@@ -1,0 +1,70 @@
+#include "TestRunner.h"
+
+#include <iostream>
+#include <string>
+
+#include "Client/ClientConfigTests.h"
+#include "Client/SnapshotChunkAssemblerTests.h"
+#include "Net/SnapshotChunkAssemblerCoreTests.h"
+#include "Packet/PacketSerializationTests.h"
+#include "Threading/ThreadPoolTests.h"
+#include "Log/AsyncLogWriterTests.h"
+#include "Server/ServerConfigTests.h"
+#include "Server/ServerMetricsCollectorTests.h"
+#include "Server/GameSimulationTests.h"
+#include "Server/PeerSessionServiceTests.h"
+#include "Server/PlayerCommandServiceTests.h"
+#include "Server/PacketPayloadValidatorTests.h"
+#include "Server/UdpPacketDispatcherTests.h"
+#include "Server/SnapshotBroadcastBuilderTests.h"
+#include "Server/IntegrationSmokeTests.h"
+#include "Game/WorldCollisionTests.h"
+
+namespace tests
+{
+	bool TestRunner::RunAll()
+	{
+		common::diagnostics::DebugTestResult totalResult{};
+
+		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
+		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
+		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
+		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
+		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
+		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());
+		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());
+		MergeAndPrint(totalResult, "GameSimulation", server::RunGameSimulationTests());
+		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());
+		MergeAndPrint(totalResult, "PlayerCommandService", server::RunPlayerCommandServiceTests());
+		MergeAndPrint(totalResult, "SnapshotBroadcastBuilder", server::RunSnapshotBroadcastBuilderTests());
+		MergeAndPrint(totalResult, "PacketPayloadValidator", server::RunPacketPayloadValidatorTests());
+		MergeAndPrint(totalResult, "UdpPacketDispatcher", server::RunUdpPacketDispatcherTests());
+		MergeAndPrint(totalResult, "IntegrationSmoke", server::RunIntegrationSmokeTests());
+		MergeAndPrint(totalResult, "ClientConfig", client::RunClientConfigTests());
+		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
+
+		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';
+
+		return totalResult.IsSucceeded();
+	}
+
+	void TestRunner::PrintResult(std::string_view testName, const common::diagnostics::DebugTestResult& result)
+	{
+		for (const std::string& failure : result.failureList)
+		{
+			std::cerr << "[" << testName << "] " << failure << '\n';
+		}
+
+		std::cout << "[" << testName << "] Passed=" << result.passedCount << ", Failed=" << result.failedCount << '\n';
+	}
+
+	void TestRunner::MergeAndPrint(
+		common::diagnostics::DebugTestResult& totalResult,
+		std::string_view testName,
+		const common::diagnostics::DebugTestResult& result
+	)
+	{
+		PrintResult(testName, result);
+		totalResult.Merge(result);
+	}
+}

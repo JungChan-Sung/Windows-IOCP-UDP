@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Client/Client.vcxproj" Id="8d7a619e-9553-4364-8457-b692b76e726a">
+    <BuildDependency Project="Common/Common.vcxproj" />
+  </Project>
+  <Project Path="Common/Common.vcxproj" Id="efd8fd17-79e1-488b-8a94-01c6f3a33e40" />
+  <Project Path="Server/Server.vcxproj" Id="93ad7b95-c9a1-414d-ba8e-f965afe6c775">
+    <BuildDependency Project="Common/Common.vcxproj" />
+  </Project>
+  <Project Path="Tests/Tests.vcxproj" Id="76b7a29a-18f5-4fc3-950a-fd89460b314c">
+    <BuildDependency Project="Common/Common.vcxproj" />
+  </Project>
+</Solution>

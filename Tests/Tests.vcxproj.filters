@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일\Net">
+      <UniqueIdentifier>{09bd004f-4de4-47ac-a2d6-26f2b5037f26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Packet">
+      <UniqueIdentifier>{0ba1abce-21e7-4312-b333-735f2b7e9439}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Server">
+      <UniqueIdentifier>{b819a9df-adf1-4d82-bb74-6e2b686b0cc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Client">
+      <UniqueIdentifier>{6c7be5e2-2c84-4d53-87a1-9f9b1a7b088a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Link">
+      <UniqueIdentifier>{5113901a-a002-4f8e-b09d-ce92def8f1cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Net">
+      <UniqueIdentifier>{054ed283-8bf4-445f-88a4-a7e3594eb92e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Client">
+      <UniqueIdentifier>{36d50e2b-eb42-484b-b53c-2381002b47f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Server">
+      <UniqueIdentifier>{4870263f-45f4-4517-aff2-2f8bfa8bbe9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Packet">
+      <UniqueIdentifier>{4a98c221-a32e-4e34-915f-8dce8193c0a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Game">
+      <UniqueIdentifier>{b32aab80-0077-4213-a122-57de6123e588}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Game">
+      <UniqueIdentifier>{6595c225-771d-4735-8e29-7e4bf77f679a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Link">
+      <UniqueIdentifier>{66220102-9509-4e86-9ad9-ae5c6fe336c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Threading">
+      <UniqueIdentifier>{046f34d1-dfaa-48cb-ae12-1b945e92b4d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Threading">
+      <UniqueIdentifier>{7661ba54-c734-4375-adb2-5838b150986b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Log">
+      <UniqueIdentifier>{a44c0bbc-77f3-4b62-845a-a059a3c570af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Log">
+      <UniqueIdentifier>{feab3960-6d1b-426a-8030-0870eb7cd1e1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Tests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Config\ClientConfigLoader.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Config\ServerConfigValidator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\SnapshotChunkAssemblerCoreTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\ClientConfigTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\ServerConfigTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet\PacketSerializationTests.cpp">
+      <Filter>소스 파일\Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="TestRunner.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\GameSimulationTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Game\GameSimulation.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Game\GameWorld.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\WorldCollisionTests.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\PeerSessionServiceTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\PeerRoomManager.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\PeerSessionService.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\PlayerCommandServiceTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\PlayerCommandService.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\UdpPacketDispatcherTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\PacketPayloadValidatorTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\PacketPayloadValidator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\SnapshotBroadcastBuilder.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\IntegrationSmokeTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Threading\ThreadPoolTests.cpp">
+      <Filter>소스 파일\Threading</Filter>
+    </ClCompile>
+    <ClCompile Include="Log\AsyncLogWriterTests.cpp">
+      <Filter>소스 파일\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\ServerMetricsCollectorTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\ClientConfigTests.h">
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\SnapshotChunkAssemblerTests.h">
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\ServerConfigTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\PacketSerializationTests.h">
+      <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="TestRunner.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\GameSimulationTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\WorldCollisionTests.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\PeerSessionServiceTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Net\Endpoint.h">
+      <Filter>헤더 파일\Link</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\PlayerCommandServiceTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\UdpPacketDispatcherTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\PacketPayloadValidatorTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\IntegrationSmokeTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Threading\ThreadPoolTests.h">
+      <Filter>헤더 파일\Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="Log\AsyncLogWriterTests.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\ServerMetricsCollectorTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

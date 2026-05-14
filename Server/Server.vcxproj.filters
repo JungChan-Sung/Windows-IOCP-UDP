@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="소스 파일\Net">
+      <UniqueIdentifier>{f1d02475-3091-44c8-8f32-9a3c86a829b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Net">
+      <UniqueIdentifier>{3ca57a59-a695-48bd-8dda-14ad9cd5f56e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Game">
+      <UniqueIdentifier>{186de1e4-0f9f-421f-a209-0dea8b3e5038}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\App">
+      <UniqueIdentifier>{1a4564a8-6bda-48fa-9b93-c779b067b813}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\App">
+      <UniqueIdentifier>{3d1b4efb-df5f-41ad-acea-a7f0c356ac00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Game">
+      <UniqueIdentifier>{e63d933d-d949-4b92-9537-4d6670cafee6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Config">
+      <UniqueIdentifier>{6c93e6c7-ddd7-4129-a92f-afb2571ac144}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Config">
+      <UniqueIdentifier>{293053d7-2903-4bfc-8cd9-0aaa28ceeaa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Diagnostics">
+      <UniqueIdentifier>{d8ef627c-fa31-49d3-bc48-cc8f8c87417f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Diagnostics">
+      <UniqueIdentifier>{65b11475-7e95-40c1-863e-307844e1002f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Server.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpServer.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="App\GameServerApp.cpp">
+      <Filter>소스 파일\App</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpPacketDispatcher.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\SnapshotBroadcastBuilder.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\PeerRoomManager.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpPacketSender.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\PeerSessionService.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\PlayerCommandService.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpIocpTransport.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameTickRunner.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\ServerConfigLoader.cpp">
+      <Filter>소스 파일\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\ServerConfigValidator.cpp">
+      <Filter>소스 파일\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\InvalidPacketLogLimiter.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\ServerStatusReporter.cpp">
+      <Filter>소스 파일\Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\PacketPayloadValidator.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameSimulation.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameWorld.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\ServerMetricsCollector.cpp">
+      <Filter>소스 파일\Diagnostics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Net\UdpServer.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\PlayerState.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PeerState.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="App\GameServerApp.h">
+      <Filter>헤더 파일\App</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpPacketDispatcher.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\BulletState.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\ImpactEffectState.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\SnapshotBroadcastBuilder.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PeerRoomManager.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameWorld.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpPacketSender.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PeerSessionService.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PlayerCommandService.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\SnapshotBroadcastTask.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpIocpTransport.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameTickRunner.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ServerConfig.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ServerConfigLoader.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ServerConfigWarning.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ServerConfigValidator.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\InvalidPacketLogLimiter.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\ServerStatusSnapshot.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\ServerStatusReporter.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PacketPayloadValidator.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameSimulation.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\StatePool.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\ServerMetricsSnapshot.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\ServerMetricsCollector.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Server.ini">
+      <Filter>리소스 파일</Filter>
+    </None>
+  </ItemGroup>
+</Project>

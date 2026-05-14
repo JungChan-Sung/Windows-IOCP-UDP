@@ -1,0 +1,50 @@
+#pragma once
+
+#include <atomic>
+#include <mutex>
+#include <string_view>
+
+#include "LogLevel.h"
+
+namespace common::log
+{
+	class ConsoleLogger
+	{
+	private:
+		mutable std::mutex logMutex_;
+		std::atomic<LogLevel> minimumLogLevel_ = LogLevel::Info;
+
+	public:
+		ConsoleLogger() = default;
+		~ConsoleLogger() noexcept = default;
+
+		ConsoleLogger(const ConsoleLogger&) = delete;
+		ConsoleLogger& operator=(const ConsoleLogger&) = delete;
+
+		ConsoleLogger(ConsoleLogger&&) = delete;
+		ConsoleLogger& operator=(ConsoleLogger&&) = delete;
+
+	public:
+		void Log(LogLevel logLevel, std::string_view message) const;
+		void Trace(std::string_view message) const;
+		void Debug(std::string_view message) const;
+		void Info(std::string_view message) const;
+		void Warning(std::string_view message) const;
+		void Error(std::string_view message) const;
+
+	public:
+		void SetMinimumLogLevel(LogLevel logLevel) noexcept
+		{
+			minimumLogLevel_.store(logLevel);
+		}
+
+		[[nodiscard]] LogLevel GetMinimumLogLevel() const noexcept
+		{
+			return minimumLogLevel_.load();
+		}
+
+	private:
+		[[nodiscard]] bool ShouldLog(LogLevel logLevel) const noexcept;
+		[[nodiscard]] static std::string_view ToString(LogLevel logLevel) noexcept;
+	};
+}

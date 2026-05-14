@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일\Game">
+      <UniqueIdentifier>{2fa58bc5-66b3-40fc-8d2d-dcbd7eec0611}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Game">
+      <UniqueIdentifier>{43dff870-6795-4318-8747-6ef6a0838cec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Net">
+      <UniqueIdentifier>{431ebe3d-76ca-45dc-9722-370ca9ac3b88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Net">
+      <UniqueIdentifier>{ac0e8d4b-ba3d-472a-8858-c159f89af801}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\App">
+      <UniqueIdentifier>{5fc3798b-f335-4749-b992-b1f124fd44fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\App">
+      <UniqueIdentifier>{fa983903-8c71-4fb1-8323-d321b7656d98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Ui">
+      <UniqueIdentifier>{672e50ab-17f6-4a43-aa67-14351a70a15d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Ui">
+      <UniqueIdentifier>{4ec3243f-e9fa-4ac2-996e-4c5e33496408}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Render">
+      <UniqueIdentifier>{5f34e219-f2c2-4866-8a75-b9a9111dd90d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Render">
+      <UniqueIdentifier>{5d2b8bef-1e0b-4916-98cb-0fcb1040ede4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Diagnostics">
+      <UniqueIdentifier>{3043a378-4369-48d5-86d0-58d1e7d7ab41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Config">
+      <UniqueIdentifier>{39267e92-b802-4af0-90e9-bbd5b85b0816}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Config">
+      <UniqueIdentifier>{4c567638-11f8-4658-8ab9-065af0f1704b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Client.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\ClientWorld.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpClient.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="App\GameClientApp.cpp">
+      <Filter>소스 파일\App</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\InputState.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Ui\GameWindow.cpp">
+      <Filter>소스 파일\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ClientPacketDispatcher.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\SnapshotChunkAssembler.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\GdiRenderer.cpp">
+      <Filter>소스 파일\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\ClientConfigLoader.cpp">
+      <Filter>소스 파일\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\ClientConfigValidator.cpp">
+      <Filter>소스 파일\Config</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\ClientWorld.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpClient.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="App\GameClientApp.h">
+      <Filter>헤더 파일\App</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\InputState.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Ui\GameWindow.h">
+      <Filter>헤더 파일\Ui</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ClientPacketDispatcher.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\SnapshotChunkAssembler.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\EffectConfig.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\ClientTuning.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\GdiObject.h">
+      <Filter>헤더 파일\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\GdiRenderConstants.h">
+      <Filter>헤더 파일\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\GdiRenderer.h">
+      <Filter>헤더 파일\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\DebugTestConstants.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfig.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfigWarning.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfigLoader.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfigValidator.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfigDefaults.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ClientConfigDebugTests.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Client.ini">
+      <Filter>리소스 파일</Filter>
+    </None>
+  </ItemGroup>
+</Project>

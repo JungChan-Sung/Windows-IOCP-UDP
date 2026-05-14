@@ -5,10 +5,8 @@
 #include <chrono>
 #include <sstream>
 #include <thread>
-#include <vector>
 
 #include <Server/Config/ServerConfigLoader.h>
-#include <Server/Config/ServerConfigValidator.h>
 
 namespace server::app
 {
@@ -25,7 +23,7 @@ namespace server::app
 			return false;
 		}
 
-		LogStartupConfig(serverConfig);
+		LogStartupConfig(udpServer_.GetConfig());
 
 		MainLoop();
 
@@ -46,10 +44,6 @@ namespace server::app
 		{
 			serverConfig.network.port = port;
 		}
-
-		const std::vector<config::ServerConfigWarning> validationWarningList
-			= config::ServerConfigValidator::ValidateAndNormalize(serverConfig);
-		LogConfigWarnings(validationWarningList);
 
 		return serverConfig;
 	}

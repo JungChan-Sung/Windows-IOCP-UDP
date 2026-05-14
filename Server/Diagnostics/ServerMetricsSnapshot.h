@@ -10,15 +10,16 @@ namespace server::diagnostics
 		std::uint64_t receivedPacketCount = 0;
 		std::uint64_t invalidPacketDropCount = 0;
 
+		// Counts packets that passed dispatcher/header/payload validation and reached UdpServer handlers.
 		std::uint64_t joinRequestCount = 0;
 		std::uint64_t inputCommandCount = 0;
 		std::uint64_t fireRequestCount = 0;
 		std::uint64_t leaveRequestCount = 0;
 		std::uint64_t joinRoomRequestCount = 0;
 
-		std::uint64_t playerSnapshotBroadcastCount = 0;
-		std::uint64_t bulletSnapshotBroadcastCount = 0;
-		std::uint64_t impactEffectBroadcastCount = 0;
+		std::uint64_t playerSnapshotSendCount = 0;
+		std::uint64_t bulletSnapshotSendCount = 0;
+		std::uint64_t impactEffectSendCount = 0;
 
 		std::uint64_t timedOutPeerCount = 0;
 	};

@@ -10,6 +10,7 @@ namespace server::diagnostics
 	class ServerMetricsCollector
 	{
 	private:
+	private:
 		std::atomic<std::uint64_t> receivedPacketCount_ = 0;
 		std::atomic<std::uint64_t> invalidPacketDropCount_ = 0;
 
@@ -19,9 +20,9 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> leaveRequestCount_ = 0;
 		std::atomic<std::uint64_t> joinRoomRequestCount_ = 0;
 
-		std::atomic<std::uint64_t> playerSnapshotBroadcastCount_ = 0;
-		std::atomic<std::uint64_t> bulletSnapshotBroadcastCount_ = 0;
-		std::atomic<std::uint64_t> impactEffectBroadcastCount_ = 0;
+		std::atomic<std::uint64_t> playerSnapshotSendCount_ = 0;
+		std::atomic<std::uint64_t> bulletSnapshotSendCount_ = 0;
+		std::atomic<std::uint64_t> impactEffectSendCount_ = 0;
 
 		std::atomic<std::uint64_t> timedOutPeerCount_ = 0;
 
@@ -47,9 +48,9 @@ namespace server::diagnostics
 		void IncrementLeaveRequestCount() noexcept;
 		void IncrementJoinRoomRequestCount() noexcept;
 
-		void AddPlayerSnapshotBroadcastCount(std::uint64_t count) noexcept;
-		void AddBulletSnapshotBroadcastCount(std::uint64_t count) noexcept;
-		void AddImpactEffectBroadcastCount(std::uint64_t count) noexcept;
+		void AddPlayerSnapshotSendCount(std::uint64_t count) noexcept;
+		void AddBulletSnapshotSendCount(std::uint64_t count) noexcept;
+		void AddImpactEffectSendCount(std::uint64_t count) noexcept;
 
 		void AddTimedOutPeerCount(std::uint64_t count) noexcept;
 

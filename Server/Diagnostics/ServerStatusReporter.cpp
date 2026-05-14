@@ -56,9 +56,9 @@ namespace server::diagnostics
 			<< ", FireRequests=" << snapshot.metrics.fireRequestCount
 			<< ", LeaveRequests=" << snapshot.metrics.leaveRequestCount
 			<< ", JoinRoomRequests=" << snapshot.metrics.joinRoomRequestCount
-			<< ", PlayerSnapshots=" << snapshot.metrics.playerSnapshotBroadcastCount
-			<< ", BulletSnapshots=" << snapshot.metrics.bulletSnapshotBroadcastCount
-			<< ", ImpactEffects=" << snapshot.metrics.impactEffectBroadcastCount
+			<< ", PlayerSnapshotSends=" << snapshot.metrics.playerSnapshotSendCount
+			<< ", BulletSnapshotSends=" << snapshot.metrics.bulletSnapshotSendCount
+			<< ", ImpactEffectSends=" << snapshot.metrics.impactEffectSendCount
 			<< ", TimedOutPeers=" << snapshot.metrics.timedOutPeerCount;
 
 		return stream.str();

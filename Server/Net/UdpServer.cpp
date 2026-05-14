@@ -5,6 +5,7 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <sstream>
@@ -127,6 +128,14 @@ namespace server::net
 
 		config_ = config;
 
+		const std::vector<server::config::ServerConfigWarning> warningList
+			= server::config::ServerConfigValidator::ValidateAndNormalize(config_);
+
+		for (const server::config::ServerConfigWarning& warning : warningList)
+		{
+			LogWarning(warning.message);
+		}
+
 		invalidPacketLogLimiter_.Reset();
 		serverMetricsCollector_.Reset();
 
@@ -206,14 +215,6 @@ namespace server::net
 		config.network.port = port;
 		config.network.workerThreadCount = workerThreadCount;
 
-		const std::vector<server::config::ServerConfigWarning> warningList
-			= server::config::ServerConfigValidator::ValidateAndNormalize(config);
-
-		for (const server::config::ServerConfigWarning& warning : warningList)
-		{
-			LogWarning(warning.message);
-		}
-
 		return Start(config);
 	}
 
@@ -280,7 +281,7 @@ namespace server::net
 			gameSimulation_.UpdateBullets(
 				config_.tick.fixedDeltaSeconds,
 				peerRoomManager_.GetPeerTable(),
-				gameWorld_, 
+				gameWorld_,
 				config_.gameRule
 			);
 			gameSimulation_.UpdateRespawns(
@@ -404,7 +405,7 @@ namespace server::net
 				config_.session.initialRoomId,
 				peerRoomManager_,
 				gameWorld_,
-				gameSimulation_, 
+				gameSimulation_,
 				config_.gameRule,
 				std::chrono::steady_clock::now()
 			);
@@ -577,7 +578,7 @@ namespace server::net
 			);
 		}
 
-		serverMetricsCollector_.AddPlayerSnapshotBroadcastCount(playerSnapshotTaskList.size());
+		serverMetricsCollector_.AddPlayerSnapshotSendCount(playerSnapshotTaskList.size());
 		packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
 	}
 
@@ -595,7 +596,14 @@ namespace server::net
 			);
 		}
 
-		serverMetricsCollector_.AddBulletSnapshotBroadcastCount(bulletSnapshotTaskList.size());
+		std::uint64_t bulletSnapshotSendCount = 0;
+
+		for (const BulletSnapshotTask& bulletSnapshotTask : bulletSnapshotTaskList)
+		{
+			bulletSnapshotSendCount += static_cast<std::uint64_t>(bulletSnapshotTask.remoteAddressList.size());
+		}
+
+		serverMetricsCollector_.AddBulletSnapshotSendCount(bulletSnapshotSendCount);
 		packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
 	}
 
@@ -620,7 +628,14 @@ namespace server::net
 			gameWorld_.ClearPendingImpactEffects();
 		}
 
-		serverMetricsCollector_.AddImpactEffectBroadcastCount(impactEffectTaskList.size());
+		std::uint64_t impactEffectSendCount = 0;
+
+		for (const ImpactEffectTask& impactEffectTask : impactEffectTaskList)
+		{
+			impactEffectSendCount += static_cast<std::uint64_t>(impactEffectTask.remoteAddressList.size());
+		}
+
+		serverMetricsCollector_.AddImpactEffectSendCount(impactEffectSendCount);
 		packetSender_.SendImpactEffectTasks(impactEffectTaskList);
 	}
 

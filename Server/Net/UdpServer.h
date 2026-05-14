@@ -128,6 +128,11 @@ namespace server::net
 		[[nodiscard]] diagnostics::ServerStatusSnapshot BuildServerStatusSnapshot() const;
 
 	public:
+		[[nodiscard]] const config::ServerConfig& GetConfig() const noexcept
+		{
+			return config_;
+		}
+
 		[[nodiscard]] unsigned short GetPort() const noexcept
 		{
 			return port_;

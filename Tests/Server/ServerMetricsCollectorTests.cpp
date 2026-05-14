@@ -17,9 +17,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: initial fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: initial leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: initial join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotBroadcastCount == 0, "ServerMetricsCollector: initial player snapshot count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotBroadcastCount == 0, "ServerMetricsCollector: initial bullet snapshot count");
-		common::diagnostics::Expect(result, snapshot.impactEffectBroadcastCount == 0, "ServerMetricsCollector: initial impact effect count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendCount == 0, "ServerMetricsCollector: player snapshot send count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendCount == 0, "ServerMetricsCollector: bullet snapshot send count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendCount == 0, "ServerMetricsCollector: impact effect send count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: initial timed out peer count");
 	}
 
@@ -38,9 +38,9 @@ namespace
 		metricsCollector.IncrementLeaveRequestCount();
 		metricsCollector.IncrementJoinRoomRequestCount();
 
-		metricsCollector.AddPlayerSnapshotBroadcastCount(3);
-		metricsCollector.AddBulletSnapshotBroadcastCount(4);
-		metricsCollector.AddImpactEffectBroadcastCount(5);
+		metricsCollector.AddPlayerSnapshotSendCount(3);
+		metricsCollector.AddBulletSnapshotSendCount(4);
+		metricsCollector.AddImpactEffectSendCount(5);
 
 		metricsCollector.AddTimedOutPeerCount(2);
 
@@ -53,9 +53,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 1, "ServerMetricsCollector: fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 1, "ServerMetricsCollector: leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 1, "ServerMetricsCollector: join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotBroadcastCount == 3, "ServerMetricsCollector: player snapshot count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotBroadcastCount == 4, "ServerMetricsCollector: bullet snapshot count");
-		common::diagnostics::Expect(result, snapshot.impactEffectBroadcastCount == 5, "ServerMetricsCollector: impact effect count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendCount == 3, "ServerMetricsCollector: player snapshot send count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendCount == 4, "ServerMetricsCollector: bullet snapshot send count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendCount == 5, "ServerMetricsCollector: impact effect send count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 2, "ServerMetricsCollector: timed out peer count");
 	}
 
@@ -70,9 +70,9 @@ namespace
 		metricsCollector.IncrementFireRequestCount();
 		metricsCollector.IncrementLeaveRequestCount();
 		metricsCollector.IncrementJoinRoomRequestCount();
-		metricsCollector.AddPlayerSnapshotBroadcastCount(10);
-		metricsCollector.AddBulletSnapshotBroadcastCount(10);
-		metricsCollector.AddImpactEffectBroadcastCount(10);
+		metricsCollector.AddPlayerSnapshotSendCount(10);
+		metricsCollector.AddBulletSnapshotSendCount(10);
+		metricsCollector.AddImpactEffectSendCount(10);
 		metricsCollector.AddTimedOutPeerCount(10);
 
 		metricsCollector.Reset();
@@ -86,9 +86,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: reset fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: reset leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: reset join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotBroadcastCount == 0, "ServerMetricsCollector: reset player snapshot count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotBroadcastCount == 0, "ServerMetricsCollector: reset bullet snapshot count");
-		common::diagnostics::Expect(result, snapshot.impactEffectBroadcastCount == 0, "ServerMetricsCollector: reset impact effect count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendCount == 0, "ServerMetricsCollector: reset player snapshot count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendCount == 0, "ServerMetricsCollector: reset bullet snapshot count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendCount == 0, "ServerMetricsCollector: reset impact effect count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
 	}
 }

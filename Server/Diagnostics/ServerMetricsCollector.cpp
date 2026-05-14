@@ -13,9 +13,9 @@ namespace server::diagnostics
 		leaveRequestCount_.store(0);
 		joinRoomRequestCount_.store(0);
 
-		playerSnapshotBroadcastCount_.store(0);
-		bulletSnapshotBroadcastCount_.store(0);
-		impactEffectBroadcastCount_.store(0);
+		playerSnapshotSendCount_.store(0);
+		bulletSnapshotSendCount_.store(0);
+		impactEffectSendCount_.store(0);
 
 		timedOutPeerCount_.store(0);
 	}
@@ -55,19 +55,19 @@ namespace server::diagnostics
 		++joinRoomRequestCount_;
 	}
 
-	void ServerMetricsCollector::AddPlayerSnapshotBroadcastCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddPlayerSnapshotSendCount(std::uint64_t count) noexcept
 	{
-		playerSnapshotBroadcastCount_.fetch_add(count);
+		playerSnapshotSendCount_.fetch_add(count);
 	}
 
-	void ServerMetricsCollector::AddBulletSnapshotBroadcastCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddBulletSnapshotSendCount(std::uint64_t count) noexcept
 	{
-		bulletSnapshotBroadcastCount_.fetch_add(count);
+		bulletSnapshotSendCount_.fetch_add(count);
 	}
 
-	void ServerMetricsCollector::AddImpactEffectBroadcastCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddImpactEffectSendCount(std::uint64_t count) noexcept
 	{
-		impactEffectBroadcastCount_.fetch_add(count);
+		impactEffectSendCount_.fetch_add(count);
 	}
 
 	void ServerMetricsCollector::AddTimedOutPeerCount(std::uint64_t count) noexcept
@@ -88,9 +88,9 @@ namespace server::diagnostics
 		snapshot.leaveRequestCount = leaveRequestCount_.load();
 		snapshot.joinRoomRequestCount = joinRoomRequestCount_.load();
 
-		snapshot.playerSnapshotBroadcastCount = playerSnapshotBroadcastCount_.load();
-		snapshot.bulletSnapshotBroadcastCount = bulletSnapshotBroadcastCount_.load();
-		snapshot.impactEffectBroadcastCount = impactEffectBroadcastCount_.load();
+		snapshot.playerSnapshotSendCount = playerSnapshotSendCount_.load();
+		snapshot.bulletSnapshotSendCount = bulletSnapshotSendCount_.load();
+		snapshot.impactEffectSendCount = impactEffectSendCount_.load();
 
 		snapshot.timedOutPeerCount = timedOutPeerCount_.load();
 

@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <Common/Log/LogLevel.h>
+
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Config/ServerConfigValidator.h>
 
@@ -57,6 +59,8 @@ namespace
 			"[Diagnostics]\n"
 			"EnableStatusLog=false\n"
 			"StatusLogIntervalSeconds=20\n"
+			"LogLevel=Debug\n"
+			"AsyncLogWorkerThreadCount=2\n"
 		);
 
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
@@ -85,6 +89,8 @@ namespace
 		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.fireCooldownSeconds == 0.2F, "ServerConfig: fireCooldownSeconds");
 		common::diagnostics::Expect(result, !config.diagnostics.enableStatusLog, "ServerConfig: enableStatusLog");
 		common::diagnostics::Expect(result, config.diagnostics.statusLogInterval == std::chrono::seconds(20), "ServerConfig: statusLogInterval");
+		common::diagnostics::Expect(result, config.diagnostics.logLevel == common::log::LogLevel::Debug, "ServerConfig: logLevel");
+		common::diagnostics::Expect(result, config.diagnostics.asyncLogWorkerThreadCount == 2, "ServerConfig: asyncLogWorkerThreadCount");
 	}
 
 	void RunLoadInvalidConfigTest(common::diagnostics::DebugTestResult& result)
@@ -105,13 +111,16 @@ namespace
 			"[Tick]\n"
 			"TickIntervalMs=0\n"
 			"FixedDeltaSeconds=bad\n"
+			"[Diagnostics]\n"
+			"LogLevel=Verbose\n"
+			"AsyncLogWorkerThreadCount=0\n"
 		);
 
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
 		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ServerConfig: invalid file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.size() >= 5, "ServerConfig: invalid file warning count");
+		common::diagnostics::Expect(result, loadResult.warningList.size() >= 7, "ServerConfig: invalid file warning count");
 	}
 
 	void RunMissingFileTest(common::diagnostics::DebugTestResult& result)
@@ -145,6 +154,7 @@ namespace
 		config.weaponRule.basicWeaponRule.bulletRadius = 0.0F;
 		config.weaponRule.basicWeaponRule.fireCooldownSeconds = -1.0F;
 		config.diagnostics.statusLogInterval = std::chrono::seconds(0);
+		config.diagnostics.asyncLogWorkerThreadCount = 0;
 
 		const std::vector<server::config::ServerConfigWarning> warningList = server::config::ServerConfigValidator::ValidateAndNormalize(config);
 
@@ -158,9 +168,44 @@ namespace
 		common::diagnostics::Expect(result, config.tick.fixedDeltaSeconds == defaultConfig.tick.fixedDeltaSeconds, "ServerConfigValidator: delta normalized");
 		common::diagnostics::Expect(result, config.gameRule.initialPlayerHp == defaultConfig.gameRule.initialPlayerHp, "ServerConfigValidator: hp normalized");
 		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletDamage == defaultConfig.weaponRule.basicWeaponRule.bulletDamage,
-			"ServerConfigValidator: damage normalized");
+			"ServerConfigValidator: damage normalized"
+		);
 		common::diagnostics::Expect(result, config.diagnostics.statusLogInterval == defaultConfig.diagnostics.statusLogInterval,
-			"ServerConfigValidator: status interval normalized");
+			"ServerConfigValidator: status interval normalized"
+		);
+		common::diagnostics::Expect(
+			result,
+			config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
+			"ServerConfigValidator: async log worker count normalized"
+		);
+	}
+
+	void RunLoadLogLevelAliasTest(common::diagnostics::DebugTestResult& result)
+	{
+		const std::filesystem::path filePath = MakeTempServerConfigPath();
+
+		WriteTextFile(
+			filePath,
+			"[Diagnostics]\n"
+			"LogLevel=warn\n"
+			"AsyncLogWorkerThreadCount=3\n"
+		);
+
+		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
+		std::filesystem::remove(filePath);
+
+		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ServerConfig: log level alias file loaded");
+		common::diagnostics::Expect(result, loadResult.warningList.empty(), "ServerConfig: log level alias has no loader warning");
+		common::diagnostics::Expect(
+			result,
+			loadResult.config.diagnostics.logLevel == common::log::LogLevel::Warning,
+			"ServerConfig: log level warn alias"
+		);
+		common::diagnostics::Expect(
+			result,
+			loadResult.config.diagnostics.asyncLogWorkerThreadCount == 3,
+			"ServerConfig: async log worker count alias test"
+		);
 	}
 }
 
@@ -172,6 +217,7 @@ namespace tests::server
 
 		RunLoadValidConfigTest(result);
 		RunLoadInvalidConfigTest(result);
+		RunLoadLogLevelAliasTest(result);
 		RunMissingFileTest(result);
 		RunValidatorNormalizeTest(result);
 

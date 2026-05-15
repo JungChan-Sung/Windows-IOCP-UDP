@@ -1,5 +1,6 @@
 #include "AsyncLogWriter.h"
 
+#include <string>
 #include <utility>
 
 namespace common::log

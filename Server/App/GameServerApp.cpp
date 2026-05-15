@@ -35,6 +35,8 @@ namespace server::app
 		udpServer_.Stop();
 		udpServer_.DetachLogger();
 
+		logger_.Stop();
+
 		return true;
 	}
 

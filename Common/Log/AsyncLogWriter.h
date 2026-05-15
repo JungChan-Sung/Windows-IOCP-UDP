@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <cstddef>
-#include <string>
 #include <string_view>
 
 #include <Common/Log/ConsoleLogger.h>
@@ -22,7 +21,7 @@ namespace common::log
 
 	public:
 		AsyncLogWriter() = default;
-		~AsyncLogWriter() noexcept;
+		~AsyncLogWriter() noexcept override;
 
 		AsyncLogWriter(const AsyncLogWriter&) = delete;
 		AsyncLogWriter& operator=(const AsyncLogWriter&) = delete;

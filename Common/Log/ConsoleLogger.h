@@ -17,7 +17,7 @@ namespace common::log
 
 	public:
 		ConsoleLogger() = default;
-		virtual ~ConsoleLogger() noexcept = default;
+		~ConsoleLogger() noexcept override = default;
 
 		ConsoleLogger(const ConsoleLogger&) = delete;
 		ConsoleLogger& operator=(const ConsoleLogger&) = delete;

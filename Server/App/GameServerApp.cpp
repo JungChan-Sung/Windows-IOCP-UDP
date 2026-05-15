@@ -25,6 +25,7 @@ namespace server::app
 		{
 			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
+			logger_.Stop();
 			return false;
 		}
 

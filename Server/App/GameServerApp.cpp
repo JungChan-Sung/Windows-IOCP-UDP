@@ -12,6 +12,11 @@ namespace server::app
 {
 	bool GameServerApp::Run(unsigned short port)
 	{
+		if (!logger_.Start(1))
+		{
+			return false;
+		}
+
 		udpServer_.AttachLogger(logger_);
 
 		const config::ServerConfig serverConfig = BuildServerConfig(port);

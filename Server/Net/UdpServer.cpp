@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <Common/Log/ConsoleLogger.h>
+#include <Common/Log/ILogger.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/GamePacket.h>
 
@@ -253,7 +253,7 @@ namespace server::net
 		}
 	}
 
-	void UdpServer::AttachLogger(common::log::ConsoleLogger& logger) noexcept
+	void UdpServer::AttachLogger(common::log::ILogger& logger) noexcept
 	{
 		logger_ = &logger;
 	}

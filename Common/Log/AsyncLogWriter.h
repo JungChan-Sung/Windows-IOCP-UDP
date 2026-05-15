@@ -5,20 +5,20 @@
 #include <string>
 #include <string_view>
 
+#include <Common/Log/ConsoleLogger.h>
+#include <Common/Log/ILogger.h>
+#include <Common/Log/LogLevel.h>
 #include <Common/Threading/ThreadPool.h>
-
-#include "ConsoleLogger.h"
-#include "LogLevel.h"
 
 namespace common::log
 {
-	class AsyncLogWriter
+	class AsyncLogWriter final : public ILogger
 	{
 	private:
 		ConsoleLogger logger_;
-		threading::ThreadPool threadPool_;
+		mutable threading::ThreadPool threadPool_;
 
-		std::atomic<bool> isStarted_ = false;
+		mutable std::atomic<bool> isStarted_ = false;
 
 	public:
 		AsyncLogWriter() = default;
@@ -34,12 +34,7 @@ namespace common::log
 		[[nodiscard]] bool Start(std::size_t workerThreadCount = 1);
 		void Stop() noexcept;
 
-		[[nodiscard]] bool Log(LogLevel logLevel, std::string_view message);
-		[[nodiscard]] bool Trace(std::string_view message);
-		[[nodiscard]] bool Debug(std::string_view message);
-		[[nodiscard]] bool Info(std::string_view message);
-		[[nodiscard]] bool Warning(std::string_view message);
-		[[nodiscard]] bool Error(std::string_view message);
+		bool Log(LogLevel logLevel, std::string_view message) const override;
 
 	private:
 		[[nodiscard]] bool ShouldEnqueue(LogLevel logLevel) const noexcept;

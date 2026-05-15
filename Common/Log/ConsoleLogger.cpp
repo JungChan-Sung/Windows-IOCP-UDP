@@ -4,42 +4,19 @@
 
 namespace common::log
 {
-	void ConsoleLogger::Log(LogLevel logLevel, std::string_view message) const
+	bool ConsoleLogger::Log(LogLevel logLevel, std::string_view message) const
 	{
 		if (!ShouldLog(logLevel))
 		{
-			return;
+			return false;
 		}
 
 		std::scoped_lock lock(logMutex_);
 
 		std::ostream& outputStream = (logLevel >= LogLevel::Warning) ? std::cerr : std::cout;
 		outputStream << '[' << ToString(logLevel) << "] " << message << '\n';
-	}
 
-	void ConsoleLogger::Trace(std::string_view message) const
-	{
-		Log(LogLevel::Trace, message);
-	}
-
-	void ConsoleLogger::Debug(std::string_view message) const
-	{
-		Log(LogLevel::Debug, message);
-	}
-
-	void ConsoleLogger::Info(std::string_view message) const
-	{
-		Log(LogLevel::Info, message);
-	}
-
-	void ConsoleLogger::Warning(std::string_view message) const
-	{
-		Log(LogLevel::Warning, message);
-	}
-
-	void ConsoleLogger::Error(std::string_view message) const
-	{
-		Log(LogLevel::Error, message);
+		return true;
 	}
 
 	bool ConsoleLogger::ShouldLog(LogLevel logLevel) const noexcept

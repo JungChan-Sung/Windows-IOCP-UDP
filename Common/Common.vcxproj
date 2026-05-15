@@ -30,6 +30,7 @@
     <ClInclude Include="Game\WorldCollision.h" />
     <ClInclude Include="Log\AsyncLogWriter.h" />
     <ClInclude Include="Log\ConsoleLogger.h" />
+    <ClInclude Include="Log\ILogger.h" />
     <ClInclude Include="Log\LogLevel.h" />
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\IocpHandle.h" />

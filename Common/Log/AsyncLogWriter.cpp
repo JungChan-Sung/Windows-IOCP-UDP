@@ -40,7 +40,7 @@ namespace common::log
 		threadPool_.StopAfterDrain();
 	}
 
-	bool AsyncLogWriter::Log(LogLevel logLevel, std::string_view message)
+	bool AsyncLogWriter::Log(LogLevel logLevel, std::string_view message) const
 	{
 		if (!isStarted_.load())
 		{
@@ -60,31 +60,6 @@ namespace common::log
 				logger_.Log(logLevel, copiedMessage);
 			}
 		);
-	}
-
-	bool AsyncLogWriter::Trace(std::string_view message)
-	{
-		return Log(LogLevel::Trace, message);
-	}
-
-	bool AsyncLogWriter::Debug(std::string_view message)
-	{
-		return Log(LogLevel::Debug, message);
-	}
-
-	bool AsyncLogWriter::Info(std::string_view message)
-	{
-		return Log(LogLevel::Info, message);
-	}
-
-	bool AsyncLogWriter::Warning(std::string_view message)
-	{
-		return Log(LogLevel::Warning, message);
-	}
-
-	bool AsyncLogWriter::Error(std::string_view message)
-	{
-		return Log(LogLevel::Error, message);
 	}
 
 	bool AsyncLogWriter::ShouldEnqueue(LogLevel logLevel) const noexcept

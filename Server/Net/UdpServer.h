@@ -28,7 +28,7 @@
 
 namespace common::log
 {
-	class ConsoleLogger;
+	class ILogger;
 }
 
 namespace common::packet
@@ -67,7 +67,7 @@ namespace server::net
 		PeerSessionService peerSessionService_;
 		PlayerCommandService playerCommandService_;
 
-		common::log::ConsoleLogger* logger_ = nullptr;
+		common::log::ILogger* logger_ = nullptr;
 
 		server::config::ServerConfig config_{};
 
@@ -89,7 +89,7 @@ namespace server::net
 		[[nodiscard]] bool Start(unsigned short port, std::size_t workerThreadCount = 0);
 		void Stop() noexcept;
 
-		void AttachLogger(common::log::ConsoleLogger& logger) noexcept;
+		void AttachLogger(common::log::ILogger& logger) noexcept;
 		void DetachLogger() noexcept;
 
 	private:

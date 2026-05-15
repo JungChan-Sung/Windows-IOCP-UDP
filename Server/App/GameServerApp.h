@@ -2,7 +2,7 @@
 
 #include <span>
 
-#include <Common/Log/ConsoleLogger.h>
+#include <Common/Log/AsyncLogWriter.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Config/ServerConfigWarning.h>
@@ -13,7 +13,7 @@ namespace server::app
 	class GameServerApp
 	{
 	private:
-		common::log::ConsoleLogger logger_;
+		common::log::AsyncLogWriter logger_;
 		net::UdpServer udpServer_;
 
 	public:

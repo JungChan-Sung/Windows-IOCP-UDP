@@ -4,11 +4,12 @@
 #include <mutex>
 #include <string_view>
 
-#include "LogLevel.h"
+#include <Common/Log/ILogger.h>
+#include <Common/Log/LogLevel.h>
 
 namespace common::log
 {
-	class ConsoleLogger
+	class ConsoleLogger final : public ILogger
 	{
 	private:
 		mutable std::mutex logMutex_;
@@ -16,7 +17,7 @@ namespace common::log
 
 	public:
 		ConsoleLogger() = default;
-		~ConsoleLogger() noexcept = default;
+		virtual ~ConsoleLogger() noexcept = default;
 
 		ConsoleLogger(const ConsoleLogger&) = delete;
 		ConsoleLogger& operator=(const ConsoleLogger&) = delete;
@@ -25,12 +26,7 @@ namespace common::log
 		ConsoleLogger& operator=(ConsoleLogger&&) = delete;
 
 	public:
-		void Log(LogLevel logLevel, std::string_view message) const;
-		void Trace(std::string_view message) const;
-		void Debug(std::string_view message) const;
-		void Info(std::string_view message) const;
-		void Warning(std::string_view message) const;
-		void Error(std::string_view message) const;
+		bool Log(LogLevel logLevel, std::string_view message) const override;
 
 	public:
 		void SetMinimumLogLevel(LogLevel logLevel) noexcept

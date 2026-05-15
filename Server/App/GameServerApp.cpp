@@ -5,23 +5,55 @@
 #include <chrono>
 #include <sstream>
 #include <thread>
+#include <string_view>
 
 #include <Server/Config/ServerConfigLoader.h>
+
+namespace
+{
+	[[nodiscard]] std::string_view ToString(common::log::LogLevel logLevel) noexcept
+	{
+		switch (logLevel)
+		{
+		case common::log::LogLevel::Trace:
+			return "Trace";
+
+		case common::log::LogLevel::Debug:
+			return "Debug";
+
+		case common::log::LogLevel::Info:
+			return "Info";
+
+		case common::log::LogLevel::Warning:
+			return "Warning";
+
+		case common::log::LogLevel::Error:
+			return "Error";
+
+		default:
+			return "Unknown";
+		}
+	}
+}
 
 namespace server::app
 {
 	bool GameServerApp::Run(unsigned short port)
 	{
-		if (!logger_.Start(1))
+		const config::ServerConfigLoadResult loadResult = BuildServerConfig(port);
+
+		logger_.SetMinimumLogLevel(loadResult.config.diagnostics.logLevel);
+
+		if (!logger_.Start(loadResult.config.diagnostics.asyncLogWorkerThreadCount))
 		{
 			return false;
 		}
 
+		LogConfigWarnings(loadResult.warningList);
+
 		udpServer_.AttachLogger(logger_);
 
-		const config::ServerConfig serverConfig = BuildServerConfig(port);
-
-		if (!udpServer_.Start(serverConfig))
+		if (!udpServer_.Start(loadResult.config))
 		{
 			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
@@ -41,19 +73,16 @@ namespace server::app
 		return true;
 	}
 
-	config::ServerConfig GameServerApp::BuildServerConfig(unsigned short port) const
+	config::ServerConfigLoadResult GameServerApp::BuildServerConfig(unsigned short port) const
 	{
 		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::Load("Server.ini");
-		LogConfigWarnings(loadResult.warningList);
-
-		config::ServerConfig serverConfig = loadResult.config;
 
 		if (port != 0)
 		{
-			serverConfig.network.port = port;
+			loadResult.config.network.port = port;
 		}
 
-		return serverConfig;
+		return loadResult;
 	}
 
 	void GameServerApp::LogConfigWarnings(std::span<const config::ServerConfigWarning> warningList) const
@@ -96,7 +125,9 @@ namespace server::app
 			<< ", BasicBulletRadius=" << serverConfig.weaponRule.basicWeaponRule.bulletRadius
 			<< ", BasicFireCooldownSeconds=" << serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds
 			<< ", EnableStatusLog=" << std::boolalpha << serverConfig.diagnostics.enableStatusLog
-			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count();
+			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count()
+			<< ", LogLevel=" << ToString(serverConfig.diagnostics.logLevel)
+			<< ", AsyncLogWorkerThreadCount=" << serverConfig.diagnostics.asyncLogWorkerThreadCount;
 
 		logger_.Info(stream.str());
 		logger_.Info("Press ESC to stop.");

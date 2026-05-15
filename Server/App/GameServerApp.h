@@ -4,8 +4,7 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 
-#include <Server/Config/ServerConfig.h>
-#include <Server/Config/ServerConfigWarning.h>
+#include <Server/Config/ServerConfigLoader.h>
 #include <Server/Net/UdpServer.h>
 
 namespace server::app
@@ -30,7 +29,7 @@ namespace server::app
 		[[nodiscard]] bool Run(unsigned short port);
 
 	private:
-		[[nodiscard]] config::ServerConfig BuildServerConfig(unsigned short port) const;
+		[[nodiscard]] config::ServerConfigLoadResult BuildServerConfig(unsigned short port) const;
 
 		void LogConfigWarnings(std::span<const config::ServerConfigWarning> warningList) const;
 		void LogStartupConfig(const config::ServerConfig& serverConfig) const;

@@ -167,11 +167,14 @@ namespace server::config
 
 		if (serverConfig.diagnostics.statusLogInterval <= std::chrono::seconds(0))
 		{
-			AddWarning(
-				warningList,
-				"Diagnostics.StatusLogIntervalSeconds must be greater than 0. Default status log interval will be used."
-			);
+			AddWarning(warningList, "Diagnostics.StatusLogIntervalSeconds must be greater than 0. Default status log interval will be used.");
 			serverConfig.diagnostics.statusLogInterval = defaultConfig.diagnostics.statusLogInterval;
+		}
+
+		if (serverConfig.diagnostics.asyncLogWorkerThreadCount == 0)
+		{
+			AddWarning(warningList, "Diagnostics.AsyncLogWorkerThreadCount cannot be 0. Default value will be used.");
+			serverConfig.diagnostics.asyncLogWorkerThreadCount = defaultConfig.diagnostics.asyncLogWorkerThreadCount;
 		}
 
 		if (deltaDifference > 0.001F)

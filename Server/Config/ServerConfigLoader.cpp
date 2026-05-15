@@ -175,6 +175,36 @@ namespace
 		return std::nullopt;
 	}
 
+	[[nodiscard]] std::optional<common::log::LogLevel> TryParseLogLevel(std::string_view value) noexcept
+	{
+		if (value == "Trace")
+		{
+			return common::log::LogLevel::Trace;
+		}
+
+		if (value == "Debug")
+		{
+			return common::log::LogLevel::Debug;
+		}
+
+		if (value == "Info")
+		{
+			return common::log::LogLevel::Info;
+		}
+
+		if (value == "Warning")
+		{
+			return common::log::LogLevel::Warning;
+		}
+
+		if (value == "Error")
+		{
+			return common::log::LogLevel::Error;
+		}
+
+		return std::nullopt;
+	}
+
 	void ApplyNetworkValue(
 		server::config::ServerConfig& serverConfig,
 		std::string_view section,
@@ -519,6 +549,36 @@ namespace
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.diagnostics.statusLogInterval = std::chrono::seconds(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "loglevel")
+		{
+			const std::optional<common::log::LogLevel> parsedValue = TryParseLogLevel(value);
+			if (parsedValue.has_value())
+			{
+				serverConfig.diagnostics.logLevel = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "asynclogworkerthreadcount")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				serverConfig.diagnostics.asyncLogWorkerThreadCount = static_cast<std::size_t>(*parsedValue);
 			}
 			else
 			{

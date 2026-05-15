@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstddef>
 
+#include <Common/Log/LogLevel.h>
 #include <Common/Game/GameRules.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/SimulationConstants.h>
@@ -52,6 +53,8 @@ namespace server::config
 	public:
 		bool enableStatusLog = true;
 		std::chrono::seconds statusLogInterval = std::chrono::seconds(10);
+		common::log::LogLevel logLevel = common::log::LogLevel::Info;
+		std::size_t asyncLogWorkerThreadCount = 1;
 	};
 
 	struct ServerConfig

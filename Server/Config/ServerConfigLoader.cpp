@@ -177,27 +177,29 @@ namespace
 
 	[[nodiscard]] std::optional<common::log::LogLevel> TryParseLogLevel(std::string_view value) noexcept
 	{
-		if (value == "Trace")
+		const std::string normalizedValue = ToLowerCopy(Trim(value));
+
+		if (normalizedValue == "trace")
 		{
 			return common::log::LogLevel::Trace;
 		}
 
-		if (value == "Debug")
+		if (normalizedValue == "debug")
 		{
 			return common::log::LogLevel::Debug;
 		}
 
-		if (value == "Info")
+		if (normalizedValue == "info")
 		{
 			return common::log::LogLevel::Info;
 		}
 
-		if (value == "Warning")
+		if (normalizedValue == "warning" || normalizedValue == "warn")
 		{
 			return common::log::LogLevel::Warning;
 		}
 
-		if (value == "Error")
+		if (normalizedValue == "error")
 		{
 			return common::log::LogLevel::Error;
 		}

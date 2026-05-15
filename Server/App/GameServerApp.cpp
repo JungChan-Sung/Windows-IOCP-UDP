@@ -4,8 +4,8 @@
 
 #include <chrono>
 #include <sstream>
-#include <thread>
 #include <string_view>
+#include <thread>
 
 #include <Server/Config/ServerConfigLoader.h>
 

@@ -1,10 +1,7 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <atomic>
 #include <cstdint>
-#include <thread>
 #include <chrono>
 
 #include <Common/Net/Socket.h>
@@ -14,6 +11,7 @@
 #include <Client/Config/ClientConfigDefaults.h>
 #include <Client/Net/ClientPacketDispatcher.h>
 #include <Client/Net/SnapshotChunkAssembler.h>
+#include <Client/Net/UdpSocketTransport.h>
 
 namespace common::packet
 {
@@ -43,10 +41,9 @@ namespace client::net
 		using ClientWorldType = game::ClientWorld;
 
 	private:
-		common::net::Socket socket_;
-		sockaddr_in serverAddress_{};
+		UdpSocketTransport udpTransport_;
+
 		std::atomic<bool> isRunning_ = false;
-		std::jthread recvThread_;
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
 		std::chrono::milliseconds snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
@@ -75,15 +72,7 @@ namespace client::net
 		[[nodiscard]] bool SendJoinRoomRequest(RoomId roomId);
 
 	private:
-		[[nodiscard]] bool CreateSocket();
-		[[nodiscard]] bool BindSocket();
-		[[nodiscard]] bool ConfigureSocket();
-		[[nodiscard]] bool SetServerAddress(const char* serverIp, unsigned short serverPort);
-		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
-
 		void RegisterPacketHandlers();
-
-		void RecvLoop(std::stop_token stopToken);
 
 		void HandlePacket(const char* packetData, int packetSize);
 		void HandleJoinResponse(const common::packet::JoinResponsePacket& packet);

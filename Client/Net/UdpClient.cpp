@@ -1,18 +1,11 @@
 #include "UdpClient.h"
 
-#include <MSWSock.h>
-#include <Mstcpip.h>
-#include <WS2tcpip.h>
-
-#include <chrono>
-#include <thread>
 #include <functional>
 #include <type_traits>
 #include <optional>
 
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Net/UdpContext.h>
 
 #include <Client/Game/ClientWorld.h>
 
@@ -62,29 +55,6 @@ namespace client::net
 			return false;
 		}
 
-		if (!CreateSocket())
-		{
-			return false;
-		}
-
-		if (!BindSocket())
-		{
-			socket_.Close();
-			return false;
-		}
-
-		if (!ConfigureSocket())
-		{
-			socket_.Close();
-			return false;
-		}
-
-		if (!SetServerAddress(serverIp, serverPort))
-		{
-			socket_.Close();
-			return false;
-		}
-
 		world_ = &world;
 		inputSequence_ = 0;
 		packetDispatcher_.Clear();
@@ -92,15 +62,22 @@ namespace client::net
 		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
 		RegisterPacketHandlers();
 
-		isRunning_.store(true);
-
-		recvThread_ = std::jthread(
-			[this](std::stop_token stopToken)
+		if (!udpTransport_.Start(
+			serverIp,
+			serverPort,
+			[this](const char* packetData, int packetSize)
 			{
-				RecvLoop(stopToken);
+				HandlePacket(packetData, packetSize);
 			}
-		);
+		))
+		{
+			world_ = nullptr;
+			packetDispatcher_.Clear();
+			snapshotChunkAssembler_.Clear();
+			return false;
+		}
 
+		isRunning_.store(true);
 		return true;
 	}
 
@@ -111,19 +88,7 @@ namespace client::net
 			return;
 		}
 
-		if (recvThread_.joinable())
-		{
-			recvThread_.request_stop();
-		}
-
-		socket_.Close();
-
-		if (recvThread_.joinable())
-		{
-			recvThread_.join();
-		}
-
-		recvThread_ = std::jthread();
+		udpTransport_.Stop();
 
 		world_ = nullptr;
 		inputSequence_ = 0;
@@ -141,7 +106,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -157,7 +122,7 @@ namespace client::net
 		}
 
 		inputSequence = packet.inputSequence;
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendFireRequest()
@@ -170,7 +135,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendLeaveRequest()
@@ -183,7 +148,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendJoinRoomRequest(RoomId roomId)
@@ -197,127 +162,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
-	}
-
-	bool UdpClient::CreateSocket()
-	{
-		SOCKET handle = ::WSASocketW(
-			AF_INET,
-			SOCK_DGRAM,
-			IPPROTO_UDP,
-			nullptr,
-			0,
-			0
-		);
-
-		if (handle == INVALID_SOCKET)
-		{
-			return false;
-		}
-
-		socket_.Reset(handle);
-		return true;
-	}
-
-	bool UdpClient::BindSocket()
-	{
-		sockaddr_in localAddress{};
-		localAddress.sin_family = AF_INET;
-		localAddress.sin_addr.s_addr = ::htonl(INADDR_ANY);
-		localAddress.sin_port = ::htons(0);
-
-		const int result = ::bind(
-			socket_.Get(),
-			reinterpret_cast<const sockaddr*>(&localAddress),
-			sizeof(localAddress)
-		);
-
-		return result != SOCKET_ERROR;
-	}
-
-	bool UdpClient::ConfigureSocket()
-	{
-		u_long nonBlocking = 1;
-
-		const int nonBlockingResult = ::ioctlsocket(
-			socket_.Get(),
-			FIONBIO,
-			&nonBlocking
-		);
-
-		if (nonBlockingResult == SOCKET_ERROR)
-		{
-			return false;
-		}
-
-		BOOL newBehavior = FALSE;
-		DWORD bytesReturned = 0;
-
-		const int connResetResult = ::WSAIoctl(
-			socket_.Get(),
-			SIO_UDP_CONNRESET,
-			&newBehavior,
-			sizeof(newBehavior),
-			nullptr,
-			0,
-			&bytesReturned,
-			nullptr,
-			nullptr
-		);
-
-		return connResetResult != SOCKET_ERROR;
-	}
-
-	bool UdpClient::SetServerAddress(const char* serverIp, unsigned short serverPort)
-	{
-		sockaddr_in serverAddress{};
-		serverAddress.sin_family = AF_INET;
-		serverAddress.sin_port = ::htons(serverPort);
-
-		const int result = ::InetPtonA(
-			AF_INET,
-			serverIp,
-			&serverAddress.sin_addr
-		);
-
-		if (result != 1)
-		{
-			return false;
-		}
-
-		serverAddress_ = serverAddress;
-		return true;
-	}
-
-	bool UdpClient::SendPacket(const void* packetData, int packetSize)
-	{
-		if (!socket_.IsValid() || packetData == nullptr || packetSize <= 0)
-		{
-			return false;
-		}
-
-		const int sentBytes = ::sendto(
-			socket_.Get(),
-			static_cast<const char*>(packetData),
-			packetSize,
-			0,
-			reinterpret_cast<const sockaddr*>(&serverAddress_),
-			sizeof(serverAddress_)
-		);
-
-		if (sentBytes == SOCKET_ERROR)
-		{
-			const int errorCode = ::WSAGetLastError();
-			if (errorCode == WSAEWOULDBLOCK)
-			{
-				return false;
-			}
-
-			return false;
-		}
-
-		return sentBytes == packetSize;
+		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	void UdpClient::RegisterPacketHandlers()
@@ -372,68 +217,6 @@ namespace client::net
 			*this,
 			&UdpClient::HandleImpactEffectPacket
 		);
-	}
-
-	void UdpClient::RecvLoop(std::stop_token stopToken)
-	{
-		using namespace std::chrono_literals;
-
-		common::net::UdpBuffer receiveBuffer{};
-
-		while (!stopToken.stop_requested())
-		{
-			sockaddr_in remoteAddress{};
-			int remoteAddressLength = static_cast<int>(sizeof(remoteAddress));
-
-			const int receivedBytes = ::recvfrom(
-				socket_.Get(),
-				receiveBuffer.data(),
-				static_cast<int>(receiveBuffer.size()),
-				0,
-				reinterpret_cast<sockaddr*>(&remoteAddress),
-				&remoteAddressLength
-			);
-
-			if (receivedBytes == SOCKET_ERROR)
-			{
-				if (!isRunning_.load())
-				{
-					break;
-				}
-
-				const int errorCode = ::WSAGetLastError();
-				if (errorCode == WSAEWOULDBLOCK)
-				{
-					std::this_thread::sleep_for(1ms);
-					continue;
-				}
-
-				if (errorCode == WSAENOTSOCK || errorCode == WSAESHUTDOWN || errorCode == WSAEINTR)
-				{
-					break;
-				}
-
-				continue;
-			}
-
-			if (receivedBytes <= 0)
-			{
-				std::this_thread::sleep_for(1ms);
-				continue;
-			}
-
-			if (remoteAddress.sin_addr.S_un.S_addr != serverAddress_.sin_addr.S_un.S_addr)
-			{
-				continue;
-			}
-
-			if (remoteAddress.sin_port != serverAddress_.sin_port)
-			{
-				continue;
-			}
-
-			HandlePacket(receiveBuffer.data(), receivedBytes);
-		}
 	}
 
 	void UdpClient::HandlePacket(const char* packetData, int packetSize)

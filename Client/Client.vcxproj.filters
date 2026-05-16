@@ -87,6 +87,9 @@
     <ClCompile Include="Config\ClientConfigValidator.cpp">
       <Filter>소스 파일\Config</Filter>
     </ClCompile>
+    <ClCompile Include="Net\UdpSocketTransport.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\ClientWorld.h">
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="Config\ClientConfigDebugTests.h">
       <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpSocketTransport.h">
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

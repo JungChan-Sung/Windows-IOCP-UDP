@@ -152,6 +152,7 @@
     <ClCompile Include="Net\ClientPacketDispatcher.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssembler.cpp" />
     <ClCompile Include="Net\UdpClient.cpp" />
+    <ClCompile Include="Net\UdpSocketTransport.cpp" />
     <ClCompile Include="Render\GdiRenderer.cpp" />
     <ClCompile Include="Ui\GameWindow.cpp" />
   </ItemGroup>
@@ -171,6 +172,7 @@
     <ClInclude Include="Net\ClientPacketDispatcher.h" />
     <ClInclude Include="Net\SnapshotChunkAssembler.h" />
     <ClInclude Include="Net\UdpClient.h" />
+    <ClInclude Include="Net\UdpSocketTransport.h" />
     <ClInclude Include="Render\GdiObject.h" />
     <ClInclude Include="Render\GdiRenderConstants.h" />
     <ClInclude Include="Render\GdiRenderer.h" />

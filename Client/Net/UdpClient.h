@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <chrono>
 
-#include <Common/Net/Socket.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
 

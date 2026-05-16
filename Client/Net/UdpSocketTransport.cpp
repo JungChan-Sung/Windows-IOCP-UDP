@@ -107,12 +107,6 @@ namespace client::net
 
 		if (sentBytes == SOCKET_ERROR)
 		{
-			const int errorCode = ::WSAGetLastError();
-			if (errorCode == WSAEWOULDBLOCK)
-			{
-				return false;
-			}
-
 			return false;
 		}
 

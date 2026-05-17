@@ -51,6 +51,11 @@ namespace client::app
 
 		udpClient_.SetSnapshotAssemblyTimeout(config_.snapshot.assemblyTimeout);
 		udpClient_.SetEnableChunkAssemblerDebugTests(config_.diagnostics.enableChunkAssemblerDebugTests);
+		udpClient_.SetTransportConfig(
+			config_.network.transportType,
+			config_.network.iocpWorkerThreadCount,
+			config_.network.iocpRecvContextCount
+		);
 
 		if (!udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_))
 		{

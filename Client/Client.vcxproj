@@ -165,6 +165,7 @@
     <ClInclude Include="Config\ClientConfigLoader.h" />
     <ClInclude Include="Config\ClientConfigValidator.h" />
     <ClInclude Include="Config\ClientConfigWarning.h" />
+    <ClInclude Include="Config\ClientTransportType.h" />
     <ClInclude Include="Diagnostics\DebugTestConstants.h" />
     <ClInclude Include="Game\ClientTuning.h" />
     <ClInclude Include="Game\ClientWorld.h" />

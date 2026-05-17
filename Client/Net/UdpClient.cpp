@@ -62,14 +62,7 @@ namespace client::net
 		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
 		RegisterPacketHandlers();
 
-		if (!udpTransport_.Start(
-			serverIp,
-			serverPort,
-			[this](const char* packetData, int packetSize)
-			{
-				HandlePacket(packetData, packetSize);
-			}
-		))
+		if (!StartTransport(serverIp, serverPort))
 		{
 			world_ = nullptr;
 			packetDispatcher_.Clear();
@@ -88,7 +81,7 @@ namespace client::net
 			return;
 		}
 
-		udpTransport_.Stop();
+		StopTransport();
 
 		world_ = nullptr;
 		inputSequence_ = 0;
@@ -106,7 +99,7 @@ namespace client::net
 			return false;
 		}
 
-		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -122,7 +115,7 @@ namespace client::net
 		}
 
 		inputSequence = packet.inputSequence;
-		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendFireRequest()
@@ -135,7 +128,7 @@ namespace client::net
 			return false;
 		}
 
-		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendLeaveRequest()
@@ -148,7 +141,7 @@ namespace client::net
 			return false;
 		}
 
-		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	bool UdpClient::SendJoinRoomRequest(RoomId roomId)
@@ -162,7 +155,59 @@ namespace client::net
 			return false;
 		}
 
-		return udpTransport_.SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+	}
+
+	bool UdpClient::StartTransport(const char* serverIp, unsigned short serverPort)
+	{
+		switch (transportType_)
+		{
+		case config::ClientTransportType::Socket:
+			return socketTransport_.Start(
+				serverIp,
+				serverPort,
+				[this](const char* packetData, int packetSize)
+				{
+					HandlePacket(packetData, packetSize);
+				}
+			);
+
+		case config::ClientTransportType::Iocp:
+			return iocpTransport_.Start(
+				serverIp,
+				serverPort,
+				iocpWorkerThreadCount_,
+				iocpRecvContextCount_,
+				[this](const char* packetData, int packetSize)
+				{
+					HandlePacket(packetData, packetSize);
+				}
+			);
+
+		default:
+			return false;
+		}
+	}
+
+	void UdpClient::StopTransport() noexcept
+	{
+		socketTransport_.Stop();
+		iocpTransport_.Stop();
+	}
+
+	bool UdpClient::SendPacket(const void* packetData, int packetSize)
+	{
+		switch (transportType_)
+		{
+		case config::ClientTransportType::Socket:
+			return socketTransport_.SendPacket(packetData, packetSize);
+
+		case config::ClientTransportType::Iocp:
+			return iocpTransport_.SendPacket(packetData, packetSize);
+
+		default:
+			return false;
+		}
 	}
 
 	void UdpClient::RegisterPacketHandlers()
@@ -354,6 +399,29 @@ namespace client::net
 			assembledBulletSnapshot->roomId,
 			assembledBulletSnapshot->impactEffectDataList
 		);
+	}
+
+	void UdpClient::SetTransportConfig(config::ClientTransportType transportType, std::size_t iocpWorkerThreadCount, std::size_t iocpRecvContextCount) noexcept
+	{
+		transportType_ = transportType;
+
+		if (iocpWorkerThreadCount == 0)
+		{
+			iocpWorkerThreadCount_ = config::defaultIocpWorkerThreadCount;
+		}
+		else
+		{
+			iocpWorkerThreadCount_ = iocpWorkerThreadCount;
+		}
+
+		if (iocpRecvContextCount == 0)
+		{
+			iocpRecvContextCount_ = config::defaultIocpRecvContextCount;
+		}
+		else
+		{
+			iocpRecvContextCount_ = iocpRecvContextCount;
+		}
 	}
 
 	void UdpClient::SetSnapshotAssemblyTimeout(std::chrono::milliseconds snapshotAssemblyTimeout) noexcept

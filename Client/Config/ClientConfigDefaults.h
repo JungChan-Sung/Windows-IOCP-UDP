@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <chrono>
 #include <string_view>
 
@@ -25,4 +26,7 @@ namespace client::config
 
 	inline constexpr std::chrono::milliseconds defaultSimulationTickInterval = common::game::defaultFixedTickInterval;
 	inline constexpr float defaultSimulationDeltaSeconds = common::game::defaultFixedDeltaSeconds;
+
+	inline constexpr std::size_t defaultIocpWorkerThreadCount = 1;
+	inline constexpr std::size_t defaultIocpRecvContextCount = 4;
 }

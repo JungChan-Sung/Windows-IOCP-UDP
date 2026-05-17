@@ -7,10 +7,12 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
 
+#include <Client/Config/ClientTransportType.h>
 #include <Client/Config/ClientConfigDefaults.h>
 #include <Client/Net/ClientPacketDispatcher.h>
 #include <Client/Net/SnapshotChunkAssembler.h>
 #include <Client/Net/UdpSocketTransport.h>
+#include <Client/Net/UdpIocpTransport.h>
 
 namespace common::packet
 {
@@ -40,7 +42,12 @@ namespace client::net
 		using ClientWorldType = game::ClientWorld;
 
 	private:
-		UdpSocketTransport udpTransport_;
+		UdpSocketTransport socketTransport_;
+		UdpIocpTransport iocpTransport_;
+
+		config::ClientTransportType transportType_ = config::ClientTransportType::Socket;
+		std::size_t iocpWorkerThreadCount_ = config::defaultIocpWorkerThreadCount;
+		std::size_t iocpRecvContextCount_ = config::defaultIocpRecvContextCount;
 
 		std::atomic<bool> isRunning_ = false;
 		ClientWorldType* world_ = nullptr;
@@ -71,6 +78,10 @@ namespace client::net
 		[[nodiscard]] bool SendJoinRoomRequest(RoomId roomId);
 
 	private:
+		[[nodiscard]] bool StartTransport(const char* serverIp, unsigned short serverPort);
+		void StopTransport() noexcept;
+		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
+
 		void RegisterPacketHandlers();
 
 		void HandlePacket(const char* packetData, int packetSize);
@@ -83,6 +94,12 @@ namespace client::net
 		void HandleImpactEffectPacket(const common::packet::ImpactEffectPacket & packet);
 
 	public:
+		void SetTransportConfig(
+			config::ClientTransportType transportType,
+			std::size_t iocpWorkerThreadCount,
+			std::size_t iocpRecvContextCount
+		) noexcept;
+
 		void SetSnapshotAssemblyTimeout(std::chrono::milliseconds snapshotAssemblyTimeout) noexcept;
 
 		void SetEnableChunkAssemblerDebugTests(bool enableChunkAssemblerDebugTests) noexcept

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <chrono>
 #include <string>
 
+#include <Client/Config/ClientTransportType.h>
 #include <Client/Config/ClientConfigDefaults.h>
 
 namespace client::config
@@ -12,6 +14,9 @@ namespace client::config
 	public:
 		std::string serverIp = std::string(defaultServerIp);
 		unsigned short serverPort = defaultServerPort;
+		ClientTransportType transportType = ClientTransportType::Socket;
+		std::size_t iocpWorkerThreadCount = defaultIocpWorkerThreadCount;
+		std::size_t iocpRecvContextCount = defaultIocpRecvContextCount;
 	};
 
 	struct TimingConfig

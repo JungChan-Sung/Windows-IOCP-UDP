@@ -35,6 +35,26 @@ namespace client::config
 			clientConfig.network.serverPort = defaultConfig.network.serverPort;
 		}
 
+		if (clientConfig.network.iocpWorkerThreadCount == 0)
+		{
+			AddWarning(
+				warningList,
+				"Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."
+			);
+
+			clientConfig.network.iocpWorkerThreadCount = defaultConfig.network.iocpWorkerThreadCount;
+		}
+
+		if (clientConfig.network.iocpRecvContextCount == 0)
+		{
+			AddWarning(
+				warningList,
+				"Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."
+			);
+
+			clientConfig.network.iocpRecvContextCount = defaultConfig.network.iocpRecvContextCount;
+		}
+
 		if (clientConfig.timing.updateSleepInterval <= std::chrono::milliseconds(0))
 		{
 			AddWarning(warningList, "Timing.UpdateSleepMs must be greater than 0. Default update sleep will be used.");

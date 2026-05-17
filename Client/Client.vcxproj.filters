@@ -158,6 +158,9 @@
     <ClInclude Include="Net\UdpIocpTransport.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Config\ClientTransportType.h">
+      <Filter>헤더 파일\Config</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Client.ini">

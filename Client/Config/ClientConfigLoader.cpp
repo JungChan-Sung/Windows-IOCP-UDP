@@ -12,6 +12,8 @@
 #include <system_error>
 #include <utility>
 
+#include <Client/Config/ClientTransportType.h>
+
 namespace
 {
 	using WarningList = std::vector<client::config::ClientConfigWarning>;
@@ -154,6 +156,23 @@ namespace
 		}
 	}
 
+	[[nodiscard]] std::optional<client::config::ClientTransportType> TryParseClientTransportType(std::string_view value)
+	{
+		const std::string normalizedValue = ToLowerCopy(Trim(value));
+
+		if (normalizedValue == "socket")
+		{
+			return client::config::ClientTransportType::Socket;
+		}
+
+		if (normalizedValue == "iocp")
+		{
+			return client::config::ClientTransportType::Iocp;
+		}
+
+		return std::nullopt;
+	}
+
 	void ApplyNetworkValue(
 		client::config::ClientConfig& clientConfig,
 		std::string_view section,
@@ -188,6 +207,51 @@ namespace
 				&& *parsedValue <= std::numeric_limits<unsigned short>::max())
 			{
 				clientConfig.network.serverPort = static_cast<unsigned short>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "transporttype")
+		{
+			const std::optional<client::config::ClientTransportType> parsedValue = TryParseClientTransportType(value);
+			if (parsedValue.has_value())
+			{
+				clientConfig.network.transportType = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "iocpworkerthreadcount")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				clientConfig.network.iocpWorkerThreadCount = static_cast<std::size_t>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "iocprecvcontextcount")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				clientConfig.network.iocpRecvContextCount = static_cast<std::size_t>(*parsedValue);
 			}
 			else
 			{

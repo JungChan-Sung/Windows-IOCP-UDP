@@ -215,11 +215,24 @@ namespace client::net
 
 	bool UdpIocpTransport::CreateRecvContexts(std::size_t recvContextCount)
 	{
+		if (recvContextCount == 0)
+		{
+			return false;
+		}
+
 		recvContextList_.clear();
 
-		for (std::size_t index = 0; index < recvContextCount; ++index)
+		try
 		{
-			recvContextList_.emplace_back();
+			for (std::size_t index = 0; index < recvContextCount; ++index)
+			{
+				recvContextList_.emplace_back();
+			}
+		}
+		catch (...)
+		{
+			recvContextList_.clear();
+			return false;
 		}
 
 		for (common::net::UdpRecvContext& recvContext : recvContextList_)
@@ -235,11 +248,17 @@ namespace client::net
 
 	bool UdpIocpTransport::StartWorkerThreads(std::size_t workerThreadCount)
 	{
+		if (workerThreadCount == 0)
+		{
+			return false;
+		}
+
 		workerThreadList_.clear();
-		workerThreadList_.reserve(workerThreadCount);
 
 		try
 		{
+			workerThreadList_.reserve(workerThreadCount);
+
 			for (std::size_t index = 0; index < workerThreadCount; ++index)
 			{
 				workerThreadList_.emplace_back(

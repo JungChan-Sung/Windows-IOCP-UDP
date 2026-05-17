@@ -68,13 +68,13 @@ namespace client::net
 
 		isRunning_.store(true);
 
-		if (!CreateRecvContexts(resolvedRecvContextCount))
+		if (!StartWorkerThreads(resolvedWorkerThreadCount))
 		{
 			Stop();
 			return false;
 		}
 
-		if (!StartWorkerThreads(resolvedWorkerThreadCount))
+		if (!CreateRecvContexts(resolvedRecvContextCount))
 		{
 			Stop();
 			return false;
@@ -85,12 +85,7 @@ namespace client::net
 
 	void UdpIocpTransport::Stop() noexcept
 	{
-		if (!isRunning_.exchange(false))
-		{
-			packetReceivedCallback_ = nullptr;
-			serverAddress_ = {};
-			return;
-		}
+		isRunning_.store(false);
 
 		socket_.Close();
 
@@ -257,7 +252,7 @@ namespace client::net
 		}
 		catch (...)
 		{
-			workerThreadList_.clear();
+			StopWorkerThreads();
 			return false;
 		}
 

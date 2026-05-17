@@ -85,23 +85,22 @@ namespace client::net
 
 	void UdpIocpTransport::Stop() noexcept
 	{
-		isRunning_.store(false);
-
-		if (iocpHandle_.IsValid())
+		if (!isRunning_.exchange(false))
 		{
-			for (std::size_t index = 0; index < workerThreadList_.size(); ++index)
-			{
-				::PostQueuedCompletionStatus(iocpHandle_.Get(), 0, 0, nullptr);
-			}
+			packetReceivedCallback_ = nullptr;
+			serverAddress_ = {};
+			return;
 		}
 
-		workerThreadList_.clear();
+		socket_.Close();
+
+		StopWorkerThreads();
+
 		recvContextList_.clear();
 
 		packetReceivedCallback_ = nullptr;
 
 		iocpHandle_.Close();
-		socket_.Close();
 
 		serverAddress_ = {};
 	}
@@ -345,6 +344,24 @@ namespace client::net
 				PostRecv(*recvContext);
 			}
 		}
+	}
+
+	void UdpIocpTransport::StopWorkerThreads() noexcept
+	{
+		for (std::jthread& workerThread : workerThreadList_)
+		{
+			workerThread.request_stop();
+		}
+
+		if (iocpHandle_.IsValid())
+		{
+			for (std::size_t index = 0; index < workerThreadList_.size(); ++index)
+			{
+				::PostQueuedCompletionStatus(iocpHandle_.Get(), 0, 0, nullptr);
+			}
+		}
+
+		workerThreadList_.clear();
 	}
 
 	bool UdpIocpTransport::IsFromServer(const sockaddr_in& remoteAddress) const noexcept

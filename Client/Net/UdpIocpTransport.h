@@ -73,6 +73,7 @@ namespace client::net
 
 		[[nodiscard]] bool PostRecv(common::net::UdpRecvContext& recvContext);
 		void WorkerLoop(std::stop_token stopToken) noexcept;
+		void StopWorkerThreads() noexcept;
 
 		[[nodiscard]] bool IsFromServer(const sockaddr_in& remoteAddress) const noexcept;
 

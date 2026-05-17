@@ -1,8 +1,8 @@
 #pragma once
 
 #include <atomic>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
@@ -11,8 +11,8 @@
 #include <Client/Config/ClientConfigDefaults.h>
 #include <Client/Net/ClientPacketDispatcher.h>
 #include <Client/Net/SnapshotChunkAssembler.h>
-#include <Client/Net/UdpSocketTransport.h>
 #include <Client/Net/UdpIocpTransport.h>
+#include <Client/Net/UdpSocketTransport.h>
 
 namespace common::packet
 {

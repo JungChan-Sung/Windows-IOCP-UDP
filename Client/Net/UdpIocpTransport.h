@@ -1,12 +1,12 @@
 #pragma once
 
 #include <WinSock2.h>
-#include <Windows.h>
 
 #include <atomic>
 #include <cstddef>
+#include <deque>
 #include <functional>
-#include <memory>
+#include <stop_token>
 #include <thread>
 #include <vector>
 
@@ -23,7 +23,10 @@ namespace client::net
 
 	private:
 		using WorkerThreadList = std::vector<std::jthread>;
-		using RecvContextList = std::vector<std::unique_ptr<common::net::UdpRecvContext>>;
+		using RecvContextList = std::deque<common::net::UdpRecvContext>;
+
+	private:
+		static inline constexpr std::size_t defaultRecvContextCount = 4;
 
 	private:
 		common::net::Socket socket_;
@@ -65,18 +68,17 @@ namespace client::net
 		[[nodiscard]] bool ConfigureSocket();
 		[[nodiscard]] bool SetServerAddress(const char* serverIp, unsigned short serverPort);
 		[[nodiscard]] bool CreateIocp();
-		[[nodiscard]] bool AssociateSocketWithIocp();
 		[[nodiscard]] bool CreateRecvContexts(std::size_t recvContextCount);
+		[[nodiscard]] bool StartWorkerThreads(std::size_t workerThreadCount);
 
-		void StartWorkerThreads(std::size_t workerThreadCount);
+		[[nodiscard]] bool PostRecv(common::net::UdpRecvContext& recvContext);
 		void WorkerLoop(std::stop_token stopToken) noexcept;
+
+		[[nodiscard]] bool IsFromServer(const sockaddr_in& remoteAddress) const noexcept;
 
 	private:
 		[[nodiscard]] static std::size_t ResolveWorkerThreadCount(std::size_t workerThreadCount) noexcept;
-		[[nodiscard]] static std::size_t ResolveRecvContextCount(
-			std::size_t recvContextCount,
-			std::size_t workerThreadCount
-		) noexcept;
+		[[nodiscard]] static std::size_t ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept;
 
 	public:
 		[[nodiscard]] bool IsRunning() const noexcept

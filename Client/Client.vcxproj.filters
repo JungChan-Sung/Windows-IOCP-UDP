@@ -90,6 +90,9 @@
     <ClCompile Include="Net\UdpSocketTransport.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\UdpIocpTransport.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\ClientWorld.h">
@@ -150,6 +153,9 @@
       <Filter>헤더 파일\Config</Filter>
     </ClInclude>
     <ClInclude Include="Net\UdpSocketTransport.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpIocpTransport.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>

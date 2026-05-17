@@ -3,7 +3,7 @@
 #include <MSWSock.h>
 #include <WS2tcpip.h>
 
-#include <thread>
+#include <algorithm>
 #include <utility>
 
 namespace client::net
@@ -34,68 +34,58 @@ namespace client::net
 		const std::size_t resolvedWorkerThreadCount = ResolveWorkerThreadCount(workerThreadCount);
 		const std::size_t resolvedRecvContextCount = ResolveRecvContextCount(recvContextCount, resolvedWorkerThreadCount);
 
+		packetReceivedCallback_ = std::move(packetReceivedCallback);
+
 		if (!CreateSocket())
 		{
+			Stop();
 			return false;
 		}
 
 		if (!BindSocket())
 		{
-			socket_.Close();
+			Stop();
 			return false;
 		}
 
 		if (!ConfigureSocket())
 		{
-			socket_.Close();
+			Stop();
 			return false;
 		}
 
 		if (!SetServerAddress(serverIp, serverPort))
 		{
-			socket_.Close();
+			Stop();
 			return false;
 		}
 
 		if (!CreateIocp())
 		{
-			socket_.Close();
+			Stop();
 			return false;
 		}
 
-		if (!AssociateSocketWithIocp())
-		{
-			iocpHandle_.Close();
-			socket_.Close();
-			return false;
-		}
+		isRunning_.store(true);
 
 		if (!CreateRecvContexts(resolvedRecvContextCount))
 		{
-			iocpHandle_.Close();
-			socket_.Close();
+			Stop();
 			return false;
 		}
 
-		packetReceivedCallback_ = std::move(packetReceivedCallback);
-		isRunning_.store(true);
-
-		StartWorkerThreads(resolvedWorkerThreadCount);
+		if (!StartWorkerThreads(resolvedWorkerThreadCount))
+		{
+			Stop();
+			return false;
+		}
 
 		return true;
 	}
 
 	void UdpIocpTransport::Stop() noexcept
 	{
-		if (!isRunning_.exchange(false))
-		{
-			return;
-		}
-
-		for (std::jthread& workerThread : workerThreadList_)
-		{
-			workerThread.request_stop();
-		}
+		isRunning_.store(false);
 
 		if (iocpHandle_.IsValid())
 		{
@@ -105,23 +95,14 @@ namespace client::net
 			}
 		}
 
-		socket_.Close();
-
-		for (std::jthread& workerThread : workerThreadList_)
-		{
-			if (workerThread.joinable())
-			{
-				workerThread.join();
-			}
-		}
-
 		workerThreadList_.clear();
 		recvContextList_.clear();
+
+		packetReceivedCallback_ = nullptr;
 
 		iocpHandle_.Close();
 		socket_.Close();
 
-		packetReceivedCallback_ = {};
 		serverAddress_ = {};
 	}
 
@@ -177,7 +158,6 @@ namespace client::net
 		localAddress.sin_port = ::htons(0);
 
 		const int result = ::bind(socket_.Get(), reinterpret_cast<const sockaddr*>(&localAddress), sizeof(localAddress));
-
 		return result != SOCKET_ERROR;
 	}
 
@@ -229,7 +209,7 @@ namespace client::net
 
 	bool UdpIocpTransport::CreateIocp()
 	{
-		HANDLE handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, 0);
+		HANDLE handle = ::CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket_.Get()), nullptr, 0, 0);
 		if (handle == nullptr)
 		{
 			return false;
@@ -239,61 +219,80 @@ namespace client::net
 		return true;
 	}
 
-	bool UdpIocpTransport::AssociateSocketWithIocp()
-	{
-		if (!iocpHandle_.IsValid() || !socket_.IsValid())
-		{
-			return false;
-		}
-
-		HANDLE result = ::CreateIoCompletionPort(
-			reinterpret_cast<HANDLE>(socket_.Get()),
-			iocpHandle_.Get(),
-			0,
-			0
-		);
-
-		return result == iocpHandle_.Get();
-	}
-
 	bool UdpIocpTransport::CreateRecvContexts(std::size_t recvContextCount)
 	{
-		if (recvContextCount == 0)
+		recvContextList_.clear();
+
+		for (std::size_t index = 0; index < recvContextCount; ++index)
 		{
-			return false;
+			recvContextList_.emplace_back();
 		}
+
+		for (common::net::UdpRecvContext& recvContext : recvContextList_)
+		{
+			if (!PostRecv(recvContext))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool UdpIocpTransport::StartWorkerThreads(std::size_t workerThreadCount)
+	{
+		workerThreadList_.clear();
+		workerThreadList_.reserve(workerThreadCount);
 
 		try
 		{
-			recvContextList_.reserve(recvContextCount);
-
-			for (std::size_t index = 0; index < recvContextCount; ++index)
+			for (std::size_t index = 0; index < workerThreadCount; ++index)
 			{
-				recvContextList_.push_back(std::make_unique<common::net::UdpRecvContext>());
+				workerThreadList_.emplace_back(
+					[this](std::stop_token stopToken)
+					{
+						WorkerLoop(stopToken);
+					}
+				);
 			}
 		}
 		catch (...)
 		{
-			recvContextList_.clear();
+			workerThreadList_.clear();
 			return false;
 		}
 
 		return true;
 	}
 
-	void UdpIocpTransport::StartWorkerThreads(std::size_t workerThreadCount)
+	bool UdpIocpTransport::PostRecv(common::net::UdpRecvContext& recvContext)
 	{
-		workerThreadList_.reserve(workerThreadCount);
+		recvContext.Reset();
 
-		for (std::size_t index = 0; index < workerThreadCount; ++index)
+		DWORD receivedBytes = 0;
+
+		const int result = ::WSARecvFrom(
+			socket_.Get(),
+			&recvContext.wsaBuffer,
+			1,
+			&receivedBytes,
+			&recvContext.flags,
+			reinterpret_cast<sockaddr*>(&recvContext.remoteAddress),
+			&recvContext.remoteAddressLength,
+			&recvContext.overlapped,
+			nullptr
+		);
+
+		if (result == SOCKET_ERROR)
 		{
-			workerThreadList_.emplace_back(
-				[this](std::stop_token stopToken)
-				{
-					WorkerLoop(stopToken);
-				}
-			);
+			const int errorCode = ::WSAGetLastError();
+			if (errorCode != WSA_IO_PENDING)
+			{
+				return false;
+			}
 		}
+
+		return true;
 	}
 
 	void UdpIocpTransport::WorkerLoop(std::stop_token stopToken) noexcept
@@ -312,27 +311,46 @@ namespace client::net
 				INFINITE
 			);
 
-			if (stopToken.stop_requested() || !isRunning_.load())
-			{
-				return;
-			}
+			(void)completionKey;
 
 			if (overlapped == nullptr)
 			{
-				return;
-			}
+				if (!isRunning_.load() || stopToken.stop_requested())
+				{
+					break;
+				}
 
-			if (result == FALSE)
-			{
 				continue;
 			}
 
-			// Next step:
-			// 1. Cast overlapped to common::net::UdpContext*
-			// 2. Branch by UdpOperationType
-			// 3. Handle recv completion
-			// 4. Repost WSARecvFrom
+			auto* recvContext = reinterpret_cast<common::net::UdpRecvContext*>(overlapped);
+
+			if (!result || transferredBytes == 0)
+			{
+				if (isRunning_.load())
+				{
+					PostRecv(*recvContext);
+				}
+
+				continue;
+			}
+
+			if (IsFromServer(recvContext->remoteAddress) && packetReceivedCallback_)
+			{
+				packetReceivedCallback_(recvContext->buffer.data(), static_cast<int>(transferredBytes));
+			}
+
+			if (isRunning_.load())
+			{
+				PostRecv(*recvContext);
+			}
 		}
+	}
+
+	bool UdpIocpTransport::IsFromServer(const sockaddr_in& remoteAddress) const noexcept
+	{
+		return remoteAddress.sin_addr.S_un.S_addr == serverAddress_.sin_addr.S_un.S_addr
+			&& remoteAddress.sin_port == serverAddress_.sin_port;
 	}
 
 	std::size_t UdpIocpTransport::ResolveWorkerThreadCount(std::size_t workerThreadCount) noexcept
@@ -358,7 +376,6 @@ namespace client::net
 			return recvContextCount;
 		}
 
-		const std::size_t resolvedRecvContextCount = workerThreadCount * 2;
-		return (resolvedRecvContextCount != 0) ? resolvedRecvContextCount : 1;
+		return std::max(defaultRecvContextCount, workerThreadCount * 2);
 	}
 }

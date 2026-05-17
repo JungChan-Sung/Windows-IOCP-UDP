@@ -49,6 +49,8 @@ namespace client::app
 	private:
 		[[nodiscard]] config::ClientConfig BuildClientConfig(const char* serverIp, unsigned short serverPort) const;
 
+		void OutputStartupConfig() const;
+
 		int MessageLoop();
 		void UpdateLoop(std::stop_token stopToken);
 		void Update();

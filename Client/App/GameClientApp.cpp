@@ -5,10 +5,12 @@
 #include <sstream>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
+#include <Client/Config/ClientTransportType.h>
 
 namespace
 {
@@ -30,6 +32,21 @@ namespace
 			::OutputDebugStringA(stream.str().c_str());
 		}
 	}
+
+	[[nodiscard]] std::string_view ToString(client::config::ClientTransportType transportType) noexcept
+	{
+		switch (transportType)
+		{
+		case client::config::ClientTransportType::Socket:
+			return "Socket";
+
+		case client::config::ClientTransportType::Iocp:
+			return "Iocp";
+
+		default:
+			return "Unknown";
+		}
+	}
 }
 
 namespace client::app
@@ -42,6 +59,7 @@ namespace client::app
 		}
 
 		config_ = BuildClientConfig(serverIp, serverPort);
+		OutputStartupConfig();
 
 		world_.SetInterpolationSettings(
 			config_.interpolation.defaultDelay,
@@ -130,6 +148,29 @@ namespace client::app
 		OutputClientConfigWarnings(validationWarningList);
 
 		return clientConfig;
+	}
+
+	void GameClientApp::OutputStartupConfig() const
+	{
+		std::ostringstream stream;
+
+		stream << "Client config. "
+			<< "ServerIp=" << config_.network.serverIp
+			<< ", ServerPort=" << config_.network.serverPort
+			<< ", TransportType=" << ToString(config_.network.transportType)
+			<< ", IocpWorkerThreadCount=" << config_.network.iocpWorkerThreadCount
+			<< ", IocpRecvContextCount=" << config_.network.iocpRecvContextCount
+			<< ", UpdateSleepMs=" << config_.timing.updateSleepInterval.count()
+			<< ", JoinRetryMs=" << config_.timing.joinRetryInterval.count()
+			<< ", RoomJoinMs=" << config_.timing.roomJoinInterval.count()
+			<< ", InterpolationDelayMs=" << config_.interpolation.defaultDelay.count()
+			<< ", SnapshotAssemblyTimeoutMs=" << config_.snapshot.assemblyTimeout.count()
+			<< ", SimulationTickIntervalMs=" << config_.simulation.tickInterval.count()
+			<< ", SimulationDeltaSeconds=" << config_.simulation.deltaSeconds
+			<< ", EnableChunkAssemblerDebugTests=" << std::boolalpha << config_.diagnostics.enableChunkAssemblerDebugTests
+			<< '\n';
+
+		::OutputDebugStringA(stream.str().c_str());
 	}
 
 	int GameClientApp::MessageLoop()

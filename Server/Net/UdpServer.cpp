@@ -578,8 +578,8 @@ namespace server::net
 			);
 		}
 
-		serverMetricsCollector_.AddPlayerSnapshotSendCount(playerSnapshotTaskList.size());
-		packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
+		const std::size_t sentCount = packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
+		serverMetricsCollector_.AddPlayerSnapshotSendCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastBulletSnapshots()
@@ -596,15 +596,8 @@ namespace server::net
 			);
 		}
 
-		std::uint64_t bulletSnapshotSendCount = 0;
-
-		for (const BulletSnapshotTask& bulletSnapshotTask : bulletSnapshotTaskList)
-		{
-			bulletSnapshotSendCount += static_cast<std::uint64_t>(bulletSnapshotTask.remoteAddressList.size());
-		}
-
-		serverMetricsCollector_.AddBulletSnapshotSendCount(bulletSnapshotSendCount);
-		packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
+		const std::size_t sentCount = packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
+		serverMetricsCollector_.AddBulletSnapshotSendCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastImpactEffects()
@@ -628,15 +621,8 @@ namespace server::net
 			gameWorld_.ClearPendingImpactEffects();
 		}
 
-		std::uint64_t impactEffectSendCount = 0;
-
-		for (const ImpactEffectTask& impactEffectTask : impactEffectTaskList)
-		{
-			impactEffectSendCount += static_cast<std::uint64_t>(impactEffectTask.remoteAddressList.size());
-		}
-
-		serverMetricsCollector_.AddImpactEffectSendCount(impactEffectSendCount);
-		packetSender_.SendImpactEffectTasks(impactEffectTaskList);
+		const std::size_t sentCount = packetSender_.SendImpactEffectTasks(impactEffectTaskList);
+		serverMetricsCollector_.AddImpactEffectSendCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y)

@@ -49,6 +49,7 @@ namespace server::diagnostics
 			<< ", Players=" << snapshot.playerCount
 			<< ", Bullets=" << snapshot.bulletCount
 			<< ", PendingEffects=" << snapshot.pendingImpactEffectCount
+			<< ", PendingSendContexts=" << snapshot.pendingSendContextCount
 			<< ", ReceivedPackets=" << snapshot.metrics.receivedPacketCount
 			<< ", InvalidPacketDrops=" << snapshot.metrics.invalidPacketDropCount
 			<< ", JoinRequests=" << snapshot.metrics.joinRequestCount

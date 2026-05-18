@@ -460,4 +460,10 @@ namespace server::net
 		std::scoped_lock lock(pendingSendContextMutex_);
 		pendingSendContextList_.clear();
 	}
+
+	std::size_t UdpIocpTransport::GetPendingSendContextCount() const noexcept
+	{
+		std::scoped_lock lock(pendingSendContextMutex_);
+		return pendingSendContextList_.size();
+	}
 }

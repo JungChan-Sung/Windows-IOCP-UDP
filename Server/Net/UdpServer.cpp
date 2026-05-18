@@ -819,6 +819,7 @@ namespace server::net
 			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
 		}
 
+		snapshot.pendingSendContextCount = udpTransport_.GetPendingSendContextCount();
 		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
 
 		return snapshot;

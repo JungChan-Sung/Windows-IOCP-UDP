@@ -40,7 +40,7 @@ namespace server::net
 		WorkerThreadList workerThreadList_;
 		RecvContextList recvContextList_;
 
-		std::mutex pendingSendContextMutex_;
+		mutable std::mutex pendingSendContextMutex_;
 		PendingSendContextList pendingSendContextList_;
 
 		PacketReceivedHandler packetReceivedHandler_;
@@ -99,6 +99,8 @@ namespace server::net
 		{
 			return workerThreadCount_;
 		}
+
+		[[nodiscard]] std::size_t GetPendingSendContextCount() const noexcept;
 
 		[[nodiscard]] bool IsRunning() const noexcept
 		{

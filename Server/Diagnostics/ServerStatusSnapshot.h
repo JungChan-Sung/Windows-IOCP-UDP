@@ -20,6 +20,8 @@ namespace server::diagnostics
 		std::size_t bulletCount = 0;
 		std::size_t pendingImpactEffectCount = 0;
 
+		std::size_t pendingSendContextCount = 0;
+
 		ServerMetricsSnapshot metrics{};
 	};
 }

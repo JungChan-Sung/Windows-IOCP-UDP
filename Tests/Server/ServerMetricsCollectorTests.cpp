@@ -17,9 +17,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: initial fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: initial leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: initial join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: player snapshot send count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: bullet snapshot send count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: impact effect send count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: player snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: bullet snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: impact effect send request count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: initial timed out peer count");
 	}
 
@@ -53,9 +53,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 1, "ServerMetricsCollector: fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 1, "ServerMetricsCollector: leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 1, "ServerMetricsCollector: join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 3, "ServerMetricsCollector: player snapshot send count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 4, "ServerMetricsCollector: bullet snapshot send count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 5, "ServerMetricsCollector: impact effect send count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 3, "ServerMetricsCollector: player snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 4, "ServerMetricsCollector: bullet snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 5, "ServerMetricsCollector: impact effect send request count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 2, "ServerMetricsCollector: timed out peer count");
 	}
 
@@ -86,9 +86,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: reset fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: reset leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: reset join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot request count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot request count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect request count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
 	}
 }

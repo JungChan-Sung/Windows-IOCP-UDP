@@ -13,9 +13,9 @@ namespace server::diagnostics
 		leaveRequestCount_.store(0);
 		joinRoomRequestCount_.store(0);
 
-		playerSnapshotSendCount_.store(0);
-		bulletSnapshotSendCount_.store(0);
-		impactEffectSendCount_.store(0);
+		playerSnapshotSendRequestCount_.store(0);
+		bulletSnapshotSendRequestCount_.store(0);
+		impactEffectSendRequestCount_.store(0);
 
 		timedOutPeerCount_.store(0);
 	}

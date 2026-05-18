@@ -3,6 +3,7 @@
 #include <MSWSock.h>
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 namespace server::net
@@ -112,6 +113,8 @@ namespace server::net
 			return false;
 		}
 
+		common::net::UdpSendContext* rawSendContext = nullptr;
+
 		try
 		{
 			auto sendContext = std::make_unique<common::net::UdpSendContext>();
@@ -121,54 +124,43 @@ namespace server::net
 				packetSize
 			);
 
-			common::net::UdpSendContext* rawSendContext = sendContext.get();
+			rawSendContext = sendContext.get();
 
-			std::scoped_lock lock(pendingSendContextMutex_);
-			pendingSendContextList_.push_back(std::move(sendContext));
-
-			DWORD sentBytes = 0;
-
-			const int result = ::WSASendTo(
-				socket_.Get(),
-				&rawSendContext->wsaBuffer,
-				1,
-				&sentBytes,
-				0,
-				reinterpret_cast<const sockaddr*>(&rawSendContext->remoteAddress),
-				rawSendContext->remoteAddressLength,
-				&rawSendContext->overlapped,
-				nullptr
-			);
-
-			if (result == SOCKET_ERROR)
 			{
-				const int errorCode = ::WSAGetLastError();
-				if (errorCode != WSA_IO_PENDING)
-				{
-					const auto contextInterator = std::find_if(
-						pendingSendContextList_.begin(),
-						pendingSendContextList_.end(),
-						[rawSendContext](const SendContextPointer& pendingSendContext)
-						{
-							return pendingSendContext.get() == rawSendContext;
-						}
-					);
-
-					if (contextInterator != pendingSendContextList_.end())
-					{
-						pendingSendContextList_.erase(contextInterator);
-					}
-
-					return false;
-				}
+				std::scoped_lock lock(pendingSendContextMutex_);
+				pendingSendContextList_.push_back(std::move(sendContext));
 			}
-
-			return true;
 		}
 		catch (...)
 		{
 			return false;
 		}
+
+		DWORD sentBytes = 0;
+
+		const int result = ::WSASendTo(
+			socket_.Get(),
+			&rawSendContext->wsaBuffer,
+			1,
+			&sentBytes,
+			0,
+			reinterpret_cast<const sockaddr*>(&rawSendContext->remoteAddress),
+			rawSendContext->remoteAddressLength,
+			&rawSendContext->overlapped,
+			nullptr
+		);
+
+		if (result == SOCKET_ERROR)
+		{
+			const int errorCode = ::WSAGetLastError();
+			if (errorCode != WSA_IO_PENDING)
+			{
+				CompleteSend(rawSendContext);
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool UdpIocpTransport::CreateSocket()
@@ -366,7 +358,7 @@ namespace server::net
 				break;
 
 			case common::net::UdpOperationType::Send:
-				HandleSendCompletion(*static_cast<common::net::UdpSendContext*>(udpContext));
+				HandleSendCompletion(static_cast<common::net::UdpSendContext*>(udpContext), transferredBytes, result);
 				break;
 
 			default:
@@ -416,21 +408,29 @@ namespace server::net
 		}
 	}
 
-	void UdpIocpTransport::HandleSendCompletion(common::net::UdpSendContext& sendContext) noexcept
+	void UdpIocpTransport::HandleSendCompletion(common::net::UdpSendContext* sendContext, DWORD transferredBytes, BOOL completionResult) noexcept
 	{
+		(void)transferredBytes;
+		(void)completionResult;
+
 		CompleteSend(sendContext);
 	}
 
-	void UdpIocpTransport::CompleteSend(common::net::UdpSendContext& sendContext) noexcept
+	void UdpIocpTransport::CompleteSend(common::net::UdpSendContext* sendContext) noexcept
 	{
+		if (sendContext == nullptr)
+		{
+			return;
+		}
+
 		std::scoped_lock lock(pendingSendContextMutex_);
 
 		const auto contextIterator = std::find_if(
 			pendingSendContextList_.begin(),
 			pendingSendContextList_.end(),
-			[&sendContext](const SendContextPointer& pendingSendContext)
+			[sendContext](const SendContextPointer& pendingSendContext)
 			{
-				return pendingSendContext.get() == &sendContext;
+				return pendingSendContext.get() == sendContext;
 			}
 		);
 

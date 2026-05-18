@@ -51,6 +51,12 @@ namespace server::net
 		UdpIocpTransport(UdpIocpTransport&&) = delete;
 		UdpIocpTransport& operator=(UdpIocpTransport&&) = delete;
 
+	private:
+		[[nodiscard]] static std::size_t ResolveRecvContextCount(
+			std::size_t recvContextCount,
+			std::size_t workerThreadCount
+		) noexcept;
+
 	public:
 		[[nodiscard]] bool Start(
 			unsigned short port,

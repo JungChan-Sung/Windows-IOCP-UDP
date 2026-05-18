@@ -10,6 +10,16 @@ namespace server::net
 		Stop();
 	}
 
+	std::size_t UdpIocpTransport::ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept
+	{
+		if (recvContextCount != 0)
+		{
+			return recvContextCount;
+		}
+
+		return std::max(defaultRecvContextCount, workerThreadCount * 2);
+	}
+
 	bool UdpIocpTransport::Start(unsigned short port, std::size_t workerThreadCount, std::size_t recvContextCount, PacketReceivedHandler packetReceivedHandler)
 	{
 		if (isRunning_.load())
@@ -46,9 +56,7 @@ namespace server::net
 
 		isRunning_.store(true);
 
-		const std::size_t resolvedRecvContextCount = (recvContextCount != 0)
-			? recvContextCount 
-			: std::max(defaultRecvContextCount, workerThreadCount_ * 2);
+		const std::size_t resolvedRecvContextCount = ResolveRecvContextCount(recvContextCount, workerThreadCount_);
 
 		if (!StartWorkerThreads(workerThreadCount_))
 		{

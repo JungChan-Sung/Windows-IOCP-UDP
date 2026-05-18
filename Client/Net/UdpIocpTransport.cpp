@@ -13,6 +13,32 @@ namespace client::net
 		Stop();
 	}
 
+	std::size_t UdpIocpTransport::ResolveWorkerThreadCount(std::size_t workerThreadCount) noexcept
+	{
+		if (workerThreadCount != 0)
+		{
+			return workerThreadCount;
+		}
+
+		const unsigned int hardwareThreadCount = std::thread::hardware_concurrency();
+		if (hardwareThreadCount == 0)
+		{
+			return 1;
+		}
+
+		return static_cast<std::size_t>(hardwareThreadCount);
+	}
+
+	std::size_t UdpIocpTransport::ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept
+	{
+		if (recvContextCount != 0)
+		{
+			return recvContextCount;
+		}
+
+		return std::max(defaultRecvContextCount, workerThreadCount * 2);
+	}
+
 	bool UdpIocpTransport::Start(
 		const char* serverIp,
 		unsigned short serverPort,
@@ -382,31 +408,5 @@ namespace client::net
 	{
 		return remoteAddress.sin_addr.S_un.S_addr == serverAddress_.sin_addr.S_un.S_addr
 			&& remoteAddress.sin_port == serverAddress_.sin_port;
-	}
-
-	std::size_t UdpIocpTransport::ResolveWorkerThreadCount(std::size_t workerThreadCount) noexcept
-	{
-		if (workerThreadCount != 0)
-		{
-			return workerThreadCount;
-		}
-
-		const unsigned int hardwareThreadCount = std::thread::hardware_concurrency();
-		if (hardwareThreadCount == 0)
-		{
-			return 1;
-		}
-
-		return static_cast<std::size_t>(hardwareThreadCount);
-	}
-
-	std::size_t UdpIocpTransport::ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept
-	{
-		if (recvContextCount != 0)
-		{
-			return recvContextCount;
-		}
-
-		return std::max(defaultRecvContextCount, workerThreadCount * 2);
 	}
 }

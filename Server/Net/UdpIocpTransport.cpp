@@ -90,6 +90,7 @@ namespace server::net
 		StopWorkerThreads();
 
 		recvContextList_.clear();
+		ClearPendingSendContexts();
 
 		packetReceivedHandler_ = nullptr;
 
@@ -99,28 +100,75 @@ namespace server::net
 		workerThreadCount_ = 0;
 	}
 
-	bool UdpIocpTransport::SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const
+	bool UdpIocpTransport::SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize)
 	{
-		if (!socket_.IsValid() || packetData == nullptr || packetSize <= 0)
+		if (!isRunning_.load() || !socket_.IsValid() || packetData == nullptr || packetSize <= 0)
 		{
 			return false;
 		}
 
-		const int sentBytes = ::sendto(
-			socket_.Get(),
-			static_cast<const char*>(packetData),
-			packetSize,
-			0,
-			reinterpret_cast<const sockaddr*>(&remoteAddress),
-			sizeof(remoteAddress)
-		);
-
-		if (sentBytes == SOCKET_ERROR)
+		if (packetSize > static_cast<int>(common::net::udpBufferSize))
 		{
 			return false;
 		}
 
-		return sentBytes == packetSize;
+		try
+		{
+			auto sendContext = std::make_unique<common::net::UdpSendContext>();
+			sendContext->Prepare(
+				remoteAddress,
+				static_cast<const char*>(packetData),
+				packetSize
+			);
+
+			common::net::UdpSendContext* rawSendContext = sendContext.get();
+
+			std::scoped_lock lock(pendingSendContextMutex_);
+			pendingSendContextList_.push_back(std::move(sendContext));
+
+			DWORD sentBytes = 0;
+
+			const int result = ::WSASendTo(
+				socket_.Get(),
+				&rawSendContext->wsaBuffer,
+				1,
+				&sentBytes,
+				0,
+				reinterpret_cast<const sockaddr*>(&rawSendContext->remoteAddress),
+				rawSendContext->remoteAddressLength,
+				&rawSendContext->overlapped,
+				nullptr
+			);
+
+			if (result == SOCKET_ERROR)
+			{
+				const int errorCode = ::WSAGetLastError();
+				if (errorCode != WSA_IO_PENDING)
+				{
+					const auto contextInterator = std::find_if(
+						pendingSendContextList_.begin(),
+						pendingSendContextList_.end(),
+						[rawSendContext](const SendContextPointer& pendingSendContext)
+						{
+							return pendingSendContext.get() == rawSendContext;
+						}
+					);
+
+					if (contextInterator != pendingSendContextList_.end())
+					{
+						pendingSendContextList_.erase(contextInterator);
+					}
+
+					return false;
+				}
+			}
+
+			return true;
+		}
+		catch (...)
+		{
+			return false;
+		}
 	}
 
 	bool UdpIocpTransport::CreateSocket()
@@ -309,30 +357,20 @@ namespace server::net
 				continue;
 			}
 
-			auto* recvContext = reinterpret_cast<common::net::UdpRecvContext*>(overlapped);
+			auto* udpContext = reinterpret_cast<common::net::UdpContext*>(overlapped);
 
-			if (!result || transferredBytes == 0)
+			switch (udpContext->operationType)
 			{
-				if (isRunning_.load())
-				{
-					PostRecv(*recvContext);
-				}
+			case common::net::UdpOperationType::Recv:
+				HandleRecvCompletion(*static_cast<common::net::UdpRecvContext*>(udpContext), transferredBytes, result);
+				break;
 
-				continue;
-			}
+			case common::net::UdpOperationType::Send:
+				HandleSendCompletion(*static_cast<common::net::UdpSendContext*>(udpContext));
+				break;
 
-			if (packetReceivedHandler_)
-			{
-				packetReceivedHandler_(
-					recvContext->remoteAddress,
-					recvContext->buffer.data(),
-					static_cast<int>(transferredBytes)
-				);
-			}
-
-			if (isRunning_.load())
-			{
-				PostRecv(*recvContext);
+			default:
+				break;
 			}
 		}
 	}
@@ -353,5 +391,58 @@ namespace server::net
 		}
 
 		workerThreadList_.clear();
+	}
+
+	void UdpIocpTransport::HandleRecvCompletion(common::net::UdpRecvContext& recvContext, DWORD transferredBytes, BOOL completionResult)
+	{
+		if (!completionResult || transferredBytes == 0)
+		{
+			if (isRunning_.load())
+			{
+				PostRecv(recvContext);
+			}
+
+			return;
+		}
+
+		if (packetReceivedHandler_)
+		{
+			packetReceivedHandler_(recvContext.remoteAddress, recvContext.buffer.data(), static_cast<int>(transferredBytes));
+		}
+
+		if (isRunning_.load())
+		{
+			PostRecv(recvContext);
+		}
+	}
+
+	void UdpIocpTransport::HandleSendCompletion(common::net::UdpSendContext& sendContext) noexcept
+	{
+		CompleteSend(sendContext);
+	}
+
+	void UdpIocpTransport::CompleteSend(common::net::UdpSendContext& sendContext) noexcept
+	{
+		std::scoped_lock lock(pendingSendContextMutex_);
+
+		const auto contextIterator = std::find_if(
+			pendingSendContextList_.begin(),
+			pendingSendContextList_.end(),
+			[&sendContext](const SendContextPointer& pendingSendContext)
+			{
+				return pendingSendContext.get() == &sendContext;
+			}
+		);
+
+		if (contextIterator != pendingSendContextList_.end())
+		{
+			pendingSendContextList_.erase(contextIterator);
+		}
+	}
+
+	void UdpIocpTransport::ClearPendingSendContexts() noexcept
+	{
+		std::scoped_lock lock(pendingSendContextMutex_);
+		pendingSendContextList_.clear();
 	}
 }

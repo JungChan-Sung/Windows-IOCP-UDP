@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <deque>
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <stop_token>
 #include <thread>
 #include <vector>
@@ -24,6 +26,8 @@ namespace server::net
 	private:
 		using WorkerThreadList = std::vector<std::jthread>;
 		using RecvContextList = std::deque<common::net::UdpRecvContext>;
+		using SendContextPointer = std::unique_ptr<common::net::UdpSendContext>;
+		using PendingSendContextList = std::vector<SendContextPointer>;
 
 	private:
 		static inline constexpr std::size_t defaultRecvContextCount = 32;
@@ -35,6 +39,9 @@ namespace server::net
 
 		WorkerThreadList workerThreadList_;
 		RecvContextList recvContextList_;
+
+		std::mutex pendingSendContextMutex_;
+		PendingSendContextList pendingSendContextList_;
 
 		PacketReceivedHandler packetReceivedHandler_;
 
@@ -63,7 +70,7 @@ namespace server::net
 		);
 		void Stop() noexcept;
 
-		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const;
+		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize);
 
 	private:
 		[[nodiscard]] bool CreateSocket();
@@ -77,17 +84,12 @@ namespace server::net
 		void WorkerLoop(std::stop_token stopToken);
 		void StopWorkerThreads() noexcept;
 
+		void HandleRecvCompletion(common::net::UdpRecvContext& recvContext, DWORD transferredBytes, BOOL completionResult);
+		void HandleSendCompletion(common::net::UdpSendContext& sendContext) noexcept;
+		void CompleteSend(common::net::UdpSendContext& sendContext) noexcept;
+		void ClearPendingSendContexts() noexcept;
+
 	public:
-		[[nodiscard]] common::net::Socket& GetSocket() noexcept
-		{
-			return socket_;
-		}
-
-		[[nodiscard]] const common::net::Socket& GetSocket() const noexcept
-		{
-			return socket_;
-		}
-
 		[[nodiscard]] unsigned short GetPort() const noexcept
 		{
 			return port_;

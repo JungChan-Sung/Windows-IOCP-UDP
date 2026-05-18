@@ -113,8 +113,6 @@ namespace server::net
 			return false;
 		}
 
-		common::net::UdpSendContext* rawSendContext = nullptr;
-
 		try
 		{
 			auto sendContext = std::make_unique<common::net::UdpSendContext>();
@@ -124,43 +122,60 @@ namespace server::net
 				packetSize
 			);
 
-			rawSendContext = sendContext.get();
+			common::net::UdpSendContext* rawSendContext = sendContext.get();
 
+			std::scoped_lock lock(pendingSendContextMutex_);
+
+			if (!isRunning_.load() || !socket_.IsValid())
 			{
-				std::scoped_lock lock(pendingSendContextMutex_);
-				pendingSendContextList_.push_back(std::move(sendContext));
+				return false;
 			}
+
+			pendingSendContextList_.push_back(std::move(sendContext));
+
+			DWORD sentBytes = 0;
+
+			const int result = ::WSASendTo(
+				socket_.Get(),
+				&rawSendContext->wsaBuffer,
+				1,
+				&sentBytes,
+				0,
+				reinterpret_cast<const sockaddr*>(&rawSendContext->remoteAddress),
+				rawSendContext->remoteAddressLength,
+				&rawSendContext->overlapped,
+				nullptr
+			);
+
+			if (result == SOCKET_ERROR)
+			{
+				const int errorCode = ::WSAGetLastError();
+				if (errorCode != WSA_IO_PENDING)
+				{
+					const auto contextIterator = std::find_if(
+						pendingSendContextList_.begin(),
+						pendingSendContextList_.end(),
+						[rawSendContext](const SendContextPointer& pendingSendContext)
+						{
+							return pendingSendContext.get() == rawSendContext;
+						}
+					);
+
+					if (contextIterator != pendingSendContextList_.end())
+					{
+						pendingSendContextList_.erase(contextIterator);
+					}
+
+					return false;
+				}
+			}
+
+			return true;
 		}
 		catch (...)
 		{
 			return false;
 		}
-
-		DWORD sentBytes = 0;
-
-		const int result = ::WSASendTo(
-			socket_.Get(),
-			&rawSendContext->wsaBuffer,
-			1,
-			&sentBytes,
-			0,
-			reinterpret_cast<const sockaddr*>(&rawSendContext->remoteAddress),
-			rawSendContext->remoteAddressLength,
-			&rawSendContext->overlapped,
-			nullptr
-		);
-
-		if (result == SOCKET_ERROR)
-		{
-			const int errorCode = ::WSAGetLastError();
-			if (errorCode != WSA_IO_PENDING)
-			{
-				CompleteSend(rawSendContext);
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	bool UdpIocpTransport::CreateSocket()

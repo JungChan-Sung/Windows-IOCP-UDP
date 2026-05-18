@@ -17,9 +17,10 @@ namespace server::diagnostics
 		std::uint64_t leaveRequestCount = 0;
 		std::uint64_t joinRoomRequestCount = 0;
 
-		std::uint64_t playerSnapshotSendCount = 0;
-		std::uint64_t bulletSnapshotSendCount = 0;
-		std::uint64_t impactEffectSendCount = 0;
+		// Counts successful async send request submissions. Actual send completion is handled by IOCP.
+		std::uint64_t playerSnapshotSendRequestCount = 0;
+		std::uint64_t bulletSnapshotSendRequestCount = 0;
+		std::uint64_t impactEffectSendRequestCount = 0;
 
 		std::uint64_t timedOutPeerCount = 0;
 	};

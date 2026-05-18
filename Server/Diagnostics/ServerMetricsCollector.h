@@ -20,9 +20,9 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> leaveRequestCount_ = 0;
 		std::atomic<std::uint64_t> joinRoomRequestCount_ = 0;
 
-		std::atomic<std::uint64_t> playerSnapshotSendCount_ = 0;
-		std::atomic<std::uint64_t> bulletSnapshotSendCount_ = 0;
-		std::atomic<std::uint64_t> impactEffectSendCount_ = 0;
+		std::atomic<std::uint64_t> playerSnapshotSendRequestCount_ = 0;
+		std::atomic<std::uint64_t> bulletSnapshotSendRequestCount_ = 0;
+		std::atomic<std::uint64_t> impactEffectSendRequestCount_ = 0;
 
 		std::atomic<std::uint64_t> timedOutPeerCount_ = 0;
 
@@ -48,9 +48,9 @@ namespace server::diagnostics
 		void IncrementLeaveRequestCount() noexcept;
 		void IncrementJoinRoomRequestCount() noexcept;
 
-		void AddPlayerSnapshotSendCount(std::uint64_t count) noexcept;
-		void AddBulletSnapshotSendCount(std::uint64_t count) noexcept;
-		void AddImpactEffectSendCount(std::uint64_t count) noexcept;
+		void AddPlayerSnapshotSendRequestCount(std::uint64_t count) noexcept;
+		void AddBulletSnapshotSendRequestCount(std::uint64_t count) noexcept;
+		void AddImpactEffectSendRequestCount(std::uint64_t count) noexcept;
 
 		void AddTimedOutPeerCount(std::uint64_t count) noexcept;
 

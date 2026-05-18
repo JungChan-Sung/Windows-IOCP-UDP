@@ -55,19 +55,19 @@ namespace server::diagnostics
 		++joinRoomRequestCount_;
 	}
 
-	void ServerMetricsCollector::AddPlayerSnapshotSendCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddPlayerSnapshotSendRequestCount(std::uint64_t count) noexcept
 	{
-		playerSnapshotSendCount_.fetch_add(count);
+		playerSnapshotSendRequestCount_.fetch_add(count);
 	}
 
-	void ServerMetricsCollector::AddBulletSnapshotSendCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddBulletSnapshotSendRequestCount(std::uint64_t count) noexcept
 	{
-		bulletSnapshotSendCount_.fetch_add(count);
+		bulletSnapshotSendRequestCount_.fetch_add(count);
 	}
 
-	void ServerMetricsCollector::AddImpactEffectSendCount(std::uint64_t count) noexcept
+	void ServerMetricsCollector::AddImpactEffectSendRequestCount(std::uint64_t count) noexcept
 	{
-		impactEffectSendCount_.fetch_add(count);
+		impactEffectSendRequestCount_.fetch_add(count);
 	}
 
 	void ServerMetricsCollector::AddTimedOutPeerCount(std::uint64_t count) noexcept
@@ -88,9 +88,9 @@ namespace server::diagnostics
 		snapshot.leaveRequestCount = leaveRequestCount_.load();
 		snapshot.joinRoomRequestCount = joinRoomRequestCount_.load();
 
-		snapshot.playerSnapshotSendCount = playerSnapshotSendCount_.load();
-		snapshot.bulletSnapshotSendCount = bulletSnapshotSendCount_.load();
-		snapshot.impactEffectSendCount = impactEffectSendCount_.load();
+		snapshot.playerSnapshotSendRequestCount = playerSnapshotSendRequestCount_.load();
+		snapshot.bulletSnapshotSendRequestCount = bulletSnapshotSendRequestCount_.load();
+		snapshot.impactEffectSendRequestCount = impactEffectSendRequestCount_.load();
 
 		snapshot.timedOutPeerCount = timedOutPeerCount_.load();
 

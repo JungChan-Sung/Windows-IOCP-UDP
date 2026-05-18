@@ -579,7 +579,7 @@ namespace server::net
 		}
 
 		const std::size_t sentCount = packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
-		serverMetricsCollector_.AddPlayerSnapshotSendCount(static_cast<std::uint64_t>(sentCount));
+		serverMetricsCollector_.AddPlayerSnapshotSendRequestCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastBulletSnapshots()
@@ -597,7 +597,7 @@ namespace server::net
 		}
 
 		const std::size_t sentCount = packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
-		serverMetricsCollector_.AddBulletSnapshotSendCount(static_cast<std::uint64_t>(sentCount));
+		serverMetricsCollector_.AddBulletSnapshotSendRequestCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastImpactEffects()
@@ -622,7 +622,7 @@ namespace server::net
 		}
 
 		const std::size_t sentCount = packetSender_.SendImpactEffectTasks(impactEffectTaskList);
-		serverMetricsCollector_.AddImpactEffectSendCount(static_cast<std::uint64_t>(sentCount));
+		serverMetricsCollector_.AddImpactEffectSendRequestCount(static_cast<std::uint64_t>(sentCount));
 	}
 
 	void UdpServer::BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y)

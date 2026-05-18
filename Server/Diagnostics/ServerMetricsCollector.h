@@ -10,7 +10,6 @@ namespace server::diagnostics
 	class ServerMetricsCollector
 	{
 	private:
-	private:
 		std::atomic<std::uint64_t> receivedPacketCount_ = 0;
 		std::atomic<std::uint64_t> invalidPacketDropCount_ = 0;
 

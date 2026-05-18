@@ -99,6 +99,30 @@ namespace server::net
 		workerThreadCount_ = 0;
 	}
 
+	bool UdpIocpTransport::SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const
+	{
+		if (!socket_.IsValid() || packetData == nullptr || packetSize <= 0)
+		{
+			return false;
+		}
+
+		const int sentBytes = ::sendto(
+			socket_.Get(),
+			static_cast<const char*>(packetData),
+			packetSize,
+			0,
+			reinterpret_cast<const sockaddr*>(&remoteAddress),
+			sizeof(remoteAddress)
+		);
+
+		if (sentBytes == SOCKET_ERROR)
+		{
+			return false;
+		}
+
+		return sentBytes == packetSize;
+	}
+
 	bool UdpIocpTransport::CreateSocket()
 	{
 		SOCKET socketHandle = ::WSASocketW(

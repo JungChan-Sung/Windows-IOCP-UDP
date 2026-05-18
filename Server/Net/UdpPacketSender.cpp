@@ -5,6 +5,8 @@
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
+#include <Server/Net/UdpIocpTransport.h>
+
 namespace
 {
 	template <typename TPacket>
@@ -50,33 +52,24 @@ namespace
 
 namespace server::net
 {
-	void UdpPacketSender::AttachSocket(common::net::Socket& socket) noexcept
+	void UdpPacketSender::AttachTransport(UdpIocpTransport& udpTransport) noexcept
 	{
-		socket_ = &socket;
+		udpTransport_ = &udpTransport;
 	}
 
-	void UdpPacketSender::DetachSocket() noexcept
+	void UdpPacketSender::DetachTransport() noexcept
 	{
-		socket_ = nullptr;
+		udpTransport_ = nullptr;
 	}
 
 	bool UdpPacketSender::SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const
 	{
-		if (socket_ == nullptr || !socket_->IsValid() || packetData == nullptr || packetSize <= 0)
+		if (udpTransport_ == nullptr)
 		{
 			return false;
 		}
 
-		const int sentBytes = ::sendto(
-			socket_->Get(),
-			reinterpret_cast<const char*>(packetData),
-			packetSize,
-			0,
-			reinterpret_cast<const sockaddr*>(&remoteAddress),
-			sizeof(remoteAddress)
-		);
-
-		return sentBytes == packetSize;
+		return udpTransport_->SendPacket(remoteAddress, packetData, packetSize);
 	}
 
 	std::size_t UdpPacketSender::BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize) const

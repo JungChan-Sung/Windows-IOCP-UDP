@@ -188,7 +188,7 @@ namespace server::net
 			return false;
 		}
 
-		packetSender_.AttachSocket(udpTransport_.GetSocket());
+		packetSender_.AttachTransport(udpTransport_);
 
 		isRunning_.store(true);
 
@@ -230,7 +230,7 @@ namespace server::net
 		gameTickRunner_.Stop();
 
 		udpTransport_.Stop();
-		packetSender_.DetachSocket();
+		packetSender_.DetachTransport();
 		packetDispatcher_.Clear();
 
 		{

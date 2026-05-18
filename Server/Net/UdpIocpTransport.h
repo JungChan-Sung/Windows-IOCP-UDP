@@ -63,6 +63,8 @@ namespace server::net
 		);
 		void Stop() noexcept;
 
+		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const;
+
 	private:
 		[[nodiscard]] bool CreateSocket();
 		[[nodiscard]] bool BindSocket(unsigned short port);

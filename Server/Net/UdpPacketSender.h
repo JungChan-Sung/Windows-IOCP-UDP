@@ -5,13 +5,14 @@
 #include <cstdint>
 #include <span>
 
-#include <Common/Net/Socket.h>
 #include <Common/Game/GameTypes.h>
 
 #include <Server/Net/SnapshotBroadcastTask.h>
 
 namespace server::net
 {
+	class UdpIocpTransport;
+
 	class UdpPacketSender
 	{
 	public:
@@ -19,7 +20,7 @@ namespace server::net
 		using RoomId = common::game::RoomId;
 
 	private:
-		common::net::Socket* socket_ = nullptr;
+		UdpIocpTransport* udpTransport_ = nullptr;
 
 	public:
 		UdpPacketSender() = default;
@@ -32,8 +33,8 @@ namespace server::net
 		UdpPacketSender& operator=(UdpPacketSender&&) = delete;
 
 	public:
-		void AttachSocket(common::net::Socket& socket) noexcept;
-		void DetachSocket() noexcept;
+		void AttachTransport(UdpIocpTransport& udpTransport) noexcept;
+		void DetachTransport() noexcept;
 
 		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize) const;
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize) const;

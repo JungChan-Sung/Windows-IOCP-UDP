@@ -52,10 +52,7 @@ namespace server::net
 		UdpIocpTransport& operator=(UdpIocpTransport&&) = delete;
 
 	private:
-		[[nodiscard]] static std::size_t ResolveRecvContextCount(
-			std::size_t recvContextCount,
-			std::size_t workerThreadCount
-		) noexcept;
+		[[nodiscard]] static std::size_t ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept;
 
 	public:
 		[[nodiscard]] bool Start(
@@ -69,6 +66,7 @@ namespace server::net
 	private:
 		[[nodiscard]] bool CreateSocket();
 		[[nodiscard]] bool BindSocket(unsigned short port);
+		[[nodiscard]] bool ConfigureSocket();
 		[[nodiscard]] bool CreateIocp();
 		[[nodiscard]] bool CreateRecvContexts(std::size_t recvContextCount);
 		[[nodiscard]] bool StartWorkerThreads(std::size_t workerThreadCount);

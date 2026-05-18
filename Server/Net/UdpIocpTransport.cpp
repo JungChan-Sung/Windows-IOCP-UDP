@@ -1,5 +1,7 @@
 #include "UdpIocpTransport.h"
 
+#include <MSWSock.h>
+
 #include <algorithm>
 #include <utility>
 
@@ -43,6 +45,12 @@ namespace server::net
 		}
 
 		if (!BindSocket(port))
+		{
+			Stop();
+			return false;
+		}
+
+		if (!ConfigureSocket())
 		{
 			Stop();
 			return false;
@@ -120,6 +128,26 @@ namespace server::net
 
 		const int result = ::bind(socket_.Get(), reinterpret_cast<const sockaddr*>(&address), sizeof(address));
 		return result != SOCKET_ERROR;
+	}
+
+	bool UdpIocpTransport::ConfigureSocket()
+	{
+		BOOL newBehavior = FALSE;
+		DWORD bytesReturned = 0;
+
+		const int connResetResult = ::WSAIoctl(
+			socket_.Get(),
+			SIO_UDP_CONNRESET,
+			&newBehavior,
+			sizeof(newBehavior),
+			nullptr,
+			0,
+			&bytesReturned,
+			nullptr,
+			nullptr
+		);
+
+		return connResetResult != SOCKET_ERROR;
 	}
 
 	bool UdpIocpTransport::CreateIocp()

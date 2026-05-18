@@ -69,6 +69,7 @@ namespace server::net
 
 		[[nodiscard]] bool PostRecv(common::net::UdpRecvContext& recvContext);
 		void WorkerLoop(std::stop_token stopToken);
+		void StopWorkerThreads() noexcept;
 
 	public:
 		[[nodiscard]] common::net::Socket& GetSocket() noexcept

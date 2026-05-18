@@ -50,13 +50,13 @@ namespace server::net
 			? recvContextCount 
 			: std::max(defaultRecvContextCount, workerThreadCount_ * 2);
 
-		if (!CreateRecvContexts(resolvedRecvContextCount))
+		if (!StartWorkerThreads(workerThreadCount_))
 		{
 			Stop();
 			return false;
 		}
 
-		if (!StartWorkerThreads(workerThreadCount_))
+		if (!CreateRecvContexts(resolvedRecvContextCount))
 		{
 			Stop();
 			return false;
@@ -69,21 +69,15 @@ namespace server::net
 	{
 		isRunning_.store(false);
 
-		if (iocpHandle_.IsValid())
-		{
-			for (std::size_t i = 0; i < workerThreadList_.size(); ++i)
-			{
-				::PostQueuedCompletionStatus(iocpHandle_.Get(), 0, 0, nullptr);
-			}
-		}
+		socket_.Close();
 
-		workerThreadList_.clear();
+		StopWorkerThreads();
+
 		recvContextList_.clear();
 
 		packetReceivedHandler_ = nullptr;
 
 		iocpHandle_.Close();
-		socket_.Close();
 
 		port_ = 0;
 		workerThreadCount_ = 0;
@@ -134,11 +128,24 @@ namespace server::net
 
 	bool UdpIocpTransport::CreateRecvContexts(std::size_t recvContextCount)
 	{
+		if (recvContextCount == 0)
+		{
+			return false;
+		}
+
 		recvContextList_.clear();
 
-		for (std::size_t index = 0; index < recvContextCount; ++index)
+		try
 		{
-			recvContextList_.emplace_back();
+			for (std::size_t index = 0; index < recvContextCount; ++index)
+			{
+				recvContextList_.emplace_back();
+			}
+		}
+		catch (...)
+		{
+			recvContextList_.clear();
+			return false;
 		}
 
 		for (common::net::UdpRecvContext& recvContext : recvContextList_)
@@ -154,17 +161,31 @@ namespace server::net
 
 	bool UdpIocpTransport::StartWorkerThreads(std::size_t workerThreadCount)
 	{
-		workerThreadList_.clear();
-		workerThreadList_.reserve(workerThreadCount);
-
-		for (std::size_t index = 0; index < workerThreadCount; ++index)
+		if (workerThreadCount == 0)
 		{
-			workerThreadList_.emplace_back(
-				[this](std::stop_token stopToken)
-				{
-					WorkerLoop(stopToken);
-				}
-			);
+			return false;
+		}
+
+		workerThreadList_.clear();
+
+		try
+		{
+			workerThreadList_.reserve(workerThreadCount);
+
+			for (std::size_t index = 0; index < workerThreadCount; ++index)
+			{
+				workerThreadList_.emplace_back(
+					[this](std::stop_token stopToken)
+					{
+						WorkerLoop(stopToken);
+					}
+				);
+			}
+		}
+		catch (...)
+		{
+			StopWorkerThreads();
+			return false;
 		}
 
 		return true;
@@ -254,5 +275,23 @@ namespace server::net
 				PostRecv(*recvContext);
 			}
 		}
+	}
+
+	void UdpIocpTransport::StopWorkerThreads() noexcept
+	{
+		for (std::jthread& workerThread : workerThreadList_)
+		{
+			workerThread.request_stop();
+		}
+
+		if (iocpHandle_.IsValid())
+		{
+			for (std::size_t index = 0; index < workerThreadList_.size(); ++index)
+			{
+				::PostQueuedCompletionStatus(iocpHandle_.Get(), 0, 0, nullptr);
+			}
+		}
+
+		workerThreadList_.clear();
 	}
 }

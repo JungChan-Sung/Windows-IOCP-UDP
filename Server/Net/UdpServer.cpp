@@ -826,7 +826,6 @@ namespace server::net
 		snapshot.udpSendCompletionFailureCount = transportMetrics.sendCompletionFailureCount;
 		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;
 
-
 		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
 
 		return snapshot;

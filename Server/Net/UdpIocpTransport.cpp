@@ -152,20 +152,7 @@ namespace server::net
 				const int errorCode = ::WSAGetLastError();
 				if (errorCode != WSA_IO_PENDING)
 				{
-					const auto contextIterator = std::find_if(
-						pendingSendContextList_.begin(),
-						pendingSendContextList_.end(),
-						[rawSendContext](const SendContextPointer& pendingSendContext)
-						{
-							return pendingSendContext.get() == rawSendContext;
-						}
-					);
-
-					if (contextIterator != pendingSendContextList_.end())
-					{
-						pendingSendContextList_.erase(contextIterator);
-					}
-
+					CompleteSendLocked(rawSendContext);
 					return false;
 				}
 			}
@@ -432,6 +419,12 @@ namespace server::net
 	}
 
 	void UdpIocpTransport::CompleteSend(common::net::UdpSendContext* sendContext) noexcept
+	{
+		std::scoped_lock lock(pendingSendContextMutex_);
+		CompleteSendLocked(sendContext);
+	}
+
+	void UdpIocpTransport::CompleteSendLocked(common::net::UdpSendContext* sendContext) noexcept
 	{
 		if (sendContext == nullptr)
 		{

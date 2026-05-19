@@ -1,8 +1,8 @@
 ﻿#include <WinSock2.h>
 #include <Windows.h>
 
+#include <exception>
 #include <iostream>
-#include <string>
 
 #include <Common/Net/WsaSession.h>
 
@@ -10,26 +10,39 @@
 
 int main()
 {
-	common::net::WsaSession wsaSession;
-	if (!wsaSession.Initialize())
+	try
 	{
-		std::cerr << "WsaSession.Initialize failed.\n";
+		common::net::WsaSession wsaSession;
+		if (!wsaSession.Initialize())
+		{
+			std::cerr << "WsaSession.Initialize failed.\n";
+			return 1;
+		}
+
+		HINSTANCE instanceHandle = ::GetModuleHandleW(nullptr);
+		if (instanceHandle == nullptr)
+		{
+			std::cerr << "GetModuleHandleW failed.\n";
+			return 1;
+		}
+
+		client::app::GameClientApp gameClientApp;
+		if (!gameClientApp.Run(instanceHandle))
+		{
+			std::cerr << "GameClientApp.Run failed.\n";
+			return 1;
+		}
+
+		return 0;
+	}
+	catch (const std::exception& exception)
+	{
+		std::cerr << "Unhandled exception: " << exception.what() << '\n';
 		return 1;
 	}
-
-	HINSTANCE instanceHandle = ::GetModuleHandleW(nullptr);
-	if (instanceHandle == nullptr)
+	catch (...)
 	{
-		std::cerr << "GetModuleHandleW failed.\n";
+		std::cerr << "Unhandled unknown exception.\n";
 		return 1;
 	}
-
-	client::app::GameClientApp gameClientApp;
-	if (!gameClientApp.Run(instanceHandle))
-	{
-		std::cerr << "GameClientApp.Run failed.\n";
-		return 1;
-	}
-
-	return 0;
 }

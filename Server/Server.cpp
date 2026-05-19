@@ -1,5 +1,5 @@
-﻿#include <iostream>
-#include <string>
+﻿#include <exception>
+#include <iostream>
 
 #include <Common/Net/WsaSession.h>
 
@@ -7,17 +7,32 @@
 
 int main()
 {
-	common::net::WsaSession wsaSession;
-	if (!wsaSession.Initialize())
+	try
 	{
+		common::net::WsaSession wsaSession;
+		if (!wsaSession.Initialize())
+		{
+			std::cerr << "WsaSession.Initialize failed.\n";
+			return 1;
+		}
+
+		server::app::GameServerApp gameServerApp;
+		if (!gameServerApp.Run(9000))
+		{
+			std::cerr << "GameServerApp.Run failed.\n";
+			return 1;
+		}
+
+		return 0;
+	}
+	catch (const std::exception& exception)
+	{
+		std::cerr << "Unhandled exception: " << exception.what() << '\n';
 		return 1;
 	}
-
-	server::app::GameServerApp gameServerApp;
-	if (!gameServerApp.Run(9000))
+	catch (...)
 	{
+		std::cerr << "Unhandled unknown exception.\n";
 		return 1;
 	}
-
-	return 0;
 }

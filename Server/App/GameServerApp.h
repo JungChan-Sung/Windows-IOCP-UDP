@@ -26,7 +26,7 @@ namespace server::app
 		GameServerApp& operator=(GameServerApp&&) = delete;
 
 	public:
-		[[nodiscard]] bool Run(unsigned short port);
+		[[nodiscard]] bool Run(unsigned short port = 0);
 
 	private:
 		[[nodiscard]] config::ServerConfigLoadResult BuildServerConfig(unsigned short port) const;

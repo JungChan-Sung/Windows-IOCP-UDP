@@ -431,8 +431,6 @@ namespace server::net
 			return;
 		}
 
-		std::scoped_lock lock(pendingSendContextMutex_);
-
 		const auto contextIterator = std::find_if(
 			pendingSendContextList_.begin(),
 			pendingSendContextList_.end(),

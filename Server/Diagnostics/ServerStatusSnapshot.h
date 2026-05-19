@@ -22,6 +22,10 @@ namespace server::diagnostics
 
 		std::size_t pendingSendContextCount = 0;
 
+		std::uint64_t udpSendCompletionCount = 0;
+		std::uint64_t udpSendCompletionFailureCount = 0;
+		std::uint64_t udpSendCompletedByteCount = 0;
+
 		ServerMetricsSnapshot metrics{};
 	};
 }

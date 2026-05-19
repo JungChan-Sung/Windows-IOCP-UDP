@@ -63,6 +63,8 @@ namespace server::net
 			return false;
 		}
 
+		metrics_.Reset();
+
 		isRunning_.store(true);
 
 		const std::size_t resolvedRecvContextCount = ResolveRecvContextCount(recvContextCount, workerThreadCount_);
@@ -412,8 +414,18 @@ namespace server::net
 
 	void UdpIocpTransport::HandleSendCompletion(common::net::UdpSendContext* sendContext, DWORD transferredBytes, BOOL completionResult) noexcept
 	{
-		(void)transferredBytes;
-		(void)completionResult;
+		const bool isSucceeded = completionResult
+			&& sendContext != nullptr
+			&& transferredBytes == sendContext->wsaBuffer.len;
+
+		if (isSucceeded)
+		{
+			metrics_.RecordSendCompletion(transferredBytes);
+		}
+		else
+		{
+			metrics_.RecordSendCompletionFailure();
+		}
 
 		CompleteSend(sendContext);
 	}
@@ -456,5 +468,10 @@ namespace server::net
 	{
 		std::scoped_lock lock(pendingSendContextMutex_);
 		return pendingSendContextList_.size();
+	}
+
+	UdpIocpTransportMetricsSnapshot UdpIocpTransport::CaptureMetricsSnapshot() const noexcept
+	{
+		return metrics_.CaptureSnapshot();
 	}
 }

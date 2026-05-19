@@ -819,7 +819,14 @@ namespace server::net
 			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
 		}
 
+		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();
+
 		snapshot.pendingSendContextCount = udpTransport_.GetPendingSendContextCount();
+		snapshot.udpSendCompletionCount = transportMetrics.sendCompletionCount;
+		snapshot.udpSendCompletionFailureCount = transportMetrics.sendCompletionFailureCount;
+		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;
+
+
 		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
 
 		return snapshot;

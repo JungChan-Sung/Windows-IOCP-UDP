@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <functional>
 #include <memory>
@@ -15,6 +16,8 @@
 #include <Common/Net/IocpHandle.h>
 #include <Common/Net/Socket.h>
 #include <Common/Net/UdpContext.h>
+
+#include <Server/Net/UdpIocpTransportMetrics.h>
 
 namespace server::net
 {
@@ -36,6 +39,8 @@ namespace server::net
 		common::net::Socket socket_;
 		common::net::IocpHandle iocpHandle_;
 		std::atomic<bool> isRunning_ = false;
+
+		UdpIocpTransportMetrics metrics_;
 
 		WorkerThreadList workerThreadList_;
 		RecvContextList recvContextList_;
@@ -107,6 +112,8 @@ namespace server::net
 		{
 			return isRunning_.load();
 		}
+
+		[[nodiscard]] UdpIocpTransportMetricsSnapshot CaptureMetricsSnapshot() const noexcept;
 	};
 }
 

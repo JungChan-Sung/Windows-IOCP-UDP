@@ -158,6 +158,7 @@
     <ClCompile Include="Net\PlayerCommandService.cpp" />
     <ClCompile Include="Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
+    <ClCompile Include="Net\UdpIocpTransportMetrics.cpp" />
     <ClCompile Include="Net\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Net\UdpPacketSender.cpp" />
     <ClCompile Include="Net\UdpServer.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="Net\SnapshotBroadcastBuilder.h" />
     <ClInclude Include="Net\SnapshotBroadcastTask.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />
+    <ClInclude Include="Net\UdpIocpTransportMetrics.h" />
     <ClInclude Include="Net\UdpPacketDispatcher.h" />
     <ClInclude Include="Net\UdpPacketSender.h" />
     <ClInclude Include="Net\UdpServer.h" />

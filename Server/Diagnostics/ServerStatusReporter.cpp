@@ -50,6 +50,9 @@ namespace server::diagnostics
 			<< ", Bullets=" << snapshot.bulletCount
 			<< ", PendingEffects=" << snapshot.pendingImpactEffectCount
 			<< ", PendingSendContexts=" << snapshot.pendingSendContextCount
+			<< ", UdpSendCompletions=" << snapshot.udpSendCompletionCount
+			<< ", UdpSendCompletionFailures=" << snapshot.udpSendCompletionFailureCount
+			<< ", UdpSendCompletedBytes=" << snapshot.udpSendCompletedByteCount
 			<< ", ReceivedPackets=" << snapshot.metrics.receivedPacketCount
 			<< ", InvalidPacketDrops=" << snapshot.metrics.invalidPacketDropCount
 			<< ", JoinRequests=" << snapshot.metrics.joinRequestCount

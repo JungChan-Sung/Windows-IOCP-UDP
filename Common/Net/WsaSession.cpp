@@ -13,21 +13,21 @@ namespace common::net
 		}
 	}
 
-	bool WsaSession::Initialize() noexcept
+	WsaSession::InitializeResult WsaSession::Initialize() noexcept
 	{
 		if (isInitialized_)
 		{
-			return true;
+			return {};
 		}
 
 		WSADATA wsaData{};
 		const int result = ::WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (result != 0)
 		{
-			return false;
+			return std::unexpected(InitializeError{ .errorCode = result });
 		}
 
 		isInitialized_ = true;
-		return true;
+		return {};
 	}
 }

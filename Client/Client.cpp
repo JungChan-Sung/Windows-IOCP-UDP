@@ -13,9 +13,10 @@ int main()
 	try
 	{
 		common::net::WsaSession wsaSession;
-		if (!wsaSession.Initialize())
+		const common::net::WsaSession::InitializeResult initializeResult = wsaSession.Initialize();
+		if (!initializeResult.has_value())
 		{
-			std::cerr << "WsaSession.Initialize failed.\n";
+			std::cerr << "WsaSession.Initialize failed. ErrorCode="	<< initializeResult.error().errorCode << '\n';
 			return 1;
 		}
 

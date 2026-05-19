@@ -1,9 +1,21 @@
 #pragma once
 
+#include <expected>
+
 namespace common::net
 {
 	class WsaSession
 	{
+	public:
+		struct InitializeError
+		{
+		public:
+			int errorCode = 0;
+		};
+
+	public:
+		using InitializeResult = std::expected<void, InitializeError>;
+
 	private:
 		bool isInitialized_ = false;
 
@@ -18,7 +30,7 @@ namespace common::net
 		WsaSession& operator=(WsaSession&&) = delete;
 
 	public:
-		[[nodiscard]] bool Initialize() noexcept;
+		[[nodiscard]] InitializeResult Initialize() noexcept;
 
 	public:
 		[[nodiscard]] bool IsInitialized() const noexcept

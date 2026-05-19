@@ -2,6 +2,7 @@
 
 #include <expected>
 #include <span>
+#include <string_view>
 
 #include <Common/Log/AsyncLogWriter.h>
 

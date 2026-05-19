@@ -86,9 +86,9 @@ namespace
 		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: reset fire request count");
 		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: reset leave request count");
 		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: reset join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot request count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot request count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect request count");
+		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot send request count");
+		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect send request count");
 		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
 	}
 }

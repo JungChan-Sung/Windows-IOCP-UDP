@@ -44,7 +44,7 @@ namespace client::app
 		GameClientApp& operator=(GameClientApp&&) = delete;
 
 	public:
-		[[nodiscard]] bool Run(HINSTANCE instanceHandle, const char* serverIp, unsigned short serverPort);
+		[[nodiscard]] bool Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);
 
 	private:
 		[[nodiscard]] config::ClientConfig BuildClientConfig(const char* serverIp, unsigned short serverPort) const;

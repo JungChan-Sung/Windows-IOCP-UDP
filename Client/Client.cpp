@@ -25,7 +25,7 @@ int main()
 	}
 
 	client::app::GameClientApp gameClientApp;
-	if (!gameClientApp.Run(instanceHandle, "127.0.0.1", 9000))
+	if (!gameClientApp.Run(instanceHandle))
 	{
 		std::cerr << "GameClientApp.Run failed.\n";
 		return 1;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <expected>
 #include <span>
 
 #include <Common/Log/AsyncLogWriter.h>
@@ -11,6 +12,16 @@ namespace server::app
 {
 	class GameServerApp
 	{
+	public:
+		enum class RunError
+		{
+			LoggerStartFailed,
+			UdpServerStartFailed,
+		};
+
+	public:
+		using RunResult = std::expected<void, RunError>;
+
 	private:
 		common::log::AsyncLogWriter logger_;
 		net::UdpServer udpServer_;
@@ -26,7 +37,10 @@ namespace server::app
 		GameServerApp& operator=(GameServerApp&&) = delete;
 
 	public:
-		[[nodiscard]] bool Run(unsigned short port = 0);
+		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
+
+	public:
+		[[nodiscard]] RunResult Run(unsigned short port = 0);
 
 	private:
 		[[nodiscard]] config::ServerConfigLoadResult BuildServerConfig(unsigned short port) const;

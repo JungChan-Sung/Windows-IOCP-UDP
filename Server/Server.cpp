@@ -18,9 +18,10 @@ int main()
 		}
 
 		server::app::GameServerApp gameServerApp;
-		if (!gameServerApp.Run(9000))
+		const server::app::GameServerApp::RunResult runResult = gameServerApp.Run();
+		if (!runResult.has_value())
 		{
-			std::cerr << "GameServerApp.Run failed.\n";
+			std::cerr << "GameServerApp.Run failed. Error=" << server::app::GameServerApp::ToString(runResult.error()) << '\n';
 			return 1;
 		}
 

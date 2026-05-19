@@ -38,7 +38,22 @@ namespace
 
 namespace server::app
 {
-	bool GameServerApp::Run(unsigned short port)
+	std::string_view GameServerApp::ToString(RunError runError) noexcept
+	{
+		switch (runError)
+		{
+		case RunError::LoggerStartFailed:
+			return "LoggerStartFailed";
+
+		case RunError::UdpServerStartFailed:
+			return "UdpServerStartFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	GameServerApp::RunResult GameServerApp::Run(unsigned short port)
 	{
 		const config::ServerConfigLoadResult loadResult = BuildServerConfig(port);
 
@@ -46,7 +61,7 @@ namespace server::app
 
 		if (!logger_.Start(loadResult.config.diagnostics.asyncLogWorkerThreadCount))
 		{
-			return false;
+			return std::unexpected(RunError::LoggerStartFailed);
 		}
 
 		LogConfigWarnings(loadResult.warningList);
@@ -58,7 +73,7 @@ namespace server::app
 			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
 			logger_.Stop();
-			return false;
+			return std::unexpected(RunError::UdpServerStartFailed);
 		}
 
 		LogStartupConfig(udpServer_.GetConfig());
@@ -70,7 +85,7 @@ namespace server::app
 
 		logger_.Stop();
 
-		return true;
+		return {};
 	}
 
 	config::ServerConfigLoadResult GameServerApp::BuildServerConfig(unsigned short port) const
@@ -126,7 +141,7 @@ namespace server::app
 			<< ", BasicFireCooldownSeconds=" << serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds
 			<< ", EnableStatusLog=" << std::boolalpha << serverConfig.diagnostics.enableStatusLog
 			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count()
-			<< ", LogLevel=" << ToString(serverConfig.diagnostics.logLevel)
+			<< ", LogLevel=" << ::ToString(serverConfig.diagnostics.logLevel)
 			<< ", AsyncLogWorkerThreadCount=" << serverConfig.diagnostics.asyncLogWorkerThreadCount;
 
 		logger_.Info(stream.str());

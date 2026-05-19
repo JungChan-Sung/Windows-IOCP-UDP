@@ -87,6 +87,7 @@ namespace server::net
 		void HandleRecvCompletion(common::net::UdpRecvContext& recvContext, DWORD transferredBytes, BOOL completionResult);
 		void HandleSendCompletion(common::net::UdpSendContext* sendContext, DWORD transferredBytes, BOOL completionResult) noexcept;
 		void CompleteSend(common::net::UdpSendContext* sendContext) noexcept;
+		void CompleteSendLocked(common::net::UdpSendContext* sendContext) noexcept;
 		void ClearPendingSendContexts() noexcept;
 
 	public:

@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <deque>
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <stop_token>
 #include <thread>
 #include <vector>
@@ -24,6 +26,8 @@ namespace client::net
 	private:
 		using WorkerThreadList = std::vector<std::jthread>;
 		using RecvContextList = std::deque<common::net::UdpRecvContext>;
+		using SendContextPointer = std::unique_ptr<common::net::UdpSendContext>;
+		using PendingSendContextList = std::vector<SendContextPointer>;
 
 	private:
 		static inline constexpr std::size_t defaultRecvContextCount = 4;
@@ -37,6 +41,9 @@ namespace client::net
 
 		WorkerThreadList workerThreadList_;
 		RecvContextList recvContextList_;
+
+		mutable std::mutex pendingSendContextMutex_;
+		PendingSendContextList pendingSendContextList_;
 
 		PacketReceivedCallback packetReceivedCallback_;
 
@@ -74,6 +81,13 @@ namespace client::net
 		[[nodiscard]] bool PostRecv(common::net::UdpRecvContext& recvContext);
 		void WorkerLoop(std::stop_token stopToken) noexcept;
 		void StopWorkerThreads() noexcept;
+
+		void HandleRecvCompletion(common::net::UdpRecvContext& recvContext, DWORD transferredBytes, BOOL completionResult);
+		void HandleSendCompletion(common::net::UdpSendContext* sendContext) noexcept;
+
+		void CompleteSend(common::net::UdpSendContext* sendContext) noexcept;
+		void CompleteSendLocked(common::net::UdpSendContext* sendContext) noexcept;
+		void ClearPendingSendContexts() noexcept;
 
 		[[nodiscard]] bool IsFromServer(const sockaddr_in& remoteAddress) const noexcept;
 

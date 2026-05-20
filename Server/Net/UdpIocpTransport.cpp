@@ -1,9 +1,9 @@
 #include "UdpIocpTransport.h"
-#include "UdpIocpTransport.h"
 
 #include <MSWSock.h>
 
 #include <algorithm>
+#include <expected>
 #include <memory>
 #include <utility>
 
@@ -12,6 +12,39 @@ namespace server::net
 	UdpIocpTransport::~UdpIocpTransport() noexcept
 	{
 		Stop();
+	}
+
+	std::string_view UdpIocpTransport::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::InvalidPacketReceivedHandler:
+			return "InvalidPacketReceivedHandler";
+
+		case StartError::CreateSocketFailed:
+			return "CreateSocketFailed";
+
+		case StartError::BindSocketFailed:
+			return "BindSocketFailed";
+
+		case StartError::ConfigureSocketFailed:
+			return "ConfigureSocketFailed";
+
+		case StartError::CreateIocpFailed:
+			return "CreateIocpFailed";
+
+		case StartError::StartWorkerThreadsFailed:
+			return "StartWorkerThreadsFailed";
+
+		case StartError::CreateRecvContextsFailed:
+			return "CreateRecvContextsFailed";
+
+		default:
+			return "Unknown";
+		}
 	}
 
 	std::size_t UdpIocpTransport::ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept
@@ -24,16 +57,16 @@ namespace server::net
 		return std::max(defaultRecvContextCount, workerThreadCount * 2);
 	}
 
-	bool UdpIocpTransport::Start(unsigned short port, std::size_t workerThreadCount, std::size_t recvContextCount, PacketReceivedHandler packetReceivedHandler)
+	UdpIocpTransport::StartResult UdpIocpTransport::Start(unsigned short port, std::size_t workerThreadCount, std::size_t recvContextCount, PacketReceivedHandler packetReceivedHandler)
 	{
 		if (isRunning_.load())
 		{
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		if (!packetReceivedHandler)
 		{
-			return false;
+			return std::unexpected(StartError::InvalidPacketReceivedHandler);
 		}
 
 		port_ = port;
@@ -43,25 +76,25 @@ namespace server::net
 		if (!CreateSocket())
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::CreateSocketFailed);
 		}
 
 		if (!BindSocket(port))
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::BindSocketFailed);
 		}
 
 		if (!ConfigureSocket())
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::ConfigureSocketFailed);
 		}
 
 		if (!CreateIocp())
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::CreateIocpFailed);
 		}
 
 		metrics_.Reset();
@@ -73,16 +106,16 @@ namespace server::net
 		if (!StartWorkerThreads(workerThreadCount_))
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::StartWorkerThreadsFailed);
 		}
 
 		if (!CreateRecvContexts(resolvedRecvContextCount))
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::CreateRecvContextsFailed);
 		}
 
-		return true;
+		return {};
 	}
 
 	void UdpIocpTransport::Stop() noexcept

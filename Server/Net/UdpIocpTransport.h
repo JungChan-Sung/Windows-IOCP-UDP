@@ -6,10 +6,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -24,6 +26,21 @@ namespace server::net
 	class UdpIocpTransport
 	{
 	public:
+		enum class StartError
+		{
+			AlreadyRunning,
+			InvalidPacketReceivedHandler,
+			CreateSocketFailed,
+			BindSocketFailed,
+			ConfigureSocketFailed,
+			CreateIocpFailed,
+			StartWorkerThreadsFailed,
+			CreateRecvContextsFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using PacketReceivedHandler = std::function<void(const sockaddr_in&, const char*, int)>;
 
 	private:
@@ -63,11 +80,14 @@ namespace server::net
 		UdpIocpTransport(UdpIocpTransport&&) = delete;
 		UdpIocpTransport& operator=(UdpIocpTransport&&) = delete;
 
+	public:
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
 	private:
 		[[nodiscard]] static std::size_t ResolveRecvContextCount(std::size_t recvContextCount, std::size_t workerThreadCount) noexcept;
 
 	public:
-		[[nodiscard]] bool Start(
+		[[nodiscard]] StartResult Start(
 			unsigned short port,
 			std::size_t workerThreadCount,
 			std::size_t recvContextCount,

@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <optional>
 #include <sstream>
@@ -118,12 +119,84 @@ namespace server::net
 		Stop();
 	}
 
-	bool UdpServer::Start(const server::config::ServerConfig& config)
+	std::string_view UdpServer::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::UdpTransportAlreadyRunning:
+			return "UdpTransportAlreadyRunning";
+
+		case StartError::UdpTransportInvalidPacketReceivedHandler:
+			return "UdpTransportInvalidPacketReceivedHandler";
+
+		case StartError::UdpTransportCreateSocketFailed:
+			return "UdpTransportCreateSocketFailed";
+
+		case StartError::UdpTransportBindSocketFailed:
+			return "UdpTransportBindSocketFailed";
+
+		case StartError::UdpTransportConfigureSocketFailed:
+			return "UdpTransportConfigureSocketFailed";
+
+		case StartError::UdpTransportCreateIocpFailed:
+			return "UdpTransportCreateIocpFailed";
+
+		case StartError::UdpTransportStartWorkerThreadsFailed:
+			return "UdpTransportStartWorkerThreadsFailed";
+
+		case StartError::UdpTransportCreateRecvContextsFailed:
+			return "UdpTransportCreateRecvContextsFailed";
+
+		case StartError::GameTickRunnerStartFailed:
+			return "GameTickRunnerStartFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	UdpServer::StartError UdpServer::ToStartError(UdpIocpTransport::StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case UdpIocpTransport::StartError::AlreadyRunning:
+			return StartError::UdpTransportAlreadyRunning;
+
+		case UdpIocpTransport::StartError::InvalidPacketReceivedHandler:
+			return StartError::UdpTransportInvalidPacketReceivedHandler;
+
+		case UdpIocpTransport::StartError::CreateSocketFailed:
+			return StartError::UdpTransportCreateSocketFailed;
+
+		case UdpIocpTransport::StartError::BindSocketFailed:
+			return StartError::UdpTransportBindSocketFailed;
+
+		case UdpIocpTransport::StartError::ConfigureSocketFailed:
+			return StartError::UdpTransportConfigureSocketFailed;
+
+		case UdpIocpTransport::StartError::CreateIocpFailed:
+			return StartError::UdpTransportCreateIocpFailed;
+
+		case UdpIocpTransport::StartError::StartWorkerThreadsFailed:
+			return StartError::UdpTransportStartWorkerThreadsFailed;
+
+		case UdpIocpTransport::StartError::CreateRecvContextsFailed:
+			return StartError::UdpTransportCreateRecvContextsFailed;
+
+		default:
+			return StartError::UdpTransportCreateRecvContextsFailed;
+		}
+	}
+
+	UdpServer::StartResult UdpServer::Start(const server::config::ServerConfig& config)
 	{
 		if (isRunning_.load())
 		{
 			LogWarning("UdpServer start ignored because server is already running.");
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		config_ = config;
@@ -156,7 +229,7 @@ namespace server::net
 
 		RegisterPacketHandlers();
 
-		if (!udpTransport_.Start(
+		const UdpIocpTransport::StartResult transportStartResult = udpTransport_.Start(
 			config_.network.port,
 			config_.network.workerThreadCount,
 			config_.network.recvContextCount,
@@ -181,11 +254,15 @@ namespace server::net
 					LogInvalidPacket(remoteAddress, dispatchResult);
 				}
 			}
-		))
+		);
+		if (!transportStartResult.has_value())
 		{
-			LogError("UdpServer failed to start UDP IOCP transport.");
+			std::ostringstream stream;
+			stream << "UdpServer failed to start UDP IOCP transport. Error=" << UdpIocpTransport::ToString(transportStartResult.error());
+			LogError(stream.str());
+
 			Stop();
-			return false;
+			return std::unexpected(ToStartError(transportStartResult.error()));
 		}
 
 		packetSender_.AttachTransport(udpTransport_);
@@ -202,14 +279,14 @@ namespace server::net
 		{
 			LogError("UdpServer failed to start game tick runner.");
 			Stop();
-			return false;
+			return std::unexpected(StartError::GameTickRunnerStartFailed);
 		}
 
 		LogInfo("UdpServer started.");
-		return true;
+		return {};
 	}
 
-	bool UdpServer::Start(unsigned short port, std::size_t workerThreadCount)
+	UdpServer::StartResult UdpServer::Start(unsigned short port, std::size_t workerThreadCount)
 	{
 		server::config::ServerConfig config{};
 		config.network.port = port;

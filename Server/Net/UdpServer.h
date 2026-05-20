@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <expected>
 #include <mutex>
 #include <string_view>
 
@@ -42,6 +43,25 @@ namespace server::net
 	class UdpServer
 	{
 	public:
+		enum class StartError
+		{
+			AlreadyRunning,
+
+			UdpTransportAlreadyRunning,
+			UdpTransportInvalidPacketReceivedHandler,
+			UdpTransportCreateSocketFailed,
+			UdpTransportBindSocketFailed,
+			UdpTransportConfigureSocketFailed,
+			UdpTransportCreateIocpFailed,
+			UdpTransportStartWorkerThreadsFailed,
+			UdpTransportCreateRecvContextsFailed,
+
+			GameTickRunnerStartFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
@@ -85,8 +105,14 @@ namespace server::net
 		UdpServer& operator=(UdpServer&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(const server::config::ServerConfig& config);
-		[[nodiscard]] bool Start(unsigned short port, std::size_t workerThreadCount = 0);
+		std::string_view ToString(StartError startError) noexcept;
+
+	private:
+		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult  Start(const server::config::ServerConfig& config);
+		[[nodiscard]] StartResult  Start(unsigned short port, std::size_t workerThreadCount = 0);
 		void Stop() noexcept;
 
 		void AttachLogger(common::log::ILogger& logger) noexcept;

@@ -1,5 +1,6 @@
 #include "GameTickRunner.h"
 
+#include <expected>
 #include <utility>
 
 namespace server::game
@@ -9,34 +10,64 @@ namespace server::game
 		Stop();
 	}
 
-	bool GameTickRunner::Start(Duration tickInterval, TickHandler tickHandler)
+	std::string_view GameTickRunner::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::InvalidTickInterval:
+			return "InvalidTickInterval";
+
+		case StartError::InvalidTickHandler:
+			return "InvalidTickHandler";
+
+		case StartError::StartThreadFailed:
+			return "StartThreadFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	GameTickRunner::StartResult GameTickRunner::Start(Duration tickInterval, TickHandler tickHandler)
 	{
 		if (isRunning_.load())
 		{
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		if (tickInterval <= Duration::zero())
 		{
-			return false;
+			return std::unexpected(StartError::InvalidTickInterval);
 		}
 
 		if (!tickHandler)
 		{
-			return false;
+			return std::unexpected(StartError::InvalidTickHandler);
 		}
 
 		tickHandler_ = std::move(tickHandler);
 		isRunning_.store(true);
 
-		tickThread_ = std::jthread(
-			[this, tickInterval](std::stop_token stopToken)
-			{
-				RunLoop(stopToken, tickInterval);
-			}
-		);
+		try
+		{
+			tickThread_ = std::jthread(
+				[this, tickInterval](std::stop_token stopToken)
+				{
+					RunLoop(stopToken, tickInterval);
+				}
+			);
+		}
+		catch (...)
+		{
+			isRunning_.store(false);
+			tickHandler_ = nullptr;
+			return std::unexpected(StartError::StartThreadFailed);
+		}
 
-		return true;
+		return {};
 	}
 
 	void GameTickRunner::Stop() noexcept

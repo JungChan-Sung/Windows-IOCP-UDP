@@ -150,8 +150,17 @@ namespace server::net
 		case StartError::UdpTransportCreateRecvContextsFailed:
 			return "UdpTransportCreateRecvContextsFailed";
 
-		case StartError::GameTickRunnerStartFailed:
-			return "GameTickRunnerStartFailed";
+		case StartError::GameTickRunnerAlreadyRunning:
+			return "GameTickRunnerAlreadyRunning";
+
+		case StartError::GameTickRunnerInvalidTickInterval:
+			return "GameTickRunnerInvalidTickInterval";
+
+		case StartError::GameTickRunnerInvalidTickHandler:
+			return "GameTickRunnerInvalidTickHandler";
+
+		case StartError::GameTickRunnerStartThreadFailed:
+			return "GameTickRunnerStartThreadFailed";
 
 		default:
 			return "Unknown";
@@ -188,6 +197,27 @@ namespace server::net
 
 		default:
 			return StartError::UdpTransportCreateRecvContextsFailed;
+		}
+	}
+
+	UdpServer::StartError UdpServer::ToStartError(game::GameTickRunner::StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case game::GameTickRunner::StartError::AlreadyRunning:
+			return StartError::GameTickRunnerAlreadyRunning;
+
+		case game::GameTickRunner::StartError::InvalidTickInterval:
+			return StartError::GameTickRunnerInvalidTickInterval;
+
+		case game::GameTickRunner::StartError::InvalidTickHandler:
+			return StartError::GameTickRunnerInvalidTickHandler;
+
+		case game::GameTickRunner::StartError::StartThreadFailed:
+			return StartError::GameTickRunnerStartThreadFailed;
+
+		default:
+			return StartError::GameTickRunnerStartThreadFailed;
 		}
 	}
 
@@ -269,17 +299,22 @@ namespace server::net
 
 		isRunning_.store(true);
 
-		if (!gameTickRunner_.Start(
+		const game::GameTickRunner::StartResult gameTickRunnerStartResult = gameTickRunner_.Start(
 			config_.tick.tickInterval,
 			[this]()
 			{
 				UpdateGameTick();
 			}
-		))
+		);
+		if (!gameTickRunnerStartResult.has_value())
 		{
-			LogError("UdpServer failed to start game tick runner.");
+			std::ostringstream stream;
+			stream << "UdpServer failed to start game tick runner. Error="
+				<< game::GameTickRunner::ToString(gameTickRunnerStartResult.error());
+			LogError(stream.str());
+
 			Stop();
-			return std::unexpected(StartError::GameTickRunnerStartFailed);
+			return std::unexpected(ToStartError(gameTickRunnerStartResult.error()));
 		}
 
 		LogInfo("UdpServer started.");

@@ -56,7 +56,10 @@ namespace server::net
 			UdpTransportStartWorkerThreadsFailed,
 			UdpTransportCreateRecvContextsFailed,
 
-			GameTickRunnerStartFailed,
+			GameTickRunnerAlreadyRunning,
+			GameTickRunnerInvalidTickInterval,
+			GameTickRunnerInvalidTickHandler,
+			GameTickRunnerStartThreadFailed,
 		};
 
 	public:
@@ -109,6 +112,7 @@ namespace server::net
 
 	private:
 		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
+		[[nodiscard]] static StartError ToStartError(game::GameTickRunner::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] StartResult Start(const server::config::ServerConfig& config);

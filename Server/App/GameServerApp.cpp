@@ -72,8 +72,17 @@ namespace server::app
 		case RunError::UdpServerTransportCreateRecvContextsFailed:
 			return "UdpServerTransportCreateRecvContextsFailed";
 
-		case RunError::UdpServerGameTickRunnerStartFailed:
-			return "UdpServerGameTickRunnerStartFailed";
+		case RunError::UdpServerGameTickRunnerAlreadyRunning:
+			return "UdpServerGameTickRunnerAlreadyRunning";
+
+		case RunError::UdpServerGameTickRunnerInvalidTickInterval:
+			return "UdpServerGameTickRunnerInvalidTickInterval";
+
+		case RunError::UdpServerGameTickRunnerInvalidTickHandler:
+			return "UdpServerGameTickRunnerInvalidTickHandler";
+
+		case RunError::UdpServerGameTickRunnerStartThreadFailed:
+			return "UdpServerGameTickRunnerStartThreadFailed";
 
 		default:
 			return "Unknown";
@@ -111,8 +120,17 @@ namespace server::app
 		case net::UdpServer::StartError::UdpTransportCreateRecvContextsFailed:
 			return RunError::UdpServerTransportCreateRecvContextsFailed;
 
-		case net::UdpServer::StartError::GameTickRunnerStartFailed:
-			return RunError::UdpServerGameTickRunnerStartFailed;
+		case net::UdpServer::StartError::GameTickRunnerAlreadyRunning:
+			return RunError::UdpServerGameTickRunnerAlreadyRunning;
+
+		case net::UdpServer::StartError::GameTickRunnerInvalidTickInterval:
+			return RunError::UdpServerGameTickRunnerInvalidTickInterval;
+
+		case net::UdpServer::StartError::GameTickRunnerInvalidTickHandler:
+			return RunError::UdpServerGameTickRunnerInvalidTickHandler;
+
+		case net::UdpServer::StartError::GameTickRunnerStartThreadFailed:
+			return RunError::UdpServerGameTickRunnerStartThreadFailed;
 
 		default:
 			return RunError::UdpServerTransportCreateRecvContextsFailed;

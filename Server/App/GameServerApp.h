@@ -29,7 +29,10 @@ namespace server::app
 			UdpServerTransportStartWorkerThreadsFailed,
 			UdpServerTransportCreateRecvContextsFailed,
 
-			UdpServerGameTickRunnerStartFailed,
+			UdpServerGameTickRunnerAlreadyRunning,
+			UdpServerGameTickRunnerInvalidTickInterval,
+			UdpServerGameTickRunnerInvalidTickHandler,
+			UdpServerGameTickRunnerStartThreadFailed,
 		};
 
 	public:

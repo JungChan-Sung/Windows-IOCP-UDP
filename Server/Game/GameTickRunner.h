@@ -2,8 +2,10 @@
 
 #include <atomic>
 #include <chrono>
+#include <expected>
 #include <functional>
 #include <stop_token>
+#include <string_view>
 #include <thread>
 
 namespace server::game
@@ -11,6 +13,17 @@ namespace server::game
 	class GameTickRunner
 	{
 	public:
+		enum class StartError
+		{
+			AlreadyRunning,
+			InvalidTickInterval,
+			InvalidTickHandler,
+			StartThreadFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using Clock = std::chrono::steady_clock;
 		using Duration = Clock::duration;
 		using TickHandler = std::function<void()>;
@@ -31,7 +44,10 @@ namespace server::game
 		GameTickRunner& operator=(GameTickRunner&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(Duration tickInterval, TickHandler tickHandler);
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult Start(Duration tickInterval, TickHandler tickHandler);
 		void Stop() noexcept;
 
 	private:

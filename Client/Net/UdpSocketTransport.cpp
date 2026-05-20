@@ -4,6 +4,7 @@
 #include <WS2tcpip.h>
 
 #include <chrono>
+#include <expected>
 #include <thread>
 #include <utility>
 
@@ -16,53 +17,85 @@ namespace client::net
 		Stop();
 	}
 
-	bool UdpSocketTransport::Start(const char* serverIp, unsigned short serverPort, PacketReceivedCallback packetReceivedCallback)
+	std::string_view UdpSocketTransport::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::InvalidCallback:
+			return "InvalidCallback";
+
+		case StartError::CreateSocketFailed:
+			return "CreateSocketFailed";
+
+		case StartError::BindSocketFailed:
+			return "BindSocketFailed";
+
+		case StartError::ConfigureSocketFailed:
+			return "ConfigureSocketFailed";
+
+		case StartError::SetServerAddressFailed:
+			return "SetServerAddressFailed";
+
+		case StartError::StartRecvThreadFailed:
+			return "StartRecvThreadFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	UdpSocketTransport::StartResult UdpSocketTransport::Start(const char* serverIp, unsigned short serverPort, PacketReceivedCallback packetReceivedCallback)
 	{
 		if (isRunning_.load())
 		{
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		if (!packetReceivedCallback)
 		{
-			return false;
+			return std::unexpected(StartError::InvalidCallback);
 		}
 
 		if (!CreateSocket())
 		{
-			return false;
+			return std::unexpected(StartError::CreateSocketFailed);
 		}
 
 		if (!BindSocket())
 		{
 			socket_.Close();
-			return false;
+			return std::unexpected(StartError::BindSocketFailed);
 		}
 
 		if (!ConfigureSocket())
 		{
 			socket_.Close();
-			return false;
+			return std::unexpected(StartError::ConfigureSocketFailed);
 		}
 
 		if (!SetServerAddress(serverIp, serverPort))
 		{
 			socket_.Close();
-			return false;
+			return std::unexpected(StartError::SetServerAddressFailed);
 		}
 
 		packetReceivedCallback_ = std::move(packetReceivedCallback);
 
 		isRunning_.store(true);
 
-		recvThread_ = std::jthread(
-			[this](std::stop_token stopToken)
-			{
-				RecvLoop(stopToken);
-			}
-		);
+		if (!StartRecvThread())
+		{
+			isRunning_.store(false);
+			socket_.Close();
+			packetReceivedCallback_ = {};
+			serverAddress_ = {};
+			return std::unexpected(StartError::StartRecvThreadFailed);
+		}
 
-		return true;
+		return {};
 	}
 
 	void UdpSocketTransport::Stop() noexcept
@@ -201,6 +234,25 @@ namespace client::net
 		}
 
 		serverAddress_ = serverAddress;
+		return true;
+	}
+
+	bool UdpSocketTransport::StartRecvThread()
+	{
+		try
+		{
+			recvThread_ = std::jthread(
+				[this](std::stop_token stopToken)
+				{
+					RecvLoop(stopToken);
+				}
+			);
+		}
+		catch (...)
+		{
+			return false;
+		}
+
 		return true;
 	}
 

@@ -59,14 +59,62 @@ namespace client::net
 		case StartError::InvalidTransportType:
 			return "InvalidTransportType";
 
-		case StartError::SocketTransportStartFailed:
-			return "SocketTransportStartFailed";
+		case StartError::SocketTransportAlreadyRunning:
+			return "SocketTransportAlreadyRunning";
+
+		case StartError::SocketTransportInvalidCallback:
+			return "SocketTransportInvalidCallback";
+
+		case StartError::SocketTransportCreateSocketFailed:
+			return "SocketTransportCreateSocketFailed";
+
+		case StartError::SocketTransportBindSocketFailed:
+			return "SocketTransportBindSocketFailed";
+
+		case StartError::SocketTransportConfigureSocketFailed:
+			return "SocketTransportConfigureSocketFailed";
+
+		case StartError::SocketTransportSetServerAddressFailed:
+			return "SocketTransportSetServerAddressFailed";
+
+		case StartError::SocketTransportStartRecvThreadFailed:
+			return "SocketTransportStartRecvThreadFailed";
 
 		case StartError::IocpTransportStartFailed:
 			return "IocpTransportStartFailed";
 
 		default:
 			return "Unknown";
+		}
+	}
+
+	UdpClient::StartError UdpClient::ToStartError(UdpSocketTransport::StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case UdpSocketTransport::StartError::AlreadyRunning:
+			return StartError::SocketTransportAlreadyRunning;
+
+		case UdpSocketTransport::StartError::InvalidCallback:
+			return StartError::SocketTransportInvalidCallback;
+
+		case UdpSocketTransport::StartError::CreateSocketFailed:
+			return StartError::SocketTransportCreateSocketFailed;
+
+		case UdpSocketTransport::StartError::BindSocketFailed:
+			return StartError::SocketTransportBindSocketFailed;
+
+		case UdpSocketTransport::StartError::ConfigureSocketFailed:
+			return StartError::SocketTransportConfigureSocketFailed;
+
+		case UdpSocketTransport::StartError::SetServerAddressFailed:
+			return StartError::SocketTransportSetServerAddressFailed;
+
+		case UdpSocketTransport::StartError::StartRecvThreadFailed:
+			return StartError::SocketTransportStartRecvThreadFailed;
+
+		default:
+			return StartError::SocketTransportStartRecvThreadFailed;
 		}
 	}
 
@@ -186,19 +234,22 @@ namespace client::net
 		switch (transportType_)
 		{
 		case config::ClientTransportType::Socket:
-			if (!socketTransport_.Start(
+		{
+			const UdpSocketTransport::StartResult startResult = socketTransport_.Start(
 				serverIp,
 				serverPort,
 				[this](const char* packetData, int packetSize)
 				{
 					HandlePacket(packetData, packetSize);
 				}
-			))
+			);
+			if (!startResult.has_value())
 			{
-				return std::unexpected(StartError::SocketTransportStartFailed);
+				return std::unexpected(ToStartError(startResult.error()));
 			}
 
 			return {};
+		}
 
 		case config::ClientTransportType::Iocp:
 			if (!iocpTransport_.Start(

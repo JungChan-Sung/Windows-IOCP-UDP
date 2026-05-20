@@ -26,7 +26,15 @@ namespace client::app
 
 			UdpClientAlreadyRunning,
 			UdpClientInvalidTransportType,
-			UdpClientSocketTransportStartFailed,
+
+			UdpClientSocketTransportAlreadyRunning,
+			UdpClientSocketTransportInvalidCallback,
+			UdpClientSocketTransportCreateSocketFailed,
+			UdpClientSocketTransportBindSocketFailed,
+			UdpClientSocketTransportConfigureSocketFailed,
+			UdpClientSocketTransportSetServerAddressFailed,
+			UdpClientSocketTransportStartRecvThreadFailed,
+
 			UdpClientIocpTransportStartFailed,
 
 			GameWindowCreateFailed,

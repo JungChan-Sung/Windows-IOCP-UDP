@@ -64,8 +64,26 @@ namespace client::app
 		case RunError::UdpClientInvalidTransportType:
 			return "UdpClientInvalidTransportType";
 
-		case RunError::UdpClientSocketTransportStartFailed:
-			return "UdpClientSocketTransportStartFailed";
+		case RunError::UdpClientSocketTransportAlreadyRunning:
+			return "UdpClientSocketTransportAlreadyRunning";
+
+		case RunError::UdpClientSocketTransportInvalidCallback:
+			return "UdpClientSocketTransportInvalidCallback";
+
+		case RunError::UdpClientSocketTransportCreateSocketFailed:
+			return "UdpClientSocketTransportCreateSocketFailed";
+
+		case RunError::UdpClientSocketTransportBindSocketFailed:
+			return "UdpClientSocketTransportBindSocketFailed";
+
+		case RunError::UdpClientSocketTransportConfigureSocketFailed:
+			return "UdpClientSocketTransportConfigureSocketFailed";
+
+		case RunError::UdpClientSocketTransportSetServerAddressFailed:
+			return "UdpClientSocketTransportSetServerAddressFailed";
+
+		case RunError::UdpClientSocketTransportStartRecvThreadFailed:
+			return "UdpClientSocketTransportStartRecvThreadFailed";
 
 		case RunError::UdpClientIocpTransportStartFailed:
 			return "UdpClientIocpTransportStartFailed";
@@ -91,8 +109,26 @@ namespace client::app
 		case net::UdpClient::StartError::InvalidTransportType:
 			return RunError::UdpClientInvalidTransportType;
 
-		case net::UdpClient::StartError::SocketTransportStartFailed:
-			return RunError::UdpClientSocketTransportStartFailed;
+		case net::UdpClient::StartError::SocketTransportAlreadyRunning:
+			return RunError::UdpClientSocketTransportAlreadyRunning;
+
+		case net::UdpClient::StartError::SocketTransportInvalidCallback:
+			return RunError::UdpClientSocketTransportInvalidCallback;
+
+		case net::UdpClient::StartError::SocketTransportCreateSocketFailed:
+			return RunError::UdpClientSocketTransportCreateSocketFailed;
+
+		case net::UdpClient::StartError::SocketTransportBindSocketFailed:
+			return RunError::UdpClientSocketTransportBindSocketFailed;
+
+		case net::UdpClient::StartError::SocketTransportConfigureSocketFailed:
+			return RunError::UdpClientSocketTransportConfigureSocketFailed;
+
+		case net::UdpClient::StartError::SocketTransportSetServerAddressFailed:
+			return RunError::UdpClientSocketTransportSetServerAddressFailed;
+
+		case net::UdpClient::StartError::SocketTransportStartRecvThreadFailed:
+			return RunError::UdpClientSocketTransportStartRecvThreadFailed;
 
 		case net::UdpClient::StartError::IocpTransportStartFailed:
 			return RunError::UdpClientIocpTransportStartFailed;

@@ -41,15 +41,23 @@ namespace client::net
 		{
 			AlreadyRunning,
 			InvalidTransportType,
-			SocketTransportStartFailed,
+
+			SocketTransportAlreadyRunning,
+			SocketTransportInvalidCallback,
+			SocketTransportCreateSocketFailed,
+			SocketTransportBindSocketFailed,
+			SocketTransportConfigureSocketFailed,
+			SocketTransportSetServerAddressFailed,
+			SocketTransportStartRecvThreadFailed,
+
 			IocpTransportStartFailed,
 		};
 
 	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
-
-		using StartResult = std::expected<void, StartError>;
 
 	private:
 		using ClientWorldType = game::ClientWorld;
@@ -82,6 +90,8 @@ namespace client::net
 
 	public:
 		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+		[[nodiscard]] static StartError ToStartError(UdpSocketTransport::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);

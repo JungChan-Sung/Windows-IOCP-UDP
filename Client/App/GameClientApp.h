@@ -5,6 +5,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <expected>
+#include <string_view>
 #include <thread>
 
 #include <Client/Config/ClientConfig.h>
@@ -17,6 +19,18 @@ namespace client::app
 {
 	class GameClientApp
 	{
+	public:
+		enum class RunError
+		{
+			AlreadyRunning,
+			UdpClientStartFailed,
+			GameWindowCreateFailed,
+			MessageLoopFailed,
+		};
+
+	public:
+		using RunResult = std::expected<void, RunError>;
+
 	private:
 		config::ClientConfig config_;
 
@@ -44,7 +58,10 @@ namespace client::app
 		GameClientApp& operator=(GameClientApp&&) = delete;
 
 	public:
-		[[nodiscard]] bool Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);
+		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
+
+	public:
+		[[nodiscard]] RunResult Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);
 
 	private:
 		[[nodiscard]] config::ClientConfig BuildClientConfig(const char* serverIp, unsigned short serverPort) const;

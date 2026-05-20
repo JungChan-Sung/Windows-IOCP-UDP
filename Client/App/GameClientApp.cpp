@@ -52,11 +52,32 @@ namespace
 
 namespace client::app
 {
-	bool GameClientApp::Run(HINSTANCE instanceHandle, const char* serverIp, unsigned short serverPort)
+	std::string_view GameClientApp::ToString(RunError runError) noexcept
+	{
+		switch (runError)
+		{
+		case RunError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case RunError::UdpClientStartFailed:
+			return "UdpClientStartFailed";
+
+		case RunError::GameWindowCreateFailed:
+			return "GameWindowCreateFailed";
+
+		case RunError::MessageLoopFailed:
+			return "MessageLoopFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	GameClientApp::RunResult GameClientApp::Run(HINSTANCE instanceHandle, const char* serverIp, unsigned short serverPort)
 	{
 		if (isRunning_.load())
 		{
-			return false;
+			return std::unexpected(RunError::AlreadyRunning);
 		}
 
 		config_ = BuildClientConfig(serverIp, serverPort);
@@ -78,14 +99,14 @@ namespace client::app
 
 		if (!udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_))
 		{
-			return false;
+			return std::unexpected(RunError::UdpClientStartFailed);
 		}
 
 		if (!gameWindow_.Create(instanceHandle, world_, gdiRenderer_, L"UDP Game Client"))
 		{
 			udpClient_.Stop();
 			world_.Clear();
-			return false;
+			return std::unexpected(RunError::GameWindowCreateFailed);
 		}
 
 		isRunning_.store(true);
@@ -124,7 +145,12 @@ namespace client::app
 		udpClient_.Stop();
 		world_.Clear();
 
-		return exitCode == 0;
+		if (exitCode != 0)
+		{
+			return std::unexpected(RunError::MessageLoopFailed);
+		}
+
+		return {};
 	}
 
 	config::ClientConfig GameClientApp::BuildClientConfig(const char* serverIp, unsigned short serverPort) const
@@ -158,7 +184,7 @@ namespace client::app
 		stream << "Client config. "
 			<< "ServerIp=" << config_.network.serverIp
 			<< ", ServerPort=" << config_.network.serverPort
-			<< ", TransportType=" << ToString(config_.network.transportType)
+			<< ", TransportType=" << ::ToString(config_.network.transportType)
 			<< ", IocpWorkerThreadCount=" << config_.network.iocpWorkerThreadCount
 			<< ", IocpRecvContextCount=" << config_.network.iocpRecvContextCount
 			<< ", UpdateSleepMs=" << config_.timing.updateSleepInterval.count()

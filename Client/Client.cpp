@@ -28,9 +28,10 @@ int main()
 		}
 
 		client::app::GameClientApp gameClientApp;
-		if (!gameClientApp.Run(instanceHandle))
+		const client::app::GameClientApp::RunResult runResult = gameClientApp.Run(instanceHandle);
+		if (!runResult.has_value())
 		{
-			std::cerr << "GameClientApp.Run failed.\n";
+			std::cerr << "GameClientApp.Run failed. Error=" << client::app::GameClientApp::ToString(runResult.error()) << '\n';
 			return 1;
 		}
 

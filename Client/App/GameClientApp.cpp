@@ -58,8 +58,17 @@ namespace client::app
 		case RunError::AlreadyRunning:
 			return "AlreadyRunning";
 
-		case RunError::UdpClientStartFailed:
-			return "UdpClientStartFailed";
+		case RunError::UdpClientAlreadyRunning:
+			return "UdpClientAlreadyRunning";
+
+		case RunError::UdpClientInvalidTransportType:
+			return "UdpClientInvalidTransportType";
+
+		case RunError::UdpClientSocketTransportStartFailed:
+			return "UdpClientSocketTransportStartFailed";
+
+		case RunError::UdpClientIocpTransportStartFailed:
+			return "UdpClientIocpTransportStartFailed";
 
 		case RunError::GameWindowCreateFailed:
 			return "GameWindowCreateFailed";
@@ -69,6 +78,27 @@ namespace client::app
 
 		default:
 			return "Unknown";
+		}
+	}
+
+	GameClientApp::RunError GameClientApp::ToRunError(net::UdpClient::StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case net::UdpClient::StartError::AlreadyRunning:
+			return RunError::UdpClientAlreadyRunning;
+
+		case net::UdpClient::StartError::InvalidTransportType:
+			return RunError::UdpClientInvalidTransportType;
+
+		case net::UdpClient::StartError::SocketTransportStartFailed:
+			return RunError::UdpClientSocketTransportStartFailed;
+
+		case net::UdpClient::StartError::IocpTransportStartFailed:
+			return RunError::UdpClientIocpTransportStartFailed;
+
+		default:
+			return RunError::UdpClientInvalidTransportType;
 		}
 	}
 
@@ -96,9 +126,10 @@ namespace client::app
 			config_.network.iocpRecvContextCount
 		);
 
-		if (!udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_))
+		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
+		if (!udpClientStartResult.has_value())
 		{
-			return std::unexpected(RunError::UdpClientStartFailed);
+			return std::unexpected(ToRunError(udpClientStartResult.error()));
 		}
 
 		if (!gameWindow_.Create(instanceHandle, world_, gdiRenderer_, L"UDP Game Client"))

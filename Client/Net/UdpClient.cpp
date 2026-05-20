@@ -1,5 +1,6 @@
 #include "UdpClient.h"
 
+#include <expected>
 #include <functional>
 #include <type_traits>
 #include <optional>
@@ -48,11 +49,32 @@ namespace client::net
 		Stop();
 	}
 
-	bool UdpClient::Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world)
+	std::string_view UdpClient::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::InvalidTransportType:
+			return "InvalidTransportType";
+
+		case StartError::SocketTransportStartFailed:
+			return "SocketTransportStartFailed";
+
+		case StartError::IocpTransportStartFailed:
+			return "IocpTransportStartFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	UdpClient::StartResult UdpClient::Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world)
 	{
 		if (isRunning_.load())
 		{
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		world_ = &world;
@@ -62,16 +84,17 @@ namespace client::net
 		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
 		RegisterPacketHandlers();
 
-		if (!StartTransport(serverIp, serverPort))
+		const StartResult startTransportResult = StartTransport(serverIp, serverPort);
+		if (!startTransportResult.has_value())
 		{
 			world_ = nullptr;
 			packetDispatcher_.Clear();
 			snapshotChunkAssembler_.Clear();
-			return false;
+			return startTransportResult;
 		}
 
 		isRunning_.store(true);
-		return true;
+		return {};
 	}
 
 	void UdpClient::Stop() noexcept
@@ -158,22 +181,27 @@ namespace client::net
 		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
-	bool UdpClient::StartTransport(const char* serverIp, unsigned short serverPort)
+	UdpClient::StartResult UdpClient::StartTransport(const char* serverIp, unsigned short serverPort)
 	{
 		switch (transportType_)
 		{
 		case config::ClientTransportType::Socket:
-			return socketTransport_.Start(
+			if (!socketTransport_.Start(
 				serverIp,
 				serverPort,
 				[this](const char* packetData, int packetSize)
 				{
 					HandlePacket(packetData, packetSize);
 				}
-			);
+			))
+			{
+				return std::unexpected(StartError::SocketTransportStartFailed);
+			}
+
+			return {};
 
 		case config::ClientTransportType::Iocp:
-			return iocpTransport_.Start(
+			if (!iocpTransport_.Start(
 				serverIp,
 				serverPort,
 				iocpWorkerThreadCount_,
@@ -182,10 +210,15 @@ namespace client::net
 				{
 					HandlePacket(packetData, packetSize);
 				}
-			);
+			))
+			{
+				return std::unexpected(StartError::IocpTransportStartFailed);
+			}
+
+			return {};
 
 		default:
-			return false;
+			return std::unexpected(StartError::InvalidTransportType);
 		}
 	}
 

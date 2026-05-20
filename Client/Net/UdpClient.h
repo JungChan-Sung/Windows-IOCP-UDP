@@ -3,6 +3,8 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <expected>
+#include <string_view>
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
@@ -35,8 +37,19 @@ namespace client::net
 	class UdpClient
 	{
 	public:
+		enum class StartError
+		{
+			AlreadyRunning,
+			InvalidTransportType,
+			SocketTransportStartFailed,
+			IocpTransportStartFailed,
+		};
+
+	public:
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
+
+		using StartResult = std::expected<void, StartError>;
 
 	private:
 		using ClientWorldType = game::ClientWorld;
@@ -68,7 +81,10 @@ namespace client::net
 		UdpClient& operator=(UdpClient&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);
 		void Stop() noexcept;
 
 		[[nodiscard]] bool SendJoinRequest();
@@ -78,7 +94,7 @@ namespace client::net
 		[[nodiscard]] bool SendJoinRoomRequest(RoomId roomId);
 
 	private:
-		[[nodiscard]] bool StartTransport(const char* serverIp, unsigned short serverPort);
+		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
 

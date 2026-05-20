@@ -23,7 +23,12 @@ namespace client::app
 		enum class RunError
 		{
 			AlreadyRunning,
-			UdpClientStartFailed,
+
+			UdpClientAlreadyRunning,
+			UdpClientInvalidTransportType,
+			UdpClientSocketTransportStartFailed,
+			UdpClientIocpTransportStartFailed,
+
 			GameWindowCreateFailed,
 			MessageLoopFailed,
 		};
@@ -59,6 +64,7 @@ namespace client::app
 
 	public:
 		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
+		[[nodiscard]] static RunError ToRunError(net::UdpClient::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] RunResult Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);

@@ -45,35 +45,11 @@ namespace server::app
 		case RunError::LoggerStartFailed:
 			return "LoggerStartFailed";
 
-		case RunError::UdpServerAlreadyRunning:
-			return "UdpServerAlreadyRunning";
-
-		case RunError::UdpServerTransportStartFailed:
-			return "UdpServerTransportStartFailed";
-
-		case RunError::UdpServerGameTickRunnerStartFailed:
-			return "UdpServerGameTickRunnerStartFailed";
+		case RunError::UdpServerStartFailed:
+			return "UdpServerStartFailed";
 
 		default:
 			return "Unknown";
-		}
-	}
-
-	GameServerApp::RunError GameServerApp::ToRunError(net::UdpServer::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case net::UdpServer::StartError::AlreadyRunning:
-			return RunError::UdpServerAlreadyRunning;
-
-		case net::UdpServer::StartError::UdpTransportStartFailed:
-			return RunError::UdpServerTransportStartFailed;
-
-		case net::UdpServer::StartError::GameTickRunnerStartFailed:
-			return RunError::UdpServerGameTickRunnerStartFailed;
-
-		default:
-			return RunError::UdpServerTransportStartFailed;
 		}
 	}
 
@@ -92,13 +68,12 @@ namespace server::app
 
 		udpServer_.AttachLogger(logger_);
 
-		const net::UdpServer::StartResult udpServerStartResult = udpServer_.Start(loadResult.config);
-		if (!udpServerStartResult.has_value())
+		if (!udpServer_.Start(loadResult.config))
 		{
 			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
 			logger_.Stop();
-			return std::unexpected(ToRunError(udpServerStartResult.error()));
+			return std::unexpected(RunError::UdpServerStartFailed);
 		}
 
 		LogStartupConfig(udpServer_.GetConfig());

@@ -17,7 +17,10 @@ namespace server::app
 		enum class RunError
 		{
 			LoggerStartFailed,
-			UdpServerStartFailed,
+
+			UdpServerAlreadyRunning,
+			UdpServerTransportStartFailed,
+			UdpServerGameTickRunnerStartFailed,
 		};
 
 	public:
@@ -39,6 +42,9 @@ namespace server::app
 
 	public:
 		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
+
+	private:
+		[[nodiscard]] static RunError ToRunError(net::UdpServer::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] RunResult Run(unsigned short port = 0);

@@ -64,6 +64,8 @@ namespace client::app
 
 	public:
 		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
+
+	private:
 		[[nodiscard]] static RunError ToRunError(net::UdpClient::StartError startError) noexcept;
 
 	public:

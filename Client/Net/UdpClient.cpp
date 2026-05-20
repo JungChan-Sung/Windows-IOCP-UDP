@@ -2,8 +2,8 @@
 
 #include <expected>
 #include <functional>
-#include <type_traits>
 #include <optional>
+#include <type_traits>
 
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>

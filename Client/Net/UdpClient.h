@@ -91,6 +91,7 @@ namespace client::net
 	public:
 		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
 
+	private:
 		[[nodiscard]] static StartError ToStartError(UdpSocketTransport::StartError startError) noexcept;
 
 	public:

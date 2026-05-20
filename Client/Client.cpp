@@ -16,7 +16,7 @@ int main()
 		const common::net::WsaSession::InitializeResult initializeResult = wsaSession.Initialize();
 		if (!initializeResult.has_value())
 		{
-			std::cerr << "WsaSession.Initialize failed. ErrorCode="	<< initializeResult.error().errorCode << '\n';
+			std::cerr << "WsaSession.Initialize failed. ErrorCode=" << initializeResult.error().errorCode << '\n';
 			return 1;
 		}
 

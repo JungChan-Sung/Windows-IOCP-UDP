@@ -7,7 +7,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <iostream>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
@@ -198,7 +197,6 @@ namespace client::app
 			<< '\n';
 
 		::OutputDebugStringA(stream.str().c_str());
-		std::cout << stream.str();
 	}
 
 	int GameClientApp::MessageLoop()

@@ -4,8 +4,11 @@
 
 #include <chrono>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <thread>
+#include <type_traits>
+#include <variant>
 
 #include <Server/Config/ServerConfigLoader.h>
 
@@ -34,143 +37,42 @@ namespace
 			return "Unknown";
 		}
 	}
+
+	[[nodiscard]] std::string FormatScopedError(std::string_view scope, std::string_view detail)
+	{
+		std::string result;
+		result.reserve(scope.size() + 1 + detail.size());
+		result.append(scope);
+		result.push_back('.');
+		result.append(detail);
+		return result;
+	}
 }
 
 namespace server::app
 {
-	std::string_view GameServerApp::ToString(RunError runError) noexcept
+	std::string GameServerApp::ToString(const RunError& runError)
 	{
-		switch (runError)
-		{
-		case RunError::LoggerInvalidWorkerThreadCount:
-			return "LoggerInvalidWorkerThreadCount";
+		return std::visit(
+			[](const auto& error) -> std::string
+			{
+				using ErrorType = std::remove_cvref_t<decltype(error)>;
 
-		case RunError::LoggerAlreadyStarted:
-			return "LoggerAlreadyStarted";
-
-		case RunError::LoggerThreadPoolInvalidWorkerThreadCount:
-			return "LoggerThreadPoolInvalidWorkerThreadCount";
-
-		case RunError::LoggerThreadPoolAlreadyRunning:
-			return "LoggerThreadPoolAlreadyRunning";
-
-		case RunError::LoggerThreadPoolStartWorkerThreadsFailed:
-			return "LoggerThreadPoolStartWorkerThreadsFailed";
-
-		case RunError::UdpServerAlreadyRunning:
-			return "UdpServerAlreadyRunning";
-
-		case RunError::UdpServerTransportAlreadyRunning:
-			return "UdpServerTransportAlreadyRunning";
-
-		case RunError::UdpServerTransportInvalidPacketReceivedHandler:
-			return "UdpServerTransportInvalidPacketReceivedHandler";
-
-		case RunError::UdpServerTransportCreateSocketFailed:
-			return "UdpServerTransportCreateSocketFailed";
-
-		case RunError::UdpServerTransportBindSocketFailed:
-			return "UdpServerTransportBindSocketFailed";
-
-		case RunError::UdpServerTransportConfigureSocketFailed:
-			return "UdpServerTransportConfigureSocketFailed";
-
-		case RunError::UdpServerTransportCreateIocpFailed:
-			return "UdpServerTransportCreateIocpFailed";
-
-		case RunError::UdpServerTransportStartWorkerThreadsFailed:
-			return "UdpServerTransportStartWorkerThreadsFailed";
-
-		case RunError::UdpServerTransportCreateRecvContextsFailed:
-			return "UdpServerTransportCreateRecvContextsFailed";
-
-		case RunError::UdpServerGameTickRunnerAlreadyRunning:
-			return "UdpServerGameTickRunnerAlreadyRunning";
-
-		case RunError::UdpServerGameTickRunnerInvalidTickInterval:
-			return "UdpServerGameTickRunnerInvalidTickInterval";
-
-		case RunError::UdpServerGameTickRunnerInvalidTickHandler:
-			return "UdpServerGameTickRunnerInvalidTickHandler";
-
-		case RunError::UdpServerGameTickRunnerStartThreadFailed:
-			return "UdpServerGameTickRunnerStartThreadFailed";
-
-		default:
-			return "Unknown";
-		}
-	}
-
-	GameServerApp::RunError GameServerApp::ToRunError(net::UdpServer::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case net::UdpServer::StartError::AlreadyRunning:
-			return RunError::UdpServerAlreadyRunning;
-
-		case net::UdpServer::StartError::UdpTransportAlreadyRunning:
-			return RunError::UdpServerTransportAlreadyRunning;
-
-		case net::UdpServer::StartError::UdpTransportInvalidPacketReceivedHandler:
-			return RunError::UdpServerTransportInvalidPacketReceivedHandler;
-
-		case net::UdpServer::StartError::UdpTransportCreateSocketFailed:
-			return RunError::UdpServerTransportCreateSocketFailed;
-
-		case net::UdpServer::StartError::UdpTransportBindSocketFailed:
-			return RunError::UdpServerTransportBindSocketFailed;
-
-		case net::UdpServer::StartError::UdpTransportConfigureSocketFailed:
-			return RunError::UdpServerTransportConfigureSocketFailed;
-
-		case net::UdpServer::StartError::UdpTransportCreateIocpFailed:
-			return RunError::UdpServerTransportCreateIocpFailed;
-
-		case net::UdpServer::StartError::UdpTransportStartWorkerThreadsFailed:
-			return RunError::UdpServerTransportStartWorkerThreadsFailed;
-
-		case net::UdpServer::StartError::UdpTransportCreateRecvContextsFailed:
-			return RunError::UdpServerTransportCreateRecvContextsFailed;
-
-		case net::UdpServer::StartError::GameTickRunnerAlreadyRunning:
-			return RunError::UdpServerGameTickRunnerAlreadyRunning;
-
-		case net::UdpServer::StartError::GameTickRunnerInvalidTickInterval:
-			return RunError::UdpServerGameTickRunnerInvalidTickInterval;
-
-		case net::UdpServer::StartError::GameTickRunnerInvalidTickHandler:
-			return RunError::UdpServerGameTickRunnerInvalidTickHandler;
-
-		case net::UdpServer::StartError::GameTickRunnerStartThreadFailed:
-			return RunError::UdpServerGameTickRunnerStartThreadFailed;
-
-		default:
-			return RunError::UdpServerTransportCreateRecvContextsFailed;
-		}
-	}
-
-	GameServerApp::RunError GameServerApp::ToRunError(common::log::AsyncLogWriter::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case common::log::AsyncLogWriter::StartError::InvalidWorkerThreadCount:
-			return RunError::LoggerInvalidWorkerThreadCount;
-
-		case common::log::AsyncLogWriter::StartError::AlreadyStarted:
-			return RunError::LoggerAlreadyStarted;
-
-		case common::log::AsyncLogWriter::StartError::ThreadPoolInvalidWorkerThreadCount:
-			return RunError::LoggerThreadPoolInvalidWorkerThreadCount;
-
-		case common::log::AsyncLogWriter::StartError::ThreadPoolAlreadyRunning:
-			return RunError::LoggerThreadPoolAlreadyRunning;
-
-		case common::log::AsyncLogWriter::StartError::ThreadPoolStartWorkerThreadsFailed:
-			return RunError::LoggerThreadPoolStartWorkerThreadsFailed;
-
-		default:
-			return RunError::LoggerThreadPoolStartWorkerThreadsFailed;
-		}
+				if constexpr (std::is_same_v<ErrorType, common::log::AsyncLogWriter::StartError>)
+				{
+					return FormatScopedError("Logger", common::log::AsyncLogWriter::ToString(error));
+				}
+				else if constexpr (std::is_same_v<ErrorType, net::UdpServer::StartError>)
+				{
+					return FormatScopedError("UdpServer", net::UdpServer::ToString(error));
+				}
+				else
+				{
+					return "Unknown";
+				}
+			},
+			runError
+		);
 	}
 
 	GameServerApp::RunResult GameServerApp::Run(unsigned short port)
@@ -184,7 +86,7 @@ namespace server::app
 		);
 		if (!loggerStartResult.has_value())
 		{
-			return std::unexpected(ToRunError(loggerStartResult.error()));
+			return std::unexpected(RunError{ loggerStartResult.error() });
 		}
 
 		LogConfigWarnings(loadResult.warningList);
@@ -197,7 +99,7 @@ namespace server::app
 			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
 			logger_.Stop();
-			return std::unexpected(ToRunError(udpServerStartResult.error()));
+			return std::unexpected(RunError{ udpServerStartResult.error() });
 		}
 
 		LogStartupConfig(udpServer_.GetConfig());

@@ -3,7 +3,9 @@
 #include <atomic>
 #include <cstddef>
 #include <expected>
+#include <string>
 #include <string_view>
+#include <variant>
 
 #include <Common/Log/ConsoleLogger.h>
 #include <Common/Log/ILogger.h>
@@ -15,17 +17,14 @@ namespace common::log
 	class AsyncLogWriter final : public ILogger
 	{
 	public:
-		enum class StartError
+		enum class StartFailure
 		{
 			InvalidWorkerThreadCount,
 			AlreadyStarted,
-
-			ThreadPoolInvalidWorkerThreadCount,
-			ThreadPoolAlreadyRunning,
-			ThreadPoolStartWorkerThreadsFailed,
 		};
 
 	public:
+		using StartError = std::variant<StartFailure, threading::ThreadPool::StartError>;
 		using StartResult = std::expected<void, StartError>;
 
 	private:
@@ -45,10 +44,7 @@ namespace common::log
 		AsyncLogWriter& operator=(AsyncLogWriter&&) = delete;
 
 	public:
-		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
-
-	private:
-		[[nodiscard]] static StartError ToStartError(threading::ThreadPool::StartError startError) noexcept;
+		[[nodiscard]] static std::string ToString(const StartError& startError) noexcept;
 
 	public:
 		[[nodiscard]] StartResult Start(std::size_t workerThreadCount = 1);

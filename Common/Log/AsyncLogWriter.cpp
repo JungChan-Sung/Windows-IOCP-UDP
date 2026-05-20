@@ -2,7 +2,23 @@
 
 #include <expected>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
+#include <variant>
+
+namespace
+{
+	[[nodiscard]] std::string FormatScopedError(std::string_view scope, std::string_view detail)
+	{
+		std::string result;
+		result.reserve(scope.size() + 1 + detail.size());
+		result.append(scope);
+		result.push_back('.');
+		result.append(detail);
+		return result;
+	}
+}
 
 namespace common::log
 {
@@ -11,64 +27,56 @@ namespace common::log
 		Stop();
 	}
 
-	std::string_view AsyncLogWriter::ToString(StartError startError) noexcept
+	std::string AsyncLogWriter::ToString(const StartError& startError) noexcept
 	{
-		switch (startError)
-		{
-		case StartError::InvalidWorkerThreadCount:
-			return "InvalidWorkerThreadCount";
+		return std::visit(
+			[](const auto& error) -> std::string
+			{
+				using ErrorType = std::remove_cvref_t<decltype(error)>;
 
-		case StartError::AlreadyStarted:
-			return "AlreadyStarted";
+				if constexpr (std::is_same_v<ErrorType, StartFailure>)
+				{
+					switch (error)
+					{
+					case StartFailure::InvalidWorkerThreadCount:
+						return "InvalidWorkerThreadCount";
 
-		case StartError::ThreadPoolInvalidWorkerThreadCount:
-			return "ThreadPoolInvalidWorkerThreadCount";
+					case StartFailure::AlreadyStarted:
+						return "AlreadyStarted";
 
-		case StartError::ThreadPoolAlreadyRunning:
-			return "ThreadPoolAlreadyRunning";
-
-		case StartError::ThreadPoolStartWorkerThreadsFailed:
-			return "ThreadPoolStartWorkerThreadsFailed";
-
-		default:
-			return "Unknown";
-		}
-	}
-
-	AsyncLogWriter::StartError AsyncLogWriter::ToStartError(threading::ThreadPool::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case threading::ThreadPool::StartError::InvalidWorkerThreadCount:
-			return StartError::ThreadPoolInvalidWorkerThreadCount;
-
-		case threading::ThreadPool::StartError::AlreadyRunning:
-			return StartError::ThreadPoolAlreadyRunning;
-
-		case threading::ThreadPool::StartError::StartWorkerThreadsFailed:
-			return StartError::ThreadPoolStartWorkerThreadsFailed;
-
-		default:
-			return StartError::ThreadPoolStartWorkerThreadsFailed;
-		}
+					default:
+						return "Unknown";
+					}
+				}
+				else if constexpr (std::is_same_v<ErrorType, threading::ThreadPool::StartError>)
+				{
+					return FormatScopedError("ThreadPool", threading::ThreadPool::ToString(error));
+				}
+				else
+				{
+					return "Unknown";
+				}
+			},
+			startError
+		);
 	}
 
 	AsyncLogWriter::StartResult AsyncLogWriter::Start(std::size_t workerThreadCount)
 	{
 		if (workerThreadCount == 0)
 		{
-			return std::unexpected(StartError::InvalidWorkerThreadCount);
+			return std::unexpected(StartError{ StartFailure::InvalidWorkerThreadCount });
 		}
 
 		if (isStarted_.load())
 		{
-			return std::unexpected(StartError::AlreadyStarted);
+			return std::unexpected(StartError{ StartFailure::AlreadyStarted });
 		}
 
 		const threading::ThreadPool::StartResult threadPoolStartResult = threadPool_.Start(workerThreadCount);
 		if (!threadPoolStartResult.has_value())
 		{
-			return std::unexpected(ToStartError(threadPoolStartResult.error()));
+			return std::unexpected(StartError{ threadPoolStartResult.error() });
 		}
 
 		isStarted_.store(true);

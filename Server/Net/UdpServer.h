@@ -6,7 +6,9 @@
 #include <cstddef>
 #include <expected>
 #include <mutex>
+#include <string>
 #include <string_view>
+#include <variant>
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
@@ -43,26 +45,12 @@ namespace server::net
 	class UdpServer
 	{
 	public:
-		enum class StartError
+		struct AlreadyRunningError
 		{
-			AlreadyRunning,
-
-			UdpTransportAlreadyRunning,
-			UdpTransportInvalidPacketReceivedHandler,
-			UdpTransportCreateSocketFailed,
-			UdpTransportBindSocketFailed,
-			UdpTransportConfigureSocketFailed,
-			UdpTransportCreateIocpFailed,
-			UdpTransportStartWorkerThreadsFailed,
-			UdpTransportCreateRecvContextsFailed,
-
-			GameTickRunnerAlreadyRunning,
-			GameTickRunnerInvalidTickInterval,
-			GameTickRunnerInvalidTickHandler,
-			GameTickRunnerStartThreadFailed,
 		};
 
 	public:
+		using StartError = std::variant<AlreadyRunningError, UdpIocpTransport::StartError, game::GameTickRunner::StartError>;
 		using StartResult = std::expected<void, StartError>;
 
 		using PlayerId = common::game::PlayerId;
@@ -108,11 +96,7 @@ namespace server::net
 		UdpServer& operator=(UdpServer&&) = delete;
 
 	public:
-		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
-
-	private:
-		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
-		[[nodiscard]] static StartError ToStartError(game::GameTickRunner::StartError startError) noexcept;
+		[[nodiscard]] static std::string ToString(const StartError& startError);
 
 	public:
 		[[nodiscard]] StartResult Start(const server::config::ServerConfig& config);

@@ -108,7 +108,7 @@ namespace server::net
 		UdpServer& operator=(UdpServer&&) = delete;
 
 	public:
-		static [[nodiscard]] std::string_view ToString(StartError startError) noexcept;
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
 
 	private:
 		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;

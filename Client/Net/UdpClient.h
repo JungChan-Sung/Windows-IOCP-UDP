@@ -50,7 +50,15 @@ namespace client::net
 			SocketTransportSetServerAddressFailed,
 			SocketTransportStartRecvThreadFailed,
 
-			IocpTransportStartFailed,
+			IocpTransportAlreadyRunning,
+			IocpTransportInvalidCallback,
+			IocpTransportCreateSocketFailed,
+			IocpTransportBindSocketFailed,
+			IocpTransportConfigureSocketFailed,
+			IocpTransportSetServerAddressFailed,
+			IocpTransportCreateIocpFailed,
+			IocpTransportStartWorkerThreadsFailed,
+			IocpTransportCreateRecvContextsFailed,
 		};
 
 	public:
@@ -93,6 +101,7 @@ namespace client::net
 
 	private:
 		[[nodiscard]] static StartError ToStartError(UdpSocketTransport::StartError startError) noexcept;
+		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);

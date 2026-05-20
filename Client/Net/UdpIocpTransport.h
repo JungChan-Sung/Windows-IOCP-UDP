@@ -5,10 +5,12 @@
 #include <atomic>
 #include <cstddef>
 #include <deque>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -21,6 +23,22 @@ namespace client::net
 	class UdpIocpTransport
 	{
 	public:
+		enum class StartError
+		{
+			AlreadyRunning,
+			InvalidCallback,
+			CreateSocketFailed,
+			BindSocketFailed,
+			ConfigureSocketFailed,
+			SetServerAddressFailed,
+			CreateIocpFailed,
+			StartWorkerThreadsFailed,
+			CreateRecvContextsFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using PacketReceivedCallback = std::function<void(const char* packetData, int packetSize)>;
 
 	private:
@@ -58,7 +76,10 @@ namespace client::net
 		UdpIocpTransport& operator=(UdpIocpTransport&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult Start(
 			const char* serverIp,
 			unsigned short serverPort,
 			std::size_t workerThreadCount,

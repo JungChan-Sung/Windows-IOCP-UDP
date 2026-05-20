@@ -35,7 +35,15 @@ namespace client::app
 			UdpClientSocketTransportSetServerAddressFailed,
 			UdpClientSocketTransportStartRecvThreadFailed,
 
-			UdpClientIocpTransportStartFailed,
+			UdpClientIocpTransportAlreadyRunning,
+			UdpClientIocpTransportInvalidCallback,
+			UdpClientIocpTransportCreateSocketFailed,
+			UdpClientIocpTransportBindSocketFailed,
+			UdpClientIocpTransportConfigureSocketFailed,
+			UdpClientIocpTransportSetServerAddressFailed,
+			UdpClientIocpTransportCreateIocpFailed,
+			UdpClientIocpTransportStartWorkerThreadsFailed,
+			UdpClientIocpTransportCreateRecvContextsFailed,
 
 			GameWindowCreateFailed,
 			MessageLoopFailed,

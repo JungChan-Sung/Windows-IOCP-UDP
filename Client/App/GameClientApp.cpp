@@ -85,8 +85,32 @@ namespace client::app
 		case RunError::UdpClientSocketTransportStartRecvThreadFailed:
 			return "UdpClientSocketTransportStartRecvThreadFailed";
 
-		case RunError::UdpClientIocpTransportStartFailed:
-			return "UdpClientIocpTransportStartFailed";
+		case RunError::UdpClientIocpTransportAlreadyRunning:
+			return "UdpClientIocpTransportAlreadyRunning";
+
+		case RunError::UdpClientIocpTransportInvalidCallback:
+			return "UdpClientIocpTransportInvalidCallback";
+
+		case RunError::UdpClientIocpTransportCreateSocketFailed:
+			return "UdpClientIocpTransportCreateSocketFailed";
+
+		case RunError::UdpClientIocpTransportBindSocketFailed:
+			return "UdpClientIocpTransportBindSocketFailed";
+
+		case RunError::UdpClientIocpTransportConfigureSocketFailed:
+			return "UdpClientIocpTransportConfigureSocketFailed";
+
+		case RunError::UdpClientIocpTransportSetServerAddressFailed:
+			return "UdpClientIocpTransportSetServerAddressFailed";
+
+		case RunError::UdpClientIocpTransportCreateIocpFailed:
+			return "UdpClientIocpTransportCreateIocpFailed";
+
+		case RunError::UdpClientIocpTransportStartWorkerThreadsFailed:
+			return "UdpClientIocpTransportStartWorkerThreadsFailed";
+
+		case RunError::UdpClientIocpTransportCreateRecvContextsFailed:
+			return "UdpClientIocpTransportCreateRecvContextsFailed";
 
 		case RunError::GameWindowCreateFailed:
 			return "GameWindowCreateFailed";
@@ -130,8 +154,32 @@ namespace client::app
 		case net::UdpClient::StartError::SocketTransportStartRecvThreadFailed:
 			return RunError::UdpClientSocketTransportStartRecvThreadFailed;
 
-		case net::UdpClient::StartError::IocpTransportStartFailed:
-			return RunError::UdpClientIocpTransportStartFailed;
+		case net::UdpClient::StartError::IocpTransportAlreadyRunning:
+			return RunError::UdpClientIocpTransportAlreadyRunning;
+
+		case net::UdpClient::StartError::IocpTransportInvalidCallback:
+			return RunError::UdpClientIocpTransportInvalidCallback;
+
+		case net::UdpClient::StartError::IocpTransportCreateSocketFailed:
+			return RunError::UdpClientIocpTransportCreateSocketFailed;
+
+		case net::UdpClient::StartError::IocpTransportBindSocketFailed:
+			return RunError::UdpClientIocpTransportBindSocketFailed;
+
+		case net::UdpClient::StartError::IocpTransportConfigureSocketFailed:
+			return RunError::UdpClientIocpTransportConfigureSocketFailed;
+
+		case net::UdpClient::StartError::IocpTransportSetServerAddressFailed:
+			return RunError::UdpClientIocpTransportSetServerAddressFailed;
+
+		case net::UdpClient::StartError::IocpTransportCreateIocpFailed:
+			return RunError::UdpClientIocpTransportCreateIocpFailed;
+
+		case net::UdpClient::StartError::IocpTransportStartWorkerThreadsFailed:
+			return RunError::UdpClientIocpTransportStartWorkerThreadsFailed;
+
+		case net::UdpClient::StartError::IocpTransportCreateRecvContextsFailed:
+			return RunError::UdpClientIocpTransportCreateRecvContextsFailed;
 
 		default:
 			return RunError::UdpClientInvalidTransportType;

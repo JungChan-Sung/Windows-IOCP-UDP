@@ -16,7 +16,11 @@ namespace server::app
 	public:
 		enum class RunError
 		{
-			LoggerStartFailed,
+			LoggerInvalidWorkerThreadCount,
+			LoggerAlreadyStarted,
+			LoggerThreadPoolInvalidWorkerThreadCount,
+			LoggerThreadPoolAlreadyRunning,
+			LoggerThreadPoolStartWorkerThreadsFailed,
 
 			UdpServerAlreadyRunning,
 
@@ -57,6 +61,7 @@ namespace server::app
 
 	private:
 		[[nodiscard]] static RunError ToRunError(net::UdpServer::StartError startError) noexcept;
+		[[nodiscard]] static RunError ToRunError(common::log::AsyncLogWriter::StartError startError) noexcept;
 
 	public:
 		[[nodiscard]] RunResult Run(unsigned short port = 0);

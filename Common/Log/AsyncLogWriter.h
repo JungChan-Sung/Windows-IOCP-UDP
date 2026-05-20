@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <expected>
 #include <string_view>
 
 #include <Common/Log/ConsoleLogger.h>
@@ -13,6 +14,20 @@ namespace common::log
 {
 	class AsyncLogWriter final : public ILogger
 	{
+	public:
+		enum class StartError
+		{
+			InvalidWorkerThreadCount,
+			AlreadyStarted,
+
+			ThreadPoolInvalidWorkerThreadCount,
+			ThreadPoolAlreadyRunning,
+			ThreadPoolStartWorkerThreadsFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 	private:
 		ConsoleLogger logger_;
 		mutable threading::ThreadPool threadPool_;
@@ -30,7 +45,13 @@ namespace common::log
 		AsyncLogWriter& operator=(AsyncLogWriter&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(std::size_t workerThreadCount = 1);
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+	private:
+		[[nodiscard]] static StartError ToStartError(threading::ThreadPool::StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult Start(std::size_t workerThreadCount = 1);
 		void Stop() noexcept;
 
 		bool Log(LogLevel logLevel, std::string_view message) const override;

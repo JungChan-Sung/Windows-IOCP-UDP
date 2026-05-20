@@ -1,5 +1,6 @@
 #include "ThreadPool.h"
 
+#include <expected>
 #include <utility>
 
 namespace common::threading
@@ -9,16 +10,34 @@ namespace common::threading
 		Stop();
 	}
 
-	bool ThreadPool::Start(std::size_t workerThreadCount)
+	std::string_view ThreadPool::ToString(StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case StartError::InvalidWorkerThreadCount:
+			return "InvalidWorkerThreadCount";
+
+		case StartError::AlreadyRunning:
+			return "AlreadyRunning";
+
+		case StartError::StartWorkerThreadsFailed:
+			return "StartWorkerThreadsFailed";
+
+		default:
+			return "Unknown";
+		}
+	}
+
+	ThreadPool::StartResult ThreadPool::Start(std::size_t workerThreadCount)
 	{
 		if (workerThreadCount == 0)
 		{
-			return false;
+			return std::unexpected(StartError::InvalidWorkerThreadCount);
 		}
 
 		if (isRunning_.exchange(true))
 		{
-			return false;
+			return std::unexpected(StartError::AlreadyRunning);
 		}
 
 		isAcceptingTasks_.store(true);
@@ -40,10 +59,10 @@ namespace common::threading
 		catch (...)
 		{
 			Stop();
-			return false;
+			return std::unexpected(StartError::StartWorkerThreadsFailed);
 		}
 
-		return true;
+		return {};
 	}
 
 	void ThreadPool::Stop() noexcept

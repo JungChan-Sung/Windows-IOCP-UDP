@@ -3,10 +3,12 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
+#include <expected>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <stop_token>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -15,6 +17,16 @@ namespace common::threading
 	class ThreadPool
 	{
 	public:
+		enum class StartError
+		{
+			InvalidWorkerThreadCount,
+			AlreadyRunning,
+			StartWorkerThreadsFailed,
+		};
+
+	public:
+		using StartResult = std::expected<void, StartError>;
+
 		using Task = std::function<void()>;
 
 	private:
@@ -42,7 +54,10 @@ namespace common::threading
 		ThreadPool& operator=(ThreadPool&&) = delete;
 
 	public:
-		[[nodiscard]] bool Start(std::size_t workerThreadCount);
+		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
+
+	public:
+		[[nodiscard]] StartResult Start(std::size_t workerThreadCount);
 		void Stop() noexcept;
 		void StopAfterDrain() noexcept;
 

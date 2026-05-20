@@ -42,8 +42,20 @@ namespace server::app
 	{
 		switch (runError)
 		{
-		case RunError::LoggerStartFailed:
-			return "LoggerStartFailed";
+		case RunError::LoggerInvalidWorkerThreadCount:
+			return "LoggerInvalidWorkerThreadCount";
+
+		case RunError::LoggerAlreadyStarted:
+			return "LoggerAlreadyStarted";
+
+		case RunError::LoggerThreadPoolInvalidWorkerThreadCount:
+			return "LoggerThreadPoolInvalidWorkerThreadCount";
+
+		case RunError::LoggerThreadPoolAlreadyRunning:
+			return "LoggerThreadPoolAlreadyRunning";
+
+		case RunError::LoggerThreadPoolStartWorkerThreadsFailed:
+			return "LoggerThreadPoolStartWorkerThreadsFailed";
 
 		case RunError::UdpServerAlreadyRunning:
 			return "UdpServerAlreadyRunning";
@@ -137,15 +149,42 @@ namespace server::app
 		}
 	}
 
+	GameServerApp::RunError GameServerApp::ToRunError(common::log::AsyncLogWriter::StartError startError) noexcept
+	{
+		switch (startError)
+		{
+		case common::log::AsyncLogWriter::StartError::InvalidWorkerThreadCount:
+			return RunError::LoggerInvalidWorkerThreadCount;
+
+		case common::log::AsyncLogWriter::StartError::AlreadyStarted:
+			return RunError::LoggerAlreadyStarted;
+
+		case common::log::AsyncLogWriter::StartError::ThreadPoolInvalidWorkerThreadCount:
+			return RunError::LoggerThreadPoolInvalidWorkerThreadCount;
+
+		case common::log::AsyncLogWriter::StartError::ThreadPoolAlreadyRunning:
+			return RunError::LoggerThreadPoolAlreadyRunning;
+
+		case common::log::AsyncLogWriter::StartError::ThreadPoolStartWorkerThreadsFailed:
+			return RunError::LoggerThreadPoolStartWorkerThreadsFailed;
+
+		default:
+			return RunError::LoggerThreadPoolStartWorkerThreadsFailed;
+		}
+	}
+
 	GameServerApp::RunResult GameServerApp::Run(unsigned short port)
 	{
 		const config::ServerConfigLoadResult loadResult = BuildServerConfig(port);
 
 		logger_.SetMinimumLogLevel(loadResult.config.diagnostics.logLevel);
 
-		if (!logger_.Start(loadResult.config.diagnostics.asyncLogWorkerThreadCount))
+		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(
+			loadResult.config.diagnostics.asyncLogWorkerThreadCount
+		);
+		if (!loggerStartResult.has_value())
 		{
-			return std::unexpected(RunError::LoggerStartFailed);
+			return std::unexpected(ToRunError(loggerStartResult.error()));
 		}
 
 		LogConfigWarnings(loadResult.warningList);

@@ -105,14 +105,14 @@ namespace server::net
 		UdpServer& operator=(UdpServer&&) = delete;
 
 	public:
-		std::string_view ToString(StartError startError) noexcept;
+		static [[nodiscard]] std::string_view ToString(StartError startError) noexcept;
 
 	private:
 		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
 
 	public:
-		[[nodiscard]] StartResult  Start(const server::config::ServerConfig& config);
-		[[nodiscard]] StartResult  Start(unsigned short port, std::size_t workerThreadCount = 0);
+		[[nodiscard]] StartResult Start(const server::config::ServerConfig& config);
+		[[nodiscard]] StartResult Start(unsigned short port, std::size_t workerThreadCount = 0);
 		void Stop() noexcept;
 
 		void AttachLogger(common::log::ILogger& logger) noexcept;

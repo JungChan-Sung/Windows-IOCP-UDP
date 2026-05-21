@@ -2,9 +2,7 @@
 
 #include <atomic>
 #include <chrono>
-#include <condition_variable>
 #include <cstddef>
-#include <mutex>
 
 #include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Threading/ThreadPool.h>

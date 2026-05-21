@@ -7,18 +7,7 @@
 #include <utility>
 #include <variant>
 
-namespace
-{
-	[[nodiscard]] std::string FormatScopedError(std::string_view scope, std::string_view detail)
-	{
-		std::string result;
-		result.reserve(scope.size() + 1 + detail.size());
-		result.append(scope);
-		result.push_back('.');
-		result.append(detail);
-		return result;
-	}
-}
+#include <Common/String/StringFormat.h>
 
 namespace common::log
 {
@@ -50,7 +39,7 @@ namespace common::log
 				}
 				else if constexpr (std::is_same_v<ErrorType, threading::ThreadPool::StartError>)
 				{
-					return FormatScopedError("ThreadPool", threading::ThreadPool::ToString(error));
+					return common::string::FormatScopedName("ThreadPool", threading::ThreadPool::ToString(error));
 				}
 				else
 				{

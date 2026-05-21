@@ -19,6 +19,7 @@
 #include <Common/Log/ILogger.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/GamePacket.h>
+#include <Common/String/StringFormat.h>
 
 #include <Server/Config/ServerConfigValidator.h>
 #include <Server/Net/PacketPayloadValidator.h>
@@ -112,16 +113,6 @@ namespace
 
 		return stream.str();
 	}
-
-	[[nodiscard]] std::string FormatScopedError(std::string_view scope, std::string_view detail)
-	{
-		std::string result;
-		result.reserve(scope.size() + 1 + detail.size());
-		result.append(scope);
-		result.push_back('.');
-		result.append(detail);
-		return result;
-	}
 }
 
 namespace server::net
@@ -151,11 +142,11 @@ namespace server::net
 				}
 				else if constexpr (std::is_same_v<ErrorType, UdpIocpTransport::StartError>)
 				{
-					return FormatScopedError("UdpTransport", UdpIocpTransport::ToString(error));
+					return common::string::FormatScopedName("UdpTransport", UdpIocpTransport::ToString(error));
 				}
 				else if constexpr (std::is_same_v<ErrorType, game::GameTickRunner::StartError>)
 				{
-					return FormatScopedError("GameTickRunner", game::GameTickRunner::ToString(error));
+					return common::string::FormatScopedName("GameTickRunner", game::GameTickRunner::ToString(error));
 				}
 				else
 				{

@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <variant>
 
+#include <Common/String/StringFormat.h>
+
 #include <Server/Config/ServerConfigLoader.h>
 
 namespace
@@ -37,16 +39,6 @@ namespace
 			return "Unknown";
 		}
 	}
-
-	[[nodiscard]] std::string FormatScopedError(std::string_view scope, std::string_view detail)
-	{
-		std::string result;
-		result.reserve(scope.size() + 1 + detail.size());
-		result.append(scope);
-		result.push_back('.');
-		result.append(detail);
-		return result;
-	}
 }
 
 namespace server::app
@@ -60,11 +52,11 @@ namespace server::app
 
 				if constexpr (std::is_same_v<ErrorType, common::log::AsyncLogWriter::StartError>)
 				{
-					return FormatScopedError("Logger", common::log::AsyncLogWriter::ToString(error));
+					return common::string::FormatScopedName("Logger", common::log::AsyncLogWriter::ToString(error));
 				}
 				else if constexpr (std::is_same_v<ErrorType, net::UdpServer::StartError>)
 				{
-					return FormatScopedError("UdpServer", net::UdpServer::ToString(error));
+					return common::string::FormatScopedName("UdpServer", net::UdpServer::ToString(error));
 				}
 				else
 				{

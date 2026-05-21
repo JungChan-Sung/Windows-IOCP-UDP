@@ -185,6 +185,7 @@
     <ClInclude Include="Server\ServerMetricsCollectorTests.h" />
     <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h" />
     <ClInclude Include="Server\UdpPacketDispatcherTests.h" />
+    <ClInclude Include="TestHelpers.h" />
     <ClInclude Include="TestRunner.h" />
     <ClInclude Include="Threading\ThreadPoolTests.h" />
   </ItemGroup>

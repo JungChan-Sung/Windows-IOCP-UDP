@@ -215,5 +215,8 @@
     <ClInclude Include="Server\ServerMetricsCollectorTests.h">
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
+    <ClInclude Include="TestHelpers.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

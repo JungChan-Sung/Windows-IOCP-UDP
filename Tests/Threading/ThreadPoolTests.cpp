@@ -4,35 +4,15 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
-#include <functional>
 #include <mutex>
-#include <thread>
 
 #include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Threading/ThreadPool.h>
 
+#include <Tests/TestHelpers.h>
+
 namespace
 {
-	[[nodiscard]] bool WaitUntil(
-		const std::function<bool()>& predicate,
-		std::chrono::milliseconds timeout
-	)
-	{
-		const auto startTime = std::chrono::steady_clock::now();
-
-		while (!predicate())
-		{
-			if (std::chrono::steady_clock::now() - startTime >= timeout)
-			{
-				return false;
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-
-		return true;
-	}
-
 	void RunStartWithZeroWorkerFailsTest(common::diagnostics::DebugTestResult& result)
 	{
 		common::threading::ThreadPool threadPool;
@@ -130,7 +110,7 @@ namespace
 			}
 		);
 
-		const bool completed = WaitUntil(
+		const bool completed = tests::WaitUntil(
 			[&executedCount]()
 			{
 				return executedCount.load() == 1;
@@ -168,7 +148,7 @@ namespace
 			) && allEnqueued;
 		}
 
-		const bool completed = WaitUntil(
+		const bool completed = tests::WaitUntil(
 			[&executedCount]()
 			{
 				return executedCount.load() == taskCount;
@@ -206,7 +186,7 @@ namespace
 			}
 		);
 
-		const bool completed = WaitUntil(
+		const bool completed = tests::WaitUntil(
 			[&executedCount]()
 			{
 				return executedCount.load() == 1;

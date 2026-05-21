@@ -1,35 +1,15 @@
 #include "AsyncLogWriterTests.h"
 
 #include <chrono>
-#include <functional>
-#include <thread>
 
 #include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/LogLevel.h>
 
+#include <Tests/TestHelpers.h>
+
 namespace
 {
-	[[nodiscard]] bool WaitUntil(
-		const std::function<bool()>& predicate,
-		std::chrono::milliseconds timeout
-	)
-	{
-		const auto startTime = std::chrono::steady_clock::now();
-
-		while (!predicate())
-		{
-			if (std::chrono::steady_clock::now() - startTime >= timeout)
-			{
-				return false;
-			}
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-
-		return true;
-	}
-
 	void RunStartStopTest(common::diagnostics::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
@@ -106,7 +86,7 @@ namespace
 
 		const bool logged = logWriter.Info("async log test");
 
-		const bool drained = WaitUntil(
+		const bool drained = tests::WaitUntil(
 			[&logWriter]()
 			{
 				return logWriter.GetPendingTaskCount() == 0;

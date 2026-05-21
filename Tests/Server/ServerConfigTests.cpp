@@ -1,11 +1,8 @@
 #include "ServerConfigTests.h"
 
-#include <algorithm>
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include <Common/Log/LogLevel.h>
@@ -13,38 +10,15 @@
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Config/ServerConfigValidator.h>
 
+#include <Tests/TestHelpers.h>
+
 namespace
 {
-	[[nodiscard]] std::filesystem::path MakeTempServerConfigPath()
-	{
-		return std::filesystem::temp_directory_path() / "WindowsIocpUdp_ServerConfig_DebugTest.ini";
-	}
-
-	void WriteTextFile(const std::filesystem::path& filePath, const std::string& text)
-	{
-		std::ofstream file(filePath, std::ios::trunc);
-		file << text;
-	}
-
-	[[nodiscard]] bool ContainsWarningMessage(
-		const std::vector<server::config::ServerConfigWarning>& warningList,
-		std::string_view message
-	)
-	{
-		return std::ranges::any_of(
-			warningList,
-			[message](const server::config::ServerConfigWarning& warning)
-			{
-				return warning.message == message;
-			}
-		);
-	}
-
 	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempServerConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"[Network]\n"
 			"Port=9100\n"
@@ -111,9 +85,9 @@ namespace
 
 	void RunLoadInvalidConfigTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempServerConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"Port=9000\n"
 			"\n"
@@ -141,7 +115,7 @@ namespace
 
 	void RunMissingFileTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempServerConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 		std::filesystem::remove(filePath);
 
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
@@ -198,31 +172,31 @@ namespace
 
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Network.Port cannot be 0. Default port will be used."),
+			tests::ContainsWarningMessage(warningList, "Network.Port cannot be 0. Default port will be used."),
 			"ServerConfigValidator: port warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used."),
+			tests::ContainsWarningMessage(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used."),
 			"ServerConfigValidator: tick interval warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Tick.FixedDeltaSeconds must be greater than 0. Default delta will be used."),
+			tests::ContainsWarningMessage(warningList, "Tick.FixedDeltaSeconds must be greater than 0. Default delta will be used."),
 			"ServerConfigValidator: fixed delta warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount cannot be 0. Default value will be used."),
+			tests::ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount cannot be 0. Default value will be used."),
 			"ServerConfigValidator: async log worker warning message"
 		);
 	}
 
 	void RunLoadLogLevelAliasTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempServerConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"[Diagnostics]\n"
 			"LogLevel=warn\n"

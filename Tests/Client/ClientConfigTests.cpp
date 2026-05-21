@@ -1,49 +1,23 @@
 #include "ClientConfigTests.h"
 
-#include <algorithm>
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
 #include <Client/Config/ClientTransportType.h>
 
+#include <Tests/TestHelpers.h>
+
 namespace
 {
-	[[nodiscard]] std::filesystem::path MakeTempClientConfigPath()
-	{
-		return std::filesystem::temp_directory_path() / "WindowsIocpUdp_ClientConfig_DebugTest.ini";
-	}
-
-	void WriteTextFile(const std::filesystem::path& filePath, const std::string& text)
-	{
-		std::ofstream file(filePath, std::ios::trunc);
-		file << text;
-	}
-
-	[[nodiscard]] bool ContainsWarningMessage(
-		const std::vector<client::config::ClientConfigWarning>& warningList,
-		std::string_view message
-	)
-	{
-		return std::ranges::any_of(
-			warningList,
-			[message](const client::config::ClientConfigWarning& warning)
-			{
-				return warning.message == message;
-			}
-		);
-	}
-
 	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempClientConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"[Network]\n"
 			"ServerIp=192.168.0.10\n"
@@ -106,9 +80,9 @@ namespace
 
 	void RunLoadInvalidConfigTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempClientConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"ServerPort=9000\n"
 			"\n"
@@ -139,7 +113,7 @@ namespace
 
 	void RunMissingFileTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempClientConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 		std::filesystem::remove(filePath);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
@@ -198,46 +172,46 @@ namespace
 
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Network.ServerIp cannot be empty. Default server ip will be used."),
+			tests::ContainsWarningMessage(warningList, "Network.ServerIp cannot be empty. Default server ip will be used."),
 			"ClientConfigValidator: server ip warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Network.ServerPort cannot be 0. Default server port will be used."),
+			tests::ContainsWarningMessage(warningList, "Network.ServerPort cannot be 0. Default server port will be used."),
 			"ClientConfigValidator: server port warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."),
+			tests::ContainsWarningMessage(warningList, "Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."),
 			"ClientConfigValidator: iocp worker warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."),
+			tests::ContainsWarningMessage(warningList, "Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."),
 			"ClientConfigValidator: iocp recv warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."),
+			tests::ContainsWarningMessage(warningList, "Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."),
 			"ClientConfigValidator: interpolation range warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."),
+			tests::ContainsWarningMessage(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."),
 			"ClientConfigValidator: simulation tick warning message"
 		);
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
+			tests::ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
 			"ClientConfigValidator: simulation delta warning message"
 		);
 	}
 
 	void RunLoadTransportTypeCaseInsensitiveTest(common::diagnostics::DebugTestResult& result)
 	{
-		const std::filesystem::path filePath = MakeTempClientConfigPath();
+		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
-		WriteTextFile(
+		tests::WriteTextFile(
 			filePath,
 			"[Network]\n"
 			"TransportType=IOCP\n"
@@ -285,7 +259,7 @@ namespace
 
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
+			tests::ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
 			"ClientConfigValidator: default delay lower warning message"
 		);
 
@@ -305,7 +279,7 @@ namespace
 
 		common::diagnostics::Expect(
 			result,
-			ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
+			tests::ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
 			"ClientConfigValidator: default delay upper warning message"
 		);
 	}

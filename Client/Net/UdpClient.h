@@ -108,7 +108,7 @@ namespace client::net
 		void HandlePlayerLeft(const common::packet::PlayerLeftPacket& packet);
 		void HandlePlayerSnapshot(const common::packet::PlayerSnapshotPacket& packet);
 		void HandleBulletSnapshot(const common::packet::BulletSnapshotPacket& packet);
-		void HandleImpactEffectPacket(const common::packet::ImpactEffectPacket & packet);
+		void HandleImpactEffectPacket(const common::packet::ImpactEffectPacket& packet);
 
 	public:
 		void SetTransportConfig(

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests::game
 {
-	[[nodiscard]] common::diagnostics::DebugTestResult RunWorldCollisionTests();
+	[[nodiscard]] tests::DebugTestResult RunWorldCollisionTests();
 }

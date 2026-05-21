@@ -172,6 +172,7 @@
     <ClInclude Include="..\Common\Net\Endpoint.h" />
     <ClInclude Include="Client\ClientConfigTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
+    <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />
     <ClInclude Include="Log\AsyncLogWriterTests.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h" />

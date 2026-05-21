@@ -5,7 +5,6 @@
 #include <chrono>
 #include <cstdint>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
 
@@ -16,6 +15,8 @@
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/PeerSessionService.h>
 #include <Server/Net/PeerState.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -68,7 +69,7 @@ namespace
 		return gameWorld.FindPlayer(playerId);
 	}
 
-	void RunJoinPeerCreatesPeerAndPlayerTest(common::diagnostics::DebugTestResult& result)
+	void RunJoinPeerCreatesPeerAndPlayerTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -93,39 +94,39 @@ namespace
 			now
 		);
 
-		common::diagnostics::Expect(result, joinResult.shouldSendResponse, "PeerSessionService: join sends response");
-		common::diagnostics::Expect(result, joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: join broadcasts joined");
-		common::diagnostics::Expect(result, joinResult.playerId == 1, "PeerSessionService: join allocates first player id");
-		common::diagnostics::Expect(result, joinResult.roomId == initialRoomId, "PeerSessionService: join room id");
-		common::diagnostics::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: join peer count");
-		common::diagnostics::Expect(result, peerRoomManager.GetJoinedPeerCount() == 1, "PeerSessionService: join joined peer count");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(initialRoomId) == 1, "PeerSessionService: join room count");
-		common::diagnostics::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: join player count");
+		tests::Expect(result, joinResult.shouldSendResponse, "PeerSessionService: join sends response");
+		tests::Expect(result, joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: join broadcasts joined");
+		tests::Expect(result, joinResult.playerId == 1, "PeerSessionService: join allocates first player id");
+		tests::Expect(result, joinResult.roomId == initialRoomId, "PeerSessionService: join room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: join peer count");
+		tests::Expect(result, peerRoomManager.GetJoinedPeerCount() == 1, "PeerSessionService: join joined peer count");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(initialRoomId) == 1, "PeerSessionService: join room count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: join player count");
 
 		const server::net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
-		common::diagnostics::Expect(result, peerState != nullptr, "PeerSessionService: join peer exists");
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: join peer exists");
 
 		if (peerState != nullptr)
 		{
-			common::diagnostics::Expect(result, peerState->playerId == joinResult.playerId, "PeerSessionService: join peer player id");
-			common::diagnostics::Expect(result, peerState->roomId == initialRoomId, "PeerSessionService: join peer room id");
-			common::diagnostics::Expect(result, peerState->lastRecvTime == now, "PeerSessionService: join lastRecvTime");
+			tests::Expect(result, peerState->playerId == joinResult.playerId, "PeerSessionService: join peer player id");
+			tests::Expect(result, peerState->roomId == initialRoomId, "PeerSessionService: join peer room id");
+			tests::Expect(result, peerState->lastRecvTime == now, "PeerSessionService: join lastRecvTime");
 		}
 
 		const server::game::PlayerState* playerState = gameWorld.FindPlayer(joinResult.playerId);
-		common::diagnostics::Expect(result, playerState != nullptr, "PeerSessionService: join player exists");
+		tests::Expect(result, playerState != nullptr, "PeerSessionService: join player exists");
 
 		if (playerState != nullptr)
 		{
-			common::diagnostics::Expect(result, playerState->playerId == joinResult.playerId, "PeerSessionService: join player id");
-			common::diagnostics::Expect(result, playerState->x == joinResult.spawnPosition.x, "PeerSessionService: join player x");
-			common::diagnostics::Expect(result, playerState->y == joinResult.spawnPosition.y, "PeerSessionService: join player y");
-			common::diagnostics::Expect(result, playerState->hp == gameRuleConfig.initialPlayerHp, "PeerSessionService: join player hp");
-			common::diagnostics::Expect(result, !playerState->isDead, "PeerSessionService: join player alive");
+			tests::Expect(result, playerState->playerId == joinResult.playerId, "PeerSessionService: join player id");
+			tests::Expect(result, playerState->x == joinResult.spawnPosition.x, "PeerSessionService: join player x");
+			tests::Expect(result, playerState->y == joinResult.spawnPosition.y, "PeerSessionService: join player y");
+			tests::Expect(result, playerState->hp == gameRuleConfig.initialPlayerHp, "PeerSessionService: join player hp");
+			tests::Expect(result, !playerState->isDead, "PeerSessionService: join player alive");
 		}
 	}
 
-	void RunJoinExistingPeerReturnsExistingPlayerTest(common::diagnostics::DebugTestResult& result)
+	void RunJoinExistingPeerReturnsExistingPlayerTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -164,23 +165,23 @@ namespace
 			secondTime
 		);
 
-		common::diagnostics::Expect(result, firstJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join first broadcast");
-		common::diagnostics::Expect(result, secondJoinResult.shouldSendResponse, "PeerSessionService: existing join sends response");
-		common::diagnostics::Expect(result, !secondJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join no broadcast");
-		common::diagnostics::Expect(result, secondJoinResult.playerId == firstJoinResult.playerId, "PeerSessionService: existing join same player");
-		common::diagnostics::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: existing join peer count");
-		common::diagnostics::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: existing join player count");
+		tests::Expect(result, firstJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join first broadcast");
+		tests::Expect(result, secondJoinResult.shouldSendResponse, "PeerSessionService: existing join sends response");
+		tests::Expect(result, !secondJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join no broadcast");
+		tests::Expect(result, secondJoinResult.playerId == firstJoinResult.playerId, "PeerSessionService: existing join same player");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: existing join peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: existing join player count");
 
 		const server::net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
-		common::diagnostics::Expect(result, peerState != nullptr, "PeerSessionService: existing join peer exists");
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: existing join peer exists");
 
 		if (peerState != nullptr)
 		{
-			common::diagnostics::Expect(result, peerState->lastRecvTime == secondTime, "PeerSessionService: existing join refresh time");
+			tests::Expect(result, peerState->lastRecvTime == secondTime, "PeerSessionService: existing join refresh time");
 		}
 	}
 
-	void RunLeavePeerRemovesPeerAndPlayerTest(common::diagnostics::DebugTestResult& result)
+	void RunLeavePeerRemovesPeerAndPlayerTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -211,16 +212,16 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: leave broadcasts left");
-		common::diagnostics::Expect(result, leaveResult.playerId == joinResult.playerId, "PeerSessionService: leave player id");
-		common::diagnostics::Expect(result, leaveResult.roomId == roomId, "PeerSessionService: leave room id");
-		common::diagnostics::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: leave peer count");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 0, "PeerSessionService: leave room count");
-		common::diagnostics::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: leave player count");
-		common::diagnostics::Expect(result, gameWorld.FindPlayer(joinResult.playerId) == nullptr, "PeerSessionService: leave player removed");
+		tests::Expect(result, leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: leave broadcasts left");
+		tests::Expect(result, leaveResult.playerId == joinResult.playerId, "PeerSessionService: leave player id");
+		tests::Expect(result, leaveResult.roomId == roomId, "PeerSessionService: leave room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: leave peer count");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 0, "PeerSessionService: leave room count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: leave player count");
+		tests::Expect(result, gameWorld.FindPlayer(joinResult.playerId) == nullptr, "PeerSessionService: leave player removed");
 	}
 
-	void RunLeaveUnknownPeerDoesNothingTest(common::diagnostics::DebugTestResult& result)
+	void RunLeaveUnknownPeerDoesNothingTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -235,14 +236,14 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, !leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: unknown leave no broadcast");
-		common::diagnostics::Expect(result, leaveResult.playerId == 0, "PeerSessionService: unknown leave player id");
-		common::diagnostics::Expect(result, leaveResult.roomId == 0, "PeerSessionService: unknown leave room id");
-		common::diagnostics::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown leave peer count");
-		common::diagnostics::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown leave player count");
+		tests::Expect(result, !leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: unknown leave no broadcast");
+		tests::Expect(result, leaveResult.playerId == 0, "PeerSessionService: unknown leave player id");
+		tests::Expect(result, leaveResult.roomId == 0, "PeerSessionService: unknown leave room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown leave peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown leave player count");
 	}
 
-	void RunChangePeerRoomTest(common::diagnostics::DebugTestResult& result)
+	void RunChangePeerRoomTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -284,35 +285,35 @@ namespace
 			changeTime
 		);
 
-		common::diagnostics::Expect(result, changeResult.changed, "PeerSessionService: room change succeeds");
-		common::diagnostics::Expect(result, changeResult.playerId == joinResult.playerId, "PeerSessionService: room change player id");
-		common::diagnostics::Expect(result, changeResult.previousRoomId == previousRoomId, "PeerSessionService: room change previous room");
-		common::diagnostics::Expect(result, changeResult.nextRoomId == nextRoomId, "PeerSessionService: room change next room");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(previousRoomId) == 0, "PeerSessionService: previous room empty");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(nextRoomId) == 1, "PeerSessionService: next room count");
+		tests::Expect(result, changeResult.changed, "PeerSessionService: room change succeeds");
+		tests::Expect(result, changeResult.playerId == joinResult.playerId, "PeerSessionService: room change player id");
+		tests::Expect(result, changeResult.previousRoomId == previousRoomId, "PeerSessionService: room change previous room");
+		tests::Expect(result, changeResult.nextRoomId == nextRoomId, "PeerSessionService: room change next room");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(previousRoomId) == 0, "PeerSessionService: previous room empty");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(nextRoomId) == 1, "PeerSessionService: next room count");
 
 		const server::net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
-		common::diagnostics::Expect(result, peerState != nullptr, "PeerSessionService: room change peer exists");
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: room change peer exists");
 
 		if (peerState != nullptr)
 		{
-			common::diagnostics::Expect(result, peerState->roomId == nextRoomId, "PeerSessionService: peer room changed");
-			common::diagnostics::Expect(result, peerState->lastRecvTime == changeTime, "PeerSessionService: room change recv time");
+			tests::Expect(result, peerState->roomId == nextRoomId, "PeerSessionService: peer room changed");
+			tests::Expect(result, peerState->lastRecvTime == changeTime, "PeerSessionService: room change recv time");
 		}
 
 		playerState = FindPlayer(gameWorld, joinResult.playerId);
-		common::diagnostics::Expect(result, playerState != nullptr, "PeerSessionService: room change player exists");
+		tests::Expect(result, playerState != nullptr, "PeerSessionService: room change player exists");
 
 		if (playerState != nullptr)
 		{
-			common::diagnostics::Expect(result, playerState->x == changeResult.spawnPosition.x, "PeerSessionService: room change player x");
-			common::diagnostics::Expect(result, playerState->y == changeResult.spawnPosition.y, "PeerSessionService: room change player y");
-			common::diagnostics::Expect(result, playerState->inputFlags == common::game::InputFlags::None,
+			tests::Expect(result, playerState->x == changeResult.spawnPosition.x, "PeerSessionService: room change player x");
+			tests::Expect(result, playerState->y == changeResult.spawnPosition.y, "PeerSessionService: room change player y");
+			tests::Expect(result, playerState->inputFlags == common::game::InputFlags::None,
 				"PeerSessionService: room change clears input");
 		}
 	}
 
-	void RunChangePeerRoomInvalidRoomFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunChangePeerRoomInvalidRoomFailsTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -345,12 +346,12 @@ namespace
 			now
 		);
 
-		common::diagnostics::Expect(result, !changeResult.changed, "PeerSessionService: invalid room change fails");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: invalid room original room remains");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(0) == 0, "PeerSessionService: invalid room not created");
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: invalid room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: invalid room original room remains");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(0) == 0, "PeerSessionService: invalid room not created");
 	}
 
-	void RunChangePeerRoomSameRoomFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunChangePeerRoomSameRoomFailsTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -384,11 +385,11 @@ namespace
 			now
 		);
 
-		common::diagnostics::Expect(result, !changeResult.changed, "PeerSessionService: same room change fails");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 1, "PeerSessionService: same room member count");
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: same room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 1, "PeerSessionService: same room member count");
 	}
 
-	void RunChangePeerRoomUnknownPeerFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunChangePeerRoomUnknownPeerFailsTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -408,12 +409,12 @@ namespace
 			now
 		);
 
-		common::diagnostics::Expect(result, !changeResult.changed, "PeerSessionService: unknown room change fails");
-		common::diagnostics::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown room change peer count");
-		common::diagnostics::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown room change player count");
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: unknown room change fails");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown room change peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown room change player count");
 	}
 
-	void RunChangePeerRoomDeadPlayerFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunChangePeerRoomDeadPlayerFailsTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
 		server::net::PeerRoomManager peerRoomManager;
@@ -453,18 +454,18 @@ namespace
 			now
 		);
 
-		common::diagnostics::Expect(result, !changeResult.changed, "PeerSessionService: dead player room change fails");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 1,
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: dead player room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 1,
 			"PeerSessionService: dead player original room remains");
-		common::diagnostics::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 0, "PeerSessionService: dead player next room empty");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 0, "PeerSessionService: dead player next room empty");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunPeerSessionServiceTests()
+	tests::DebugTestResult RunPeerSessionServiceTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunJoinPeerCreatesPeerAndPlayerTest(result);
 		RunJoinExistingPeerReturnsExistingPlayerTest(result);

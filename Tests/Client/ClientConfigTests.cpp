@@ -13,7 +13,7 @@
 
 namespace
 {
-	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadValidConfigTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
@@ -51,34 +51,34 @@ namespace
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ClientConfig: valid file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.empty(), "ClientConfig: valid file has no loader warning");
+		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: valid file loaded");
+		tests::Expect(result, loadResult.warningList.empty(), "ClientConfig: valid file has no loader warning");
 
 		const client::config::ClientConfig& config = loadResult.config;
 
-		common::diagnostics::Expect(result, config.network.serverIp == "192.168.0.10", "ClientConfig: serverIp");
-		common::diagnostics::Expect(result, config.network.serverPort == 9100, "ClientConfig: serverPort");
-		common::diagnostics::Expect(
+		tests::Expect(result, config.network.serverIp == "192.168.0.10", "ClientConfig: serverIp");
+		tests::Expect(result, config.network.serverPort == 9100, "ClientConfig: serverPort");
+		tests::Expect(
 			result,
 			config.network.transportType == client::config::ClientTransportType::Iocp,
 			"ClientConfig: transportType"
 		);
-		common::diagnostics::Expect(result, config.network.iocpWorkerThreadCount == 2, "ClientConfig: iocpWorkerThreadCount");
-		common::diagnostics::Expect(result, config.network.iocpRecvContextCount == 8, "ClientConfig: iocpRecvContextCount");
-		common::diagnostics::Expect(result, config.timing.updateSleepInterval == std::chrono::milliseconds(2), "ClientConfig: updateSleep");
-		common::diagnostics::Expect(result, config.timing.joinRetryInterval == std::chrono::milliseconds(1500), "ClientConfig: joinRetry");
-		common::diagnostics::Expect(result, config.timing.roomJoinInterval == std::chrono::milliseconds(300), "ClientConfig: roomJoin");
-		common::diagnostics::Expect(result, config.timing.interpolationAdjustStep == std::chrono::milliseconds(15), "ClientConfig: adjustStep");
-		common::diagnostics::Expect(result, config.interpolation.defaultDelay == std::chrono::milliseconds(120), "ClientConfig: defaultDelay");
-		common::diagnostics::Expect(result, config.interpolation.minDelay == std::chrono::milliseconds(10), "ClientConfig: minDelay");
-		common::diagnostics::Expect(result, config.interpolation.maxDelay == std::chrono::milliseconds(600), "ClientConfig: maxDelay");
-		common::diagnostics::Expect(result, config.snapshot.assemblyTimeout == std::chrono::milliseconds(700), "ClientConfig: assemblyTimeout");
-		common::diagnostics::Expect(result, config.simulation.tickInterval == std::chrono::milliseconds(40), "ClientConfig: simulation tick");
-		common::diagnostics::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
-		common::diagnostics::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
+		tests::Expect(result, config.network.iocpWorkerThreadCount == 2, "ClientConfig: iocpWorkerThreadCount");
+		tests::Expect(result, config.network.iocpRecvContextCount == 8, "ClientConfig: iocpRecvContextCount");
+		tests::Expect(result, config.timing.updateSleepInterval == std::chrono::milliseconds(2), "ClientConfig: updateSleep");
+		tests::Expect(result, config.timing.joinRetryInterval == std::chrono::milliseconds(1500), "ClientConfig: joinRetry");
+		tests::Expect(result, config.timing.roomJoinInterval == std::chrono::milliseconds(300), "ClientConfig: roomJoin");
+		tests::Expect(result, config.timing.interpolationAdjustStep == std::chrono::milliseconds(15), "ClientConfig: adjustStep");
+		tests::Expect(result, config.interpolation.defaultDelay == std::chrono::milliseconds(120), "ClientConfig: defaultDelay");
+		tests::Expect(result, config.interpolation.minDelay == std::chrono::milliseconds(10), "ClientConfig: minDelay");
+		tests::Expect(result, config.interpolation.maxDelay == std::chrono::milliseconds(600), "ClientConfig: maxDelay");
+		tests::Expect(result, config.snapshot.assemblyTimeout == std::chrono::milliseconds(700), "ClientConfig: assemblyTimeout");
+		tests::Expect(result, config.simulation.tickInterval == std::chrono::milliseconds(40), "ClientConfig: simulation tick");
+		tests::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
+		tests::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
 	}
 
-	void RunLoadInvalidConfigTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadInvalidConfigTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
@@ -107,22 +107,22 @@ namespace
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.size() >= 9, "ClientConfig: invalid file warning count");
+		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
+		tests::Expect(result, loadResult.warningList.size() >= 9, "ClientConfig: invalid file warning count");
 	}
 
-	void RunMissingFileTest(common::diagnostics::DebugTestResult& result)
+	void RunMissingFileTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 		std::filesystem::remove(filePath);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 
-		common::diagnostics::Expect(result, !loadResult.loadedFromFile, "ClientConfig: missing file not loaded");
-		common::diagnostics::Expect(result, !loadResult.warningList.empty(), "ClientConfig: missing file warning");
+		tests::Expect(result, !loadResult.loadedFromFile, "ClientConfig: missing file not loaded");
+		tests::Expect(result, !loadResult.warningList.empty(), "ClientConfig: missing file warning");
 	}
 
-	void RunValidatorNormalizeTest(common::diagnostics::DebugTestResult& result)
+	void RunValidatorNormalizeTest(tests::DebugTestResult& result)
 	{
 		client::config::ClientConfig config{};
 		const client::config::ClientConfig defaultConfig{};
@@ -144,70 +144,70 @@ namespace
 
 		const std::vector<client::config::ClientConfigWarning> warningList = client::config::ClientConfigValidator::ValidateAndNormalize(config);
 
-		common::diagnostics::Expect(result, !warningList.empty(), "ClientConfigValidator: warning generated");
-		common::diagnostics::Expect(result, config.network.serverIp == defaultConfig.network.serverIp, "ClientConfigValidator: serverIp normalized");
-		common::diagnostics::Expect(result, config.network.serverPort == defaultConfig.network.serverPort, "ClientConfigValidator: serverPort normalized");
-		common::diagnostics::Expect(
+		tests::Expect(result, !warningList.empty(), "ClientConfigValidator: warning generated");
+		tests::Expect(result, config.network.serverIp == defaultConfig.network.serverIp, "ClientConfigValidator: serverIp normalized");
+		tests::Expect(result, config.network.serverPort == defaultConfig.network.serverPort, "ClientConfigValidator: serverPort normalized");
+		tests::Expect(
 			result,
 			config.network.iocpWorkerThreadCount == defaultConfig.network.iocpWorkerThreadCount,
 			"ClientConfigValidator: iocp worker thread count normalized"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			config.network.iocpRecvContextCount == defaultConfig.network.iocpRecvContextCount,
 			"ClientConfigValidator: iocp recv context count normalized"
 		);
-		common::diagnostics::Expect(result, config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
+		tests::Expect(result, config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfigValidator: update sleep normalized");
-		common::diagnostics::Expect(result, config.interpolation.minDelay == defaultConfig.interpolation.minDelay,
+		tests::Expect(result, config.interpolation.minDelay == defaultConfig.interpolation.minDelay,
 			"ClientConfigValidator: min delay normalized");
-		common::diagnostics::Expect(result, config.interpolation.maxDelay == defaultConfig.interpolation.maxDelay,
+		tests::Expect(result, config.interpolation.maxDelay == defaultConfig.interpolation.maxDelay,
 			"ClientConfigValidator: max delay normalized");
-		common::diagnostics::Expect(result, config.snapshot.assemblyTimeout == defaultConfig.snapshot.assemblyTimeout,
+		tests::Expect(result, config.snapshot.assemblyTimeout == defaultConfig.snapshot.assemblyTimeout,
 			"ClientConfigValidator: snapshot timeout normalized");
-		common::diagnostics::Expect(result, config.simulation.tickInterval == defaultConfig.simulation.tickInterval,
+		tests::Expect(result, config.simulation.tickInterval == defaultConfig.simulation.tickInterval,
 			"ClientConfigValidator: simulation tick normalized");
-		common::diagnostics::Expect(result, config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
+		tests::Expect(result, config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
 			"ClientConfigValidator: simulation delta normalized");
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.ServerIp cannot be empty. Default server ip will be used."),
 			"ClientConfigValidator: server ip warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.ServerPort cannot be 0. Default server port will be used."),
 			"ClientConfigValidator: server port warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."),
 			"ClientConfigValidator: iocp worker warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."),
 			"ClientConfigValidator: iocp recv warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."),
 			"ClientConfigValidator: interpolation range warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."),
 			"ClientConfigValidator: simulation tick warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
 			"ClientConfigValidator: simulation delta warning message"
 		);
 	}
 
-	void RunLoadTransportTypeCaseInsensitiveTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadTransportTypeCaseInsensitiveTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_DebugTest.ini");
 
@@ -222,26 +222,26 @@ namespace
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ClientConfig: transport type case file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.empty(), "ClientConfig: transport type case has no loader warning");
-		common::diagnostics::Expect(
+		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: transport type case file loaded");
+		tests::Expect(result, loadResult.warningList.empty(), "ClientConfig: transport type case has no loader warning");
+		tests::Expect(
 			result,
 			loadResult.config.network.transportType == client::config::ClientTransportType::Iocp,
 			"ClientConfig: transport type case insensitive"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			loadResult.config.network.iocpWorkerThreadCount == 3,
 			"ClientConfig: transport type case worker count"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			loadResult.config.network.iocpRecvContextCount == 6,
 			"ClientConfig: transport type case recv context count"
 		);
 	}
 
-	void RunValidatorInterpolationDefaultDelayClampTest(common::diagnostics::DebugTestResult& result)
+	void RunValidatorInterpolationDefaultDelayClampTest(tests::DebugTestResult& result)
 	{
 		client::config::ClientConfig lowerConfig{};
 		lowerConfig.interpolation.minDelay = std::chrono::milliseconds(100);
@@ -251,13 +251,13 @@ namespace
 		const std::vector<client::config::ClientConfigWarning> lowerWarningList =
 			client::config::ClientConfigValidator::ValidateAndNormalize(lowerConfig);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			lowerConfig.interpolation.defaultDelay == std::chrono::milliseconds(100),
 			"ClientConfigValidator: default delay clamped to min"
 		);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
 			"ClientConfigValidator: default delay lower warning message"
@@ -271,13 +271,13 @@ namespace
 		const std::vector<client::config::ClientConfigWarning> upperWarningList =
 			client::config::ClientConfigValidator::ValidateAndNormalize(upperConfig);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			upperConfig.interpolation.defaultDelay == std::chrono::milliseconds(300),
 			"ClientConfigValidator: default delay clamped to max"
 		);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
 			"ClientConfigValidator: default delay upper warning message"
@@ -287,9 +287,9 @@ namespace
 
 namespace tests::client
 {
-	common::diagnostics::DebugTestResult RunClientConfigTests()
+	tests::DebugTestResult RunClientConfigTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunLoadValidConfigTest(result);
 		RunLoadInvalidConfigTest(result);

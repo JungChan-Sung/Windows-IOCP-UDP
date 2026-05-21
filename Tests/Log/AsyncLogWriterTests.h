@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests::log
 {
-	[[nodiscard]] common::diagnostics::DebugTestResult RunAsyncLogWriterTests();
+	[[nodiscard]] tests::DebugTestResult RunAsyncLogWriterTests();
 }

@@ -4,10 +4,11 @@
 #include <cstdint>
 #include <optional>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Packet/GamePacket.h>
 
 #include <Client/Net/SnapshotChunkAssembler.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -89,7 +90,7 @@ namespace
 		}
 	}
 
-	void RunSingleBulletChunkTest(common::diagnostics::DebugTestResult& result)
+	void RunSingleBulletChunkTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -100,21 +101,21 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> assembledSnapshot
 			= assembler.PushBulletSnapshotChunk(packet);
 
-		common::diagnostics::Expect(result, assembledSnapshot.has_value(), "ClientSnapshotAssembler: single bullet chunk assembled");
+		tests::Expect(result, assembledSnapshot.has_value(), "ClientSnapshotAssembler: single bullet chunk assembled");
 
 		if (!assembledSnapshot.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, assembledSnapshot->roomId == 1, "ClientSnapshotAssembler: single bullet roomId");
-		common::diagnostics::Expect(result, assembledSnapshot->serverTick == 100, "ClientSnapshotAssembler: single bullet serverTick");
-		common::diagnostics::Expect(result, assembledSnapshot->bulletStateDataList.size() == 2, "ClientSnapshotAssembler: single bullet count");
-		common::diagnostics::Expect(result, assembledSnapshot->bulletStateDataList[0].bulletId == 10, "ClientSnapshotAssembler: single bullet data 0");
-		common::diagnostics::Expect(result, assembledSnapshot->bulletStateDataList[1].bulletId == 11, "ClientSnapshotAssembler: single bullet data 1");
+		tests::Expect(result, assembledSnapshot->roomId == 1, "ClientSnapshotAssembler: single bullet roomId");
+		tests::Expect(result, assembledSnapshot->serverTick == 100, "ClientSnapshotAssembler: single bullet serverTick");
+		tests::Expect(result, assembledSnapshot->bulletStateDataList.size() == 2, "ClientSnapshotAssembler: single bullet count");
+		tests::Expect(result, assembledSnapshot->bulletStateDataList[0].bulletId == 10, "ClientSnapshotAssembler: single bullet data 0");
+		tests::Expect(result, assembledSnapshot->bulletStateDataList[1].bulletId == 11, "ClientSnapshotAssembler: single bullet data 1");
 	}
 
-	void RunMultiBulletChunkInOrderTest(common::diagnostics::DebugTestResult& result)
+	void RunMultiBulletChunkInOrderTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -130,21 +131,21 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> secondResult
 			= assembler.PushBulletSnapshotChunk(secondPacket);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: multi bullet first waits");
-		common::diagnostics::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: multi bullet second assembles");
+		tests::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: multi bullet first waits");
+		tests::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: multi bullet second assembles");
 
 		if (!secondResult.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList.size() == 3, "ClientSnapshotAssembler: multi bullet count");
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList[0].bulletId == 20, "ClientSnapshotAssembler: multi bullet order 0");
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList[1].bulletId == 21, "ClientSnapshotAssembler: multi bullet order 1");
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList[2].bulletId == 22, "ClientSnapshotAssembler: multi bullet order 2");
+		tests::Expect(result, secondResult->bulletStateDataList.size() == 3, "ClientSnapshotAssembler: multi bullet count");
+		tests::Expect(result, secondResult->bulletStateDataList[0].bulletId == 20, "ClientSnapshotAssembler: multi bullet order 0");
+		tests::Expect(result, secondResult->bulletStateDataList[1].bulletId == 21, "ClientSnapshotAssembler: multi bullet order 1");
+		tests::Expect(result, secondResult->bulletStateDataList[2].bulletId == 22, "ClientSnapshotAssembler: multi bullet order 2");
 	}
 
-	void RunMultiBulletChunkOutOfOrderTest(common::diagnostics::DebugTestResult& result)
+	void RunMultiBulletChunkOutOfOrderTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -159,20 +160,20 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> secondResult
 			= assembler.PushBulletSnapshotChunk(secondPacket);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: out-of-order bullet first waits");
-		common::diagnostics::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: out-of-order bullet second assembles");
+		tests::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: out-of-order bullet first waits");
+		tests::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: out-of-order bullet second assembles");
 
 		if (!secondResult.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList.size() == 2, "ClientSnapshotAssembler: out-of-order bullet count");
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList[0].bulletId == 30, "ClientSnapshotAssembler: out-of-order bullet order 0");
-		common::diagnostics::Expect(result, secondResult->bulletStateDataList[1].bulletId == 31, "ClientSnapshotAssembler: out-of-order bullet order 1");
+		tests::Expect(result, secondResult->bulletStateDataList.size() == 2, "ClientSnapshotAssembler: out-of-order bullet count");
+		tests::Expect(result, secondResult->bulletStateDataList[0].bulletId == 30, "ClientSnapshotAssembler: out-of-order bullet order 0");
+		tests::Expect(result, secondResult->bulletStateDataList[1].bulletId == 31, "ClientSnapshotAssembler: out-of-order bullet order 1");
 	}
 
-	void RunDuplicateBulletChunkTest(common::diagnostics::DebugTestResult& result)
+	void RunDuplicateBulletChunkTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -184,11 +185,11 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> duplicateResult
 			= assembler.PushBulletSnapshotChunk(packet);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: duplicate bullet first waits");
-		common::diagnostics::Expect(result, !duplicateResult.has_value(), "ClientSnapshotAssembler: duplicate bullet dropped");
+		tests::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: duplicate bullet first waits");
+		tests::Expect(result, !duplicateResult.has_value(), "ClientSnapshotAssembler: duplicate bullet dropped");
 	}
 
-	void RunAlreadyAppliedBulletChunkTest(common::diagnostics::DebugTestResult& result)
+	void RunAlreadyAppliedBulletChunkTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -200,11 +201,11 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> secondResult
 			= assembler.PushBulletSnapshotChunk(packet);
 
-		common::diagnostics::Expect(result, firstResult.has_value(), "ClientSnapshotAssembler: already-applied bullet first assembles");
-		common::diagnostics::Expect(result, !secondResult.has_value(), "ClientSnapshotAssembler: already-applied bullet dropped");
+		tests::Expect(result, firstResult.has_value(), "ClientSnapshotAssembler: already-applied bullet first assembles");
+		tests::Expect(result, !secondResult.has_value(), "ClientSnapshotAssembler: already-applied bullet dropped");
 	}
 
-	void RunResetRoomBulletTest(common::diagnostics::DebugTestResult& result)
+	void RunResetRoomBulletTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -222,11 +223,11 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> secondResult
 			= assembler.PushBulletSnapshotChunk(secondPacket);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: reset room bullet first waits");
-		common::diagnostics::Expect(result, !secondResult.has_value(), "ClientSnapshotAssembler: reset room removes partial assembly");
+		tests::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: reset room bullet first waits");
+		tests::Expect(result, !secondResult.has_value(), "ClientSnapshotAssembler: reset room removes partial assembly");
 	}
 
-	void RunSingleImpactEffectChunkTest(common::diagnostics::DebugTestResult& result)
+	void RunSingleImpactEffectChunkTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -237,23 +238,23 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledImpactEffectPacket> assembledPacket
 			= assembler.PushImpactEffectChunk(packet);
 
-		common::diagnostics::Expect(result, assembledPacket.has_value(), "ClientSnapshotAssembler: single impact chunk assembled");
+		tests::Expect(result, assembledPacket.has_value(), "ClientSnapshotAssembler: single impact chunk assembled");
 
 		if (!assembledPacket.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, assembledPacket->roomId == 2, "ClientSnapshotAssembler: single impact roomId");
-		common::diagnostics::Expect(result, assembledPacket->serverTick == 700, "ClientSnapshotAssembler: single impact serverTick");
-		common::diagnostics::Expect(result, assembledPacket->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: single impact count");
-		common::diagnostics::Expect(result, assembledPacket->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
+		tests::Expect(result, assembledPacket->roomId == 2, "ClientSnapshotAssembler: single impact roomId");
+		tests::Expect(result, assembledPacket->serverTick == 700, "ClientSnapshotAssembler: single impact serverTick");
+		tests::Expect(result, assembledPacket->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: single impact count");
+		tests::Expect(result, assembledPacket->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
 			"ClientSnapshotAssembler: single impact data 0");
-		common::diagnostics::Expect(result, assembledPacket->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
+		tests::Expect(result, assembledPacket->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
 			"ClientSnapshotAssembler: single impact data 1");
 	}
 
-	void RunMultiImpactEffectChunkOutOfOrderTest(common::diagnostics::DebugTestResult& result)
+	void RunMultiImpactEffectChunkOutOfOrderTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -268,22 +269,22 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledImpactEffectPacket> secondResult
 			= assembler.PushImpactEffectChunk(secondPacket);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: out-of-order impact first waits");
-		common::diagnostics::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: out-of-order impact second assembles");
+		tests::Expect(result, !firstResult.has_value(), "ClientSnapshotAssembler: out-of-order impact first waits");
+		tests::Expect(result, secondResult.has_value(), "ClientSnapshotAssembler: out-of-order impact second assembles");
 
 		if (!secondResult.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, secondResult->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: out-of-order impact count");
-		common::diagnostics::Expect(result, secondResult->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
+		tests::Expect(result, secondResult->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: out-of-order impact count");
+		tests::Expect(result, secondResult->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
 			"ClientSnapshotAssembler: out-of-order impact order 0");
-		common::diagnostics::Expect(result, secondResult->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
+		tests::Expect(result, secondResult->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
 			"ClientSnapshotAssembler: out-of-order impact order 1");
 	}
 
-	void RunBulletAndImpactIndependentTest(common::diagnostics::DebugTestResult& result)
+	void RunBulletAndImpactIndependentTest(tests::DebugTestResult& result)
 	{
 		client::net::SnapshotChunkAssembler assembler;
 
@@ -298,26 +299,26 @@ namespace
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledImpactEffectPacket> impactResult
 			= assembler.PushImpactEffectChunk(impactPacket);
 
-		common::diagnostics::Expect(result, bulletResult.has_value(), "ClientSnapshotAssembler: bullet stream assembles independently");
-		common::diagnostics::Expect(result, impactResult.has_value(), "ClientSnapshotAssembler: impact stream assembles independently");
+		tests::Expect(result, bulletResult.has_value(), "ClientSnapshotAssembler: bullet stream assembles independently");
+		tests::Expect(result, impactResult.has_value(), "ClientSnapshotAssembler: impact stream assembles independently");
 
 		if (bulletResult.has_value())
 		{
-			common::diagnostics::Expect(result, bulletResult->bulletStateDataList.size() == 1, "ClientSnapshotAssembler: independent bullet count");
+			tests::Expect(result, bulletResult->bulletStateDataList.size() == 1, "ClientSnapshotAssembler: independent bullet count");
 		}
 
 		if (impactResult.has_value())
 		{
-			common::diagnostics::Expect(result, impactResult->impactEffectDataList.size() == 1, "ClientSnapshotAssembler: independent impact count");
+			tests::Expect(result, impactResult->impactEffectDataList.size() == 1, "ClientSnapshotAssembler: independent impact count");
 		}
 	}
 }
 
 namespace tests::client
 {
-	common::diagnostics::DebugTestResult RunSnapshotChunkAssemblerTests()
+	tests::DebugTestResult RunSnapshotChunkAssemblerTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunSingleBulletChunkTest(result);
 		RunMultiBulletChunkInOrderTest(result);

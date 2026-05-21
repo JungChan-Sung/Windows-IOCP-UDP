@@ -4,26 +4,26 @@
 
 namespace
 {
-	void RunInitialSnapshotIsZeroTest(common::diagnostics::DebugTestResult& result)
+	void RunInitialSnapshotIsZeroTest(tests::DebugTestResult& result)
 	{
 		server::diagnostics::ServerMetricsCollector metricsCollector;
 
 		const server::diagnostics::ServerMetricsSnapshot snapshot = metricsCollector.CaptureSnapshot();
 
-		common::diagnostics::Expect(result, snapshot.receivedPacketCount == 0, "ServerMetricsCollector: initial received packet count");
-		common::diagnostics::Expect(result, snapshot.invalidPacketDropCount == 0, "ServerMetricsCollector: initial invalid packet count");
-		common::diagnostics::Expect(result, snapshot.joinRequestCount == 0, "ServerMetricsCollector: initial join request count");
-		common::diagnostics::Expect(result, snapshot.inputCommandCount == 0, "ServerMetricsCollector: initial input command count");
-		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: initial fire request count");
-		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: initial leave request count");
-		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: initial join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: player snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: bullet snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: impact effect send request count");
-		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: initial timed out peer count");
+		tests::Expect(result, snapshot.receivedPacketCount == 0, "ServerMetricsCollector: initial received packet count");
+		tests::Expect(result, snapshot.invalidPacketDropCount == 0, "ServerMetricsCollector: initial invalid packet count");
+		tests::Expect(result, snapshot.joinRequestCount == 0, "ServerMetricsCollector: initial join request count");
+		tests::Expect(result, snapshot.inputCommandCount == 0, "ServerMetricsCollector: initial input command count");
+		tests::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: initial fire request count");
+		tests::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: initial leave request count");
+		tests::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: initial join room request count");
+		tests::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: player snapshot send request count");
+		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: bullet snapshot send request count");
+		tests::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: impact effect send request count");
+		tests::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: initial timed out peer count");
 	}
 
-	void RunIncrementCountersTest(common::diagnostics::DebugTestResult& result)
+	void RunIncrementCountersTest(tests::DebugTestResult& result)
 	{
 		server::diagnostics::ServerMetricsCollector metricsCollector;
 
@@ -46,20 +46,20 @@ namespace
 
 		const server::diagnostics::ServerMetricsSnapshot snapshot = metricsCollector.CaptureSnapshot();
 
-		common::diagnostics::Expect(result, snapshot.receivedPacketCount == 2, "ServerMetricsCollector: received packet count");
-		common::diagnostics::Expect(result, snapshot.invalidPacketDropCount == 1, "ServerMetricsCollector: invalid packet count");
-		common::diagnostics::Expect(result, snapshot.joinRequestCount == 1, "ServerMetricsCollector: join request count");
-		common::diagnostics::Expect(result, snapshot.inputCommandCount == 2, "ServerMetricsCollector: input command count");
-		common::diagnostics::Expect(result, snapshot.fireRequestCount == 1, "ServerMetricsCollector: fire request count");
-		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 1, "ServerMetricsCollector: leave request count");
-		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 1, "ServerMetricsCollector: join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 3, "ServerMetricsCollector: player snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 4, "ServerMetricsCollector: bullet snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 5, "ServerMetricsCollector: impact effect send request count");
-		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 2, "ServerMetricsCollector: timed out peer count");
+		tests::Expect(result, snapshot.receivedPacketCount == 2, "ServerMetricsCollector: received packet count");
+		tests::Expect(result, snapshot.invalidPacketDropCount == 1, "ServerMetricsCollector: invalid packet count");
+		tests::Expect(result, snapshot.joinRequestCount == 1, "ServerMetricsCollector: join request count");
+		tests::Expect(result, snapshot.inputCommandCount == 2, "ServerMetricsCollector: input command count");
+		tests::Expect(result, snapshot.fireRequestCount == 1, "ServerMetricsCollector: fire request count");
+		tests::Expect(result, snapshot.leaveRequestCount == 1, "ServerMetricsCollector: leave request count");
+		tests::Expect(result, snapshot.joinRoomRequestCount == 1, "ServerMetricsCollector: join room request count");
+		tests::Expect(result, snapshot.playerSnapshotSendRequestCount == 3, "ServerMetricsCollector: player snapshot send request count");
+		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 4, "ServerMetricsCollector: bullet snapshot send request count");
+		tests::Expect(result, snapshot.impactEffectSendRequestCount == 5, "ServerMetricsCollector: impact effect send request count");
+		tests::Expect(result, snapshot.timedOutPeerCount == 2, "ServerMetricsCollector: timed out peer count");
 	}
 
-	void RunResetTest(common::diagnostics::DebugTestResult& result)
+	void RunResetTest(tests::DebugTestResult& result)
 	{
 		server::diagnostics::ServerMetricsCollector metricsCollector;
 
@@ -79,25 +79,25 @@ namespace
 
 		const server::diagnostics::ServerMetricsSnapshot snapshot = metricsCollector.CaptureSnapshot();
 
-		common::diagnostics::Expect(result, snapshot.receivedPacketCount == 0, "ServerMetricsCollector: reset received packet count");
-		common::diagnostics::Expect(result, snapshot.invalidPacketDropCount == 0, "ServerMetricsCollector: reset invalid packet count");
-		common::diagnostics::Expect(result, snapshot.joinRequestCount == 0, "ServerMetricsCollector: reset join request count");
-		common::diagnostics::Expect(result, snapshot.inputCommandCount == 0, "ServerMetricsCollector: reset input command count");
-		common::diagnostics::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: reset fire request count");
-		common::diagnostics::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: reset leave request count");
-		common::diagnostics::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: reset join room request count");
-		common::diagnostics::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot send request count");
-		common::diagnostics::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect send request count");
-		common::diagnostics::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
+		tests::Expect(result, snapshot.receivedPacketCount == 0, "ServerMetricsCollector: reset received packet count");
+		tests::Expect(result, snapshot.invalidPacketDropCount == 0, "ServerMetricsCollector: reset invalid packet count");
+		tests::Expect(result, snapshot.joinRequestCount == 0, "ServerMetricsCollector: reset join request count");
+		tests::Expect(result, snapshot.inputCommandCount == 0, "ServerMetricsCollector: reset input command count");
+		tests::Expect(result, snapshot.fireRequestCount == 0, "ServerMetricsCollector: reset fire request count");
+		tests::Expect(result, snapshot.leaveRequestCount == 0, "ServerMetricsCollector: reset leave request count");
+		tests::Expect(result, snapshot.joinRoomRequestCount == 0, "ServerMetricsCollector: reset join room request count");
+		tests::Expect(result, snapshot.playerSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset player snapshot send request count");
+		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot send request count");
+		tests::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect send request count");
+		tests::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunServerMetricsCollectorTests()
+	tests::DebugTestResult RunServerMetricsCollectorTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunInitialSnapshotIsZeroTest(result);
 		RunIncrementCountersTest(result);

@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-namespace common::diagnostics
+namespace tests
 {
 	struct DebugTestResult
 	{
@@ -18,11 +18,13 @@ namespace common::diagnostics
 		{
 			++passedCount;
 		}
+
 		void AddFailed(std::string_view message)
 		{
 			++failedCount;
 			failureList.emplace_back(message);
 		}
+
 		void Merge(const DebugTestResult& other)
 		{
 			passedCount += other.passedCount;

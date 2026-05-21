@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests::net
 {
-	[[nodiscard]] common::diagnostics::DebugTestResult RunSnapshotChunkAssemblerCoreTests();
+	[[nodiscard]] tests::DebugTestResult RunSnapshotChunkAssemblerCoreTests();
 }

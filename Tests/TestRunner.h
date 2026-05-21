@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests
 {
@@ -22,11 +22,11 @@ namespace tests
 		[[nodiscard]] static bool RunAll();
 
 	private:
-		static void PrintResult(std::string_view testName, const common::diagnostics::DebugTestResult& result);
+		static void PrintResult(std::string_view testName, const tests::DebugTestResult& result);
 		static void MergeAndPrint(
-			common::diagnostics::DebugTestResult& totalResult,
+			tests::DebugTestResult& totalResult,
 			std::string_view testName,
-			const common::diagnostics::DebugTestResult& result
+			const tests::DebugTestResult& result
 		);
 	};
 }

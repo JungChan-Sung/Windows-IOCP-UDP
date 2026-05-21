@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests::server
 {
-	[[nodiscard]] common::diagnostics::DebugTestResult RunPacketPayloadValidatorTests();
+	[[nodiscard]] tests::DebugTestResult RunPacketPayloadValidatorTests();
 }

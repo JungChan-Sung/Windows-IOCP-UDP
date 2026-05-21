@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstdint>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Game/GameRules.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
@@ -14,6 +13,8 @@
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Net/PeerState.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -59,7 +60,7 @@ namespace
 		return playerState;
 	}
 
-	void RunCreateBulletDirectionTest(common::diagnostics::DebugTestResult& result)
+	void RunCreateBulletDirectionTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -82,20 +83,20 @@ namespace
 
 		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
 
-		common::diagnostics::Expect(result, bulletState.bulletId == 10, "GameSimulation: CreateBullet bulletId");
-		common::diagnostics::Expect(result, bulletState.ownerPlayerId == 1, "GameSimulation: CreateBullet ownerPlayerId");
-		common::diagnostics::Expect(result, bulletState.roomId == 1, "GameSimulation: CreateBullet roomId");
-		common::diagnostics::Expect(result, bulletState.x == ownerPlayer.x, "GameSimulation: CreateBullet x");
-		common::diagnostics::Expect(result, bulletState.y == ownerPlayer.y, "GameSimulation: CreateBullet y");
-		common::diagnostics::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed * 0.6F),
+		tests::Expect(result, bulletState.bulletId == 10, "GameSimulation: CreateBullet bulletId");
+		tests::Expect(result, bulletState.ownerPlayerId == 1, "GameSimulation: CreateBullet ownerPlayerId");
+		tests::Expect(result, bulletState.roomId == 1, "GameSimulation: CreateBullet roomId");
+		tests::Expect(result, bulletState.x == ownerPlayer.x, "GameSimulation: CreateBullet x");
+		tests::Expect(result, bulletState.y == ownerPlayer.y, "GameSimulation: CreateBullet y");
+		tests::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed * 0.6F),
 			"GameSimulation: CreateBullet velocityX normalized");
-		common::diagnostics::Expect(result, IsNearlyEqual(bulletState.velocityY, weaponRule.bulletSpeed * 0.8F),
+		tests::Expect(result, IsNearlyEqual(bulletState.velocityY, weaponRule.bulletSpeed * 0.8F),
 			"GameSimulation: CreateBullet velocityY normalized");
-		common::diagnostics::Expect(result, bulletState.damage == weaponRule.bulletDamage, "GameSimulation: CreateBullet damage");
-		common::diagnostics::Expect(result, bulletState.radius == weaponRule.bulletRadius, "GameSimulation: CreateBullet radius");
+		tests::Expect(result, bulletState.damage == weaponRule.bulletDamage, "GameSimulation: CreateBullet damage");
+		tests::Expect(result, bulletState.radius == weaponRule.bulletRadius, "GameSimulation: CreateBullet radius");
 	}
 
-	void RunCreateBulletFallbackDirectionTest(common::diagnostics::DebugTestResult& result)
+	void RunCreateBulletFallbackDirectionTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -116,12 +117,12 @@ namespace
 
 		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
 
-		common::diagnostics::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed),
+		tests::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed),
 			"GameSimulation: CreateBullet fallback velocityX");
-		common::diagnostics::Expect(result, IsNearlyEqual(bulletState.velocityY, 0.0F), "GameSimulation: CreateBullet fallback velocityY");
+		tests::Expect(result, IsNearlyEqual(bulletState.velocityY, 0.0F), "GameSimulation: CreateBullet fallback velocityY");
 	}
 
-	void RunBulletLifetimeRemoveTest(common::diagnostics::DebugTestResult& result)
+	void RunBulletLifetimeRemoveTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -141,10 +142,10 @@ namespace
 
 		simulation.UpdateBullets(0.1F, peerTable, gameWorld, gameRuleConfig);
 
-		common::diagnostics::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: expired bullet removed");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: expired bullet removed");
 	}
 
-	void RunBulletHitPlayerTest(common::diagnostics::DebugTestResult& result)
+	void RunBulletHitPlayerTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -183,21 +184,21 @@ namespace
 
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
-		common::diagnostics::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: hit target exists");
-		common::diagnostics::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: hit bullet removed");
-		common::diagnostics::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: hit impact effect spawned");
+		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: hit target exists");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: hit bullet removed");
+		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: hit impact effect spawned");
 
 		if (updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp - 1, "GameSimulation: hit hp decreased");
-		common::diagnostics::Expect(result, updatedTargetPlayer->hitFlashRemainingSeconds > 0.0F, "GameSimulation: hit flash timer set");
-		common::diagnostics::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: hit target still alive");
+		tests::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp - 1, "GameSimulation: hit hp decreased");
+		tests::Expect(result, updatedTargetPlayer->hitFlashRemainingSeconds > 0.0F, "GameSimulation: hit flash timer set");
+		tests::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: hit target still alive");
 	}
 
-	void RunBulletKillPlayerTest(common::diagnostics::DebugTestResult& result)
+	void RunBulletKillPlayerTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -237,23 +238,23 @@ namespace
 		const server::game::PlayerState* updatedOwnerPlayer = gameWorld.FindPlayer(ownerPlayerId);
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
-		common::diagnostics::Expect(result, updatedOwnerPlayer != nullptr, "GameSimulation: kill owner exists");
-		common::diagnostics::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: kill target exists");
+		tests::Expect(result, updatedOwnerPlayer != nullptr, "GameSimulation: kill owner exists");
+		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: kill target exists");
 
 		if (updatedOwnerPlayer == nullptr || updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, updatedTargetPlayer->hp == 0, "GameSimulation: kill target hp zero");
-		common::diagnostics::Expect(result, updatedTargetPlayer->isDead, "GameSimulation: kill target dead");
-		common::diagnostics::Expect(result, updatedTargetPlayer->deathCount == 1, "GameSimulation: kill target deathCount");
-		common::diagnostics::Expect(result, updatedOwnerPlayer->killCount == 1, "GameSimulation: kill owner killCount");
-		common::diagnostics::Expect(result, updatedTargetPlayer->inputFlags == common::game::InputFlags::None, "GameSimulation: kill clears input");
-		common::diagnostics::Expect(result, updatedTargetPlayer->respawnRemainingSeconds > 0.0F, "GameSimulation: kill sets respawn timer");
+		tests::Expect(result, updatedTargetPlayer->hp == 0, "GameSimulation: kill target hp zero");
+		tests::Expect(result, updatedTargetPlayer->isDead, "GameSimulation: kill target dead");
+		tests::Expect(result, updatedTargetPlayer->deathCount == 1, "GameSimulation: kill target deathCount");
+		tests::Expect(result, updatedOwnerPlayer->killCount == 1, "GameSimulation: kill owner killCount");
+		tests::Expect(result, updatedTargetPlayer->inputFlags == common::game::InputFlags::None, "GameSimulation: kill clears input");
+		tests::Expect(result, updatedTargetPlayer->respawnRemainingSeconds > 0.0F, "GameSimulation: kill sets respawn timer");
 	}
 
-	void RunInvinciblePlayerIgnoresBulletTest(common::diagnostics::DebugTestResult& result)
+	void RunInvinciblePlayerIgnoresBulletTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -292,20 +293,20 @@ namespace
 
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
-		common::diagnostics::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: invincible target exists");
-		common::diagnostics::Expect(result, gameWorld.GetBulletCount() == 1, "GameSimulation: invincible bullet remains");
-		common::diagnostics::Expect(result, gameWorld.GetPendingImpactEffectCount() == 0, "GameSimulation: invincible no impact");
+		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: invincible target exists");
+		tests::Expect(result, gameWorld.GetBulletCount() == 1, "GameSimulation: invincible bullet remains");
+		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 0, "GameSimulation: invincible no impact");
 
 		if (updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: invincible hp unchanged");
-		common::diagnostics::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: invincible not dead");
+		tests::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: invincible hp unchanged");
+		tests::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: invincible not dead");
 	}
 
-	void RunRespawnTest(common::diagnostics::DebugTestResult& result)
+	void RunRespawnTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -330,24 +331,24 @@ namespace
 
 		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(playerId);
 
-		common::diagnostics::Expect(result, updatedPlayerState != nullptr, "GameSimulation: respawn player exists");
-		common::diagnostics::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: respawn spawn effect");
+		tests::Expect(result, updatedPlayerState != nullptr, "GameSimulation: respawn player exists");
+		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: respawn spawn effect");
 
 		if (updatedPlayerState == nullptr)
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, !updatedPlayerState->isDead, "GameSimulation: respawn not dead");
-		common::diagnostics::Expect(result, updatedPlayerState->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: respawn hp");
-		common::diagnostics::Expect(result, updatedPlayerState->respawnRemainingSeconds == 0.0F, "GameSimulation: respawn timer cleared");
-		common::diagnostics::Expect(result, updatedPlayerState->invincibilityRemainingSeconds > 0.0F, "GameSimulation: respawn invincible");
-		common::diagnostics::Expect(result, updatedPlayerState->inputFlags == common::game::InputFlags::None, "GameSimulation: respawn input cleared");
-		common::diagnostics::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionX, 1.0F), "GameSimulation: respawn direction x");
-		common::diagnostics::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionY, 0.0F), "GameSimulation: respawn direction y");
+		tests::Expect(result, !updatedPlayerState->isDead, "GameSimulation: respawn not dead");
+		tests::Expect(result, updatedPlayerState->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: respawn hp");
+		tests::Expect(result, updatedPlayerState->respawnRemainingSeconds == 0.0F, "GameSimulation: respawn timer cleared");
+		tests::Expect(result, updatedPlayerState->invincibilityRemainingSeconds > 0.0F, "GameSimulation: respawn invincible");
+		tests::Expect(result, updatedPlayerState->inputFlags == common::game::InputFlags::None, "GameSimulation: respawn input cleared");
+		tests::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionX, 1.0F), "GameSimulation: respawn direction x");
+		tests::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionY, 0.0F), "GameSimulation: respawn direction y");
 	}
 
-	void RunTimerClampTest(common::diagnostics::DebugTestResult& result)
+	void RunTimerClampTest(tests::DebugTestResult& result)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -364,24 +365,24 @@ namespace
 
 		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(1);
 
-		common::diagnostics::Expect(result, updatedPlayerState != nullptr, "GameSimulation: timer player exists");
+		tests::Expect(result, updatedPlayerState != nullptr, "GameSimulation: timer player exists");
 
 		if (updatedPlayerState == nullptr)
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, updatedPlayerState->invincibilityRemainingSeconds == 0.0F, "GameSimulation: invincibility timer clamp");
-		common::diagnostics::Expect(result, updatedPlayerState->hitFlashRemainingSeconds == 0.0F, "GameSimulation: hit flash timer clamp");
-		common::diagnostics::Expect(result, updatedPlayerState->fireCooldownRemainingSeconds == 0.0F, "GameSimulation: fire cooldown timer clamp");
+		tests::Expect(result, updatedPlayerState->invincibilityRemainingSeconds == 0.0F, "GameSimulation: invincibility timer clamp");
+		tests::Expect(result, updatedPlayerState->hitFlashRemainingSeconds == 0.0F, "GameSimulation: hit flash timer clamp");
+		tests::Expect(result, updatedPlayerState->fireCooldownRemainingSeconds == 0.0F, "GameSimulation: fire cooldown timer clamp");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunGameSimulationTests()
+	tests::DebugTestResult RunGameSimulationTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunCreateBulletDirectionTest(result);
 		RunCreateBulletFallbackDirectionTest(result);

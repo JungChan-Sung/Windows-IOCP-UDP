@@ -73,7 +73,7 @@ namespace
 		return chunkView;
 	}
 
-	void RunAssembleInOrderTest(common::diagnostics::DebugTestResult& result)
+	void RunAssembleInOrderTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		const auto now = std::chrono::steady_clock::now();
@@ -84,7 +84,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: first chunk waits");
+		tests::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: first chunk waits");
 
 		const std::optional<AssembledChunk> secondResult = assemblerCore.PushChunk(
 			MakeChunk(1, 100, 1, 2, { TestData{ 2, 30.0F, 40.0F } }),
@@ -92,21 +92,21 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, secondResult.has_value(), "SnapshotChunkCore: second chunk completes");
+		tests::Expect(result, secondResult.has_value(), "SnapshotChunkCore: second chunk completes");
 
 		if (!secondResult.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, secondResult->roomId == 1, "SnapshotChunkCore: assembled roomId");
-		common::diagnostics::Expect(result, secondResult->serverTick == 100, "SnapshotChunkCore: assembled serverTick");
-		common::diagnostics::Expect(result, secondResult->dataList.size() == 2, "SnapshotChunkCore: assembled data count");
-		common::diagnostics::Expect(result, secondResult->dataList[0].id == 1, "SnapshotChunkCore: first data order");
-		common::diagnostics::Expect(result, secondResult->dataList[1].id == 2, "SnapshotChunkCore: second data order");
+		tests::Expect(result, secondResult->roomId == 1, "SnapshotChunkCore: assembled roomId");
+		tests::Expect(result, secondResult->serverTick == 100, "SnapshotChunkCore: assembled serverTick");
+		tests::Expect(result, secondResult->dataList.size() == 2, "SnapshotChunkCore: assembled data count");
+		tests::Expect(result, secondResult->dataList[0].id == 1, "SnapshotChunkCore: first data order");
+		tests::Expect(result, secondResult->dataList[1].id == 2, "SnapshotChunkCore: second data order");
 	}
 
-	void RunAssembleOutOfOrderTest(common::diagnostics::DebugTestResult& result)
+	void RunAssembleOutOfOrderTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		const auto now = std::chrono::steady_clock::now();
@@ -117,7 +117,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: out of order first waits");
+		tests::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: out of order first waits");
 
 		const std::optional<AssembledChunk> secondResult = assemblerCore.PushChunk(
 			MakeChunk(1, 101, 0, 2, { TestData{ 10, 10.0F, 20.0F } }),
@@ -125,18 +125,18 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, secondResult.has_value(), "SnapshotChunkCore: out of order completes");
+		tests::Expect(result, secondResult.has_value(), "SnapshotChunkCore: out of order completes");
 
 		if (!secondResult.has_value())
 		{
 			return;
 		}
 
-		common::diagnostics::Expect(result, secondResult->dataList[0].id == 10, "SnapshotChunkCore: out of order first data");
-		common::diagnostics::Expect(result, secondResult->dataList[1].id == 20, "SnapshotChunkCore: out of order second data");
+		tests::Expect(result, secondResult->dataList[0].id == 10, "SnapshotChunkCore: out of order first data");
+		tests::Expect(result, secondResult->dataList[1].id == 20, "SnapshotChunkCore: out of order second data");
 	}
 
-	void RunDuplicateDropTest(common::diagnostics::DebugTestResult& result)
+	void RunDuplicateDropTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		LogList logList;
@@ -164,14 +164,14 @@ namespace
 			}
 		);
 
-		common::diagnostics::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: duplicate base waits");
-		common::diagnostics::Expect(result, !duplicateResult.has_value(), "SnapshotChunkCore: duplicate dropped");
+		tests::Expect(result, !firstResult.has_value(), "SnapshotChunkCore: duplicate base waits");
+		tests::Expect(result, !duplicateResult.has_value(), "SnapshotChunkCore: duplicate dropped");
 
 		const bool hasDuplicateLog = std::ranges::find(logList, "DuplicateChunkDrop") != logList.end();
-		common::diagnostics::Expect(result, hasDuplicateLog, "SnapshotChunkCore: duplicate log");
+		tests::Expect(result, hasDuplicateLog, "SnapshotChunkCore: duplicate log");
 	}
 
-	void RunAlreadyAppliedDropTest(common::diagnostics::DebugTestResult& result)
+	void RunAlreadyAppliedDropTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		LogList logList;
@@ -183,7 +183,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, completeResult.has_value(), "SnapshotChunkCore: already applied base completes");
+		tests::Expect(result, completeResult.has_value(), "SnapshotChunkCore: already applied base completes");
 
 		const std::optional<AssembledChunk> alreadyAppliedResult = assemblerCore.PushChunk(
 			MakeChunk(1, 300, 0, 1, { TestData{ 2, 3.0F, 4.0F } }),
@@ -195,13 +195,13 @@ namespace
 			}
 		);
 
-		common::diagnostics::Expect(result, !alreadyAppliedResult.has_value(), "SnapshotChunkCore: already applied dropped");
+		tests::Expect(result, !alreadyAppliedResult.has_value(), "SnapshotChunkCore: already applied dropped");
 
 		const bool hasAlreadyAppliedLog = std::ranges::find(logList, "StaleDrop-AlreadyApplied") != logList.end();
-		common::diagnostics::Expect(result, hasAlreadyAppliedLog, "SnapshotChunkCore: already applied log");
+		tests::Expect(result, hasAlreadyAppliedLog, "SnapshotChunkCore: already applied log");
 	}
 
-	void RunOlderThanAppliedDropTest(common::diagnostics::DebugTestResult& result)
+	void RunOlderThanAppliedDropTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		LogList logList;
@@ -213,7 +213,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, completeResult.has_value(), "SnapshotChunkCore: stale base completes");
+		tests::Expect(result, completeResult.has_value(), "SnapshotChunkCore: stale base completes");
 
 		const std::optional<AssembledChunk> staleResult = assemblerCore.PushChunk(
 			MakeChunk(1, 399, 0, 1, { TestData{ 2, 3.0F, 4.0F } }),
@@ -225,13 +225,13 @@ namespace
 			}
 		);
 
-		common::diagnostics::Expect(result, !staleResult.has_value(), "SnapshotChunkCore: older than applied dropped");
+		tests::Expect(result, !staleResult.has_value(), "SnapshotChunkCore: older than applied dropped");
 
 		const bool hasStaleLog = std::ranges::find(logList, "StaleDrop-OlderThanApplied") != logList.end();
-		common::diagnostics::Expect(result, hasStaleLog, "SnapshotChunkCore: older than applied log");
+		tests::Expect(result, hasStaleLog, "SnapshotChunkCore: older than applied log");
 	}
 
-	void RunNewerTickResetsAssemblyTest(common::diagnostics::DebugTestResult& result)
+	void RunNewerTickResetsAssemblyTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		const auto now = std::chrono::steady_clock::now();
@@ -242,7 +242,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, !oldResult.has_value(), "SnapshotChunkCore: old partial waits");
+		tests::Expect(result, !oldResult.has_value(), "SnapshotChunkCore: old partial waits");
 
 		const std::optional<AssembledChunk> newResult = assemblerCore.PushChunk(
 			MakeChunk(1, 501, 0, 1, { TestData{ 2, 3.0F, 4.0F } }),
@@ -250,17 +250,17 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, newResult.has_value(), "SnapshotChunkCore: newer tick resets and completes");
+		tests::Expect(result, newResult.has_value(), "SnapshotChunkCore: newer tick resets and completes");
 
 		if (newResult.has_value())
 		{
-			common::diagnostics::Expect(result, newResult->serverTick == 501, "SnapshotChunkCore: newer tick serverTick");
-			common::diagnostics::Expect(result, newResult->dataList.size() == 1, "SnapshotChunkCore: newer tick data count");
-			common::diagnostics::Expect(result, newResult->dataList[0].id == 2, "SnapshotChunkCore: newer tick data");
+			tests::Expect(result, newResult->serverTick == 501, "SnapshotChunkCore: newer tick serverTick");
+			tests::Expect(result, newResult->dataList.size() == 1, "SnapshotChunkCore: newer tick data count");
+			tests::Expect(result, newResult->dataList[0].id == 2, "SnapshotChunkCore: newer tick data");
 		}
 	}
 
-	void RunInvalidChunkHeaderDropTest(common::diagnostics::DebugTestResult& result)
+	void RunInvalidChunkHeaderDropTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		LogList logList;
@@ -276,13 +276,13 @@ namespace
 			}
 		);
 
-		common::diagnostics::Expect(result, !zeroCountResult.has_value(), "SnapshotChunkCore: zero chunkCount rejected");
+		tests::Expect(result, !zeroCountResult.has_value(), "SnapshotChunkCore: zero chunkCount rejected");
 
 		const bool hasInvalidLog = std::ranges::find(logList, "InvalidChunkHeaderDrop") != logList.end();
-		common::diagnostics::Expect(result, hasInvalidLog, "SnapshotChunkCore: invalid chunk log");
+		tests::Expect(result, hasInvalidLog, "SnapshotChunkCore: invalid chunk log");
 	}
 
-	void RunTimeoutCleanupTest(common::diagnostics::DebugTestResult& result)
+	void RunTimeoutCleanupTest(tests::DebugTestResult& result)
 	{
 		AssemblerCore assemblerCore;
 		LogList logList;
@@ -296,7 +296,7 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, !partialResult.has_value(), "SnapshotChunkCore: timeout base waits");
+		tests::Expect(result, !partialResult.has_value(), "SnapshotChunkCore: timeout base waits");
 
 		assemblerCore.CleanupExpiredAssemblies(
 			currentTime,
@@ -309,7 +309,7 @@ namespace
 		);
 
 		const bool hasTimeoutLog = std::ranges::find(logList, "TimeoutDrop") != logList.end();
-		common::diagnostics::Expect(result, hasTimeoutLog, "SnapshotChunkCore: timeout log");
+		tests::Expect(result, hasTimeoutLog, "SnapshotChunkCore: timeout log");
 
 		const std::optional<AssembledChunk> nextResult = assemblerCore.PushChunk(
 			MakeChunk(1, 700, 1, 2, { TestData{ 2, 3.0F, 4.0F } }),
@@ -317,15 +317,15 @@ namespace
 			TestLog
 		);
 
-		common::diagnostics::Expect(result, !nextResult.has_value(), "SnapshotChunkCore: chunk after timeout starts new assembly");
+		tests::Expect(result, !nextResult.has_value(), "SnapshotChunkCore: chunk after timeout starts new assembly");
 	}
 }
 
 namespace tests::net
 {
-	common::diagnostics::DebugTestResult RunSnapshotChunkAssemblerCoreTests()
+	tests::DebugTestResult RunSnapshotChunkAssemblerCoreTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunAssembleInOrderTest(result);
 		RunAssembleOutOfOrderTest(result);

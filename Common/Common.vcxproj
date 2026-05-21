@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Diagnostics\DebugTestResult.h" />
     <ClInclude Include="Game\GameRules.h" />
     <ClInclude Include="Game\GameTypes.h" />
     <ClInclude Include="Game\InputFlags.h" />

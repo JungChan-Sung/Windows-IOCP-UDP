@@ -24,7 +24,7 @@ namespace tests
 {
 	bool TestRunner::RunAll()
 	{
-		common::diagnostics::DebugTestResult totalResult{};
+		tests::DebugTestResult totalResult{};
 
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
@@ -48,7 +48,7 @@ namespace tests
 		return totalResult.IsSucceeded();
 	}
 
-	void TestRunner::PrintResult(std::string_view testName, const common::diagnostics::DebugTestResult& result)
+	void TestRunner::PrintResult(std::string_view testName, const tests::DebugTestResult& result)
 	{
 		for (const std::string& failure : result.failureList)
 		{
@@ -59,9 +59,9 @@ namespace tests
 	}
 
 	void TestRunner::MergeAndPrint(
-		common::diagnostics::DebugTestResult& totalResult,
+		tests::DebugTestResult& totalResult,
 		std::string_view testName,
-		const common::diagnostics::DebugTestResult& result
+		const tests::DebugTestResult& result
 	)
 	{
 		PrintResult(testName, result);

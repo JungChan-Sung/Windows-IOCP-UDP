@@ -2,42 +2,42 @@
 
 #include <chrono>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/LogLevel.h>
 
+#include <Tests/DebugTestResult.h>
 #include <Tests/TestHelpers.h>
 
 namespace
 {
-	void RunStartStopTest(common::diagnostics::DebugTestResult& result)
+	void RunStartStopTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
 		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
 		const bool started = startResult.has_value();
 
-		common::diagnostics::Expect(result, started, "AsyncLogWriter: start succeeds");
-		common::diagnostics::Expect(result, logWriter.IsStarted(), "AsyncLogWriter: started after start");
+		tests::Expect(result, started, "AsyncLogWriter: start succeeds");
+		tests::Expect(result, logWriter.IsStarted(), "AsyncLogWriter: started after start");
 
 		logWriter.Stop();
 
-		common::diagnostics::Expect(result, !logWriter.IsStarted(), "AsyncLogWriter: stopped after stop");
-		common::diagnostics::Expect(result, logWriter.GetPendingTaskCount() == 0, "AsyncLogWriter: pending count after stop");
+		tests::Expect(result, !logWriter.IsStarted(), "AsyncLogWriter: stopped after stop");
+		tests::Expect(result, logWriter.GetPendingTaskCount() == 0, "AsyncLogWriter: pending count after stop");
 	}
 
-	void RunStartWithZeroWorkerFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunStartWithZeroWorkerFailsTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
 		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(0);
 		const bool started = startResult.has_value();
 
-		common::diagnostics::Expect(result, !started, "AsyncLogWriter: start with zero worker fails");
-		common::diagnostics::Expect(result, !logWriter.IsStarted(), "AsyncLogWriter: zero worker not started");
+		tests::Expect(result, !started, "AsyncLogWriter: start with zero worker fails");
+		tests::Expect(result, !logWriter.IsStarted(), "AsyncLogWriter: zero worker not started");
 	}
 
-	void RunStartTwiceFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunStartTwiceFailsTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
@@ -47,22 +47,22 @@ namespace
 		const bool firstStarted = firstStartResult.has_value();
 		const bool secondStarted = secondStartResult.has_value();
 
-		common::diagnostics::Expect(result, firstStarted, "AsyncLogWriter: first start succeeds");
-		common::diagnostics::Expect(result, !secondStarted, "AsyncLogWriter: second start fails");
+		tests::Expect(result, firstStarted, "AsyncLogWriter: first start succeeds");
+		tests::Expect(result, !secondStarted, "AsyncLogWriter: second start fails");
 
 		logWriter.Stop();
 	}
 
-	void RunLogBeforeStartFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunLogBeforeStartFailsTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
 		const bool logged = logWriter.Info("message before start");
 
-		common::diagnostics::Expect(result, !logged, "AsyncLogWriter: log before start fails");
+		tests::Expect(result, !logged, "AsyncLogWriter: log before start fails");
 	}
 
-	void RunLogAfterStopFailsTest(common::diagnostics::DebugTestResult& result)
+	void RunLogAfterStopFailsTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
@@ -73,11 +73,11 @@ namespace
 
 		const bool logged = logWriter.Info("message after stop");
 
-		common::diagnostics::Expect(result, started, "AsyncLogWriter: log after stop start succeeds");
-		common::diagnostics::Expect(result, !logged, "AsyncLogWriter: log after stop fails");
+		tests::Expect(result, started, "AsyncLogWriter: log after stop start succeeds");
+		tests::Expect(result, !logged, "AsyncLogWriter: log after stop fails");
 	}
 
-	void RunLogEnqueueSucceedsTest(common::diagnostics::DebugTestResult& result)
+	void RunLogEnqueueSucceedsTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
@@ -94,14 +94,14 @@ namespace
 			std::chrono::milliseconds(1000)
 		);
 
-		common::diagnostics::Expect(result, started, "AsyncLogWriter: enqueue start succeeds");
-		common::diagnostics::Expect(result, logged, "AsyncLogWriter: enqueue succeeds");
-		common::diagnostics::Expect(result, drained, "AsyncLogWriter: queue drained");
+		tests::Expect(result, started, "AsyncLogWriter: enqueue start succeeds");
+		tests::Expect(result, logged, "AsyncLogWriter: enqueue succeeds");
+		tests::Expect(result, drained, "AsyncLogWriter: queue drained");
 
 		logWriter.Stop();
 	}
 
-	void RunMinimumLogLevelFiltersTest(common::diagnostics::DebugTestResult& result)
+	void RunMinimumLogLevelFiltersTest(tests::DebugTestResult& result)
 	{
 		common::log::AsyncLogWriter logWriter;
 
@@ -113,9 +113,9 @@ namespace
 		const bool infoLogged = logWriter.Info("filtered info log");
 		const bool warningLogged = logWriter.Warning("visible warning log");
 
-		common::diagnostics::Expect(result, started, "AsyncLogWriter: filter start succeeds");
-		common::diagnostics::Expect(result, !infoLogged, "AsyncLogWriter: info filtered");
-		common::diagnostics::Expect(result, warningLogged, "AsyncLogWriter: warning accepted");
+		tests::Expect(result, started, "AsyncLogWriter: filter start succeeds");
+		tests::Expect(result, !infoLogged, "AsyncLogWriter: info filtered");
+		tests::Expect(result, warningLogged, "AsyncLogWriter: warning accepted");
 
 		logWriter.Stop();
 	}
@@ -123,9 +123,9 @@ namespace
 
 namespace tests::log
 {
-	common::diagnostics::DebugTestResult RunAsyncLogWriterTests()
+	tests::DebugTestResult RunAsyncLogWriterTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunStartStopTest(result);
 		RunStartWithZeroWorkerFailsTest(result);

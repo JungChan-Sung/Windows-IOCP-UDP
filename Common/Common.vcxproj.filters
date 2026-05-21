@@ -31,9 +31,6 @@
     <Filter Include="소스 파일\Log">
       <UniqueIdentifier>{cc4947a5-0dd4-4917-8831-43b1461669fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Diagnostics">
-      <UniqueIdentifier>{13b07f42-a6a7-40a7-8da2-d507b0bde563}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\Threading">
       <UniqueIdentifier>{8b737eba-74de-4d5c-af70-2e2293b48a2f}</UniqueIdentifier>
     </Filter>
@@ -113,9 +110,6 @@
     </ClInclude>
     <ClInclude Include="Packet\PacketSerialization.h">
       <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Diagnostics\DebugTestResult.h">
-      <Filter>헤더 파일\Diagnostics</Filter>
     </ClInclude>
     <ClInclude Include="Threading\ThreadPool.h">
       <Filter>헤더 파일\Threading</Filter>

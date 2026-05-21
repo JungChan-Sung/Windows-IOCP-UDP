@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <vector>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketConstants.h>
 
@@ -18,6 +17,8 @@
 #include <Server/Net/PeerState.h>
 #include <Server/Net/SnapshotBroadcastBuilder.h>
 #include <Server/Net/SnapshotBroadcastTask.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -187,7 +188,7 @@ namespace
 		}
 	}
 
-	void RunBuildPlayerSnapshotTasksTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildPlayerSnapshotTasksTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -220,56 +221,56 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: player task count");
+		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: player task count");
 
 		for (const server::net::PlayerSnapshotTask& task : taskList)
 		{
 			const common::packet::PlayerSnapshotPacket& packet = task.snapshotPacket;
 
-			common::diagnostics::Expect(result, packet.serverTick == 10, "SnapshotBroadcastBuilder: player packet serverTick");
-			common::diagnostics::Expect(result, packet.roomId == 1, "SnapshotBroadcastBuilder: player packet roomId");
-			common::diagnostics::Expect(result, packet.playerCount == 2, "SnapshotBroadcastBuilder: player packet playerCount");
+			tests::Expect(result, packet.serverTick == 10, "SnapshotBroadcastBuilder: player packet serverTick");
+			tests::Expect(result, packet.roomId == 1, "SnapshotBroadcastBuilder: player packet roomId");
+			tests::Expect(result, packet.playerCount == 2, "SnapshotBroadcastBuilder: player packet playerCount");
 
 			const common::packet::PlayerStateData* firstPlayerData = FindPlayerStateData(packet, 101);
 			const common::packet::PlayerStateData* secondPlayerData = FindPlayerStateData(packet, 102);
 			const common::packet::PlayerStateData* unjoinedPlayerData = FindPlayerStateData(packet, 103);
 
-			common::diagnostics::Expect(result, firstPlayerData != nullptr, "SnapshotBroadcastBuilder: first player included");
-			common::diagnostics::Expect(result, secondPlayerData != nullptr, "SnapshotBroadcastBuilder: second player included");
-			common::diagnostics::Expect(result, unjoinedPlayerData == nullptr, "SnapshotBroadcastBuilder: unjoined player excluded");
+			tests::Expect(result, firstPlayerData != nullptr, "SnapshotBroadcastBuilder: first player included");
+			tests::Expect(result, secondPlayerData != nullptr, "SnapshotBroadcastBuilder: second player included");
+			tests::Expect(result, unjoinedPlayerData == nullptr, "SnapshotBroadcastBuilder: unjoined player excluded");
 
 			if (firstPlayerData != nullptr)
 			{
-				common::diagnostics::Expect(result, firstPlayerData->x == 10.0F, "SnapshotBroadcastBuilder: first player x");
-				common::diagnostics::Expect(result, firstPlayerData->y == 20.0F, "SnapshotBroadcastBuilder: first player y");
-				common::diagnostics::Expect(result, firstPlayerData->hp == 3, "SnapshotBroadcastBuilder: first player hp");
-				common::diagnostics::Expect(result, firstPlayerData->isDead == 0, "SnapshotBroadcastBuilder: first player alive flag");
+				tests::Expect(result, firstPlayerData->x == 10.0F, "SnapshotBroadcastBuilder: first player x");
+				tests::Expect(result, firstPlayerData->y == 20.0F, "SnapshotBroadcastBuilder: first player y");
+				tests::Expect(result, firstPlayerData->hp == 3, "SnapshotBroadcastBuilder: first player hp");
+				tests::Expect(result, firstPlayerData->isDead == 0, "SnapshotBroadcastBuilder: first player alive flag");
 			}
 
 			if (secondPlayerData != nullptr)
 			{
-				common::diagnostics::Expect(result, secondPlayerData->hp == 0, "SnapshotBroadcastBuilder: second player hp");
-				common::diagnostics::Expect(result, secondPlayerData->isDead == 1, "SnapshotBroadcastBuilder: second player dead flag");
+				tests::Expect(result, secondPlayerData->hp == 0, "SnapshotBroadcastBuilder: second player hp");
+				tests::Expect(result, secondPlayerData->isDead == 1, "SnapshotBroadcastBuilder: second player dead flag");
 			}
 
 			if (IsSameRemoteAddress(task.remoteAddress, MakeRemoteAddress(firstEndpointKey)))
 			{
-				common::diagnostics::Expect(result, packet.lastProcessedInputSequence == 1001,
+				tests::Expect(result, packet.lastProcessedInputSequence == 1001,
 					"SnapshotBroadcastBuilder: first peer last input sequence");
 			}
 			else if (IsSameRemoteAddress(task.remoteAddress, MakeRemoteAddress(secondEndpointKey)))
 			{
-				common::diagnostics::Expect(result, packet.lastProcessedInputSequence == 1002,
+				tests::Expect(result, packet.lastProcessedInputSequence == 1002,
 					"SnapshotBroadcastBuilder: second peer last input sequence");
 			}
 			else
 			{
-				common::diagnostics::Expect(result, false, "SnapshotBroadcastBuilder: unexpected player snapshot target");
+				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected player snapshot target");
 			}
 		}
 	}
 
-	void RunBuildPlayerSnapshotMaxPlayerLimitTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildPlayerSnapshotMaxPlayerLimitTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -292,17 +293,17 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == common::packet::maxPlayersPerSnapshot + 3,
+		tests::Expect(result, taskList.size() == common::packet::maxPlayersPerSnapshot + 3,
 			"SnapshotBroadcastBuilder: max player limit task count");
 
 		if (!taskList.empty())
 		{
-			common::diagnostics::Expect(result, taskList.front().snapshotPacket.playerCount == common::packet::maxPlayersPerSnapshot,
+			tests::Expect(result, taskList.front().snapshotPacket.playerCount == common::packet::maxPlayersPerSnapshot,
 				"SnapshotBroadcastBuilder: max player limit packet count");
 		}
 	}
 
-	void RunBuildBulletSnapshotEmptyRoomCreatesEmptyChunkTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildBulletSnapshotEmptyRoomCreatesEmptyChunkTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -321,7 +322,7 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 1, "SnapshotBroadcastBuilder: empty bullet room task count");
+		tests::Expect(result, taskList.size() == 1, "SnapshotBroadcastBuilder: empty bullet room task count");
 
 		if (taskList.empty())
 		{
@@ -329,15 +330,15 @@ namespace
 		}
 
 		const server::net::BulletSnapshotTask& task = taskList.front();
-		common::diagnostics::Expect(result, task.remoteAddressList.size() == 1, "SnapshotBroadcastBuilder: empty bullet remote count");
-		common::diagnostics::Expect(result, task.snapshotPacket.serverTick == 20, "SnapshotBroadcastBuilder: empty bullet serverTick");
-		common::diagnostics::Expect(result, task.snapshotPacket.roomId == 1, "SnapshotBroadcastBuilder: empty bullet roomId");
-		common::diagnostics::Expect(result, task.snapshotPacket.chunkIndex == 0, "SnapshotBroadcastBuilder: empty bullet chunkIndex");
-		common::diagnostics::Expect(result, task.snapshotPacket.chunkCount == 1, "SnapshotBroadcastBuilder: empty bullet chunkCount");
-		common::diagnostics::Expect(result, task.snapshotPacket.bulletCount == 0, "SnapshotBroadcastBuilder: empty bullet count");
+		tests::Expect(result, task.remoteAddressList.size() == 1, "SnapshotBroadcastBuilder: empty bullet remote count");
+		tests::Expect(result, task.snapshotPacket.serverTick == 20, "SnapshotBroadcastBuilder: empty bullet serverTick");
+		tests::Expect(result, task.snapshotPacket.roomId == 1, "SnapshotBroadcastBuilder: empty bullet roomId");
+		tests::Expect(result, task.snapshotPacket.chunkIndex == 0, "SnapshotBroadcastBuilder: empty bullet chunkIndex");
+		tests::Expect(result, task.snapshotPacket.chunkCount == 1, "SnapshotBroadcastBuilder: empty bullet chunkCount");
+		tests::Expect(result, task.snapshotPacket.bulletCount == 0, "SnapshotBroadcastBuilder: empty bullet count");
 	}
 
-	void RunBuildBulletSnapshotRoomFilterTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildBulletSnapshotRoomFilterTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -361,38 +362,38 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet room filter task count");
+		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet room filter task count");
 
 		for (const server::net::BulletSnapshotTask& task : taskList)
 		{
 			if (task.snapshotPacket.roomId == 1)
 			{
-				common::diagnostics::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room1 bullet count");
-				common::diagnostics::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) != nullptr,
+				tests::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room1 bullet count");
+				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) != nullptr,
 					"SnapshotBroadcastBuilder: room1 bullet included");
-				common::diagnostics::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) == nullptr,
+				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) == nullptr,
 					"SnapshotBroadcastBuilder: room2 bullet excluded from room1");
-				common::diagnostics::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
+				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
 					"SnapshotBroadcastBuilder: room1 remote included");
 			}
 			else if (task.snapshotPacket.roomId == 2)
 			{
-				common::diagnostics::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room2 bullet count");
-				common::diagnostics::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) != nullptr,
+				tests::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room2 bullet count");
+				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) != nullptr,
 					"SnapshotBroadcastBuilder: room2 bullet included");
-				common::diagnostics::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) == nullptr,
+				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) == nullptr,
 					"SnapshotBroadcastBuilder: room1 bullet excluded from room2");
-				common::diagnostics::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
+				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
 					"SnapshotBroadcastBuilder: room2 remote included");
 			}
 			else
 			{
-				common::diagnostics::Expect(result, false, "SnapshotBroadcastBuilder: unexpected bullet room task");
+				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected bullet room task");
 			}
 		}
 	}
 
-	void RunBuildBulletSnapshotChunkSplitTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildBulletSnapshotChunkSplitTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -420,14 +421,14 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet chunk split task count");
+		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet chunk split task count");
 
 		std::uint16_t maxChunkBulletCount = 0;
 		std::uint16_t lastChunkBulletCount = 0;
 
 		for (const server::net::BulletSnapshotTask& task : taskList)
 		{
-			common::diagnostics::Expect(result, task.snapshotPacket.chunkCount == 2, "SnapshotBroadcastBuilder: bullet chunkCount");
+			tests::Expect(result, task.snapshotPacket.chunkCount == 2, "SnapshotBroadcastBuilder: bullet chunkCount");
 
 			if (task.snapshotPacket.chunkIndex == 0)
 			{
@@ -439,12 +440,12 @@ namespace
 			}
 		}
 
-		common::diagnostics::Expect(result, maxChunkBulletCount == common::packet::maxBulletsPerSnapshot,
+		tests::Expect(result, maxChunkBulletCount == common::packet::maxBulletsPerSnapshot,
 			"SnapshotBroadcastBuilder: first bullet chunk is full");
-		common::diagnostics::Expect(result, lastChunkBulletCount == 1, "SnapshotBroadcastBuilder: last bullet chunk has remainder");
+		tests::Expect(result, lastChunkBulletCount == 1, "SnapshotBroadcastBuilder: last bullet chunk has remainder");
 	}
 
-	void RunBuildBulletSnapshotSkipsRoomWithoutRemoteAddressTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildBulletSnapshotSkipsRoomWithoutRemoteAddressTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -466,10 +467,10 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: bullet room without remotes skipped");
+		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: bullet room without remotes skipped");
 	}
 
-	void RunBuildImpactEffectEmptyListCreatesNoTaskTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildImpactEffectEmptyListCreatesNoTaskTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -486,10 +487,10 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: empty impact list creates no task");
+		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: empty impact list creates no task");
 	}
 
-	void RunBuildImpactEffectRoomFilterTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildImpactEffectRoomFilterTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -513,34 +514,34 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact room filter task count");
+		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact room filter task count");
 
 		for (const server::net::ImpactEffectTask& task : taskList)
 		{
 			if (task.effectPacket.roomId == 1)
 			{
-				common::diagnostics::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room1 impact count");
-				common::diagnostics::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Impact,
+				tests::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room1 impact count");
+				tests::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Impact,
 					"SnapshotBroadcastBuilder: room1 impact type");
-				common::diagnostics::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
+				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
 					"SnapshotBroadcastBuilder: room1 impact remote");
 			}
 			else if (task.effectPacket.roomId == 2)
 			{
-				common::diagnostics::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room2 impact count");
-				common::diagnostics::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Spawn,
+				tests::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room2 impact count");
+				tests::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Spawn,
 					"SnapshotBroadcastBuilder: room2 impact type");
-				common::diagnostics::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
+				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
 					"SnapshotBroadcastBuilder: room2 impact remote");
 			}
 			else
 			{
-				common::diagnostics::Expect(result, false, "SnapshotBroadcastBuilder: unexpected impact room task");
+				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected impact room task");
 			}
 		}
 	}
 
-	void RunBuildImpactEffectChunkSplitTest(common::diagnostics::DebugTestResult& result)
+	void RunBuildImpactEffectChunkSplitTest(tests::DebugTestResult& result)
 	{
 		server::net::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
@@ -568,14 +569,14 @@ namespace
 			gameWorld
 		);
 
-		common::diagnostics::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact chunk split task count");
+		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact chunk split task count");
 
 		std::uint16_t maxChunkEffectCount = 0;
 		std::uint16_t lastChunkEffectCount = 0;
 
 		for (const server::net::ImpactEffectTask& task : taskList)
 		{
-			common::diagnostics::Expect(result, task.effectPacket.chunkCount == 2, "SnapshotBroadcastBuilder: impact chunkCount");
+			tests::Expect(result, task.effectPacket.chunkCount == 2, "SnapshotBroadcastBuilder: impact chunkCount");
 
 			if (task.effectPacket.chunkIndex == 0)
 			{
@@ -587,17 +588,17 @@ namespace
 			}
 		}
 
-		common::diagnostics::Expect(result, maxChunkEffectCount == common::packet::maxImpactEffectsPerPacket,
+		tests::Expect(result, maxChunkEffectCount == common::packet::maxImpactEffectsPerPacket,
 			"SnapshotBroadcastBuilder: first impact chunk is full");
-		common::diagnostics::Expect(result, lastChunkEffectCount == 1, "SnapshotBroadcastBuilder: last impact chunk has remainder");
+		tests::Expect(result, lastChunkEffectCount == 1, "SnapshotBroadcastBuilder: last impact chunk has remainder");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunSnapshotBroadcastBuilderTests()
+	tests::DebugTestResult RunSnapshotBroadcastBuilderTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunBuildPlayerSnapshotTasksTest(result);
 		RunBuildPlayerSnapshotMaxPlayerLimitTest(result);

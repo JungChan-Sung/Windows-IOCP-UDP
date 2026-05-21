@@ -6,11 +6,12 @@
 #include <cstdint>
 #include <optional>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
 #include <Server/Net/UdpPacketDispatcher.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -47,19 +48,19 @@ namespace
 		return *packetBuffer;
 	}
 
-	void RunNullPacketDataTest(common::diagnostics::DebugTestResult& result)
+	void RunNullPacketDataTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
 
 		const server::net::UdpPacketDispatcher::DispatchResult dispatchResult = dispatcher.Dispatch(remoteAddress, nullptr, 0);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::NullPacketData,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::NullPacketData,
 			"UdpPacketDispatcher: null packet data rejected");
-		common::diagnostics::Expect(result, dispatchResult.actualPacketSize == 0, "UdpPacketDispatcher: null actual size");
+		tests::Expect(result, dispatchResult.actualPacketSize == 0, "UdpPacketDispatcher: null actual size");
 	}
 
-	void RunPacketTooSmallTest(common::diagnostics::DebugTestResult& result)
+	void RunPacketTooSmallTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -71,13 +72,13 @@ namespace
 			static_cast<int>(sizeof(packetData))
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::PacketTooSmall,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::PacketTooSmall,
 			"UdpPacketDispatcher: too small packet rejected");
-		common::diagnostics::Expect(result, dispatchResult.actualPacketSize == static_cast<int>(sizeof(packetData)),
+		tests::Expect(result, dispatchResult.actualPacketSize == static_cast<int>(sizeof(packetData)),
 			"UdpPacketDispatcher: too small actual size");
 	}
 
-	void RunInvalidHeaderSizeTest(common::diagnostics::DebugTestResult& result)
+	void RunInvalidHeaderSizeTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -91,13 +92,13 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidHeaderSize,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidHeaderSize,
 			"UdpPacketDispatcher: invalid header size rejected");
-		common::diagnostics::Expect(result, dispatchResult.declaredPacketSize == static_cast<int>(packetBuffer.size() + 1),
+		tests::Expect(result, dispatchResult.declaredPacketSize == static_cast<int>(packetBuffer.size() + 1),
 			"UdpPacketDispatcher: declared size captured");
 	}
 
-	void RunUnsupportedProtocolVersionTest(common::diagnostics::DebugTestResult& result)
+	void RunUnsupportedProtocolVersionTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -111,13 +112,13 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::UnsupportedProtocolVersion,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::UnsupportedProtocolVersion,
 			"UdpPacketDispatcher: unsupported protocol version rejected");
-		common::diagnostics::Expect(result, dispatchResult.protocolVersion == common::packet::protocolVersion + 1,
+		tests::Expect(result, dispatchResult.protocolVersion == common::packet::protocolVersion + 1,
 			"UdpPacketDispatcher: protocol version captured");
 	}
 
-	void RunUnknownPacketTypeTest(common::diagnostics::DebugTestResult& result)
+	void RunUnknownPacketTypeTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -131,12 +132,12 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::UnknownPacketType,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::UnknownPacketType,
 			"UdpPacketDispatcher: unknown packet type rejected");
-		common::diagnostics::Expect(result, dispatchResult.packetType.has_value(), "UdpPacketDispatcher: unknown packet type captured");
+		tests::Expect(result, dispatchResult.packetType.has_value(), "UdpPacketDispatcher: unknown packet type captured");
 	}
 
-	void RunInvalidPacketSizeTest(common::diagnostics::DebugTestResult& result)
+	void RunInvalidPacketSizeTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -157,13 +158,13 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidPacketSize,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidPacketSize,
 			"UdpPacketDispatcher: invalid fixed packet size rejected");
-		common::diagnostics::Expect(result, dispatchResult.expectedPacketSize == common::packet::packetExpectedSize<common::packet::JoinRequestPacket> +1,
+		tests::Expect(result, dispatchResult.expectedPacketSize == common::packet::packetExpectedSize<common::packet::JoinRequestPacket> +1,
 			"UdpPacketDispatcher: expected packet size captured");
 	}
 
-	void RunEmptyHandlerTest(common::diagnostics::DebugTestResult& result)
+	void RunEmptyHandlerTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -181,11 +182,11 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::EmptyHandler,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::EmptyHandler,
 			"UdpPacketDispatcher: empty handler rejected");
 	}
 
-	void RunSucceededHandlerTest(common::diagnostics::DebugTestResult& result)
+	void RunSucceededHandlerTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -215,14 +216,14 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::Succeeded,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::Succeeded,
 			"UdpPacketDispatcher: handler succeeds");
-		common::diagnostics::Expect(result, dispatchResult.detailCode == 123, "UdpPacketDispatcher: handler detail code propagated");
-		common::diagnostics::Expect(result, handlerCalled, "UdpPacketDispatcher: handler called");
-		common::diagnostics::Expect(result, handlerPacketSize == static_cast<int>(packetBuffer.size()), "UdpPacketDispatcher: handler packet size");
+		tests::Expect(result, dispatchResult.detailCode == 123, "UdpPacketDispatcher: handler detail code propagated");
+		tests::Expect(result, handlerCalled, "UdpPacketDispatcher: handler called");
+		tests::Expect(result, handlerPacketSize == static_cast<int>(packetBuffer.size()), "UdpPacketDispatcher: handler packet size");
 	}
 
-	void RunInvalidPayloadResultPropagatedTest(common::diagnostics::DebugTestResult& result)
+	void RunInvalidPayloadResultPropagatedTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -246,12 +247,12 @@ namespace
 			static_cast<int>(packetBuffer.size())
 		);
 
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidPacketPayload,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::InvalidPacketPayload,
 			"UdpPacketDispatcher: invalid payload status propagated");
-		common::diagnostics::Expect(result, dispatchResult.detailCode == 77, "UdpPacketDispatcher: invalid payload detail propagated");
+		tests::Expect(result, dispatchResult.detailCode == 77, "UdpPacketDispatcher: invalid payload detail propagated");
 	}
 
-	void RunVariableSizePacketHandlerTest(common::diagnostics::DebugTestResult& result)
+	void RunVariableSizePacketHandlerTest(tests::DebugTestResult& result)
 	{
 		server::net::UdpPacketDispatcher dispatcher;
 		const sockaddr_in remoteAddress = MakeRemoteAddress();
@@ -266,7 +267,7 @@ namespace
 		packet.players[0].y = 20.0F;
 
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
-		common::diagnostics::Expect(result, packetBuffer.has_value(), "UdpPacketDispatcher: variable packet serialize");
+		tests::Expect(result, packetBuffer.has_value(), "UdpPacketDispatcher: variable packet serialize");
 
 		if (!packetBuffer.has_value())
 		{
@@ -291,19 +292,19 @@ namespace
 			static_cast<int>(packetBuffer->size())
 		);
 
-		common::diagnostics::Expect(result, common::packet::packetExpectedSize<common::packet::PlayerSnapshotPacket> == 0,
+		tests::Expect(result, common::packet::packetExpectedSize<common::packet::PlayerSnapshotPacket> == 0,
 			"UdpPacketDispatcher: variable packet expected size is zero");
-		common::diagnostics::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::Succeeded,
+		tests::Expect(result, dispatchResult.status == server::net::UdpPacketDispatcher::DispatchStatus::Succeeded,
 			"UdpPacketDispatcher: variable packet handler succeeds");
-		common::diagnostics::Expect(result, handlerCalled, "UdpPacketDispatcher: variable packet handler called");
+		tests::Expect(result, handlerCalled, "UdpPacketDispatcher: variable packet handler called");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunUdpPacketDispatcherTests()
+	tests::DebugTestResult RunUdpPacketDispatcherTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunNullPacketDataTest(result);
 		RunPacketTooSmallTest(result);

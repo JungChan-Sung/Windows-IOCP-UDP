@@ -14,7 +14,7 @@
 
 namespace
 {
-	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadValidConfigTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
@@ -56,34 +56,34 @@ namespace
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ServerConfig: valid file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.empty(), "ServerConfig: valid file has no loader warning");
+		tests::Expect(result, loadResult.loadedFromFile, "ServerConfig: valid file loaded");
+		tests::Expect(result, loadResult.warningList.empty(), "ServerConfig: valid file has no loader warning");
 
 		const server::config::ServerConfig& config = loadResult.config;
 
-		common::diagnostics::Expect(result, config.network.port == 9100, "ServerConfig: port");
-		common::diagnostics::Expect(result, config.network.workerThreadCount == 2, "ServerConfig: workerThreadCount");
-		common::diagnostics::Expect(result, config.network.recvContextCount == 64, "ServerConfig: recvContextCount");
-		common::diagnostics::Expect(result, config.session.initialRoomId == 3, "ServerConfig: initialRoomId");
-		common::diagnostics::Expect(result, config.session.peerTimeout == std::chrono::seconds(15), "ServerConfig: peerTimeout");
-		common::diagnostics::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(33), "ServerConfig: tickInterval");
-		common::diagnostics::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfig: fixedDeltaSeconds");
-		common::diagnostics::Expect(result, config.gameRule.initialPlayerHp == 5, "ServerConfig: initialPlayerHp");
-		common::diagnostics::Expect(result, config.gameRule.respawnDelaySeconds == 2.5F, "ServerConfig: respawnDelaySeconds");
-		common::diagnostics::Expect(result, config.gameRule.respawnInvincibilitySeconds == 1.5F, "ServerConfig: respawnInvincibilitySeconds");
-		common::diagnostics::Expect(result, config.gameRule.hitFlashDurationSeconds == 0.25F, "ServerConfig: hitFlashDurationSeconds");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletDamage == 2, "ServerConfig: bulletDamage");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletSpeed == 700.0F, "ServerConfig: bulletSpeed");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletLifeSeconds == 2.0F, "ServerConfig: bulletLifeSeconds");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletRadius == 7.5F, "ServerConfig: bulletRadius");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.fireCooldownSeconds == 0.2F, "ServerConfig: fireCooldownSeconds");
-		common::diagnostics::Expect(result, !config.diagnostics.enableStatusLog, "ServerConfig: enableStatusLog");
-		common::diagnostics::Expect(result, config.diagnostics.statusLogInterval == std::chrono::seconds(20), "ServerConfig: statusLogInterval");
-		common::diagnostics::Expect(result, config.diagnostics.logLevel == common::log::LogLevel::Debug, "ServerConfig: logLevel");
-		common::diagnostics::Expect(result, config.diagnostics.asyncLogWorkerThreadCount == 2, "ServerConfig: asyncLogWorkerThreadCount");
+		tests::Expect(result, config.network.port == 9100, "ServerConfig: port");
+		tests::Expect(result, config.network.workerThreadCount == 2, "ServerConfig: workerThreadCount");
+		tests::Expect(result, config.network.recvContextCount == 64, "ServerConfig: recvContextCount");
+		tests::Expect(result, config.session.initialRoomId == 3, "ServerConfig: initialRoomId");
+		tests::Expect(result, config.session.peerTimeout == std::chrono::seconds(15), "ServerConfig: peerTimeout");
+		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(33), "ServerConfig: tickInterval");
+		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfig: fixedDeltaSeconds");
+		tests::Expect(result, config.gameRule.initialPlayerHp == 5, "ServerConfig: initialPlayerHp");
+		tests::Expect(result, config.gameRule.respawnDelaySeconds == 2.5F, "ServerConfig: respawnDelaySeconds");
+		tests::Expect(result, config.gameRule.respawnInvincibilitySeconds == 1.5F, "ServerConfig: respawnInvincibilitySeconds");
+		tests::Expect(result, config.gameRule.hitFlashDurationSeconds == 0.25F, "ServerConfig: hitFlashDurationSeconds");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.bulletDamage == 2, "ServerConfig: bulletDamage");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.bulletSpeed == 700.0F, "ServerConfig: bulletSpeed");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.bulletLifeSeconds == 2.0F, "ServerConfig: bulletLifeSeconds");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.bulletRadius == 7.5F, "ServerConfig: bulletRadius");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.fireCooldownSeconds == 0.2F, "ServerConfig: fireCooldownSeconds");
+		tests::Expect(result, !config.diagnostics.enableStatusLog, "ServerConfig: enableStatusLog");
+		tests::Expect(result, config.diagnostics.statusLogInterval == std::chrono::seconds(20), "ServerConfig: statusLogInterval");
+		tests::Expect(result, config.diagnostics.logLevel == common::log::LogLevel::Debug, "ServerConfig: logLevel");
+		tests::Expect(result, config.diagnostics.asyncLogWorkerThreadCount == 2, "ServerConfig: asyncLogWorkerThreadCount");
 	}
 
-	void RunLoadInvalidConfigTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadInvalidConfigTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
@@ -109,22 +109,22 @@ namespace
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ServerConfig: invalid file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.size() >= 7, "ServerConfig: invalid file warning count");
+		tests::Expect(result, loadResult.loadedFromFile, "ServerConfig: invalid file loaded");
+		tests::Expect(result, loadResult.warningList.size() >= 7, "ServerConfig: invalid file warning count");
 	}
 
-	void RunMissingFileTest(common::diagnostics::DebugTestResult& result)
+	void RunMissingFileTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 		std::filesystem::remove(filePath);
 
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
 
-		common::diagnostics::Expect(result, !loadResult.loadedFromFile, "ServerConfig: missing file not loaded");
-		common::diagnostics::Expect(result, !loadResult.warningList.empty(), "ServerConfig: missing file warning");
+		tests::Expect(result, !loadResult.loadedFromFile, "ServerConfig: missing file not loaded");
+		tests::Expect(result, !loadResult.warningList.empty(), "ServerConfig: missing file warning");
 	}
 
-	void RunValidatorNormalizeTest(common::diagnostics::DebugTestResult& result)
+	void RunValidatorNormalizeTest(tests::DebugTestResult& result)
 	{
 		server::config::ServerConfig config{};
 		const server::config::ServerConfig defaultConfig{};
@@ -148,51 +148,51 @@ namespace
 
 		const std::vector<server::config::ServerConfigWarning> warningList = server::config::ServerConfigValidator::ValidateAndNormalize(config);
 
-		common::diagnostics::Expect(result, !warningList.empty(), "ServerConfigValidator: warning generated");
-		common::diagnostics::Expect(result, config.network.port == defaultConfig.network.port, "ServerConfigValidator: port normalized");
-		common::diagnostics::Expect(result, config.network.workerThreadCount > 0, "ServerConfigValidator: worker count resolved");
-		common::diagnostics::Expect(result, config.network.recvContextCount > 0, "ServerConfigValidator: recv context count resolved");
-		common::diagnostics::Expect(result, config.session.initialRoomId == defaultConfig.session.initialRoomId, "ServerConfigValidator: room normalized");
-		common::diagnostics::Expect(result, config.session.peerTimeout == defaultConfig.session.peerTimeout, "ServerConfigValidator: timeout normalized");
-		common::diagnostics::Expect(result, config.tick.tickInterval == defaultConfig.tick.tickInterval, "ServerConfigValidator: tick interval normalized");
-		common::diagnostics::Expect(result, config.tick.fixedDeltaSeconds == defaultConfig.tick.fixedDeltaSeconds, "ServerConfigValidator: delta normalized");
-		common::diagnostics::Expect(result, config.gameRule.initialPlayerHp == defaultConfig.gameRule.initialPlayerHp, "ServerConfigValidator: hp normalized");
-		common::diagnostics::Expect(result, config.weaponRule.basicWeaponRule.bulletDamage == defaultConfig.weaponRule.basicWeaponRule.bulletDamage,
+		tests::Expect(result, !warningList.empty(), "ServerConfigValidator: warning generated");
+		tests::Expect(result, config.network.port == defaultConfig.network.port, "ServerConfigValidator: port normalized");
+		tests::Expect(result, config.network.workerThreadCount > 0, "ServerConfigValidator: worker count resolved");
+		tests::Expect(result, config.network.recvContextCount > 0, "ServerConfigValidator: recv context count resolved");
+		tests::Expect(result, config.session.initialRoomId == defaultConfig.session.initialRoomId, "ServerConfigValidator: room normalized");
+		tests::Expect(result, config.session.peerTimeout == defaultConfig.session.peerTimeout, "ServerConfigValidator: timeout normalized");
+		tests::Expect(result, config.tick.tickInterval == defaultConfig.tick.tickInterval, "ServerConfigValidator: tick interval normalized");
+		tests::Expect(result, config.tick.fixedDeltaSeconds == defaultConfig.tick.fixedDeltaSeconds, "ServerConfigValidator: delta normalized");
+		tests::Expect(result, config.gameRule.initialPlayerHp == defaultConfig.gameRule.initialPlayerHp, "ServerConfigValidator: hp normalized");
+		tests::Expect(result, config.weaponRule.basicWeaponRule.bulletDamage == defaultConfig.weaponRule.basicWeaponRule.bulletDamage,
 			"ServerConfigValidator: damage normalized"
 		);
-		common::diagnostics::Expect(result, config.diagnostics.statusLogInterval == defaultConfig.diagnostics.statusLogInterval,
+		tests::Expect(result, config.diagnostics.statusLogInterval == defaultConfig.diagnostics.statusLogInterval,
 			"ServerConfigValidator: status interval normalized"
 		);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
 			"ServerConfigValidator: async log worker count normalized"
 		);
 
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.Port cannot be 0. Default port will be used."),
 			"ServerConfigValidator: port warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used."),
 			"ServerConfigValidator: tick interval warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Tick.FixedDeltaSeconds must be greater than 0. Default delta will be used."),
 			"ServerConfigValidator: fixed delta warning message"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount cannot be 0. Default value will be used."),
 			"ServerConfigValidator: async log worker warning message"
 		);
 	}
 
-	void RunLoadLogLevelAliasTest(common::diagnostics::DebugTestResult& result)
+	void RunLoadLogLevelAliasTest(tests::DebugTestResult& result)
 	{
 		const std::filesystem::path filePath = tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_DebugTest.ini");
 
@@ -206,21 +206,21 @@ namespace
 		const server::config::ServerConfigLoadResult loadResult = server::config::ServerConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
-		common::diagnostics::Expect(result, loadResult.loadedFromFile, "ServerConfig: log level alias file loaded");
-		common::diagnostics::Expect(result, loadResult.warningList.empty(), "ServerConfig: log level alias has no loader warning");
-		common::diagnostics::Expect(
+		tests::Expect(result, loadResult.loadedFromFile, "ServerConfig: log level alias file loaded");
+		tests::Expect(result, loadResult.warningList.empty(), "ServerConfig: log level alias has no loader warning");
+		tests::Expect(
 			result,
 			loadResult.config.diagnostics.logLevel == common::log::LogLevel::Warning,
 			"ServerConfig: log level warn alias"
 		);
-		common::diagnostics::Expect(
+		tests::Expect(
 			result,
 			loadResult.config.diagnostics.asyncLogWorkerThreadCount == 3,
 			"ServerConfig: async log worker count alias test"
 		);
 	}
 
-	void RunValidatorTickDeltaMismatchWarningTest(common::diagnostics::DebugTestResult& result)
+	void RunValidatorTickDeltaMismatchWarningTest(tests::DebugTestResult& result)
 	{
 		server::config::ServerConfig config{};
 
@@ -238,17 +238,17 @@ namespace
 			}
 		);
 
-		common::diagnostics::Expect(result, hasMismatchWarning, "ServerConfigValidator: tick delta mismatch warning");
-		common::diagnostics::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
-		common::diagnostics::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfigValidator: mismatch keeps fixed delta");
+		tests::Expect(result, hasMismatchWarning, "ServerConfigValidator: tick delta mismatch warning");
+		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
+		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfigValidator: mismatch keeps fixed delta");
 	}
 }
 
 namespace tests::server
 {
-	common::diagnostics::DebugTestResult RunServerConfigTests()
+	tests::DebugTestResult RunServerConfigTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunLoadValidConfigTest(result);
 		RunLoadInvalidConfigTest(result);

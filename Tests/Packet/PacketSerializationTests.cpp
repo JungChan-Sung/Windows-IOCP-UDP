@@ -6,8 +6,9 @@
 #include <string>
 #include <string_view>
 
-#include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Packet/PacketSerialization.h>
+
+#include <Tests/DebugTestResult.h>
 
 namespace
 {
@@ -24,13 +25,13 @@ namespace
 
 	template <typename TPacket>
 	[[nodiscard]] std::optional<TPacket> RoundTrip(
-		common::diagnostics::DebugTestResult& result,
+		tests::DebugTestResult& result,
 		const TPacket& packet,
 		std::string_view testName
 	)
 	{
 		const std::optional<common::packet::PacketBuffer> serializedPacket = common::packet::SerializePacket(packet);
-		common::diagnostics::Expect(result, serializedPacket.has_value(), std::string(testName) + ": serialize");
+		tests::Expect(result, serializedPacket.has_value(), std::string(testName) + ": serialize");
 
 		if (!serializedPacket.has_value())
 		{
@@ -38,35 +39,35 @@ namespace
 		}
 
 		const std::size_t expectedSize = common::packet::PacketCodec<TPacket>::GetSerializedSize(packet);
-		common::diagnostics::Expect(result, serializedPacket->size() == expectedSize, std::string(testName) + ": serialized size");
+		tests::Expect(result, serializedPacket->size() == expectedSize, std::string(testName) + ": serialized size");
 
 		const std::optional<TPacket> deserializedPacket = common::packet::DeserializePacket<TPacket>(
 			serializedPacket->data(),
 			static_cast<int>(serializedPacket->size())
 		);
 
-		common::diagnostics::Expect(result, deserializedPacket.has_value(), std::string(testName) + ": deserialize");
+		tests::Expect(result, deserializedPacket.has_value(), std::string(testName) + ": deserialize");
 
 		if (!deserializedPacket.has_value())
 		{
 			return std::nullopt;
 		}
 
-		common::diagnostics::Expect(result, deserializedPacket->header.size == expectedSize, std::string(testName) + ": header size");
-		common::diagnostics::Expect(result, deserializedPacket->header.type == common::packet::PacketCodec<TPacket>::packetType,
+		tests::Expect(result, deserializedPacket->header.size == expectedSize, std::string(testName) + ": header size");
+		tests::Expect(result, deserializedPacket->header.type == common::packet::PacketCodec<TPacket>::packetType,
 			std::string(testName) + ": header type");
-		common::diagnostics::Expect(result, deserializedPacket->header.version == common::packet::protocolVersion,
+		tests::Expect(result, deserializedPacket->header.version == common::packet::protocolVersion,
 			std::string(testName) + ": header version");
 
 		return deserializedPacket;
 	}
 
-	void RunFixedPacketRoundTripTests(common::diagnostics::DebugTestResult& result)
+	void RunFixedPacketRoundTripTests(tests::DebugTestResult& result)
 	{
 		{
 			common::packet::JoinRequestPacket packet{};
 			const std::optional<common::packet::JoinRequestPacket> roundTripPacket = RoundTrip(result, packet, "JoinRequest");
-			common::diagnostics::Expect(result, roundTripPacket.has_value(), "JoinRequest: roundtrip");
+			tests::Expect(result, roundTripPacket.has_value(), "JoinRequest: roundtrip");
 		}
 
 		{
@@ -78,9 +79,9 @@ namespace
 			const std::optional<common::packet::JoinResponsePacket> roundTripPacket = RoundTrip(result, packet, "JoinResponse");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->playerId == packet.playerId, "JoinResponse: playerId");
-				common::diagnostics::Expect(result, roundTripPacket->spawnX == packet.spawnX, "JoinResponse: spawnX");
-				common::diagnostics::Expect(result, roundTripPacket->spawnY == packet.spawnY, "JoinResponse: spawnY");
+				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "JoinResponse: playerId");
+				tests::Expect(result, roundTripPacket->spawnX == packet.spawnX, "JoinResponse: spawnX");
+				tests::Expect(result, roundTripPacket->spawnY == packet.spawnY, "JoinResponse: spawnY");
 			}
 		}
 
@@ -92,21 +93,21 @@ namespace
 			const std::optional<common::packet::InputCommandPacket> roundTripPacket = RoundTrip(result, packet, "InputCommand");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->inputSequence == packet.inputSequence, "InputCommand: inputSequence");
-				common::diagnostics::Expect(result, roundTripPacket->inputFlags == packet.inputFlags, "InputCommand: inputFlags");
+				tests::Expect(result, roundTripPacket->inputSequence == packet.inputSequence, "InputCommand: inputSequence");
+				tests::Expect(result, roundTripPacket->inputFlags == packet.inputFlags, "InputCommand: inputFlags");
 			}
 		}
 
 		{
 			common::packet::FireRequestPacket packet{};
 			const std::optional<common::packet::FireRequestPacket> roundTripPacket = RoundTrip(result, packet, "FireRequest");
-			common::diagnostics::Expect(result, roundTripPacket.has_value(), "FireRequest: roundtrip");
+			tests::Expect(result, roundTripPacket.has_value(), "FireRequest: roundtrip");
 		}
 
 		{
 			common::packet::LeaveRequestPacket packet{};
 			const std::optional<common::packet::LeaveRequestPacket> roundTripPacket = RoundTrip(result, packet, "LeaveRequest");
-			common::diagnostics::Expect(result, roundTripPacket.has_value(), "LeaveRequest: roundtrip");
+			tests::Expect(result, roundTripPacket.has_value(), "LeaveRequest: roundtrip");
 		}
 
 		{
@@ -116,7 +117,7 @@ namespace
 			const std::optional<common::packet::JoinRoomRequestPacket> roundTripPacket = RoundTrip(result, packet, "JoinRoomRequest");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomRequest: roomId");
+				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomRequest: roomId");
 			}
 		}
 
@@ -129,9 +130,9 @@ namespace
 			const std::optional<common::packet::JoinRoomResponsePacket> roundTripPacket = RoundTrip(result, packet, "JoinRoomResponse");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomResponse: roomId");
-				common::diagnostics::Expect(result, roundTripPacket->spawnX == packet.spawnX, "JoinRoomResponse: spawnX");
-				common::diagnostics::Expect(result, roundTripPacket->spawnY == packet.spawnY, "JoinRoomResponse: spawnY");
+				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomResponse: roomId");
+				tests::Expect(result, roundTripPacket->spawnX == packet.spawnX, "JoinRoomResponse: spawnX");
+				tests::Expect(result, roundTripPacket->spawnY == packet.spawnY, "JoinRoomResponse: spawnY");
 			}
 		}
 
@@ -145,10 +146,10 @@ namespace
 			const std::optional<common::packet::PlayerJoinedPacket> roundTripPacket = RoundTrip(result, packet, "PlayerJoined");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerJoined: playerId");
-				common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerJoined: roomId");
-				common::diagnostics::Expect(result, roundTripPacket->x == packet.x, "PlayerJoined: x");
-				common::diagnostics::Expect(result, roundTripPacket->y == packet.y, "PlayerJoined: y");
+				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerJoined: playerId");
+				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerJoined: roomId");
+				tests::Expect(result, roundTripPacket->x == packet.x, "PlayerJoined: x");
+				tests::Expect(result, roundTripPacket->y == packet.y, "PlayerJoined: y");
 			}
 		}
 
@@ -160,13 +161,13 @@ namespace
 			const std::optional<common::packet::PlayerLeftPacket> roundTripPacket = RoundTrip(result, packet, "PlayerLeft");
 			if (roundTripPacket.has_value())
 			{
-				common::diagnostics::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerLeft: playerId");
-				common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerLeft: roomId");
+				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerLeft: playerId");
+				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerLeft: roomId");
 			}
 		}
 	}
 
-	void RunPlayerSnapshotRoundTripTest(common::diagnostics::DebugTestResult& result)
+	void RunPlayerSnapshotRoundTripTest(tests::DebugTestResult& result)
 	{
 		common::packet::PlayerSnapshotPacket packet{};
 		packet.serverTick = 1234;
@@ -202,25 +203,25 @@ namespace
 			return;
 		}
 
-		common::diagnostics::Expect(result, roundTripPacket->serverTick == packet.serverTick, "PlayerSnapshot: serverTick");
-		common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerSnapshot: roomId");
-		common::diagnostics::Expect(result, roundTripPacket->lastProcessedInputSequence == packet.lastProcessedInputSequence,
+		tests::Expect(result, roundTripPacket->serverTick == packet.serverTick, "PlayerSnapshot: serverTick");
+		tests::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerSnapshot: roomId");
+		tests::Expect(result, roundTripPacket->lastProcessedInputSequence == packet.lastProcessedInputSequence,
 			"PlayerSnapshot: lastProcessedInputSequence");
-		common::diagnostics::Expect(result, roundTripPacket->playerCount == packet.playerCount, "PlayerSnapshot: playerCount");
+		tests::Expect(result, roundTripPacket->playerCount == packet.playerCount, "PlayerSnapshot: playerCount");
 
 		for (std::size_t index = 0; index < packet.playerCount; ++index)
 		{
-			common::diagnostics::Expect(result, roundTripPacket->players[index].playerId == packet.players[index].playerId,
+			tests::Expect(result, roundTripPacket->players[index].playerId == packet.players[index].playerId,
 				"PlayerSnapshot: playerId");
-			common::diagnostics::Expect(result, roundTripPacket->players[index].x == packet.players[index].x, "PlayerSnapshot: x");
-			common::diagnostics::Expect(result, roundTripPacket->players[index].y == packet.players[index].y, "PlayerSnapshot: y");
-			common::diagnostics::Expect(result, roundTripPacket->players[index].hp == packet.players[index].hp, "PlayerSnapshot: hp");
-			common::diagnostics::Expect(result, roundTripPacket->players[index].isDead == packet.players[index].isDead,
+			tests::Expect(result, roundTripPacket->players[index].x == packet.players[index].x, "PlayerSnapshot: x");
+			tests::Expect(result, roundTripPacket->players[index].y == packet.players[index].y, "PlayerSnapshot: y");
+			tests::Expect(result, roundTripPacket->players[index].hp == packet.players[index].hp, "PlayerSnapshot: hp");
+			tests::Expect(result, roundTripPacket->players[index].isDead == packet.players[index].isDead,
 				"PlayerSnapshot: isDead");
 		}
 	}
 
-	void RunBulletSnapshotRoundTripTest(common::diagnostics::DebugTestResult& result)
+	void RunBulletSnapshotRoundTripTest(tests::DebugTestResult& result)
 	{
 		common::packet::BulletSnapshotPacket packet{};
 		packet.serverTick = 2000;
@@ -243,16 +244,16 @@ namespace
 			return;
 		}
 
-		common::diagnostics::Expect(result, roundTripPacket->serverTick == packet.serverTick, "BulletSnapshot: serverTick");
-		common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "BulletSnapshot: roomId");
-		common::diagnostics::Expect(result, roundTripPacket->chunkIndex == packet.chunkIndex, "BulletSnapshot: chunkIndex");
-		common::diagnostics::Expect(result, roundTripPacket->chunkCount == packet.chunkCount, "BulletSnapshot: chunkCount");
-		common::diagnostics::Expect(result, roundTripPacket->bulletCount == packet.bulletCount, "BulletSnapshot: bulletCount");
-		common::diagnostics::Expect(result, roundTripPacket->bullets[0].bulletId == packet.bullets[0].bulletId, "BulletSnapshot: bullet 0");
-		common::diagnostics::Expect(result, roundTripPacket->bullets[1].bulletId == packet.bullets[1].bulletId, "BulletSnapshot: bullet 1");
+		tests::Expect(result, roundTripPacket->serverTick == packet.serverTick, "BulletSnapshot: serverTick");
+		tests::Expect(result, roundTripPacket->roomId == packet.roomId, "BulletSnapshot: roomId");
+		tests::Expect(result, roundTripPacket->chunkIndex == packet.chunkIndex, "BulletSnapshot: chunkIndex");
+		tests::Expect(result, roundTripPacket->chunkCount == packet.chunkCount, "BulletSnapshot: chunkCount");
+		tests::Expect(result, roundTripPacket->bulletCount == packet.bulletCount, "BulletSnapshot: bulletCount");
+		tests::Expect(result, roundTripPacket->bullets[0].bulletId == packet.bullets[0].bulletId, "BulletSnapshot: bullet 0");
+		tests::Expect(result, roundTripPacket->bullets[1].bulletId == packet.bullets[1].bulletId, "BulletSnapshot: bullet 1");
 	}
 
-	void RunImpactEffectRoundTripTest(common::diagnostics::DebugTestResult& result)
+	void RunImpactEffectRoundTripTest(tests::DebugTestResult& result)
 	{
 		common::packet::ImpactEffectPacket packet{};
 		packet.serverTick = 3000;
@@ -275,16 +276,16 @@ namespace
 			return;
 		}
 
-		common::diagnostics::Expect(result, roundTripPacket->serverTick == packet.serverTick, "ImpactEffect: serverTick");
-		common::diagnostics::Expect(result, roundTripPacket->roomId == packet.roomId, "ImpactEffect: roomId");
-		common::diagnostics::Expect(result, roundTripPacket->chunkIndex == packet.chunkIndex, "ImpactEffect: chunkIndex");
-		common::diagnostics::Expect(result, roundTripPacket->chunkCount == packet.chunkCount, "ImpactEffect: chunkCount");
-		common::diagnostics::Expect(result, roundTripPacket->effectCount == packet.effectCount, "ImpactEffect: effectCount");
-		common::diagnostics::Expect(result, roundTripPacket->effects[0].effectType == packet.effects[0].effectType, "ImpactEffect: effect 0");
-		common::diagnostics::Expect(result, roundTripPacket->effects[1].effectType == packet.effects[1].effectType, "ImpactEffect: effect 1");
+		tests::Expect(result, roundTripPacket->serverTick == packet.serverTick, "ImpactEffect: serverTick");
+		tests::Expect(result, roundTripPacket->roomId == packet.roomId, "ImpactEffect: roomId");
+		tests::Expect(result, roundTripPacket->chunkIndex == packet.chunkIndex, "ImpactEffect: chunkIndex");
+		tests::Expect(result, roundTripPacket->chunkCount == packet.chunkCount, "ImpactEffect: chunkCount");
+		tests::Expect(result, roundTripPacket->effectCount == packet.effectCount, "ImpactEffect: effectCount");
+		tests::Expect(result, roundTripPacket->effects[0].effectType == packet.effects[0].effectType, "ImpactEffect: effect 0");
+		tests::Expect(result, roundTripPacket->effects[1].effectType == packet.effects[1].effectType, "ImpactEffect: effect 1");
 	}
 
-	void RunInvalidPacketTests(common::diagnostics::DebugTestResult& result)
+	void RunInvalidPacketTests(tests::DebugTestResult& result)
 	{
 		common::packet::JoinResponsePacket packet{};
 		packet.playerId = 10;
@@ -292,7 +293,7 @@ namespace
 		packet.spawnY = 30.0F;
 
 		const std::optional<common::packet::PacketBuffer> serializedPacket = common::packet::SerializePacket(packet);
-		common::diagnostics::Expect(result, serializedPacket.has_value(), "InvalidPacket: base serialize");
+		tests::Expect(result, serializedPacket.has_value(), "InvalidPacket: base serialize");
 
 		if (!serializedPacket.has_value())
 		{
@@ -306,7 +307,7 @@ namespace
 			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: truncated rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: truncated rejected");
 		}
 
 		{
@@ -316,7 +317,7 @@ namespace
 			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong size rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong size rejected");
 		}
 
 		{
@@ -326,7 +327,7 @@ namespace
 			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong type rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong type rejected");
 		}
 
 		{
@@ -336,11 +337,11 @@ namespace
 			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong version rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong version rejected");
 		}
 	}
 
-	void RunInvalidVariablePacketTests(common::diagnostics::DebugTestResult& result)
+	void RunInvalidVariablePacketTests(tests::DebugTestResult& result)
 	{
 		common::packet::PlayerSnapshotPacket packet{};
 		packet.serverTick = 1;
@@ -352,7 +353,7 @@ namespace
 		packet.players[0].y = 2.0F;
 
 		const std::optional<common::packet::PacketBuffer> serializedPacket = common::packet::SerializePacket(packet);
-		common::diagnostics::Expect(result, serializedPacket.has_value(), "InvalidVariablePacket: base serialize");
+		tests::Expect(result, serializedPacket.has_value(), "InvalidVariablePacket: base serialize");
 
 		if (!serializedPacket.has_value())
 		{
@@ -371,7 +372,7 @@ namespace
 			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count over max rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count over max rejected");
 		}
 
 		{
@@ -381,16 +382,16 @@ namespace
 			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket
 				= common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
 
-			common::diagnostics::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count size mismatch rejected");
+			tests::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count size mismatch rejected");
 		}
 	}
 }
 
 namespace tests::packet
 {
-	common::diagnostics::DebugTestResult RunPacketSerializationTests()
+	tests::DebugTestResult RunPacketSerializationTests()
 	{
-		common::diagnostics::DebugTestResult result{};
+		tests::DebugTestResult result{};
 
 		RunFixedPacketRoundTripTests(result);
 		RunPlayerSnapshotRoundTripTest(result);

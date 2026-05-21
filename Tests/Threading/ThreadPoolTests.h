@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Common/Diagnostics/DebugTestResult.h>
+#include <Tests/DebugTestResult.h>
 
 namespace tests::threading
 {
-	[[nodiscard]] common::diagnostics::DebugTestResult RunThreadPoolTests();
+	[[nodiscard]] tests::DebugTestResult RunThreadPoolTests();
 }

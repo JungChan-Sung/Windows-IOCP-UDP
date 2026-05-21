@@ -88,7 +88,6 @@ namespace server::app
 		const net::UdpServer::StartResult udpServerStartResult = udpServer_.Start(loadResult.config);
 		if (!udpServerStartResult.has_value())
 		{
-			logger_.Error("Failed to start UDP game server.");
 			udpServer_.DetachLogger();
 			logger_.Stop();
 			return std::unexpected(RunError{ udpServerStartResult.error() });

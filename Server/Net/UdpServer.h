@@ -45,12 +45,13 @@ namespace server::net
 	class UdpServer
 	{
 	public:
-		struct AlreadyRunningError
+		enum class StartFailure
 		{
+			AlreadyRunning,
 		};
 
 	public:
-		using StartError = std::variant<AlreadyRunningError, UdpIocpTransport::StartError, game::GameTickRunner::StartError>;
+		using StartError = std::variant<StartFailure, UdpIocpTransport::StartError, game::GameTickRunner::StartError>;
 		using StartResult = std::expected<void, StartError>;
 
 		using PlayerId = common::game::PlayerId;

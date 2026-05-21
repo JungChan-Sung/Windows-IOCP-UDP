@@ -138,9 +138,16 @@ namespace server::net
 			{
 				using ErrorType = std::remove_cvref_t<decltype(error)>;
 
-				if constexpr (std::is_same_v<ErrorType, AlreadyRunningError>)
+				if constexpr (std::is_same_v<ErrorType, StartFailure>)
 				{
-					return "AlreadyRunning";
+					switch (error)
+					{
+					case StartFailure::AlreadyRunning:
+						return "AlreadyRunning";
+
+					default:
+						return "Unknown";
+					}
 				}
 				else if constexpr (std::is_same_v<ErrorType, UdpIocpTransport::StartError>)
 				{
@@ -164,7 +171,7 @@ namespace server::net
 		if (isRunning_.load())
 		{
 			LogWarning("UdpServer start ignored because server is already running.");
-			return std::unexpected(StartError{ AlreadyRunningError{} });
+			return std::unexpected(StartError{ StartFailure::AlreadyRunning });
 		}
 
 		config_ = config;
@@ -247,8 +254,7 @@ namespace server::net
 		if (!gameTickRunnerStartResult.has_value())
 		{
 			std::ostringstream stream;
-			stream << "UdpServer failed to start game tick runner. Error="
-				<< game::GameTickRunner::ToString(gameTickRunnerStartResult.error());
+			stream << "UdpServer failed to start game tick runner. Error=" << game::GameTickRunner::ToString(gameTickRunnerStartResult.error());
 			LogError(stream.str());
 
 			Stop();

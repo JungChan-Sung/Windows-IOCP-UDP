@@ -34,7 +34,8 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool started = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+		const bool started = startResult.has_value();
 
 		common::diagnostics::Expect(result, started, "AsyncLogWriter: start succeeds");
 		common::diagnostics::Expect(result, logWriter.IsStarted(), "AsyncLogWriter: started after start");
@@ -49,7 +50,8 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool started = logWriter.Start(0);
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(0);
+		const bool started = startResult.has_value();
 
 		common::diagnostics::Expect(result, !started, "AsyncLogWriter: start with zero worker fails");
 		common::diagnostics::Expect(result, !logWriter.IsStarted(), "AsyncLogWriter: zero worker not started");
@@ -59,8 +61,11 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool firstStarted = logWriter.Start(1);
-		const bool secondStarted = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult firstStartResult = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult secondStartResult = logWriter.Start(1);
+
+		const bool firstStarted = firstStartResult.has_value();
+		const bool secondStarted = secondStartResult.has_value();
 
 		common::diagnostics::Expect(result, firstStarted, "AsyncLogWriter: first start succeeds");
 		common::diagnostics::Expect(result, !secondStarted, "AsyncLogWriter: second start fails");
@@ -81,7 +86,9 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool started = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+		const bool started = startResult.has_value();
+
 		logWriter.Stop();
 
 		const bool logged = logWriter.Info("message after stop");
@@ -94,7 +101,9 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool started = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+		const bool started = startResult.has_value();
+
 		const bool logged = logWriter.Info("async log test");
 
 		const bool drained = WaitUntil(
@@ -116,7 +125,9 @@ namespace
 	{
 		common::log::AsyncLogWriter logWriter;
 
-		const bool started = logWriter.Start(1);
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+		const bool started = startResult.has_value();
+
 		logWriter.SetMinimumLogLevel(common::log::LogLevel::Warning);
 
 		const bool infoLogged = logWriter.Info("filtered info log");

@@ -40,6 +40,9 @@
     <Filter Include="헤더 파일\Threading">
       <UniqueIdentifier>{06b00ff4-879a-49d2-a6b8-7330118cc561}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\String">
+      <UniqueIdentifier>{2b410671-318b-4118-9154-ab0815690ff8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -122,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="Log\ILogger.h">
       <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="String\StringFormat.h">
+      <Filter>헤더 파일\String</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

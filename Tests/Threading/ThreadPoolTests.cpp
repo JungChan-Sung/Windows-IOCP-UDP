@@ -4,7 +4,9 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
+#include <functional>
 #include <mutex>
+#include <thread>
 
 #include <Common/Diagnostics/DebugTestResult.h>
 #include <Common/Threading/ThreadPool.h>
@@ -35,7 +37,8 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool started = threadPool.Start(0);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(0);
+		const bool started = startResult.has_value();
 
 		common::diagnostics::Expect(result, !started, "ThreadPool: start with zero worker fails");
 		common::diagnostics::Expect(result, !threadPool.IsRunning(), "ThreadPool: zero worker pool is not running");
@@ -46,7 +49,8 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool started = threadPool.Start(2);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(2);
+		const bool started = startResult.has_value();
 
 		common::diagnostics::Expect(result, started, "ThreadPool: start succeeds");
 		common::diagnostics::Expect(result, threadPool.IsRunning(), "ThreadPool: running after start");
@@ -65,8 +69,11 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool firstStarted = threadPool.Start(1);
-		const bool secondStarted = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult firstStartResult = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult secondStartResult = threadPool.Start(1);
+
+		const bool firstStarted = firstStartResult.has_value();
+		const bool secondStarted = secondStartResult.has_value();
 
 		common::diagnostics::Expect(result, firstStarted, "ThreadPool: first start succeeds");
 		common::diagnostics::Expect(result, !secondStarted, "ThreadPool: second start fails");
@@ -79,7 +86,8 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool started = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(1);
+		const bool started = startResult.has_value();
 		const bool enqueued = threadPool.Enqueue({});
 
 		common::diagnostics::Expect(result, started, "ThreadPool: empty task test start succeeds");
@@ -92,7 +100,9 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool started = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(1);
+		const bool started = startResult.has_value();
+
 		threadPool.Stop();
 
 		const bool enqueued = threadPool.Enqueue(
@@ -110,7 +120,9 @@ namespace
 		common::threading::ThreadPool threadPool;
 		std::atomic<int> executedCount = 0;
 
-		const bool started = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(1);
+		const bool started = startResult.has_value();
+
 		const bool enqueued = threadPool.Enqueue(
 			[&executedCount]()
 			{
@@ -141,7 +153,9 @@ namespace
 
 		constexpr int taskCount = 128;
 
-		const bool started = threadPool.Start(4);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(4);
+		const bool started = startResult.has_value();
+
 		bool allEnqueued = true;
 
 		for (int index = 0; index < taskCount; ++index)
@@ -175,7 +189,8 @@ namespace
 		common::threading::ThreadPool threadPool;
 		std::atomic<int> executedCount = 0;
 
-		const bool started = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(1);
+		const bool started = startResult.has_value();
 
 		const bool firstEnqueued = threadPool.Enqueue(
 			[]()
@@ -215,7 +230,9 @@ namespace
 
 		constexpr int taskCount = 64;
 
-		const bool started = threadPool.Start(2);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(2);
+		const bool started = startResult.has_value();
+
 		bool allEnqueued = true;
 
 		for (int index = 0; index < taskCount; ++index)
@@ -243,7 +260,8 @@ namespace
 	{
 		common::threading::ThreadPool threadPool;
 
-		const bool started = threadPool.Start(1);
+		const common::threading::ThreadPool::StartResult startResult = threadPool.Start(1);
+		const bool started = startResult.has_value();
 
 		threadPool.StopAfterDrain();
 

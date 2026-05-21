@@ -3,10 +3,13 @@
 #include <expected>
 #include <functional>
 #include <optional>
+#include <string>
 #include <type_traits>
+#include <variant>
 
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
+#include <Common/String/StringFormat.h>
 
 #include <Client/Game/ClientWorld.h>
 
@@ -49,140 +52,49 @@ namespace client::net
 		Stop();
 	}
 
-	std::string_view UdpClient::ToString(StartError startError) noexcept
+	std::string UdpClient::ToString(const StartError& startError)
 	{
-		switch (startError)
-		{
-		case StartError::AlreadyRunning:
-			return "AlreadyRunning";
+		return std::visit(
+			[](const auto& error) -> std::string
+			{
+				using ErrorType = std::remove_cvref_t<decltype(error)>;
 
-		case StartError::InvalidTransportType:
-			return "InvalidTransportType";
+				if constexpr (std::is_same_v<ErrorType, StartFailure>)
+				{
+					switch (error)
+					{
+					case StartFailure::AlreadyRunning:
+						return "AlreadyRunning";
 
-		case StartError::SocketTransportAlreadyRunning:
-			return "SocketTransportAlreadyRunning";
+					case StartFailure::InvalidTransportType:
+						return "InvalidTransportType";
 
-		case StartError::SocketTransportInvalidCallback:
-			return "SocketTransportInvalidCallback";
-
-		case StartError::SocketTransportCreateSocketFailed:
-			return "SocketTransportCreateSocketFailed";
-
-		case StartError::SocketTransportBindSocketFailed:
-			return "SocketTransportBindSocketFailed";
-
-		case StartError::SocketTransportConfigureSocketFailed:
-			return "SocketTransportConfigureSocketFailed";
-
-		case StartError::SocketTransportSetServerAddressFailed:
-			return "SocketTransportSetServerAddressFailed";
-
-		case StartError::SocketTransportStartRecvThreadFailed:
-			return "SocketTransportStartRecvThreadFailed";
-
-		case StartError::IocpTransportAlreadyRunning:
-			return "IocpTransportAlreadyRunning";
-
-		case StartError::IocpTransportInvalidCallback:
-			return "IocpTransportInvalidCallback";
-
-		case StartError::IocpTransportCreateSocketFailed:
-			return "IocpTransportCreateSocketFailed";
-
-		case StartError::IocpTransportBindSocketFailed:
-			return "IocpTransportBindSocketFailed";
-
-		case StartError::IocpTransportConfigureSocketFailed:
-			return "IocpTransportConfigureSocketFailed";
-
-		case StartError::IocpTransportSetServerAddressFailed:
-			return "IocpTransportSetServerAddressFailed";
-
-		case StartError::IocpTransportCreateIocpFailed:
-			return "IocpTransportCreateIocpFailed";
-
-		case StartError::IocpTransportStartWorkerThreadsFailed:
-			return "IocpTransportStartWorkerThreadsFailed";
-
-		case StartError::IocpTransportCreateRecvContextsFailed:
-			return "IocpTransportCreateRecvContextsFailed";
-
-		default:
-			return "Unknown";
-		}
-	}
-
-	UdpClient::StartError UdpClient::ToStartError(UdpSocketTransport::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case UdpSocketTransport::StartError::AlreadyRunning:
-			return StartError::SocketTransportAlreadyRunning;
-
-		case UdpSocketTransport::StartError::InvalidCallback:
-			return StartError::SocketTransportInvalidCallback;
-
-		case UdpSocketTransport::StartError::CreateSocketFailed:
-			return StartError::SocketTransportCreateSocketFailed;
-
-		case UdpSocketTransport::StartError::BindSocketFailed:
-			return StartError::SocketTransportBindSocketFailed;
-
-		case UdpSocketTransport::StartError::ConfigureSocketFailed:
-			return StartError::SocketTransportConfigureSocketFailed;
-
-		case UdpSocketTransport::StartError::SetServerAddressFailed:
-			return StartError::SocketTransportSetServerAddressFailed;
-
-		case UdpSocketTransport::StartError::StartRecvThreadFailed:
-			return StartError::SocketTransportStartRecvThreadFailed;
-
-		default:
-			return StartError::SocketTransportStartRecvThreadFailed;
-		}
-	}
-
-	UdpClient::StartError UdpClient::ToStartError(UdpIocpTransport::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case UdpIocpTransport::StartError::AlreadyRunning:
-			return StartError::IocpTransportAlreadyRunning;
-
-		case UdpIocpTransport::StartError::InvalidCallback:
-			return StartError::IocpTransportInvalidCallback;
-
-		case UdpIocpTransport::StartError::CreateSocketFailed:
-			return StartError::IocpTransportCreateSocketFailed;
-
-		case UdpIocpTransport::StartError::BindSocketFailed:
-			return StartError::IocpTransportBindSocketFailed;
-
-		case UdpIocpTransport::StartError::ConfigureSocketFailed:
-			return StartError::IocpTransportConfigureSocketFailed;
-
-		case UdpIocpTransport::StartError::SetServerAddressFailed:
-			return StartError::IocpTransportSetServerAddressFailed;
-
-		case UdpIocpTransport::StartError::CreateIocpFailed:
-			return StartError::IocpTransportCreateIocpFailed;
-
-		case UdpIocpTransport::StartError::StartWorkerThreadsFailed:
-			return StartError::IocpTransportStartWorkerThreadsFailed;
-
-		case UdpIocpTransport::StartError::CreateRecvContextsFailed:
-			return StartError::IocpTransportCreateRecvContextsFailed;
-
-		default:
-			return StartError::IocpTransportCreateRecvContextsFailed;
-		}
+					default:
+						return "Unknown";
+					}
+				}
+				else if constexpr (std::is_same_v<ErrorType, UdpSocketTransport::StartError>)
+				{
+					return common::string::FormatScopedName("SocketTransport", UdpSocketTransport::ToString(error));
+				}
+				else if constexpr (std::is_same_v<ErrorType, UdpIocpTransport::StartError>)
+				{
+					return common::string::FormatScopedName("IocpTransport", UdpIocpTransport::ToString(error));
+				}
+				else
+				{
+					return "Unknown";
+				}
+			},
+			startError
+		);
 	}
 
 	UdpClient::StartResult UdpClient::Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world)
 	{
 		if (isRunning_.load())
 		{
-			return std::unexpected(StartError::AlreadyRunning);
+			return std::unexpected(StartError{ StartFailure::AlreadyRunning });
 		}
 
 		world_ = &world;
@@ -305,7 +217,7 @@ namespace client::net
 			);
 			if (!startResult.has_value())
 			{
-				return std::unexpected(ToStartError(startResult.error()));
+				return std::unexpected(StartError{ startResult.error() });
 			}
 
 			return {};
@@ -325,14 +237,14 @@ namespace client::net
 			);
 			if (!startResult.has_value())
 			{
-				return std::unexpected(ToStartError(startResult.error()));
+				return std::unexpected(StartError{ startResult.error() });
 			}
 
 			return {};
 		}
 
 		default:
-			return std::unexpected(StartError::InvalidTransportType);
+			return std::unexpected(StartError{ StartFailure::InvalidTransportType });
 		}
 	}
 

@@ -44,7 +44,7 @@ namespace common::log
 		AsyncLogWriter& operator=(AsyncLogWriter&&) = delete;
 
 	public:
-		[[nodiscard]] static std::string ToString(const StartError& startError) noexcept;
+		[[nodiscard]] static std::string ToString(const StartError& startError);
 
 	public:
 		[[nodiscard]] StartResult Start(std::size_t workerThreadCount = 1);

@@ -16,7 +16,7 @@ namespace common::log
 		Stop();
 	}
 
-	std::string AsyncLogWriter::ToString(const StartError& startError) noexcept
+	std::string AsyncLogWriter::ToString(const StartError& startError)
 	{
 		return std::visit(
 			[](const auto& error) -> std::string

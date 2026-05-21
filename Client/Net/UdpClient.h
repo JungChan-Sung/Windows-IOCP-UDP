@@ -4,7 +4,9 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <string>
 #include <string_view>
+#include <variant>
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
@@ -37,31 +39,14 @@ namespace client::net
 	class UdpClient
 	{
 	public:
-		enum class StartError
+		enum class StartFailure
 		{
 			AlreadyRunning,
 			InvalidTransportType,
-
-			SocketTransportAlreadyRunning,
-			SocketTransportInvalidCallback,
-			SocketTransportCreateSocketFailed,
-			SocketTransportBindSocketFailed,
-			SocketTransportConfigureSocketFailed,
-			SocketTransportSetServerAddressFailed,
-			SocketTransportStartRecvThreadFailed,
-
-			IocpTransportAlreadyRunning,
-			IocpTransportInvalidCallback,
-			IocpTransportCreateSocketFailed,
-			IocpTransportBindSocketFailed,
-			IocpTransportConfigureSocketFailed,
-			IocpTransportSetServerAddressFailed,
-			IocpTransportCreateIocpFailed,
-			IocpTransportStartWorkerThreadsFailed,
-			IocpTransportCreateRecvContextsFailed,
 		};
 
 	public:
+		using StartError = std::variant<StartFailure, UdpSocketTransport::StartError, UdpIocpTransport::StartError>;
 		using StartResult = std::expected<void, StartError>;
 
 		using PlayerId = common::game::PlayerId;
@@ -97,11 +82,7 @@ namespace client::net
 		UdpClient& operator=(UdpClient&&) = delete;
 
 	public:
-		[[nodiscard]] static std::string_view ToString(StartError startError) noexcept;
-
-	private:
-		[[nodiscard]] static StartError ToStartError(UdpSocketTransport::StartError startError) noexcept;
-		[[nodiscard]] static StartError ToStartError(UdpIocpTransport::StartError startError) noexcept;
+		[[nodiscard]] static std::string ToString(const StartError& startError);
 
 	public:
 		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);

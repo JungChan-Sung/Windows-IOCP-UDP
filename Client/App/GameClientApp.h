@@ -6,8 +6,10 @@
 #include <atomic>
 #include <chrono>
 #include <expected>
+#include <string>
 #include <string_view>
 #include <thread>
+#include <variant>
 
 #include <Client/Config/ClientConfig.h>
 #include <Client/Game/ClientWorld.h>
@@ -20,36 +22,15 @@ namespace client::app
 	class GameClientApp
 	{
 	public:
-		enum class RunError
+		enum class RunFailure
 		{
 			AlreadyRunning,
-
-			UdpClientAlreadyRunning,
-			UdpClientInvalidTransportType,
-
-			UdpClientSocketTransportAlreadyRunning,
-			UdpClientSocketTransportInvalidCallback,
-			UdpClientSocketTransportCreateSocketFailed,
-			UdpClientSocketTransportBindSocketFailed,
-			UdpClientSocketTransportConfigureSocketFailed,
-			UdpClientSocketTransportSetServerAddressFailed,
-			UdpClientSocketTransportStartRecvThreadFailed,
-
-			UdpClientIocpTransportAlreadyRunning,
-			UdpClientIocpTransportInvalidCallback,
-			UdpClientIocpTransportCreateSocketFailed,
-			UdpClientIocpTransportBindSocketFailed,
-			UdpClientIocpTransportConfigureSocketFailed,
-			UdpClientIocpTransportSetServerAddressFailed,
-			UdpClientIocpTransportCreateIocpFailed,
-			UdpClientIocpTransportStartWorkerThreadsFailed,
-			UdpClientIocpTransportCreateRecvContextsFailed,
-
 			GameWindowCreateFailed,
 			MessageLoopFailed,
 		};
 
 	public:
+		using RunError = std::variant<RunFailure, net::UdpClient::StartError>;
 		using RunResult = std::expected<void, RunError>;
 
 	private:
@@ -79,10 +60,7 @@ namespace client::app
 		GameClientApp& operator=(GameClientApp&&) = delete;
 
 	public:
-		[[nodiscard]] static std::string_view ToString(RunError runError) noexcept;
-
-	private:
-		[[nodiscard]] static RunError ToRunError(net::UdpClient::StartError startError) noexcept;
+		[[nodiscard]] static std::string ToString(const RunError& runError);
 
 	public:
 		[[nodiscard]] RunResult Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);

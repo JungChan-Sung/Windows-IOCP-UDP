@@ -6,7 +6,11 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <variant>
 #include <vector>
+
+#include <Common/String/StringFormat.h>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
@@ -51,146 +55,48 @@ namespace
 
 namespace client::app
 {
-	std::string_view GameClientApp::ToString(RunError runError) noexcept
+	std::string GameClientApp::ToString(const RunError& runError)
 	{
-		switch (runError)
-		{
-		case RunError::AlreadyRunning:
-			return "AlreadyRunning";
+		return std::visit(
+			[](const auto& error) -> std::string
+			{
+				using ErrorType = std::remove_cvref_t<decltype(error)>;
 
-		case RunError::UdpClientAlreadyRunning:
-			return "UdpClientAlreadyRunning";
+				if constexpr (std::is_same_v<ErrorType, RunFailure>)
+				{
+					switch (error)
+					{
+					case RunFailure::AlreadyRunning:
+						return "AlreadyRunning";
 
-		case RunError::UdpClientInvalidTransportType:
-			return "UdpClientInvalidTransportType";
+					case RunFailure::GameWindowCreateFailed:
+						return "GameWindowCreateFailed";
 
-		case RunError::UdpClientSocketTransportAlreadyRunning:
-			return "UdpClientSocketTransportAlreadyRunning";
+					case RunFailure::MessageLoopFailed:
+						return "MessageLoopFailed";
 
-		case RunError::UdpClientSocketTransportInvalidCallback:
-			return "UdpClientSocketTransportInvalidCallback";
-
-		case RunError::UdpClientSocketTransportCreateSocketFailed:
-			return "UdpClientSocketTransportCreateSocketFailed";
-
-		case RunError::UdpClientSocketTransportBindSocketFailed:
-			return "UdpClientSocketTransportBindSocketFailed";
-
-		case RunError::UdpClientSocketTransportConfigureSocketFailed:
-			return "UdpClientSocketTransportConfigureSocketFailed";
-
-		case RunError::UdpClientSocketTransportSetServerAddressFailed:
-			return "UdpClientSocketTransportSetServerAddressFailed";
-
-		case RunError::UdpClientSocketTransportStartRecvThreadFailed:
-			return "UdpClientSocketTransportStartRecvThreadFailed";
-
-		case RunError::UdpClientIocpTransportAlreadyRunning:
-			return "UdpClientIocpTransportAlreadyRunning";
-
-		case RunError::UdpClientIocpTransportInvalidCallback:
-			return "UdpClientIocpTransportInvalidCallback";
-
-		case RunError::UdpClientIocpTransportCreateSocketFailed:
-			return "UdpClientIocpTransportCreateSocketFailed";
-
-		case RunError::UdpClientIocpTransportBindSocketFailed:
-			return "UdpClientIocpTransportBindSocketFailed";
-
-		case RunError::UdpClientIocpTransportConfigureSocketFailed:
-			return "UdpClientIocpTransportConfigureSocketFailed";
-
-		case RunError::UdpClientIocpTransportSetServerAddressFailed:
-			return "UdpClientIocpTransportSetServerAddressFailed";
-
-		case RunError::UdpClientIocpTransportCreateIocpFailed:
-			return "UdpClientIocpTransportCreateIocpFailed";
-
-		case RunError::UdpClientIocpTransportStartWorkerThreadsFailed:
-			return "UdpClientIocpTransportStartWorkerThreadsFailed";
-
-		case RunError::UdpClientIocpTransportCreateRecvContextsFailed:
-			return "UdpClientIocpTransportCreateRecvContextsFailed";
-
-		case RunError::GameWindowCreateFailed:
-			return "GameWindowCreateFailed";
-
-		case RunError::MessageLoopFailed:
-			return "MessageLoopFailed";
-
-		default:
-			return "Unknown";
-		}
-	}
-
-	GameClientApp::RunError GameClientApp::ToRunError(net::UdpClient::StartError startError) noexcept
-	{
-		switch (startError)
-		{
-		case net::UdpClient::StartError::AlreadyRunning:
-			return RunError::UdpClientAlreadyRunning;
-
-		case net::UdpClient::StartError::InvalidTransportType:
-			return RunError::UdpClientInvalidTransportType;
-
-		case net::UdpClient::StartError::SocketTransportAlreadyRunning:
-			return RunError::UdpClientSocketTransportAlreadyRunning;
-
-		case net::UdpClient::StartError::SocketTransportInvalidCallback:
-			return RunError::UdpClientSocketTransportInvalidCallback;
-
-		case net::UdpClient::StartError::SocketTransportCreateSocketFailed:
-			return RunError::UdpClientSocketTransportCreateSocketFailed;
-
-		case net::UdpClient::StartError::SocketTransportBindSocketFailed:
-			return RunError::UdpClientSocketTransportBindSocketFailed;
-
-		case net::UdpClient::StartError::SocketTransportConfigureSocketFailed:
-			return RunError::UdpClientSocketTransportConfigureSocketFailed;
-
-		case net::UdpClient::StartError::SocketTransportSetServerAddressFailed:
-			return RunError::UdpClientSocketTransportSetServerAddressFailed;
-
-		case net::UdpClient::StartError::SocketTransportStartRecvThreadFailed:
-			return RunError::UdpClientSocketTransportStartRecvThreadFailed;
-
-		case net::UdpClient::StartError::IocpTransportAlreadyRunning:
-			return RunError::UdpClientIocpTransportAlreadyRunning;
-
-		case net::UdpClient::StartError::IocpTransportInvalidCallback:
-			return RunError::UdpClientIocpTransportInvalidCallback;
-
-		case net::UdpClient::StartError::IocpTransportCreateSocketFailed:
-			return RunError::UdpClientIocpTransportCreateSocketFailed;
-
-		case net::UdpClient::StartError::IocpTransportBindSocketFailed:
-			return RunError::UdpClientIocpTransportBindSocketFailed;
-
-		case net::UdpClient::StartError::IocpTransportConfigureSocketFailed:
-			return RunError::UdpClientIocpTransportConfigureSocketFailed;
-
-		case net::UdpClient::StartError::IocpTransportSetServerAddressFailed:
-			return RunError::UdpClientIocpTransportSetServerAddressFailed;
-
-		case net::UdpClient::StartError::IocpTransportCreateIocpFailed:
-			return RunError::UdpClientIocpTransportCreateIocpFailed;
-
-		case net::UdpClient::StartError::IocpTransportStartWorkerThreadsFailed:
-			return RunError::UdpClientIocpTransportStartWorkerThreadsFailed;
-
-		case net::UdpClient::StartError::IocpTransportCreateRecvContextsFailed:
-			return RunError::UdpClientIocpTransportCreateRecvContextsFailed;
-
-		default:
-			return RunError::UdpClientInvalidTransportType;
-		}
+					default:
+						return "Unknown";
+					}
+				}
+				else if constexpr (std::is_same_v<ErrorType, net::UdpClient::StartError>)
+				{
+					return common::string::FormatScopedName("UdpClient", net::UdpClient::ToString(error));
+				}
+				else
+				{
+					return "Unknown";
+				}
+			},
+			runError
+		);
 	}
 
 	GameClientApp::RunResult GameClientApp::Run(HINSTANCE instanceHandle, const char* serverIp, unsigned short serverPort)
 	{
 		if (isRunning_.load())
 		{
-			return std::unexpected(RunError::AlreadyRunning);
+			return std::unexpected(RunError{ RunFailure::AlreadyRunning });
 		}
 
 		config_ = BuildClientConfig(serverIp, serverPort);
@@ -213,14 +119,14 @@ namespace client::app
 		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
 		if (!udpClientStartResult.has_value())
 		{
-			return std::unexpected(ToRunError(udpClientStartResult.error()));
+			return std::unexpected(RunError{ udpClientStartResult.error() });
 		}
 
 		if (!gameWindow_.Create(instanceHandle, world_, gdiRenderer_, L"UDP Game Client"))
 		{
 			udpClient_.Stop();
 			world_.Clear();
-			return std::unexpected(RunError::GameWindowCreateFailed);
+			return std::unexpected(RunError{ RunFailure::GameWindowCreateFailed });
 		}
 
 		isRunning_.store(true);
@@ -261,7 +167,7 @@ namespace client::app
 
 		if (exitCode != 0)
 		{
-			return std::unexpected(RunError::MessageLoopFailed);
+			return std::unexpected(RunError{ RunFailure::MessageLoopFailed });
 		}
 
 		return {};

@@ -1,9 +1,11 @@
 #include "ClientConfigTests.h"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <Client/Config/ClientConfigLoader.h>
@@ -21,6 +23,20 @@ namespace
 	{
 		std::ofstream file(filePath, std::ios::trunc);
 		file << text;
+	}
+
+	[[nodiscard]] bool ContainsWarningMessage(
+		const std::vector<client::config::ClientConfigWarning>& warningList,
+		std::string_view message
+	)
+	{
+		return std::ranges::any_of(
+			warningList,
+			[message](const client::config::ClientConfigWarning& warning)
+			{
+				return warning.message == message;
+			}
+		);
 	}
 
 	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
@@ -179,6 +195,42 @@ namespace
 			"ClientConfigValidator: simulation tick normalized");
 		common::diagnostics::Expect(result, config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
 			"ClientConfigValidator: simulation delta normalized");
+
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Network.ServerIp cannot be empty. Default server ip will be used."),
+			"ClientConfigValidator: server ip warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Network.ServerPort cannot be 0. Default server port will be used."),
+			"ClientConfigValidator: server port warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."),
+			"ClientConfigValidator: iocp worker warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."),
+			"ClientConfigValidator: iocp recv warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."),
+			"ClientConfigValidator: interpolation range warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."),
+			"ClientConfigValidator: simulation tick warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
+			"ClientConfigValidator: simulation delta warning message"
+		);
 	}
 
 	void RunLoadTransportTypeCaseInsensitiveTest(common::diagnostics::DebugTestResult& result)
@@ -214,6 +266,49 @@ namespace
 			"ClientConfig: transport type case recv context count"
 		);
 	}
+
+	void RunValidatorInterpolationDefaultDelayClampTest(common::diagnostics::DebugTestResult& result)
+	{
+		client::config::ClientConfig lowerConfig{};
+		lowerConfig.interpolation.minDelay = std::chrono::milliseconds(100);
+		lowerConfig.interpolation.maxDelay = std::chrono::milliseconds(300);
+		lowerConfig.interpolation.defaultDelay = std::chrono::milliseconds(50);
+
+		const std::vector<client::config::ClientConfigWarning> lowerWarningList =
+			client::config::ClientConfigValidator::ValidateAndNormalize(lowerConfig);
+
+		common::diagnostics::Expect(
+			result,
+			lowerConfig.interpolation.defaultDelay == std::chrono::milliseconds(100),
+			"ClientConfigValidator: default delay clamped to min"
+		);
+
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
+			"ClientConfigValidator: default delay lower warning message"
+		);
+
+		client::config::ClientConfig upperConfig{};
+		upperConfig.interpolation.minDelay = std::chrono::milliseconds(100);
+		upperConfig.interpolation.maxDelay = std::chrono::milliseconds(300);
+		upperConfig.interpolation.defaultDelay = std::chrono::milliseconds(500);
+
+		const std::vector<client::config::ClientConfigWarning> upperWarningList =
+			client::config::ClientConfigValidator::ValidateAndNormalize(upperConfig);
+
+		common::diagnostics::Expect(
+			result,
+			upperConfig.interpolation.defaultDelay == std::chrono::milliseconds(300),
+			"ClientConfigValidator: default delay clamped to max"
+		);
+
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
+			"ClientConfigValidator: default delay upper warning message"
+		);
+	}
 }
 
 namespace tests::client
@@ -227,6 +322,7 @@ namespace tests::client
 		RunLoadTransportTypeCaseInsensitiveTest(result);
 		RunMissingFileTest(result);
 		RunValidatorNormalizeTest(result);
+		RunValidatorInterpolationDefaultDelayClampTest(result);
 
 		return result;
 	}

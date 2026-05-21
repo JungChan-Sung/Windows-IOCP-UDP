@@ -1,9 +1,11 @@
 #include "ServerConfigTests.h"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <Common/Log/LogLevel.h>
@@ -22,6 +24,20 @@ namespace
 	{
 		std::ofstream file(filePath, std::ios::trunc);
 		file << text;
+	}
+
+	[[nodiscard]] bool ContainsWarningMessage(
+		const std::vector<server::config::ServerConfigWarning>& warningList,
+		std::string_view message
+	)
+	{
+		return std::ranges::any_of(
+			warningList,
+			[message](const server::config::ServerConfigWarning& warning)
+			{
+				return warning.message == message;
+			}
+		);
 	}
 
 	void RunLoadValidConfigTest(common::diagnostics::DebugTestResult& result)
@@ -173,10 +189,32 @@ namespace
 		common::diagnostics::Expect(result, config.diagnostics.statusLogInterval == defaultConfig.diagnostics.statusLogInterval,
 			"ServerConfigValidator: status interval normalized"
 		);
+
 		common::diagnostics::Expect(
 			result,
 			config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
 			"ServerConfigValidator: async log worker count normalized"
+		);
+
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Network.Port cannot be 0. Default port will be used."),
+			"ServerConfigValidator: port warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used."),
+			"ServerConfigValidator: tick interval warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Tick.FixedDeltaSeconds must be greater than 0. Default delta will be used."),
+			"ServerConfigValidator: fixed delta warning message"
+		);
+		common::diagnostics::Expect(
+			result,
+			ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount cannot be 0. Default value will be used."),
+			"ServerConfigValidator: async log worker warning message"
 		);
 	}
 
@@ -207,6 +245,29 @@ namespace
 			"ServerConfig: async log worker count alias test"
 		);
 	}
+
+	void RunValidatorTickDeltaMismatchWarningTest(common::diagnostics::DebugTestResult& result)
+	{
+		server::config::ServerConfig config{};
+
+		config.tick.tickInterval = std::chrono::milliseconds(50);
+		config.tick.fixedDeltaSeconds = 0.033F;
+
+		const std::vector<server::config::ServerConfigWarning> warningList =
+			server::config::ServerConfigValidator::ValidateAndNormalize(config);
+
+		const bool hasMismatchWarning = std::ranges::any_of(
+			warningList,
+			[](const server::config::ServerConfigWarning& warning)
+			{
+				return warning.message.find("Tick.FixedDeltaSeconds does not match Tick.TickIntervalMs.") != std::string::npos;
+			}
+		);
+
+		common::diagnostics::Expect(result, hasMismatchWarning, "ServerConfigValidator: tick delta mismatch warning");
+		common::diagnostics::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
+		common::diagnostics::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfigValidator: mismatch keeps fixed delta");
+	}
 }
 
 namespace tests::server
@@ -220,6 +281,7 @@ namespace tests::server
 		RunLoadLogLevelAliasTest(result);
 		RunMissingFileTest(result);
 		RunValidatorNormalizeTest(result);
+		RunValidatorTickDeltaMismatchWarningTest(result);
 
 		return result;
 	}

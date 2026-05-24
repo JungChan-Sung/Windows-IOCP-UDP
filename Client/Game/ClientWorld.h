@@ -111,8 +111,10 @@ namespace client::game
 
 	private:
 		static inline constexpr float localCorrectionIgnoreDistance = 2.0F;
-		static inline constexpr float localCorrectionSnapDistance = 40.0F;
-		static inline constexpr float localCorrectionBlendAlpha = 0.35F;
+		static inline constexpr float localCorrectionHardSnapDistance = 160.0F;
+		static inline constexpr float localRenderCorrectionMaxOffset = 96.0F;
+		static inline constexpr float localRenderCorrectionSmoothSpeed = 12.0F;
+		static inline constexpr float localRenderCorrectionClearDistance = 0.25F;
 
 	private:
 		mutable std::mutex worldMutex_;
@@ -128,6 +130,8 @@ namespace client::game
 
 		float localPredictedX_ = 0.0F;
 		float localPredictedY_ = 0.0F;
+		float localRenderCorrectionOffsetX_ = 0.0F;
+		float localRenderCorrectionOffsetY_ = 0.0F;
 		bool isLocalPredictedInitialized_ = false;
 
 		PlayerId localPlayerId_ = 0;

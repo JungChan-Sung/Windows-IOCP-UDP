@@ -1,6 +1,7 @@
 #include "ClientWorld.h"
 
 #include <algorithm>
+#include <cmath>
 #include <unordered_set>
 
 #include <Common/Packet/GamePacket.h>
@@ -30,9 +31,9 @@ namespace
 
 	void InitializePlayerState(
 		RemotePlayerState& playerState,
-		std::uint32_t playerId, 
+		std::uint32_t playerId,
 		float x,
-		float y, 
+		float y,
 		std::chrono::steady_clock::time_point sampleTime
 	) noexcept
 	{
@@ -66,6 +67,29 @@ namespace
 		playerState.targetSample.y = y;
 		playerState.targetSample.time = sampleTime;
 	}
+
+	void ClampVectorLength(float& x, float& y, float maxLength) noexcept
+	{
+		const float lengthSquared = LengthSquared(x, y);
+		const float maxLengthSquared = maxLength * maxLength;
+
+		if (lengthSquared <= maxLengthSquared)
+		{
+			return;
+		}
+
+		const float length = std::sqrt(lengthSquared);
+		if (length <= 0.0F)
+		{
+			x = 0.0F;
+			y = 0.0F;
+			return;
+		}
+
+		const float scale = maxLength / length;
+		x *= scale;
+		y *= scale;
+	}
 }
 
 namespace client::game
@@ -75,8 +99,7 @@ namespace client::game
 		minInterpolationDelay_(game::minInterpolationDelay),
 		maxInterpolationDelay_(game::maxInterpolationDelay),
 		interpolationDelay_(game::defaultInterpolationDelay)
-	{
-	}
+	{}
 
 	void ClientWorld::ApplyLocalPredictionTick(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds)
 	{
@@ -97,7 +120,7 @@ namespace client::game
 			localPredictedX_,
 			localPredictedY_,
 			inputFlags,
-			deltaSeconds, 
+			deltaSeconds,
 			common::game::defaultMoveSpeed,
 			common::game::playerHalfExtent,
 			common::game::defaultWorldBounds,
@@ -139,6 +162,8 @@ namespace client::game
 		{
 			localPredictedX_ = playerJoinedEvent.x;
 			localPredictedY_ = playerJoinedEvent.y;
+			localRenderCorrectionOffsetX_ = 0.0F;
+			localRenderCorrectionOffsetY_ = 0.0F;
 			isLocalPredictedInitialized_ = true;
 		}
 	}
@@ -254,31 +279,45 @@ namespace client::game
 		{
 			localPredictedX_ = reconciledX;
 			localPredictedY_ = reconciledY;
+			localRenderCorrectionOffsetX_ = 0.0F;
+			localRenderCorrectionOffsetY_ = 0.0F;
 			isLocalPredictedInitialized_ = true;
 			return;
 		}
 
-		const float correctionDeltaX = reconciledX - localPredictedX_;
-		const float correctionDeltaY = reconciledY - localPredictedY_;
+		const float oldPredictedX = localPredictedX_;
+		const float oldPredictedY = localPredictedY_;
+
+		const float correctionDeltaX = reconciledX - oldPredictedX;
+		const float correctionDeltaY = reconciledY - oldPredictedY;
 		const float correctionDistanceSquared = LengthSquared(correctionDeltaX, correctionDeltaY);
 
 		const float ignoreDistanceSquared = localCorrectionIgnoreDistance * localCorrectionIgnoreDistance;
-		const float snapDistanceSquared = localCorrectionSnapDistance * localCorrectionSnapDistance;
+		const float hardSnapDistanceSquared = localCorrectionHardSnapDistance * localCorrectionHardSnapDistance;
 
 		if (correctionDistanceSquared <= ignoreDistanceSquared)
 		{
 			return;
 		}
 
-		if (correctionDistanceSquared >= snapDistanceSquared)
+		localPredictedX_ = reconciledX;
+		localPredictedY_ = reconciledY;
+
+		if (correctionDistanceSquared >= hardSnapDistanceSquared)
 		{
-			localPredictedX_ = reconciledX;
-			localPredictedY_ = reconciledY;
+			localRenderCorrectionOffsetX_ = 0.0F;
+			localRenderCorrectionOffsetY_ = 0.0F;
 			return;
 		}
 
-		localPredictedX_ = Lerp(localPredictedX_, reconciledX, localCorrectionBlendAlpha);
-		localPredictedY_ = Lerp(localPredictedY_, reconciledY, localCorrectionBlendAlpha);
+		localRenderCorrectionOffsetX_ += oldPredictedX - reconciledX;
+		localRenderCorrectionOffsetY_ += oldPredictedY - reconciledY;
+
+		ClampVectorLength(
+			localRenderCorrectionOffsetX_,
+			localRenderCorrectionOffsetY_,
+			localRenderCorrectionMaxOffset
+		);
 	}
 
 	void ClientWorld::ApplyBulletSnapshotData(std::uint32_t serverTick, RoomId roomId, const BulletStateDataList& bulletStateDataList)
@@ -345,6 +384,28 @@ namespace client::game
 
 			effectIterator = renderImpactEffectStateList_.erase(effectIterator);
 		}
+
+		const float correctionOffsetDistanceSquared = LengthSquared(
+			localRenderCorrectionOffsetX_,
+			localRenderCorrectionOffsetY_
+		);
+
+		if (correctionOffsetDistanceSquared > 0.0F)
+		{
+			const float alpha = std::clamp(localRenderCorrectionSmoothSpeed * deltaSeconds, 0.0F, 1.0F);
+
+			localRenderCorrectionOffsetX_ = Lerp(localRenderCorrectionOffsetX_, 0.0F, alpha);
+			localRenderCorrectionOffsetY_ = Lerp(localRenderCorrectionOffsetY_, 0.0F, alpha);
+
+			const float clearDistanceSquared =
+				localRenderCorrectionClearDistance * localRenderCorrectionClearDistance;
+
+			if (LengthSquared(localRenderCorrectionOffsetX_, localRenderCorrectionOffsetY_) <= clearDistanceSquared)
+			{
+				localRenderCorrectionOffsetX_ = 0.0F;
+				localRenderCorrectionOffsetY_ = 0.0F;
+			}
+		}
 	}
 
 	void ClientWorld::Clear() noexcept
@@ -360,6 +421,8 @@ namespace client::game
 
 		localPredictedX_ = 0.0F;
 		localPredictedY_ = 0.0F;
+		localRenderCorrectionOffsetX_ = 0.0F;
+		localRenderCorrectionOffsetY_ = 0.0F;
 		isLocalPredictedInitialized_ = false;
 
 		localPlayerId_ = 0;
@@ -374,6 +437,8 @@ namespace client::game
 
 		localPredictedX_ = x;
 		localPredictedY_ = y;
+		localRenderCorrectionOffsetX_ = 0.0F;
+		localRenderCorrectionOffsetY_ = 0.0F;
 		isLocalPredictedInitialized_ = true;
 		pendingInputList_.clear();
 
@@ -414,6 +479,8 @@ namespace client::game
 
 		localPredictedX_ = spawnX;
 		localPredictedY_ = spawnY;
+		localRenderCorrectionOffsetX_ = 0.0F;
+		localRenderCorrectionOffsetY_ = 0.0F;
 		isLocalPredictedInitialized_ = true;
 		pendingInputList_.clear();
 	}
@@ -500,8 +567,8 @@ namespace client::game
 			{
 				if (isLocalPredictedInitialized_)
 				{
-					renderPlayerState.x = localPredictedX_;
-					renderPlayerState.y = localPredictedY_;
+					renderPlayerState.x = localPredictedX_ + localRenderCorrectionOffsetX_;
+					renderPlayerState.y = localPredictedY_ + localRenderCorrectionOffsetY_;
 				}
 				else
 				{

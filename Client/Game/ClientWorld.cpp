@@ -29,6 +29,29 @@ namespace
 		return (x * x) + (y * y);
 	}
 
+	void ClampVectorLength(float& x, float& y, float maxLength) noexcept
+	{
+		const float lengthSquared = LengthSquared(x, y);
+		const float maxLengthSquared = maxLength * maxLength;
+
+		if (lengthSquared <= maxLengthSquared)
+		{
+			return;
+		}
+
+		const float length = std::sqrt(lengthSquared);
+		if (length <= 0.0F)
+		{
+			x = 0.0F;
+			y = 0.0F;
+			return;
+		}
+
+		const float scale = maxLength / length;
+		x *= scale;
+		y *= scale;
+	}
+
 	void InitializePlayerState(
 		RemotePlayerState& playerState,
 		std::uint32_t playerId,
@@ -66,29 +89,6 @@ namespace
 		playerState.targetSample.x = x;
 		playerState.targetSample.y = y;
 		playerState.targetSample.time = sampleTime;
-	}
-
-	void ClampVectorLength(float& x, float& y, float maxLength) noexcept
-	{
-		const float lengthSquared = LengthSquared(x, y);
-		const float maxLengthSquared = maxLength * maxLength;
-
-		if (lengthSquared <= maxLengthSquared)
-		{
-			return;
-		}
-
-		const float length = std::sqrt(lengthSquared);
-		if (length <= 0.0F)
-		{
-			x = 0.0F;
-			y = 0.0F;
-			return;
-		}
-
-		const float scale = maxLength / length;
-		x *= scale;
-		y *= scale;
 	}
 }
 
@@ -145,8 +145,6 @@ namespace client::game
 				playerJoinedEvent.y,
 				currentTime
 			);
-
-			return;
 		}
 		else
 		{

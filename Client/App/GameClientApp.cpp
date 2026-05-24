@@ -275,7 +275,8 @@ namespace client::app
 			return;
 		}
 
-		while (currentTime >= nextSimulationTickTime_)
+		int processedSimulationTickCount = 0;
+		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
 		{
 			common::game::InputFlags inputFlags = common::game::InputFlags::None;
 
@@ -293,6 +294,12 @@ namespace client::app
 			}
 
 			nextSimulationTickTime_ += config_.simulation.tickInterval;
+			++processedSimulationTickCount;
+		}
+
+		if (processedSimulationTickCount == maxSimulationTicksPerUpdate && currentTime >= nextSimulationTickTime_)
+		{
+			nextSimulationTickTime_ = currentTime + config_.simulation.tickInterval;
 		}
 
 		if (currentTime >= nextRoomJoinTime_)

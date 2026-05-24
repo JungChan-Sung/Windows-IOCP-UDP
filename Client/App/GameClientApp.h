@@ -33,6 +33,9 @@ namespace client::app
 		using RunResult = std::expected<void, RunError>;
 
 	private:
+		static inline constexpr int maxSimulationTicksPerUpdate = 4;
+
+	private:
 		config::ClientConfig config_;
 
 		game::ClientWorld world_;

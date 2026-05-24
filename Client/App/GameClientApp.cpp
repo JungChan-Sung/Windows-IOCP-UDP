@@ -290,7 +290,8 @@ namespace client::app
 
 			if (sendResult)
 			{
-				world_.ApplyLocalPredictionTick(inputSequence, inputFlags, config_.simulation.deltaSeconds);
+				const float predictionDeltaSeconds = config_.simulation.deltaSeconds;
+				world_.ApplyLocalPredictionTick(inputSequence, inputFlags, predictionDeltaSeconds);
 			}
 
 			nextSimulationTickTime_ += config_.simulation.tickInterval;

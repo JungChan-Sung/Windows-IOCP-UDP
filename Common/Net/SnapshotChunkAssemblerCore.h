@@ -40,7 +40,7 @@ namespace common::net
 		std::uint16_t receivedChunkCount = 0;
 		std::vector<std::uint8_t> receivedChunkFlagList;
 		std::vector<std::vector<TData>> chunkDataList;
-		std::chrono::steady_clock::time_point lastUpdatedTime{};
+		std::chrono::steady_clock::time_point lastUpdatedTime;
 	};
 
 	template <typename TData, typename TRoomId>

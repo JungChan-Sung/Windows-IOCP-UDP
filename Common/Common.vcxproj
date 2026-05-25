@@ -34,6 +34,7 @@
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\IocpHandle.h" />
     <ClInclude Include="Net\ReliableUdpProtocol.h" />
+    <ClInclude Include="Net\ReliableUdpSendWindow.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCore.h" />
     <ClInclude Include="Net\UdpContext.h" />
     <ClInclude Include="Net\Socket.h" />

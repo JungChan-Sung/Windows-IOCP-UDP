@@ -34,7 +34,6 @@
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\IocpHandle.h" />
     <ClInclude Include="Net\ReliableUdpPacketHeader.h" />
-    <ClInclude Include="Net\ReliableUdpPacketSerialization.h" />
     <ClInclude Include="Net\ReliableUdpProtocol.h" />
     <ClInclude Include="Net\ReliableUdpSendWindow.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCore.h" />
@@ -48,6 +47,7 @@
     <ClInclude Include="Packet\PacketSerialization.h" />
     <ClInclude Include="Packet\PacketType.h" />
     <ClInclude Include="Packet\PacketValidation.h" />
+    <ClInclude Include="Packet\ReliableUdpPacketSerialization.h" />
     <ClInclude Include="String\StringFormat.h" />
     <ClInclude Include="Threading\ThreadPool.h" />
   </ItemGroup>

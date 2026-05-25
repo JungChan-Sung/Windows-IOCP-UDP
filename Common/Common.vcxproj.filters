@@ -132,7 +132,7 @@
     <ClInclude Include="Net\ReliableUdpPacketHeader.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
-    <ClInclude Include="Net\ReliableUdpPacketSerialization.h">
+    <ClInclude Include="Packet\ReliableUdpPacketSerialization.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
   </ItemGroup>

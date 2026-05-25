@@ -33,10 +33,12 @@ namespace common::net
 		ReliableSequence nextSequence_ = 1;
 		PendingPacketList pendingPacketList_;
 		std::size_t maxPendingPacketCount_ = 64;
-		Duration resendInterval_ = std::chrono::milliseconds(100);
+		Duration resendInterval_;
 
 	public:
-		ReliableUdpSendWindow() = default;
+		ReliableUdpSendWindow()
+			: resendInterval_(std::chrono::milliseconds(100))
+		{}
 		~ReliableUdpSendWindow() noexcept = default;
 
 		ReliableUdpSendWindow(const ReliableUdpSendWindow&) = delete;
@@ -52,20 +54,43 @@ namespace common::net
 			pendingPacketList_.clear();
 		}
 
-		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(std::vector<char> packetBuffer, TimePoint sentTime)
+		[[nodiscard]] bool CanRegisterSentPacket(const std::vector<char>& packetBuffer) const noexcept
 		{
-			if (packetBuffer.empty())
-			{
-				return std::nullopt;
-			}
+			return !packetBuffer.empty() && pendingPacketList_.size() < maxPendingPacketCount_;
+		}
 
-			if (pendingPacketList_.size() >= maxPendingPacketCount_)
-			{
-				return std::nullopt;
-			}
-
+		[[nodiscard]] ReliableSequence AllocateSequence() noexcept
+		{
 			const ReliableSequence sequence = nextSequence_;
 			++nextSequence_;
+
+			return sequence;
+		}
+
+		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, std::vector<char> packetBuffer, TimePoint sentTime)
+		{
+			if (!CanRegisterSentPacket(packetBuffer))
+			{
+				return false;
+			}
+
+			ReliablePendingPacket pendingPacket{};
+			pendingPacket.sequence = sequence;
+			pendingPacket.packetBuffer = std::move(packetBuffer);
+			pendingPacket.lastSentTime = sentTime;
+			pendingPacket.resendCount = 0;
+
+			pendingPacketList_.push_back(std::move(pendingPacket));
+			return true;
+		}
+		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(std::vector<char> packetBuffer, TimePoint sentTime)
+		{
+			if (!CanRegisterSentPacket(packetBuffer))
+			{
+				return std::nullopt;
+			}
+
+			const ReliableSequence sequence = AllocateSequence();
 
 			ReliablePendingPacket pendingPacket{};
 			pendingPacket.sequence = sequence;

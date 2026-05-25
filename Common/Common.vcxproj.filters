@@ -135,6 +135,9 @@
     <ClInclude Include="Packet\ReliableUdpPacketSerialization.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
+    <ClInclude Include="Net\ReliableUdpSession.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

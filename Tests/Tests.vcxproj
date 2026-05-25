@@ -151,6 +151,7 @@
     <ClCompile Include="Net\ReliableUdpPacketHeaderTests.cpp" />
     <ClCompile Include="Net\ReliableUdpProtocolTests.cpp" />
     <ClCompile Include="Net\ReliableUdpSendWindowTests.cpp" />
+    <ClCompile Include="Net\ReliableUdpSessionTests.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssemblerCoreTests.cpp" />
     <ClCompile Include="Packet\PacketSerializationTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="Net\ReliableUdpPacketHeaderTests.h" />
     <ClInclude Include="Net\ReliableUdpProtocolTests.h" />
     <ClInclude Include="Net\ReliableUdpSendWindowTests.h" />
+    <ClInclude Include="Net\ReliableUdpSessionTests.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h" />
     <ClInclude Include="Packet\PacketSerializationTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />

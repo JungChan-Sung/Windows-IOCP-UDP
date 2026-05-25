@@ -33,6 +33,8 @@
     <ClInclude Include="Log\LogLevel.h" />
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\IocpHandle.h" />
+    <ClInclude Include="Net\ReliableUdpPacketHeader.h" />
+    <ClInclude Include="Net\ReliableUdpPacketSerialization.h" />
     <ClInclude Include="Net\ReliableUdpProtocol.h" />
     <ClInclude Include="Net\ReliableUdpSendWindow.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCore.h" />

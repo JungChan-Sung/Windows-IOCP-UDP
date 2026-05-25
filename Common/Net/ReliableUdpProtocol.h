@@ -30,7 +30,7 @@ namespace common::net
 		return IsSequenceNewer(rhs, lhs);
 	}
 
-	[[nodiscard]] inline bool IsSequenceAcked(ReliableSequence sequence, ReliableSequence ackSequence, std::uint32_t ackBitField) noexcept
+	[[nodiscard]] inline bool IsSequenceAcked(ReliableSequence sequence, ReliableSequence ackSequence, std::uint32_t ackBitfield) noexcept
 	{
 		if (sequence == ackSequence)
 		{
@@ -49,7 +49,7 @@ namespace common::net
 		}
 
 		const std::uint32_t ackBit = static_cast<std::uint32_t>(1) << (distance - 1);
-		return (ackBitField & ackBit) != 0;
+		return (ackBitfield & ackBit) != 0;
 	}
 
 	class ReliableAckTracker

@@ -148,6 +148,7 @@
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
     <ClCompile Include="Log\AsyncLogWriterTests.cpp" />
+    <ClCompile Include="Net\ReliableUdpProtocolTests.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssemblerCoreTests.cpp" />
     <ClCompile Include="Packet\PacketSerializationTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />
     <ClInclude Include="Log\AsyncLogWriterTests.h" />
+    <ClInclude Include="Net\ReliableUdpProtocolTests.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h" />
     <ClInclude Include="Packet\PacketSerializationTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />

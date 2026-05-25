@@ -159,6 +159,9 @@
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
+    <ClCompile Include="Net\ReliableUdpProtocolTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -220,6 +223,9 @@
     </ClInclude>
     <ClInclude Include="DebugTestResult.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ReliableUdpProtocolTests.h">
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

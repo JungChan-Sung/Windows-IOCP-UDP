@@ -6,6 +6,7 @@
 #include "Client/ClientConfigTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
+#include "Net/ReliableUdpProtocolTests.h"
 #include "Packet/PacketSerializationTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
@@ -28,6 +29,7 @@ namespace tests
 
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
+		MergeAndPrint(totalResult, "ReliableUdpProtocol", net::RunReliableUdpProtocolTests());
 		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());

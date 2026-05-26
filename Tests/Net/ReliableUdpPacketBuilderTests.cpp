@@ -1,7 +1,7 @@
 #include "ReliableUdpPacketBuilderTests.h"
 
 #include <optional>
-#include <vector>
+#include <span>
 
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
@@ -16,12 +16,11 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		common::packet::JoinRoomRequestPacket gamePacket{};
 		gamePacket.roomId = 3;
 
-		const std::optional<common::packet::PacketBuffer> payload =
-			common::packet::SerializePacket(gamePacket);
+		const std::optional<common::packet::PacketBuffer> serializedGamePacket = common::packet::SerializePacket(gamePacket);
 
-		tests::Expect(result, payload.has_value(), "ReliableUdpPacketBuilder: payload serialize");
+		tests::Expect(result, serializedGamePacket.has_value(), "ReliableUdpPacketBuilder: serialize game packet");
 
-		if (!payload.has_value())
+		if (!serializedGamePacket.has_value())
 		{
 			return;
 		}
@@ -32,20 +31,58 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		reliableHeader.ackBitfield = 0b101;
 
 		const std::optional<common::packet::PacketBuffer> reliablePacket =
-			common::packet::BuildReliableUdpPacket(reliableHeader, *payload);
+			common::packet::BuildReliableUdpPacket(
+				reliableHeader,
+				std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
+			);
 
-		tests::Expect(result, reliablePacket.has_value(), "ReliableUdpPacketBuilder: build packet");
+		tests::Expect(result, reliablePacket.has_value(), "ReliableUdpPacketBuilder: build reliable packet");
 
 		if (!reliablePacket.has_value())
 		{
 			return;
 		}
 
+		const std::size_t expectedReliablePacketSize =
+			common::packet::serializedPacketHeaderSize
+			+ common::net::reliableUdpPacketHeaderWireSize
+			+ serializedGamePacket->size()
+			- common::packet::serializedPacketHeaderSize;
+
 		tests::Expect(
 			result,
-			reliablePacket->size() == common::net::reliableUdpPacketHeaderWireSize + payload->size(),
-			"ReliableUdpPacketBuilder: packet size"
+			reliablePacket->size() == expectedReliablePacketSize,
+			"ReliableUdpPacketBuilder: reliable packet size"
 		);
+
+		const std::optional<common::packet::PacketHeader> reliablePacketHeader =
+			common::packet::DeserializePacketHeader(
+				reliablePacket->data(),
+				static_cast<int>(reliablePacket->size())
+			);
+
+		tests::Expect(result, reliablePacketHeader.has_value(), "ReliableUdpPacketBuilder: reliable packet header");
+
+		if (reliablePacketHeader.has_value())
+		{
+			tests::Expect(
+				result,
+				reliablePacketHeader->type == common::packet::PacketType::JoinRoomRequest,
+				"ReliableUdpPacketBuilder: reliable packet type"
+			);
+
+			tests::Expect(
+				result,
+				common::packet::IsReliablePacketHeader(*reliablePacketHeader),
+				"ReliableUdpPacketBuilder: reliable flag"
+			);
+
+			tests::Expect(
+				result,
+				common::packet::GetPacketHeaderProtocolVersion(*reliablePacketHeader) == common::packet::protocolVersion,
+				"ReliableUdpPacketBuilder: reliable packet protocol version"
+			);
+		}
 
 		const std::optional<common::packet::ReliableUdpPacketView> packetView =
 			common::packet::ParseReliableUdpPacket(
@@ -53,7 +90,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 				static_cast<int>(reliablePacket->size())
 			);
 
-		tests::Expect(result, packetView.has_value(), "ReliableUdpPacketBuilder: parse packet");
+		tests::Expect(result, packetView.has_value(), "ReliableUdpPacketBuilder: parse reliable packet");
 
 		if (!packetView.has_value())
 		{
@@ -64,28 +101,38 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		tests::Expect(result, packetView->reliableHeader.ackSequence == reliableHeader.ackSequence, "ReliableUdpPacketBuilder: ack sequence");
 		tests::Expect(result, packetView->reliableHeader.ackBitfield == reliableHeader.ackBitfield, "ReliableUdpPacketBuilder: ack bitfield");
 
-		const std::optional<common::packet::JoinRoomRequestPacket> parsedPayload =
+		const std::optional<common::packet::PacketBuffer> rebuiltGamePacket =
+			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+
+		tests::Expect(result, rebuiltGamePacket.has_value(), "ReliableUdpPacketBuilder: rebuild game packet");
+
+		if (!rebuiltGamePacket.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::packet::JoinRoomRequestPacket> parsedGamePacket =
 			common::packet::DeserializePacket<common::packet::JoinRoomRequestPacket>(
-				packetView->payload.data(),
-				static_cast<int>(packetView->payload.size())
+				rebuiltGamePacket->data(),
+				static_cast<int>(rebuiltGamePacket->size())
 			);
 
-		tests::Expect(result, parsedPayload.has_value(), "ReliableUdpPacketBuilder: deserialize payload");
+		tests::Expect(result, parsedGamePacket.has_value(), "ReliableUdpPacketBuilder: deserialize rebuilt game packet");
 
-		if (parsedPayload.has_value())
+		if (parsedGamePacket.has_value())
 		{
-			tests::Expect(result, parsedPayload->roomId == gamePacket.roomId, "ReliableUdpPacketBuilder: payload room id");
+			tests::Expect(result, parsedGamePacket->roomId == gamePacket.roomId, "ReliableUdpPacketBuilder: room id");
 		}
 	}
 
-	void RunRejectEmptyPayloadTest(tests::DebugTestResult& result)
+	void RunRejectInvalidBuildInputTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpPacketHeader reliableHeader{};
 
-		const std::optional<common::packet::PacketBuffer> reliablePacket =
+		const std::optional<common::packet::PacketBuffer> emptyPacket =
 			common::packet::BuildReliableUdpPacket(reliableHeader, std::span<const char>{});
 
-		tests::Expect(result, !reliablePacket.has_value(), "ReliableUdpPacketBuilder: reject empty payload");
+		tests::Expect(result, !emptyPacket.has_value(), "ReliableUdpPacketBuilder: reject empty game packet");
 	}
 
 	void RunRejectInvalidParseBufferTest(tests::DebugTestResult& result)
@@ -95,7 +142,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 
 		tests::Expect(result, !nullPacket.has_value(), "ReliableUdpPacketBuilder: reject null packet");
 
-		char headerOnlyPacket[common::net::reliableUdpPacketHeaderWireSize]{};
+		char headerOnlyPacket[common::packet::reliableUdpPayloadOffset]{};
 
 		const std::optional<common::packet::ReliableUdpPacketView> headerOnlyPacketView =
 			common::packet::ParseReliableUdpPacket(
@@ -114,7 +161,7 @@ namespace tests::net
 		tests::DebugTestResult result{};
 
 		reliableUdpPacketBuilderTest::RunBuildAndParseReliablePacketTest(result);
-		reliableUdpPacketBuilderTest::RunRejectEmptyPayloadTest(result);
+		reliableUdpPacketBuilderTest::RunRejectInvalidBuildInputTest(result);
 		reliableUdpPacketBuilderTest::RunRejectInvalidParseBufferTest(result);
 
 		return result;

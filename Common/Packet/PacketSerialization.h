@@ -277,11 +277,31 @@ namespace common::packet
 		+ uint16WireSize
 		+ uint16WireSize;
 
-	inline void WritePacketHeader(PacketWriter& writer, std::uint16_t packetSize, PacketType packetType)
+	[[nodiscard]] inline std::uint16_t MakePacketHeaderVersion(bool isReliable) noexcept
+	{
+		if (isReliable)
+		{
+			return protocolVersion | packetHeaderReliableFlag;
+		}
+
+		return protocolVersion;
+	}
+
+	[[nodiscard]] inline bool IsReliablePacketHeader(const PacketHeader& packetHeader) noexcept
+	{
+		return (packetHeader.version & packetHeaderReliableFlag) != 0;
+	}
+
+	[[nodiscard]] inline std::uint16_t GetPacketHeaderProtocolVersion(const PacketHeader& packetHeader) noexcept
+	{
+		return packetHeader.version & packetHeaderVersionMask;
+	}
+
+	inline void WritePacketHeader(PacketWriter& writer, std::uint16_t packetSize, PacketType packetType, bool isReliable = false)
 	{
 		writer.WriteUInt16(packetSize);
 		writer.WritePacketType(packetType);
-		writer.WriteUInt16(protocolVersion);
+		writer.WriteUInt16(MakePacketHeaderVersion(isReliable));
 	}
 
 	[[nodiscard]] inline bool ReadPacketHeader(PacketReader& reader, PacketHeader& packetHeader) noexcept
@@ -423,7 +443,7 @@ namespace common::packet
 			return false;
 		}
 
-		if (packetHeader.version != protocolVersion)
+		if (GetPacketHeaderProtocolVersion(packetHeader) != protocolVersion)
 		{
 			return false;
 		}

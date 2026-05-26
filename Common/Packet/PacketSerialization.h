@@ -448,6 +448,11 @@ namespace common::packet
 			return false;
 		}
 
+		if (IsReliablePacketHeader(packetHeader))
+		{
+			return false;
+		}
+
 		return true;
 	}
 

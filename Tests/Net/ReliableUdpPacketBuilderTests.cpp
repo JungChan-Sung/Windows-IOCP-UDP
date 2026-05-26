@@ -43,6 +43,18 @@ namespace tests::net::reliableUdpPacketBuilderTest
 			return;
 		}
 
+		const std::optional<common::packet::JoinRoomRequestPacket> directlyParsedReliablePacket =
+			common::packet::DeserializePacket<common::packet::JoinRoomRequestPacket>(
+				reliablePacket->data(),
+				static_cast<int>(reliablePacket->size())
+			);
+
+		tests::Expect(
+			result,
+			!directlyParsedReliablePacket.has_value(),
+			"ReliableUdpPacketBuilder: reliable packet cannot be deserialized directly"
+		);
+
 		const std::size_t expectedReliablePacketSize =
 			common::packet::serializedPacketHeaderSize
 			+ common::net::reliableUdpPacketHeaderWireSize

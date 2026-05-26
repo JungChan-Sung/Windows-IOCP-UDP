@@ -83,6 +83,7 @@ namespace common::net
 			pendingPacketList_.push_back(std::move(pendingPacket));
 			return true;
 		}
+
 		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(std::vector<char> packetBuffer, TimePoint sentTime)
 		{
 			if (!CanRegisterSentPacket(packetBuffer))
@@ -91,14 +92,13 @@ namespace common::net
 			}
 
 			const ReliableSequence sequence = AllocateSequence();
+			const bool registerResult = RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 
-			ReliablePendingPacket pendingPacket{};
-			pendingPacket.sequence = sequence;
-			pendingPacket.packetBuffer = std::move(packetBuffer);
-			pendingPacket.lastSentTime = sentTime;
-			pendingPacket.resendCount = 0;
+			if (!registerResult)
+			{
+				return std::nullopt;
+			}
 
-			pendingPacketList_.push_back(std::move(pendingPacket));
 			return sequence;
 		}
 

@@ -111,6 +111,8 @@ namespace server::net
 		void UpdateGameTick();
 
 		void RegisterPacketHandlers();
+		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
+		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 
 		void HandleJoinRequest(const sockaddr_in& remoteAddress);
 		void HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet);

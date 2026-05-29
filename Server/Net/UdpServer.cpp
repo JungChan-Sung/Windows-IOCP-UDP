@@ -208,7 +208,7 @@ namespace server::net
 
 				serverMetricsCollector_.IncrementReceivedPacketCount();
 
-				const UdpPacketDispatcher::DispatchResult dispatchResult = packetDispatcher_.Dispatch(
+				const UdpPacketDispatcher::DispatchResult dispatchResult = DispatchPacket(
 					remoteAddress,
 					packetData,
 					packetSize
@@ -397,6 +397,17 @@ namespace server::net
 			&PacketPayloadValidator::ValidateJoinRoomRequestPacket,
 			&UdpServer::HandleJoinRoomRequest
 		);
+	}
+
+	UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	{
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
+		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
+		{
+			return DispatchReliablePacket(remoteAddress, packetData, packetSize);
+		}
+
+		return packetDispatcher_.Dispatch(remoteAddress, packetData, packetSize);
 	}
 
 	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress)

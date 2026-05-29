@@ -7,8 +7,10 @@
 #include <type_traits>
 #include <variant>
 
+#include <Common/Net/ReliableUdpSession.h>
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
 
 #include <Client/Game/ClientWorld.h>
@@ -99,6 +101,7 @@ namespace client::net
 
 		world_ = &world;
 		inputSequence_ = 0;
+		reliableSession_.Reset();
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
 		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
@@ -128,6 +131,7 @@ namespace client::net
 
 		world_ = nullptr;
 		inputSequence_ = 0;
+		reliableSession_.Reset();
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
 	}
@@ -198,7 +202,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendReliablePacket(std::span<const char>(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
 	}
 
 	UdpClient::StartResult UdpClient::StartTransport(const char* serverIp, unsigned short serverPort)
@@ -269,6 +273,28 @@ namespace client::net
 		}
 	}
 
+	bool UdpClient::SendReliablePacket(std::span<const char> serializedGamePacket)
+	{
+		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
+
+		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer = common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+
+		if (!reliablePacketBuffer.has_value())
+		{
+			return false;
+		}
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		if (!reliableSession_.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+		{
+			return false;
+		}
+
+		return SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size()));
+	}
+
 	void UdpClient::RegisterPacketHandlers()
 	{
 		packetDispatcher_.Clear();
@@ -325,7 +351,34 @@ namespace client::net
 
 	void UdpClient::HandlePacket(const char* packetData, int packetSize)
 	{
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
+
+		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
+		{
+			HandleReliablePacket(packetData, packetSize);
+			return;
+		}
+
 		packetDispatcher_.Dispatch(packetData, packetSize);
+	}
+
+	void UdpClient::HandleReliablePacket(const char* packetData, int packetSize)
+	{
+		const std::optional<common::packet::ReliableUdpPacketView> packetView = common::packet::ParseReliableUdpPacket(packetData, packetSize);
+		if (!packetView.has_value())
+		{
+			return;
+		}
+
+		reliableSession_.ProcessReceivedHeader(packetView->reliableHeader);
+
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+		if (!gamePacketBuffer.has_value())
+		{
+			return;
+		}
+
+		packetDispatcher_.Dispatch(gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
 	void UdpClient::HandleJoinResponse(const common::packet::JoinResponsePacket& packet)

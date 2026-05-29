@@ -6,6 +6,7 @@
 #include <cstdint>
 
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/ReliableUdpSession.h>
 #include <Common/Game/GameTypes.h>
 
 namespace server::net
@@ -20,5 +21,6 @@ namespace server::net
 		common::game::RoomId roomId = 0;
 		bool isJoined = false;
 		std::chrono::steady_clock::time_point lastRecvTime{};
+		common::net::ReliableUdpSession reliableSession;
 	};
 }

@@ -6,8 +6,10 @@
 #include <expected>
 #include <string>
 #include <string_view>
+#include <span>
 #include <variant>
 
+#include <Common/Net/ReliableUdpSession.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
 
@@ -70,6 +72,7 @@ namespace client::net
 		bool enableChunkAssemblerDebugTests_ = config::defaultEnableChunkAssemblerDebugTests;
 		ClientPacketDispatcher packetDispatcher_;
 		SnapshotChunkAssembler snapshotChunkAssembler_;
+		common::net::ReliableUdpSession reliableSession_;
 
 	public:
 		UdpClient() = default;
@@ -98,10 +101,12 @@ namespace client::net
 		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
+		[[nodiscard]] bool SendReliablePacket(std::span<const char> serializedGamePacket);
 
 		void RegisterPacketHandlers();
 
 		void HandlePacket(const char* packetData, int packetSize);
+		void HandleReliablePacket(const char* packetData, int packetSize);
 		void HandleJoinResponse(const common::packet::JoinResponsePacket& packet);
 		void HandleJoinRoomResponse(const common::packet::JoinRoomResponsePacket& packet);
 		void HandlePlayerJoined(const common::packet::PlayerJoinedPacket& packet);

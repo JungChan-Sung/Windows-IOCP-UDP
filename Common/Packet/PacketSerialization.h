@@ -7,14 +7,13 @@
 #include <limits>
 #include <optional>
 #include <utility>
-#include <vector>
+
+#include <Common/Packet/PacketBuffer.h>
 
 #include "GamePacket.h"
 
 namespace common::packet
 {
-	using PacketBuffer = std::vector<char>;
-
 	class PacketWriter
 	{
 	private:

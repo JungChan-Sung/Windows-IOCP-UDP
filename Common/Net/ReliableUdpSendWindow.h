@@ -1,13 +1,13 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <deque>
 #include <optional>
 #include <utility>
-#include <vector>
 
 #include <Common/Net/ReliableUdpProtocol.h>
+#include <Common/Packet/PacketBuffer.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace common::net
 {
@@ -15,17 +15,17 @@ namespace common::net
 	{
 	public:
 		ReliableSequence sequence = 0;
-		std::vector<char> packetBuffer;
-		std::chrono::steady_clock::time_point lastSentTime;
+		common::packet::PacketBuffer packetBuffer;
+		common::time::TimePoint lastSentTime;
 		int resendCount = 0;
 	};
 
 	class ReliableUdpSendWindow
 	{
 	public:
-		using Clock = std::chrono::steady_clock;
-		using TimePoint = Clock::time_point;
-		using Duration = Clock::duration;
+		using Clock = common::time::Clock;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 		using PendingPacketList = std::deque<ReliablePendingPacket>;
 		using ResendPacketList = std::vector<ReliablePendingPacket>;
 
@@ -37,7 +37,7 @@ namespace common::net
 
 	public:
 		ReliableUdpSendWindow()
-			: resendInterval_(std::chrono::milliseconds(100))
+			: resendInterval_(common::time::Milliseconds(100))
 		{}
 		~ReliableUdpSendWindow() noexcept = default;
 
@@ -54,7 +54,7 @@ namespace common::net
 			pendingPacketList_.clear();
 		}
 
-		[[nodiscard]] bool CanRegisterSentPacket(const std::vector<char>& packetBuffer) const noexcept
+		[[nodiscard]] bool CanRegisterSentPacket(const common::packet::PacketBuffer& packetBuffer) const noexcept
 		{
 			return !packetBuffer.empty() && pendingPacketList_.size() < maxPendingPacketCount_;
 		}
@@ -67,7 +67,7 @@ namespace common::net
 			return sequence;
 		}
 
-		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, std::vector<char> packetBuffer, TimePoint sentTime)
+		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			if (!CanRegisterSentPacket(packetBuffer))
 			{
@@ -84,7 +84,7 @@ namespace common::net
 			return true;
 		}
 
-		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(std::vector<char> packetBuffer, TimePoint sentTime)
+		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			if (!CanRegisterSentPacket(packetBuffer))
 			{

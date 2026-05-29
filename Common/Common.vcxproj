@@ -43,6 +43,7 @@
     <ClInclude Include="Net\UdpTypes.h" />
     <ClInclude Include="Net\WsaSession.h" />
     <ClInclude Include="Packet\GamePacket.h" />
+    <ClInclude Include="Packet\PacketBuffer.h" />
     <ClInclude Include="Packet\PacketConstants.h" />
     <ClInclude Include="Packet\PacketHeader.h" />
     <ClInclude Include="Packet\PacketSerialization.h" />
@@ -52,6 +53,7 @@
     <ClInclude Include="Packet\ReliableUdpPacketSerialization.h" />
     <ClInclude Include="String\StringFormat.h" />
     <ClInclude Include="Threading\ThreadPool.h" />
+    <ClInclude Include="Time\TimeTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Log\AsyncLogWriter.cpp" />

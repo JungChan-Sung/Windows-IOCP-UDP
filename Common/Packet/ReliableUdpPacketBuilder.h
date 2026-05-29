@@ -6,6 +6,7 @@
 #include <span>
 
 #include <Common/Net/ReliableUdpPacketHeader.h>
+#include <Common/Packet/PacketBuffer.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
 #include <Common/Packet/PacketSerialization.h>
@@ -21,12 +22,12 @@ namespace common::packet
 	public:
 		PacketHeader packetHeader{};
 		net::ReliableUdpPacketHeader reliableHeader{};
-		std::span<const char> payload;
+		ConstPacketSpan payload;
 	};
 
 	[[nodiscard]] inline std::optional<PacketBuffer> BuildReliableUdpPacket(
 		const net::ReliableUdpPacketHeader& reliableHeader,
-		std::span<const char> serializedGamePacket
+		ConstPacketSpan serializedGamePacket
 	)
 	{
 		if (serializedGamePacket.size() <= serializedPacketHeaderSize)

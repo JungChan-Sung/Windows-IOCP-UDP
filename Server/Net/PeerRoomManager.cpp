@@ -151,7 +151,7 @@ namespace server::net
 		return true;
 	}
 
-	std::vector<PeerRoomManager::TimedOutPeer> PeerRoomManager::RemoveTimedOutPeers(TimePoint currentTime, Clock::duration timeout) noexcept
+	std::vector<PeerRoomManager::TimedOutPeer> PeerRoomManager::RemoveTimedOutPeers(TimePoint currentTime, Duration timeout) noexcept
 	{
 		std::vector<TimedOutPeer> timedOutPeerList;
 

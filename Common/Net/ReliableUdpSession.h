@@ -4,11 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <vector>
 
 #include <Common/Net/ReliableUdpPacketHeader.h>
 #include <Common/Net/ReliableUdpProtocol.h>
 #include <Common/Net/ReliableUdpSendWindow.h>
+#include <Common/Packet/PacketBuffer.h>
 
 namespace common::net
 {
@@ -60,7 +60,7 @@ namespace common::net
 			return reliableHeader;
 		}
 
-		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, std::vector<char> packetBuffer, TimePoint sentTime)
+		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 		}

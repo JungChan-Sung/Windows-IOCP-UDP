@@ -10,6 +10,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Net/PeerState.h>
 
@@ -21,8 +22,9 @@ namespace server::net
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
-		using Clock = std::chrono::steady_clock;
-		using TimePoint = Clock::time_point;
+		using Clock = common::time::Clock;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 
 	public:
 		struct TimedOutPeer
@@ -90,7 +92,7 @@ namespace server::net
 			RoomChangeResult& roomChangeResult
 		) noexcept;
 
-		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(TimePoint currentTime, Clock::duration timeout) noexcept;
+		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(TimePoint currentTime, Duration timeout) noexcept;
 
 		[[nodiscard]] RemoteAddressList BuildRoomRemoteAddressList(RoomId roomId) const;
 

@@ -40,6 +40,9 @@
     <Filter Include="헤더 파일\String">
       <UniqueIdentifier>{2b410671-318b-4118-9154-ab0815690ff8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Time">
+      <UniqueIdentifier>{d5d22f42-bea4-400c-89e7-48f5ab6af1b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -140,6 +143,12 @@
     </ClInclude>
     <ClInclude Include="Packet\ReliableUdpPacketBuilder.h">
       <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\PacketBuffer.h">
+      <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Time\TimeTypes.h">
+      <Filter>헤더 파일\Time</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

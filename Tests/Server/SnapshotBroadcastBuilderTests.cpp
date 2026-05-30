@@ -111,15 +111,15 @@ namespace
 		std::uint32_t lastInputSequence
 	)
 	{
-		server::net::PeerState peerState{};
+		auto [peerIterator, _] = peerTable.try_emplace(endpointKey);
+		server::net::PeerState& peerState = peerIterator->second;
+
 		peerState.remoteAddress = MakeRemoteAddress(endpointKey);
 		peerState.endpointKey = endpointKey;
 		peerState.playerId = playerId;
 		peerState.roomId = roomId;
 		peerState.isJoined = isJoined;
 		peerState.lastInputSequence = lastInputSequence;
-
-		peerTable.insert_or_assign(endpointKey, peerState);
 	}
 
 	void AddPlayer(

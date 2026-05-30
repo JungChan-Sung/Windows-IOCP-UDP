@@ -37,13 +37,13 @@ namespace
 	{
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(playerId);
 
-		server::net::PeerState peerState{};
+		auto [peerIterator, _] = peerTable.try_emplace(endpointKey);
+		server::net::PeerState& peerState = peerIterator->second;
+
 		peerState.endpointKey = endpointKey;
 		peerState.playerId = playerId;
 		peerState.roomId = roomId;
 		peerState.isJoined = true;
-
-		peerTable.insert_or_assign(endpointKey, peerState);
 	}
 
 	[[nodiscard]] server::game::PlayerState MakePlayer(common::game::PlayerId playerId, float x, float y)

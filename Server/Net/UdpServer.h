@@ -6,12 +6,15 @@
 #include <cstddef>
 #include <expected>
 #include <mutex>
+#include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <variant>
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Packet/PacketBuffer.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Diagnostics/ServerMetricsCollector.h>
@@ -113,6 +116,17 @@ namespace server::net
 		void RegisterPacketHandlers();
 		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
+
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliablePacket(
+			PeerState& peerState,
+			std::span<const char> serializedGamePacket
+		);
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(
+			PeerState& peerState,
+			RoomId roomId,
+			float spawnX,
+			float spawnY
+		);
 
 		void HandleJoinRequest(const sockaddr_in& remoteAddress);
 		void HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet);

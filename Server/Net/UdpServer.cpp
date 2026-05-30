@@ -17,8 +17,9 @@
 #include <variant>
 
 #include <Common/Log/ILogger.h>
-#include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/GamePacket.h>
+#include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
 
 #include <Server/Config/ServerConfigValidator.h>
@@ -410,6 +411,77 @@ namespace server::net
 		return packetDispatcher_.Dispatch(remoteAddress, packetData, packetSize);
 	}
 
+	UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	{
+		using DispatchResult = UdpPacketDispatcher::DispatchResult;
+		using DispatchStatus = UdpPacketDispatcher::DispatchStatus;
+
+		const std::optional<common::packet::ReliableUdpPacketView> packetView = common::packet::ParseReliableUdpPacket(packetData, packetSize);
+		if (!packetView.has_value())
+		{
+			return DispatchResult{ DispatchStatus::InvalidPacketHeader, std::nullopt, packetSize };
+		}
+
+		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
+
+		{
+			std::scoped_lock lock(stateMutex_);
+
+			PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+			if (peerState == nullptr)
+			{
+				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
+			}
+
+			peerState->reliableSession.ProcessReceivedHeader(packetView->reliableHeader);
+		}
+
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+		if (!gamePacketBuffer.has_value())
+		{
+			return DispatchResult{ DispatchStatus::InvalidPacketPayload, packetView->packetHeader.type, packetSize };
+		}
+
+		return packetDispatcher_.Dispatch(remoteAddress, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
+	}
+
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliablePacket(PeerState& peerState, std::span<const char> serializedGamePacket)
+	{
+		const common::net::ReliableSequence sequence = peerState.reliableSession.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
+
+		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
+			common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+		if (!reliablePacketBuffer.has_value())
+		{
+			return std::nullopt;
+		}
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+		if (!peerState.reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+		{
+			return std::nullopt;
+		}
+
+		return reliablePacketBuffer;
+	}
+
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(PeerState& peerState, RoomId roomId, float spawnX, float spawnY)
+	{
+		common::packet::JoinRoomResponsePacket packet{};
+		packet.roomId = roomId;
+		packet.spawnX = spawnX;
+		packet.spawnY = spawnY;
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		if (!packetBuffer.has_value())
+		{
+			return std::nullopt;
+		}
+
+		return BuildReliablePacket(peerState, std::span<const char>(packetBuffer->data(), packetBuffer->size()));
+	}
+
 	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress)
 	{
 		serverMetricsCollector_.IncrementJoinRequestCount();
@@ -573,6 +645,7 @@ namespace server::net
 	void UdpServer::ProcessJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet)
 	{
 		PeerSessionService::RoomChangeResult roomChangeResult{};
+		std::optional<common::packet::PacketBuffer> reliableResponsePacketBuffer;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -585,6 +658,20 @@ namespace server::net
 				gameSimulation_,
 				std::chrono::steady_clock::now()
 			);
+
+			if (roomChangeResult.changed)
+			{
+				PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+				if (peerState != nullptr)
+				{
+					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(
+						*peerState,
+						roomChangeResult.nextRoomId,
+						roomChangeResult.spawnPosition.x,
+						roomChangeResult.spawnPosition.y
+					);
+				}
+			}
 		}
 
 		if (!roomChangeResult.changed)
@@ -593,12 +680,23 @@ namespace server::net
 			return;
 		}
 
-		packetSender_.SendJoinRoomResponse(
-			roomChangeResult.remoteAddress,
-			roomChangeResult.nextRoomId,
-			roomChangeResult.spawnPosition.x,
-			roomChangeResult.spawnPosition.y
-		);
+		if (reliableResponsePacketBuffer.has_value())
+		{
+			packetSender_.SendPacket(
+				roomChangeResult.remoteAddress,
+				reliableResponsePacketBuffer->data(),
+				static_cast<int>(reliableResponsePacketBuffer->size())
+			);
+		}
+		else
+		{
+			packetSender_.SendJoinRoomResponse(
+				roomChangeResult.remoteAddress,
+				roomChangeResult.nextRoomId,
+				roomChangeResult.spawnPosition.x,
+				roomChangeResult.spawnPosition.y
+			);
+		}
 
 		{
 			std::ostringstream stream;

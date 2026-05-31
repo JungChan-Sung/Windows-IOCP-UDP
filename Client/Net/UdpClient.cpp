@@ -205,6 +205,17 @@ namespace client::net
 		return SendReliablePacket(std::span<const char>(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
 	}
 
+	void UdpClient::ProcessReliableResends()
+	{
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+		const common::net::ReliableUdpSession::ResendPacketList resendPacketList = reliableSession_.ExtractResendPackets(currentTime);
+
+		for (const common::net::ReliablePendingPacket& pendingPacket : resendPacketList)
+		{
+			SendPacket(pendingPacket.packetBuffer.data(), static_cast<int>(pendingPacket.packetBuffer.size()));
+		}
+	}
+
 	UdpClient::StartResult UdpClient::StartTransport(const char* serverIp, unsigned short serverPort)
 	{
 		switch (transportType_)
@@ -295,6 +306,20 @@ namespace client::net
 		return SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size()));
 	}
 
+	bool UdpClient::SendReliableAckPacket()
+	{
+		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
+
+		const std::optional<common::packet::PacketBuffer> ackPacketBuffer = common::packet::BuildReliableUdpAckPacket(reliableHeader);
+		if (!ackPacketBuffer.has_value())
+		{
+			return false;
+		}
+
+		return SendPacket(ackPacketBuffer->data(), static_cast<int>(ackPacketBuffer->size()));
+	}
+
 	void UdpClient::RegisterPacketHandlers()
 	{
 		packetDispatcher_.Clear();
@@ -370,7 +395,18 @@ namespace client::net
 			return;
 		}
 
-		reliableSession_.ProcessReceivedHeader(packetView->reliableHeader);
+		const bool isNewReliablePacket = reliableSession_.ProcessReceivedHeader(packetView->reliableHeader);
+		SendReliableAckPacket();
+
+		if (!isNewReliablePacket)
+		{
+			return;
+		}
+
+		if (packetView->packetHeader.type == common::packet::PacketType::None)
+		{
+			return;
+		}
 
 		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
 		if (!gamePacketBuffer.has_value())

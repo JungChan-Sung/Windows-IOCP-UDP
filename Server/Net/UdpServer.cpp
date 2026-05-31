@@ -347,6 +347,7 @@ namespace server::net
 		}
 
 		RemoveTimedOutPeers();
+		ProcessReliableResend();
 
 		BroadcastPlayerSnapshots();
 		BroadcastBulletSnapshots();
@@ -424,6 +425,9 @@ namespace server::net
 
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 
+		bool isNewReliablePacket = false;
+		std::optional<common::packet::PacketBuffer> ackPacketBuffer;
+
 		{
 			std::scoped_lock lock(stateMutex_);
 
@@ -433,7 +437,27 @@ namespace server::net
 				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 			}
 
-			peerState->reliableSession.ProcessReceivedHeader(packetView->reliableHeader);
+			isNewReliablePacket = peerState->reliableSession.ProcessReceivedHeader(packetView->reliableHeader);
+			ackPacketBuffer = BuildReliableAckPacket(*peerState);
+		}
+
+		if (ackPacketBuffer.has_value())
+		{
+			packetSender_.SendPacket(
+				remoteAddress,
+				ackPacketBuffer->data(),
+				static_cast<int>(ackPacketBuffer->size())
+			);
+		}
+
+		if (!isNewReliablePacket)
+		{
+			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
+		}
+
+		if (packetView->packetHeader.type == common::packet::PacketType::None)
+		{
+			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
 
 		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
@@ -464,6 +488,14 @@ namespace server::net
 		}
 
 		return reliablePacketBuffer;
+	}
+
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(PeerState& peerState)
+	{
+		const common::net::ReliableSequence sequence = peerState.reliableSession.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
+
+		return common::packet::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
 	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(PeerState& peerState, RoomId roomId, float spawnX, float spawnY)
@@ -518,6 +550,49 @@ namespace server::net
 
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessJoinRoomRequest(endpointKey, packet);
+	}
+
+	void UdpServer::ProcessReliableResend()
+	{
+		struct ReliableResendTask
+		{
+		public:
+			sockaddr_in remoteAddress{};
+			common::packet::PacketBuffer packetBuffer;
+		};
+
+		std::vector<ReliableResendTask> resendTaskList;
+
+		{
+			std::scoped_lock lock(stateMutex_);
+
+			const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+			peerRoomManager_.ForEachJoinedPeer(
+				[&resendTaskList, currentTime](PeerState& peerState)
+				{
+					common::net::ReliableUdpSession::ResendPacketList resendPacketList = peerState.reliableSession.ExtractResendPackets(currentTime);
+
+					for (common::net::ReliablePendingPacket& pendingPacket : resendPacketList)
+					{
+						ReliableResendTask resendTask{};
+						resendTask.remoteAddress = peerState.remoteAddress;
+						resendTask.packetBuffer = std::move(pendingPacket.packetBuffer);
+
+						resendTaskList.push_back(std::move(resendTask));
+					}
+				}
+			);
+		}
+
+		for (const ReliableResendTask& resendTask : resendTaskList)
+		{
+			packetSender_.SendPacket(
+				resendTask.remoteAddress,
+				resendTask.packetBuffer.data(),
+				static_cast<int>(resendTask.packetBuffer.size())
+			);
+		}
 	}
 
 	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress)

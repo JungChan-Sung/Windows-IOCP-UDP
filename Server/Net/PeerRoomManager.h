@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -80,6 +81,7 @@ namespace server::net
 			RoomId roomId,
 			TimePoint currentTime
 		);
+		void ForEachJoinedPeer(const std::function<void(PeerState&)>& action);
 
 		void RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept;
 

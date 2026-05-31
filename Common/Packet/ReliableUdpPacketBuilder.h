@@ -93,9 +93,38 @@ namespace common::packet
 		return packetBuffer;
 	}
 
+	[[nodiscard]] inline std::optional<PacketBuffer> BuildReliableUdpAckPacket(const net::ReliableUdpPacketHeader& reliableHeader)
+	{
+		const std::size_t packetSize = reliableUdpPayloadOffset;
+
+		if (packetSize > maxSerializedPacketSize)
+		{
+			return std::nullopt;
+		}
+
+		PacketWriter writer;
+		writer.Reserve(packetSize);
+
+		WritePacketHeader(
+			writer,
+			static_cast<std::uint16_t>(packetSize),
+			PacketType::None,
+			true
+		);
+		WriteReliableUdpPacketHeader(writer, reliableHeader);
+
+		PacketBuffer packetBuffer = writer.TakeBuffer();
+		if (packetBuffer.size() != packetSize)
+		{
+			return std::nullopt;
+		}
+
+		return packetBuffer;
+	}
+
 	[[nodiscard]] inline std::optional<ReliableUdpPacketView> ParseReliableUdpPacket(const char* packetData, int packetSize)
 	{
-		if (packetData == nullptr || packetSize <= static_cast<int>(reliableUdpPayloadOffset))
+		if (packetData == nullptr || packetSize < static_cast<int>(reliableUdpPayloadOffset))
 		{
 			return std::nullopt;
 		}

@@ -121,6 +121,7 @@ namespace server::net
 			PeerState& peerState,
 			std::span<const char> serializedGamePacket
 		);
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(PeerState& peerState);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(
 			PeerState& peerState,
 			RoomId roomId,
@@ -134,6 +135,7 @@ namespace server::net
 		void HandleLeaveRequest(const sockaddr_in& remoteAddress);
 		void HandleJoinRoomRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRoomRequestPacket& packet);
 
+		void ProcessReliableResend();
 		void ProcessJoinRequest(const sockaddr_in& remoteAddress);
 		void ProcessInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
 		void ProcessFireRequest(const EndpointKey& endpointKey);

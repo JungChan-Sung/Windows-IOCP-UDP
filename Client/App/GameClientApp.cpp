@@ -259,6 +259,8 @@ namespace client::app
 
 		const auto currentTime = std::chrono::steady_clock::now();
 
+		udpClient_.ProcessReliableResends();
+
 		const float effectDeltaSeconds = std::chrono::duration<float>(currentTime - lastEffectUpdateTime_).count();
 		lastEffectUpdateTime_ = currentTime;
 

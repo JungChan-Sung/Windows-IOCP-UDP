@@ -202,7 +202,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendReliablePacket(std::span<const char>(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
+		return SendReliablePacket(std::span<const char>(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	void UdpClient::ProcessReliableResends()

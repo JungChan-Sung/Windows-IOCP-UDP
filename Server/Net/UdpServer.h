@@ -135,7 +135,7 @@ namespace server::net
 		void HandleLeaveRequest(const sockaddr_in& remoteAddress);
 		void HandleJoinRoomRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRoomRequestPacket& packet);
 
-		void ProcessReliableResend();
+		void ProcessReliableResends();
 		void ProcessJoinRequest(const sockaddr_in& remoteAddress);
 		void ProcessInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
 		void ProcessFireRequest(const EndpointKey& endpointKey);

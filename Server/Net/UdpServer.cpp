@@ -347,7 +347,7 @@ namespace server::net
 		}
 
 		RemoveTimedOutPeers();
-		ProcessReliableResend();
+		ProcessReliableResends();
 
 		BroadcastPlayerSnapshots();
 		BroadcastBulletSnapshots();
@@ -559,7 +559,7 @@ namespace server::net
 		ProcessJoinRoomRequest(endpointKey, packet);
 	}
 
-	void UdpServer::ProcessReliableResend()
+	void UdpServer::ProcessReliableResends()
 	{
 		struct ReliableResendTask
 		{

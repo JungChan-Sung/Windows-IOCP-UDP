@@ -4,14 +4,15 @@
 #include <vector>
 
 #include <Common/Net/ReliableUdpSession.h>
+#include <Common/Packet/PacketBuffer.h>
 
 #include <Tests/DebugTestResult.h>
 
 namespace tests::net::reliableUdpSessionTest
 {
-	[[nodiscard]] std::vector<char> MakePacketBuffer(char value)
+	[[nodiscard]] common::packet::PacketBuffer MakePacketBuffer(char value)
 	{
-		return std::vector<char>{ value };
+		return common::packet::PacketBuffer{ value };
 	}
 
 	void RunBuildOutgoingHeaderWithoutAckTest(tests::DebugTestResult& result)

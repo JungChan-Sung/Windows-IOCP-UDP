@@ -164,6 +164,61 @@ namespace tests::net::reliableUdpPacketBuilderTest
 
 		tests::Expect(result, !headerOnlyPacketView.has_value(), "ReliableUdpPacketBuilder: reject header only packet");
 	}
+
+	void RunBuildAndParseAckOnlyPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+		reliableHeader.ackSequence = 10;
+		reliableHeader.ackBitfield = 0b101;
+
+		const std::optional<common::packet::PacketBuffer> ackPacket =
+			common::packet::BuildReliableUdpAckPacket(reliableHeader);
+
+		tests::Expect(result, ackPacket.has_value(), "ReliableUdpPacketBuilder: build ack-only packet");
+
+		if (!ackPacket.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::packet::ReliableUdpPacketView> packetView =
+			common::packet::ParseReliableUdpPacket(
+				ackPacket->data(),
+				static_cast<int>(ackPacket->size())
+			);
+
+		tests::Expect(result, packetView.has_value(), "ReliableUdpPacketBuilder: parse ack-only packet");
+
+		if (!packetView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			packetView->packetHeader.type == common::packet::PacketType::None,
+			"ReliableUdpPacketBuilder: ack-only packet type"
+		);
+
+		tests::Expect(
+			result,
+			common::packet::IsReliablePacketHeader(packetView->packetHeader),
+			"ReliableUdpPacketBuilder: ack-only reliable flag"
+		);
+
+		tests::Expect(result, packetView->payload.empty(), "ReliableUdpPacketBuilder: ack-only payload empty");
+		tests::Expect(result, packetView->reliableHeader.ackSequence == reliableHeader.ackSequence, "ReliableUdpPacketBuilder: ack sequence");
+		tests::Expect(result, packetView->reliableHeader.ackBitfield == reliableHeader.ackBitfield, "ReliableUdpPacketBuilder: ack bitfield");
+
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer =
+			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+
+		tests::Expect(
+			result,
+			!gamePacketBuffer.has_value(),
+			"ReliableUdpPacketBuilder: ack-only cannot rebuild game packet"
+		);
+	}
 }
 
 namespace tests::net
@@ -175,6 +230,7 @@ namespace tests::net
 		reliableUdpPacketBuilderTest::RunBuildAndParseReliablePacketTest(result);
 		reliableUdpPacketBuilderTest::RunRejectInvalidBuildInputTest(result);
 		reliableUdpPacketBuilderTest::RunRejectInvalidParseBufferTest(result);
+		reliableUdpPacketBuilderTest::RunBuildAndParseAckOnlyPacketTest(result);
 
 		return result;
 	}

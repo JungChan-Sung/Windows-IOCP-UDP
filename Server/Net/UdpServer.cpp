@@ -424,6 +424,7 @@ namespace server::net
 		}
 
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
+		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
 
 		bool isNewReliablePacket = false;
 		std::optional<common::packet::PacketBuffer> ackPacketBuffer;
@@ -437,8 +438,20 @@ namespace server::net
 				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 			}
 
-			isNewReliablePacket = peerState->reliableSession.ProcessReceivedHeader(packetView->reliableHeader);
-			ackPacketBuffer = BuildReliableAckPacket(*peerState);
+			if (isAckOnlyPacket)
+			{
+				peerState->reliableSession.ProcessReceivedAck(packetView->reliableHeader);
+			}
+			else
+			{
+				isNewReliablePacket = peerState->reliableSession.ProcessReceivedDataHeader(packetView->reliableHeader);
+				ackPacketBuffer = BuildReliableAckPacket(*peerState);
+			}
+		}
+
+		if (isAckOnlyPacket)
+		{
+			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
 
 		if (ackPacketBuffer.has_value())
@@ -451,11 +464,6 @@ namespace server::net
 		}
 
 		if (!isNewReliablePacket)
-		{
-			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
-		}
-
-		if (packetView->packetHeader.type == common::packet::PacketType::None)
 		{
 			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
@@ -492,8 +500,7 @@ namespace server::net
 
 	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(PeerState& peerState)
 	{
-		const common::net::ReliableSequence sequence = peerState.reliableSession.AllocateOutgoingSequence();
-		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
+		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingAckHeader();
 
 		return common::packet::BuildReliableUdpAckPacket(reliableHeader);
 	}

@@ -308,8 +308,7 @@ namespace client::net
 
 	bool UdpClient::SendReliableAckPacket()
 	{
-		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
-		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
+		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingAckHeader();
 
 		const std::optional<common::packet::PacketBuffer> ackPacketBuffer = common::packet::BuildReliableUdpAckPacket(reliableHeader);
 		if (!ackPacketBuffer.has_value())
@@ -395,15 +394,17 @@ namespace client::net
 			return;
 		}
 
-		const bool isNewReliablePacket = reliableSession_.ProcessReceivedHeader(packetView->reliableHeader);
-		SendReliableAckPacket();
-
-		if (!isNewReliablePacket)
+		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
+		if (isAckOnlyPacket)
 		{
+			reliableSession_.ProcessReceivedAck(packetView->reliableHeader);
 			return;
 		}
 
-		if (packetView->packetHeader.type == common::packet::PacketType::None)
+		const bool isNewReliablePacket = reliableSession_.ProcessReceivedDataHeader(packetView->reliableHeader);
+		SendReliableAckPacket();
+
+		if (!isNewReliablePacket)
 		{
 			return;
 		}

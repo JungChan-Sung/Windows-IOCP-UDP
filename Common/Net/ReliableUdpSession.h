@@ -65,7 +65,11 @@ namespace common::net
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 		}
 
-		bool ProcessReceivedHeader(const ReliableUdpPacketHeader& reliableHeader)
+		void ProcessReceivedAck(const ReliableUdpPacketHeader& reliableHeader)
+		{
+			sendWindow_.ProcessAck(reliableHeader.ackSequence, reliableHeader.ackBitfield);
+		}
+		[[nodiscard]] bool ProcessReceivedDataHeader(const ReliableUdpPacketHeader& reliableHeader)
 		{
 			const bool isAlreadyReceived = ackTracker_.IsSequenceAcked(reliableHeader.sequence);
 
@@ -73,6 +77,19 @@ namespace common::net
 			sendWindow_.ProcessAck(reliableHeader.ackSequence, reliableHeader.ackBitfield);
 
 			return !isAlreadyReceived;
+		}
+
+		[[nodiscard]] ReliableUdpPacketHeader BuildOutgoingAckHeader() const noexcept
+		{
+			ReliableUdpPacketHeader reliableHeader{};
+
+			if (ackTracker_.HasReceivedAnySequence())
+			{
+				reliableHeader.ackSequence = ackTracker_.GetLatestReceivedSequence();
+				reliableHeader.ackBitfield = ackTracker_.GetAckBitfield();
+			}
+
+			return reliableHeader;
 		}
 
 		[[nodiscard]] ResendPacketList ExtractResendPackets(TimePoint currentTime)

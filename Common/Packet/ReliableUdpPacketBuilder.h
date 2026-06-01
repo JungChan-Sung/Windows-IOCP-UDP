@@ -102,6 +102,11 @@ namespace common::packet
 			return std::nullopt;
 		}
 
+		if (packetSize > std::numeric_limits<std::uint16_t>::max())
+		{
+			return std::nullopt;
+		}
+
 		PacketWriter writer;
 		writer.Reserve(packetSize);
 

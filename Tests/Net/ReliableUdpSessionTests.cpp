@@ -27,7 +27,7 @@ namespace tests::net::reliableUdpSessionTest
 		tests::Expect(result, header.ackBitfield == 0, "ReliableUdpSession: outgoing header default ack bitfield");
 	}
 
-	void RunProcessReceivedHeaderUpdatesAckTest(tests::DebugTestResult& result)
+	void RunProcessReceivedDataHeaderUpdatesAckTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpSession session;
 
@@ -36,8 +36,9 @@ namespace tests::net::reliableUdpSessionTest
 		receivedHeader.ackSequence = 0;
 		receivedHeader.ackBitfield = 0;
 
-		session.ProcessReceivedHeader(receivedHeader);
+		const bool isNewReliablePacket = session.ProcessReceivedDataHeader(receivedHeader);
 
+		tests::Expect(result, isNewReliablePacket, "ReliableUdpSession: received data header is new");
 		tests::Expect(result, session.HasReceivedAnySequence(), "ReliableUdpSession: received any sequence");
 		tests::Expect(result, session.GetLatestReceivedSequence() == 10, "ReliableUdpSession: latest received sequence");
 		tests::Expect(result, session.GetAckBitfield() == 0, "ReliableUdpSession: first received ack bitfield");
@@ -54,8 +55,8 @@ namespace tests::net::reliableUdpSessionTest
 		common::net::ReliableUdpPacketHeader secondReceivedHeader{};
 		secondReceivedHeader.sequence = 11;
 
-		session.ProcessReceivedHeader(firstReceivedHeader);
-		session.ProcessReceivedHeader(secondReceivedHeader);
+		session.ProcessReceivedDataHeader(firstReceivedHeader);
+		session.ProcessReceivedDataHeader(secondReceivedHeader);
 
 		const common::net::ReliableSequence outgoingSequence = session.AllocateOutgoingSequence();
 		const common::net::ReliableUdpPacketHeader outgoingHeader = session.BuildOutgoingHeader(outgoingSequence);
@@ -65,7 +66,7 @@ namespace tests::net::reliableUdpSessionTest
 		tests::Expect(result, outgoingHeader.ackBitfield == 1, "ReliableUdpSession: outgoing ack bitfield");
 	}
 
-	void RunProcessReceivedHeaderRemovesAckedPendingPacketTest(tests::DebugTestResult& result)
+	void RunProcessReceivedDataHeaderRemovesAckedPendingPacketTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpSession session;
 
@@ -86,8 +87,9 @@ namespace tests::net::reliableUdpSessionTest
 		receivedHeader.ackSequence = firstSequence;
 		receivedHeader.ackBitfield = 0;
 
-		session.ProcessReceivedHeader(receivedHeader);
+		const bool isNewReliablePacket = session.ProcessReceivedDataHeader(receivedHeader);
 
+		tests::Expect(result, isNewReliablePacket, "ReliableUdpSession: received ack header is new");
 		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: pending count after ack");
 	}
 
@@ -129,13 +131,35 @@ namespace tests::net::reliableUdpSessionTest
 
 		common::net::ReliableUdpPacketHeader receivedHeader{};
 		receivedHeader.sequence = 10;
-		session.ProcessReceivedHeader(receivedHeader);
+		session.ProcessReceivedDataHeader(receivedHeader);
 
 		session.Reset();
 
 		tests::Expect(result, session.GetNextSequence() == 1, "ReliableUdpSession: reset next sequence");
 		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: reset pending count");
 		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: reset ack tracker");
+	}
+
+	void RunProcessReceivedAckRemovesPendingPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), currentTime);
+
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: pending count before ack-only");
+
+		common::net::ReliableUdpPacketHeader ackHeader{};
+		ackHeader.ackSequence = sequence;
+		ackHeader.ackBitfield = 0;
+
+		session.ProcessReceivedAck(ackHeader);
+
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: pending count after ack-only");
+		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: ack-only does not update received sequence");
 	}
 }
 
@@ -146,9 +170,10 @@ namespace tests::net
 		tests::DebugTestResult result{};
 
 		reliableUdpSessionTest::RunBuildOutgoingHeaderWithoutAckTest(result);
-		reliableUdpSessionTest::RunProcessReceivedHeaderUpdatesAckTest(result);
+		reliableUdpSessionTest::RunProcessReceivedDataHeaderUpdatesAckTest(result);
 		reliableUdpSessionTest::RunBuildOutgoingHeaderWithAckTest(result);
-		reliableUdpSessionTest::RunProcessReceivedHeaderRemovesAckedPendingPacketTest(result);
+		reliableUdpSessionTest::RunProcessReceivedDataHeaderRemovesAckedPendingPacketTest(result);
+		reliableUdpSessionTest::RunProcessReceivedAckRemovesPendingPacketTest(result);
 		reliableUdpSessionTest::RunExtractResendPacketsTest(result);
 		reliableUdpSessionTest::RunResetTest(result);
 

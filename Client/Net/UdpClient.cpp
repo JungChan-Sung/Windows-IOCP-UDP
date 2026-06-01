@@ -188,7 +188,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendReliablePacket(std::span<const char>(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendJoinRoomRequest(RoomId roomId)

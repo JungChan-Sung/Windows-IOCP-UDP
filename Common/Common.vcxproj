@@ -46,6 +46,7 @@
     <ClInclude Include="Packet\PacketBuffer.h" />
     <ClInclude Include="Packet\PacketConstants.h" />
     <ClInclude Include="Packet\PacketHeader.h" />
+    <ClInclude Include="Packet\PacketReliability.h" />
     <ClInclude Include="Packet\PacketSerialization.h" />
     <ClInclude Include="Packet\PacketType.h" />
     <ClInclude Include="Packet\PacketValidation.h" />

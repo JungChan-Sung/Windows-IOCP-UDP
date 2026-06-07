@@ -12,6 +12,7 @@
 #include "Net/ReliableUdpSendWindowTests.h"
 #include "Net/ReliableUdpSessionTests.h"
 #include "Packet/PacketSerializationTests.h"
+#include "Packet/PacketReliabilityTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
 #include "Server/ServerConfigTests.h"
@@ -32,6 +33,7 @@ namespace tests
 		tests::DebugTestResult totalResult{};
 
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
+		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
 		MergeAndPrint(totalResult, "ReliableUdpProtocol", net::RunReliableUdpProtocolTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketHeader", net::RunReliableUdpPacketHeaderTests());

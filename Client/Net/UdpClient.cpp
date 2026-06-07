@@ -147,7 +147,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -163,7 +163,7 @@ namespace client::net
 		}
 
 		inputSequence = packet.inputSequence;
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
 	}
 
 	bool UdpClient::SendFireRequest()
@@ -176,7 +176,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
 	}
 
 	bool UdpClient::SendLeaveRequest()
@@ -288,7 +288,10 @@ namespace client::net
 	bool UdpClient::SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader =
-			common::packet::DeserializePacketHeader(serializedGamePacket.data(), static_cast<int>(serializedGamePacket.size()));
+			common::packet::DeserializePacketHeader(
+				serializedGamePacket.data(),
+				static_cast<int>(serializedGamePacket.size())
+			);
 
 		if (!packetHeader.has_value())
 		{
@@ -323,7 +326,11 @@ namespace client::net
 		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
 		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
 
-		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer = common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
+			common::packet::BuildReliableUdpPacket(
+				reliableHeader, 
+				serializedGamePacket
+			);
 
 		if (!reliablePacketBuffer.has_value())
 		{

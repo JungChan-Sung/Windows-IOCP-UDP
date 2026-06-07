@@ -10,6 +10,7 @@
 #include <Common/Net/ReliableUdpSession.h>
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
 
@@ -146,7 +147,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -162,7 +163,7 @@ namespace client::net
 		}
 
 		inputSequence = packet.inputSequence;
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
 	}
 
 	bool UdpClient::SendFireRequest()
@@ -175,7 +176,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), static_cast<int>(packetBuffer->size())));
 	}
 
 	bool UdpClient::SendLeaveRequest()
@@ -188,7 +189,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendReliablePacket(std::span<const char>(packetBuffer->data(), packetBuffer->size()));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendJoinRoomRequest(RoomId roomId)
@@ -202,7 +203,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendReliablePacket(std::span<const char>(packetBuffer->data(), packetBuffer->size()));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	void UdpClient::ProcessReliableResends()
@@ -284,7 +285,40 @@ namespace client::net
 		}
 	}
 
-	bool UdpClient::SendReliablePacket(std::span<const char> serializedGamePacket)
+	bool UdpClient::SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket)
+	{
+		const std::optional<common::packet::PacketHeader> packetHeader =
+			common::packet::DeserializePacketHeader(serializedGamePacket.data(), static_cast<int>(serializedGamePacket.size()));
+
+		if (!packetHeader.has_value())
+		{
+			return false;
+		}
+
+		if (common::packet::IsReliablePacketHeader(*packetHeader))
+		{
+			return false;
+		}
+
+		if (common::packet::GetPacketHeaderProtocolVersion(*packetHeader) != common::packet::protocolVersion)
+		{
+			return false;
+		}
+
+		if (static_cast<std::size_t>(packetHeader->size) != serializedGamePacket.size())
+		{
+			return false;
+		}
+
+		if (common::packet::IsReliablePacketType(packetHeader->type))
+		{
+			return SendReliablePacket(serializedGamePacket);
+		}
+
+		return SendPacket(serializedGamePacket.data(), static_cast<int>(serializedGamePacket.size()));
+	}
+
+	bool UdpClient::SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket)
 	{
 		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
 		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);

@@ -6,12 +6,12 @@
 #include <expected>
 #include <string>
 #include <string_view>
-#include <span>
 #include <variant>
 
 #include <Common/Net/ReliableUdpSession.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
+#include <Common/Packet/PacketBuffer.h>
 
 #include <Client/Config/ClientTransportType.h>
 #include <Client/Config/ClientConfigDefaults.h>
@@ -103,7 +103,8 @@ namespace client::net
 		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
-		[[nodiscard]] bool SendReliablePacket(std::span<const char> serializedGamePacket);
+		[[nodiscard]] bool SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket);
+		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket);
 		[[nodiscard]] bool SendReliableAckPacket();
 
 		void RegisterPacketHandlers();

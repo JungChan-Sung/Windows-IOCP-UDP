@@ -50,6 +50,7 @@ namespace server::net
 			currentTime
 		);
 		peerState.lastInputSequence = 0;
+
 		peerState.reliableSession.SetMaxPendingPacketCount(reliableUdpConfig.maxPendingPacketCount);
 		peerState.reliableSession.SetMaxResendCount(reliableUdpConfig.maxResendCount);
 		peerState.reliableSession.SetResendInterval(common::time::Milliseconds(reliableUdpConfig.resendIntervalMilliseconds));

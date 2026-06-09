@@ -421,6 +421,7 @@ namespace server::net
 		const std::optional<common::packet::ReliableUdpPacketView> packetView = common::packet::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
 		{
+			serverMetricsCollector_.IncrementInvalidReliablePacketCount();
 			return DispatchResult{ DispatchStatus::InvalidPacketHeader, std::nullopt, packetSize };
 		}
 

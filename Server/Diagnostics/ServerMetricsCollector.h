@@ -12,6 +12,7 @@ namespace server::diagnostics
 	private:
 		std::atomic<std::uint64_t> receivedPacketCount_ = 0;
 		std::atomic<std::uint64_t> invalidPacketDropCount_ = 0;
+		std::atomic<std::uint64_t> invalidReliablePacketCount_ = 0;
 
 		std::atomic<std::uint64_t> joinRequestCount_ = 0;
 		std::atomic<std::uint64_t> inputCommandCount_ = 0;
@@ -52,6 +53,7 @@ namespace server::diagnostics
 
 		void IncrementReceivedPacketCount() noexcept;
 		void IncrementInvalidPacketDropCount() noexcept;
+		void IncrementInvalidReliablePacketCount() noexcept;
 
 		void IncrementJoinRequestCount() noexcept;
 		void IncrementInputCommandCount() noexcept;

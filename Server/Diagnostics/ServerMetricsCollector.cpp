@@ -6,6 +6,7 @@ namespace server::diagnostics
 	{
 		receivedPacketCount_.store(0);
 		invalidPacketDropCount_.store(0);
+		invalidReliablePacketCount_.store(0);
 
 		joinRequestCount_.store(0);
 		inputCommandCount_.store(0);
@@ -40,6 +41,11 @@ namespace server::diagnostics
 	void ServerMetricsCollector::IncrementInvalidPacketDropCount() noexcept
 	{
 		++invalidPacketDropCount_;
+	}
+
+	void ServerMetricsCollector::IncrementInvalidReliablePacketCount() noexcept
+	{
+		++invalidReliablePacketCount_;
 	}
 
 	void ServerMetricsCollector::IncrementJoinRequestCount() noexcept
@@ -148,6 +154,7 @@ namespace server::diagnostics
 
 		snapshot.receivedPacketCount = receivedPacketCount_.load();
 		snapshot.invalidPacketDropCount = invalidPacketDropCount_.load();
+		snapshot.invalidReliablePacketCount = invalidReliablePacketCount_.load();
 
 		snapshot.joinRequestCount = joinRequestCount_.load();
 		snapshot.inputCommandCount = inputCommandCount_.load();

@@ -67,6 +67,7 @@ namespace server::diagnostics
 			<< ", UdpSendCompletedBytes=" << snapshot.udpSendCompletedByteCount
 			<< ", ReceivedPackets=" << snapshot.metrics.receivedPacketCount
 			<< ", InvalidPacketDrops=" << snapshot.metrics.invalidPacketDropCount
+			<< ", InvalidReliablePackets=" << snapshot.metrics.invalidReliablePacketCount
 			<< ", JoinRequests=" << snapshot.metrics.joinRequestCount
 			<< ", InputCommands=" << snapshot.metrics.inputCommandCount
 			<< ", FireRequests=" << snapshot.metrics.fireRequestCount

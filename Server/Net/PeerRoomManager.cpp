@@ -84,6 +84,19 @@ namespace server::net
 		}
 	}
 
+	void PeerRoomManager::ForEachJoinedPeer(const std::function<void(const PeerState&)>& action) const
+	{
+		for (const auto& [_, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			action(peerState);
+		}
+	}
+
 	void PeerRoomManager::RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept
 	{
 		PeerState* peerState = FindPeer(endpointKey);

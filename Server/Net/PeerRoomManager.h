@@ -81,7 +81,9 @@ namespace server::net
 			RoomId roomId,
 			TimePoint currentTime
 		);
+
 		void ForEachJoinedPeer(const std::function<void(PeerState&)>& action);
+		void ForEachJoinedPeer(const std::function<void(const PeerState&)>& action) const;
 
 		void RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept;
 

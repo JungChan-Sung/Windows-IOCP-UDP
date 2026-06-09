@@ -21,6 +21,7 @@ namespace server::diagnostics
 		std::size_t pendingImpactEffectCount = 0;
 
 		std::size_t pendingSendContextCount = 0;
+		std::size_t reliablePendingPacketCount = 0;
 
 		std::uint64_t udpSendCompletionCount = 0;
 		std::uint64_t udpSendCompletionFailureCount = 0;

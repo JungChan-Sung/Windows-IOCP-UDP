@@ -1090,6 +1090,16 @@ namespace server::net
 			snapshot.playerCount = gameWorld_.GetPlayerCount();
 			snapshot.bulletCount = gameWorld_.GetBulletCount();
 			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
+
+			std::size_t reliablePendingPacketCount = 0;
+			peerRoomManager_.ForEachJoinedPeer(
+				[&reliablePendingPacketCount](const PeerState& peerState)
+				{
+					reliablePendingPacketCount += peerState.reliableSession.GetPendingPacketCount();
+				}
+			);
+
+			snapshot.reliablePendingPacketCount = reliablePendingPacketCount;
 		}
 
 		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();

@@ -20,6 +20,9 @@ namespace server::diagnostics
 		reliableResendPacketCount_.store(0);
 		reliableResendGiveUpPacketCount_.store(0);
 		reliableSendWindowFullCount_.store(0);
+		reliableUnknownPeerPacketCount_.store(0);
+		reliableUnknownPeerAckOnlyPacketCount_.store(0);
+		reliableUnknownPeerDataPacketCount_.store(0);
 		reliableDataReceivePacketCount_.store(0);
 		reliableDataSendPacketCount_.store(0);
 		reliableAckOnlyReceivePacketCount_.store(0);
@@ -94,6 +97,21 @@ namespace server::diagnostics
 		++reliableSendWindowFullCount_;
 	}
 
+	void ServerMetricsCollector::IncrementReliableUnknownPeerPacketCount() noexcept
+	{
+		++reliableUnknownPeerPacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementReliableUnknownPeerAckOnlyPacketCount() noexcept
+	{
+		++reliableUnknownPeerAckOnlyPacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementReliableUnknownPeerDataPacketCount() noexcept
+	{
+		++reliableUnknownPeerDataPacketCount_;
+	}
+
 	void ServerMetricsCollector::IncrementReliableDataReceivePacketCount() noexcept
 	{
 		++reliableDataReceivePacketCount_;
@@ -144,6 +162,9 @@ namespace server::diagnostics
 		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
 		snapshot.reliableResendGiveUpPacketCount = reliableResendGiveUpPacketCount_.load();
 		snapshot.reliableSendWindowFullCount = reliableSendWindowFullCount_.load();
+		snapshot.reliableUnknownPeerPacketCount = reliableUnknownPeerPacketCount_.load();
+		snapshot.reliableUnknownPeerAckOnlyPacketCount = reliableUnknownPeerAckOnlyPacketCount_.load();
+		snapshot.reliableUnknownPeerDataPacketCount = reliableUnknownPeerDataPacketCount_.load();
 		snapshot.reliableDataReceivePacketCount = reliableDataReceivePacketCount_.load();
 		snapshot.reliableDataSendPacketCount = reliableDataSendPacketCount_.load();
 		snapshot.reliableAckOnlyReceivePacketCount = reliableAckOnlyReceivePacketCount_.load();

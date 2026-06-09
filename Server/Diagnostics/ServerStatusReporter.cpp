@@ -54,6 +54,9 @@ namespace server::diagnostics
 			<< ", ReliableResendPackets=" << snapshot.metrics.reliableResendPacketCount
 			<< ", ReliableResendGiveUps=" << snapshot.metrics.reliableResendGiveUpPacketCount
 			<< ", ReliableSendWindowFulls=" << snapshot.metrics.reliableSendWindowFullCount
+			<< ", ReliableUnknownPeerPackets=" << snapshot.metrics.reliableUnknownPeerPacketCount
+			<< ", ReliableUnknownPeerAckOnlyPackets=" << snapshot.metrics.reliableUnknownPeerAckOnlyPacketCount
+			<< ", ReliableUnknownPeerDataPackets=" << snapshot.metrics.reliableUnknownPeerDataPacketCount
 			<< ", ReliableDataReceives=" << snapshot.metrics.reliableDataReceivePacketCount
 			<< ", ReliableDataSends=" << snapshot.metrics.reliableDataSendPacketCount
 			<< ", ReliableAckOnlyReceives=" << snapshot.metrics.reliableAckOnlyReceivePacketCount

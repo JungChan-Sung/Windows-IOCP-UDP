@@ -178,7 +178,6 @@ namespace common::net
 			resendInterval_ = resendInterval;
 		}
 
-
 		[[nodiscard]] ReliableSequence GetNextSequence() const noexcept
 		{
 			return nextSequence_;

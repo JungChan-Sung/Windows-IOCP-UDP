@@ -436,6 +436,17 @@ namespace server::net
 			PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 			if (peerState == nullptr)
 			{
+				serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
+
+				if (isAckOnlyPacket)
+				{
+					serverMetricsCollector_.IncrementReliableUnknownPeerAckOnlyPacketCount();
+				}
+				else
+				{
+					serverMetricsCollector_.IncrementReliableUnknownPeerDataPacketCount();
+				}
+
 				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 			}
 

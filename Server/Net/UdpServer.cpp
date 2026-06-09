@@ -18,6 +18,7 @@
 
 #include <Common/Log/ILogger.h>
 #include <Common/Packet/GamePacket.h>
+#include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
@@ -477,13 +478,45 @@ namespace server::net
 		return packetDispatcher_.Dispatch(remoteAddress, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliablePacket(PeerState& peerState, std::span<const char> serializedGamePacket)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(PeerState& peerState, common::packet::ConstPacketSpan serializedGamePacket)
 	{
+		const std::optional<common::packet::PacketHeader> packetHeader =
+			common::packet::DeserializePacketHeader(
+				serializedGamePacket.data(),
+				static_cast<int>(serializedGamePacket.size())
+			);
+
+		if (!packetHeader.has_value())
+		{
+			return std::nullopt;
+		}
+
+		if (common::packet::IsReliablePacketHeader(*packetHeader))
+		{
+			return std::nullopt;
+		}
+
+		if (common::packet::GetPacketHeaderProtocolVersion(*packetHeader) != common::packet::protocolVersion)
+		{
+			return std::nullopt;
+		}
+
+		if (static_cast<std::size_t>(packetHeader->size) != serializedGamePacket.size())
+		{
+			return std::nullopt;
+		}
+
+		if (!common::packet::IsReliablePacketType(packetHeader->type))
+		{
+			return std::nullopt;
+		}
+
 		const common::net::ReliableSequence sequence = peerState.reliableSession.AllocateOutgoingSequence();
 		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
 
 		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
 			common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+
 		if (!reliablePacketBuffer.has_value())
 		{
 			return std::nullopt;
@@ -518,7 +551,7 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		return BuildReliablePacket(peerState, std::span<const char>(packetBuffer->data(), packetBuffer->size()));
+		return BuildReliableGamePacket(peerState, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress)

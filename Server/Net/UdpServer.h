@@ -7,7 +7,6 @@
 #include <expected>
 #include <mutex>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -117,9 +116,9 @@ namespace server::net
 		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 
-		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliablePacket(
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableGamePacket(
 			PeerState& peerState,
-			std::span<const char> serializedGamePacket
+			common::packet::ConstPacketSpan serializedGamePacket
 		);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(PeerState& peerState);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(

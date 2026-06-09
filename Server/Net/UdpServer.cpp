@@ -442,6 +442,7 @@ namespace server::net
 			if (isAckOnlyPacket)
 			{
 				peerState->reliableSession.ProcessReceivedAck(packetView->reliableHeader);
+				serverMetricsCollector_.IncrementReliableAckOnlyReceivePacketCount();
 			}
 			else
 			{
@@ -462,10 +463,13 @@ namespace server::net
 				ackPacketBuffer->data(),
 				static_cast<int>(ackPacketBuffer->size())
 			);
+
+			serverMetricsCollector_.IncrementReliableAckOnlySendPacketCount();
 		}
 
 		if (!isNewReliablePacket)
 		{
+			serverMetricsCollector_.IncrementReliableDuplicateDropPacketCount();
 			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
 

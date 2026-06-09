@@ -18,6 +18,9 @@ namespace server::diagnostics
 		impactEffectSendRequestCount_.store(0);
 
 		reliableResendPacketCount_.store(0);
+		reliableAckOnlyReceivePacketCount_.store(0);
+		reliableAckOnlySendPacketCount_.store(0);
+		reliableDuplicateDropPacketCount_.store(0);
 
 		timedOutPeerCount_.store(0);
 	}
@@ -77,6 +80,21 @@ namespace server::diagnostics
 		reliableResendPacketCount_.fetch_add(count);
 	}
 
+	void ServerMetricsCollector::IncrementReliableAckOnlyReceivePacketCount() noexcept
+	{
+		++reliableAckOnlyReceivePacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementReliableAckOnlySendPacketCount() noexcept
+	{
+		++reliableAckOnlySendPacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementReliableDuplicateDropPacketCount() noexcept
+	{
+		++reliableDuplicateDropPacketCount_;
+	}
+
 	void ServerMetricsCollector::AddTimedOutPeerCount(std::uint64_t count) noexcept
 	{
 		timedOutPeerCount_.fetch_add(count);
@@ -100,6 +118,9 @@ namespace server::diagnostics
 		snapshot.impactEffectSendRequestCount = impactEffectSendRequestCount_.load();
 
 		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
+		snapshot.reliableAckOnlyReceivePacketCount = reliableAckOnlyReceivePacketCount_.load();
+		snapshot.reliableAckOnlySendPacketCount = reliableAckOnlySendPacketCount_.load();
+		snapshot.reliableDuplicateDropPacketCount = reliableDuplicateDropPacketCount_.load();
 
 		snapshot.timedOutPeerCount = timedOutPeerCount_.load();
 

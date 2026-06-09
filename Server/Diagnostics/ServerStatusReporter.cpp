@@ -52,6 +52,9 @@ namespace server::diagnostics
 			<< ", PendingSendContexts=" << snapshot.pendingSendContextCount
 			<< ", ReliablePendingPackets=" << snapshot.reliablePendingPacketCount
 			<< ", ReliableResendPackets=" << snapshot.metrics.reliableResendPacketCount
+			<< ", ReliableAckOnlyReceives=" << snapshot.metrics.reliableAckOnlyReceivePacketCount
+			<< ", ReliableAckOnlySends=" << snapshot.metrics.reliableAckOnlySendPacketCount
+			<< ", ReliableDuplicateDrops=" << snapshot.metrics.reliableDuplicateDropPacketCount
 			<< ", UdpSendCompletions=" << snapshot.udpSendCompletionCount
 			<< ", UdpSendCompletionFailures=" << snapshot.udpSendCompletionFailureCount
 			<< ", UdpSendCompletedBytes=" << snapshot.udpSendCompletedByteCount

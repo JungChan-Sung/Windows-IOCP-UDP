@@ -70,10 +70,10 @@ namespace server::config
 	public:
 		NetworkConfig network;
 		SessionConfig session;
+		ReliableUdpConfig reliableUdp;
 		TickConfig tick;
 		GameRuleConfig gameRule;
 		WeaponRuleConfig weaponRule;
 		DiagnosticsConfig diagnostics;
-		ReliableUdpConfig reliableUdp;
 	};
 }

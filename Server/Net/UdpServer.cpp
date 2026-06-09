@@ -469,7 +469,8 @@ namespace server::net
 			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
 
-		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer =
+			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
 		if (!gamePacketBuffer.has_value())
 		{
 			return DispatchResult{ DispatchStatus::InvalidPacketPayload, packetView->packetHeader.type, packetSize };
@@ -611,7 +612,8 @@ namespace server::net
 			peerRoomManager_.ForEachJoinedPeer(
 				[&resendTaskList, currentTime](PeerState& peerState)
 				{
-					common::net::ReliableUdpSession::ResendPacketList resendPacketList = peerState.reliableSession.ExtractResendPackets(currentTime);
+					common::net::ReliableUdpSession::ResendPacketList resendPacketList = 
+						peerState.reliableSession.ExtractResendPackets(currentTime);
 
 					for (common::net::ReliablePendingPacket& pendingPacket : resendPacketList)
 					{

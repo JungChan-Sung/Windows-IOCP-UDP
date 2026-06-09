@@ -2,12 +2,12 @@
 
 #include <WinSock2.h>
 
-#include <chrono>
 #include <cstdint>
 
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/ReliableUdpSession.h>
 #include <Common/Game/GameTypes.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace server::net
 {
@@ -20,7 +20,7 @@ namespace server::net
 		std::uint32_t lastInputSequence = 0;
 		common::game::RoomId roomId = 0;
 		bool isJoined = false;
-		std::chrono::steady_clock::time_point lastRecvTime{};
+		common::time::TimePoint lastRecvTime{};
 		common::net::ReliableUdpSession reliableSession;
 	};
 }

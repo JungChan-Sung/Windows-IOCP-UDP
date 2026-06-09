@@ -635,6 +635,8 @@ namespace server::net
 				static_cast<int>(resendTask.packetBuffer.size())
 			);
 		}
+
+		serverMetricsCollector_.AddReliableResendPacketCount(static_cast<std::uint64_t>(resendTaskList.size()));
 	}
 
 	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress)

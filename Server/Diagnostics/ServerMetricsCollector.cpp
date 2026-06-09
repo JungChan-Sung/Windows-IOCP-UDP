@@ -17,6 +17,8 @@ namespace server::diagnostics
 		bulletSnapshotSendRequestCount_.store(0);
 		impactEffectSendRequestCount_.store(0);
 
+		reliableResendPacketCount_.store(0);
+
 		timedOutPeerCount_.store(0);
 	}
 
@@ -70,6 +72,11 @@ namespace server::diagnostics
 		impactEffectSendRequestCount_.fetch_add(count);
 	}
 
+	void ServerMetricsCollector::AddReliableResendPacketCount(std::uint64_t count) noexcept
+	{
+		reliableResendPacketCount_.fetch_add(count);
+	}
+
 	void ServerMetricsCollector::AddTimedOutPeerCount(std::uint64_t count) noexcept
 	{
 		timedOutPeerCount_.fetch_add(count);
@@ -91,6 +98,8 @@ namespace server::diagnostics
 		snapshot.playerSnapshotSendRequestCount = playerSnapshotSendRequestCount_.load();
 		snapshot.bulletSnapshotSendRequestCount = bulletSnapshotSendRequestCount_.load();
 		snapshot.impactEffectSendRequestCount = impactEffectSendRequestCount_.load();
+
+		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
 
 		snapshot.timedOutPeerCount = timedOutPeerCount_.load();
 

@@ -22,6 +22,8 @@ namespace server::diagnostics
 		std::uint64_t bulletSnapshotSendRequestCount = 0;
 		std::uint64_t impactEffectSendRequestCount = 0;
 
+		std::uint64_t reliableResendPacketCount = 0;
+
 		std::uint64_t timedOutPeerCount = 0;
 	};
 }

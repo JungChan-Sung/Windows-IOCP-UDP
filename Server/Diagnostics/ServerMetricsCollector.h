@@ -23,6 +23,8 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> bulletSnapshotSendRequestCount_ = 0;
 		std::atomic<std::uint64_t> impactEffectSendRequestCount_ = 0;
 
+		std::atomic<std::uint64_t> reliableResendPacketCount_ = 0;
+
 		std::atomic<std::uint64_t> timedOutPeerCount_ = 0;
 
 	public:
@@ -50,6 +52,8 @@ namespace server::diagnostics
 		void AddPlayerSnapshotSendRequestCount(std::uint64_t count) noexcept;
 		void AddBulletSnapshotSendRequestCount(std::uint64_t count) noexcept;
 		void AddImpactEffectSendRequestCount(std::uint64_t count) noexcept;
+
+		void AddReliableResendPacketCount(std::uint64_t count) noexcept;
 
 		void AddTimedOutPeerCount(std::uint64_t count) noexcept;
 

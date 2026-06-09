@@ -446,6 +446,8 @@ namespace server::net
 			}
 			else
 			{
+				serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
+
 				isNewReliablePacket = peerState->reliableSession.ProcessReceivedDataHeader(packetView->reliableHeader);
 				ackPacketBuffer = BuildReliableAckPacket(*peerState);
 			}
@@ -532,6 +534,8 @@ namespace server::net
 		{
 			return std::nullopt;
 		}
+
+		serverMetricsCollector_.IncrementReliableDataSendPacketCount();
 
 		return reliablePacketBuffer;
 	}

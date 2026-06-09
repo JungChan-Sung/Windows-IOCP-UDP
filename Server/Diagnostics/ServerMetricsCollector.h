@@ -24,6 +24,8 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> impactEffectSendRequestCount_ = 0;
 
 		std::atomic<std::uint64_t> reliableResendPacketCount_ = 0;
+		std::atomic<std::uint64_t> reliableDataReceivePacketCount_ = 0;
+		std::atomic<std::uint64_t> reliableDataSendPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableAckOnlyReceivePacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableAckOnlySendPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableDuplicateDropPacketCount_ = 0;
@@ -57,6 +59,8 @@ namespace server::diagnostics
 		void AddImpactEffectSendRequestCount(std::uint64_t count) noexcept;
 
 		void AddReliableResendPacketCount(std::uint64_t count) noexcept;
+		void IncrementReliableDataReceivePacketCount() noexcept;
+		void IncrementReliableDataSendPacketCount() noexcept;
 		void IncrementReliableAckOnlyReceivePacketCount() noexcept;
 		void IncrementReliableAckOnlySendPacketCount() noexcept;
 		void IncrementReliableDuplicateDropPacketCount() noexcept;

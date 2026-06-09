@@ -18,6 +18,8 @@ namespace server::diagnostics
 		impactEffectSendRequestCount_.store(0);
 
 		reliableResendPacketCount_.store(0);
+		reliableDataReceivePacketCount_.store(0);
+		reliableDataSendPacketCount_.store(0);
 		reliableAckOnlyReceivePacketCount_.store(0);
 		reliableAckOnlySendPacketCount_.store(0);
 		reliableDuplicateDropPacketCount_.store(0);
@@ -80,6 +82,16 @@ namespace server::diagnostics
 		reliableResendPacketCount_.fetch_add(count);
 	}
 
+	void ServerMetricsCollector::IncrementReliableDataReceivePacketCount() noexcept
+	{
+		++reliableDataReceivePacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementReliableDataSendPacketCount() noexcept
+	{
+		++reliableDataSendPacketCount_;
+	}
+
 	void ServerMetricsCollector::IncrementReliableAckOnlyReceivePacketCount() noexcept
 	{
 		++reliableAckOnlyReceivePacketCount_;
@@ -118,6 +130,8 @@ namespace server::diagnostics
 		snapshot.impactEffectSendRequestCount = impactEffectSendRequestCount_.load();
 
 		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
+		snapshot.reliableDataReceivePacketCount = reliableDataReceivePacketCount_.load();
+		snapshot.reliableDataSendPacketCount = reliableDataSendPacketCount_.load();
 		snapshot.reliableAckOnlyReceivePacketCount = reliableAckOnlyReceivePacketCount_.load();
 		snapshot.reliableAckOnlySendPacketCount = reliableAckOnlySendPacketCount_.load();
 		snapshot.reliableDuplicateDropPacketCount = reliableDuplicateDropPacketCount_.load();

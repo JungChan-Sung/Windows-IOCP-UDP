@@ -52,6 +52,8 @@ namespace server::diagnostics
 			<< ", PendingSendContexts=" << snapshot.pendingSendContextCount
 			<< ", ReliablePendingPackets=" << snapshot.reliablePendingPacketCount
 			<< ", ReliableResendPackets=" << snapshot.metrics.reliableResendPacketCount
+			<< ", ReliableDataReceives=" << snapshot.metrics.reliableDataReceivePacketCount
+			<< ", ReliableDataSends=" << snapshot.metrics.reliableDataSendPacketCount
 			<< ", ReliableAckOnlyReceives=" << snapshot.metrics.reliableAckOnlyReceivePacketCount
 			<< ", ReliableAckOnlySends=" << snapshot.metrics.reliableAckOnlySendPacketCount
 			<< ", ReliableDuplicateDrops=" << snapshot.metrics.reliableDuplicateDropPacketCount

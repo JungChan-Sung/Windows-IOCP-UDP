@@ -19,6 +19,7 @@ namespace server::diagnostics
 
 		reliableResendPacketCount_.store(0);
 		reliableResendGiveUpPacketCount_.store(0);
+		reliableSendWindowFullCount_.store(0);
 		reliableDataReceivePacketCount_.store(0);
 		reliableDataSendPacketCount_.store(0);
 		reliableAckOnlyReceivePacketCount_.store(0);
@@ -88,6 +89,11 @@ namespace server::diagnostics
 		reliableResendGiveUpPacketCount_.fetch_add(count);
 	}
 
+	void ServerMetricsCollector::IncrementReliableSendWindowFullCount() noexcept
+	{
+		++reliableSendWindowFullCount_;
+	}
+
 	void ServerMetricsCollector::IncrementReliableDataReceivePacketCount() noexcept
 	{
 		++reliableDataReceivePacketCount_;
@@ -137,6 +143,7 @@ namespace server::diagnostics
 
 		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
 		snapshot.reliableResendGiveUpPacketCount = reliableResendGiveUpPacketCount_.load();
+		snapshot.reliableSendWindowFullCount = reliableSendWindowFullCount_.load();
 		snapshot.reliableDataReceivePacketCount = reliableDataReceivePacketCount_.load();
 		snapshot.reliableDataSendPacketCount = reliableDataSendPacketCount_.load();
 		snapshot.reliableAckOnlyReceivePacketCount = reliableAckOnlyReceivePacketCount_.load();

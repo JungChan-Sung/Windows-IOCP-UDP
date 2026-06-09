@@ -532,6 +532,7 @@ namespace server::net
 		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
 		if (!peerState.reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
 		{
+			serverMetricsCollector_.IncrementReliableSendWindowFullCount();
 			return std::nullopt;
 		}
 

@@ -4,6 +4,7 @@
 #include <deque>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include <Common/Net/ReliableUdpProtocol.h>
 #include <Common/Packet/PacketBuffer.h>
@@ -20,6 +21,13 @@ namespace common::net
 		int resendCount = 0;
 	};
 
+	struct ReliableResendResult
+	{
+	public:
+		std::vector<ReliablePendingPacket> resendPacketList;
+		std::vector<ReliablePendingPacket> giveUpPacketList;
+	};
+
 	class ReliableUdpSendWindow
 	{
 	public:
@@ -28,11 +36,13 @@ namespace common::net
 		using Duration = common::time::Duration;
 		using PendingPacketList = std::deque<ReliablePendingPacket>;
 		using ResendPacketList = std::vector<ReliablePendingPacket>;
+		using ResendResult = ReliableResendResult;
 
 	private:
 		ReliableSequence nextSequence_ = 1;
 		PendingPacketList pendingPacketList_;
 		std::size_t maxPendingPacketCount_ = 64;
+		int maxResendCount_ = 10;
 		Duration resendInterval_;
 
 	public:
@@ -116,22 +126,40 @@ namespace common::net
 			}
 		}
 
-		[[nodiscard]] ResendPacketList ExtractResendPackets(TimePoint currentTime)
+		[[nodiscard]] ResendResult ExtractResendResult(TimePoint currentTime)
 		{
-			ResendPacketList resendPacketList;
-			for (ReliablePendingPacket& pendingPacket : pendingPacketList_)
+			ResendResult result{};
+
+			for (auto packetIterator = pendingPacketList_.begin(); packetIterator != pendingPacketList_.end();)
 			{
+				ReliablePendingPacket& pendingPacket = *packetIterator;
 				if (currentTime - pendingPacket.lastSentTime < resendInterval_)
 				{
+					++packetIterator;
+					continue;
+				}
+
+				if (pendingPacket.resendCount >= maxResendCount_)
+				{
+					result.giveUpPacketList.push_back(std::move(pendingPacket));
+					packetIterator = pendingPacketList_.erase(packetIterator);
 					continue;
 				}
 
 				pendingPacket.lastSentTime = currentTime;
 				++pendingPacket.resendCount;
-				resendPacketList.push_back(pendingPacket);
+				result.resendPacketList.push_back(pendingPacket);
+
+				++packetIterator;
 			}
 
-			return resendPacketList;
+			return result;
+		}
+
+		[[nodiscard]] ResendPacketList ExtractResendPackets(TimePoint currentTime)
+		{
+			ResendResult result = ExtractResendResult(currentTime);
+			return std::move(result.resendPacketList);
 		}
 
 	public:
@@ -140,10 +168,16 @@ namespace common::net
 			maxPendingPacketCount_ = maxPendingPacketCount;
 		}
 
+		void SetMaxResendCount(int maxResendCount) noexcept
+		{
+			maxResendCount_ = (maxResendCount < 0) ? 0 : maxResendCount;
+		}
+
 		void SetResendInterval(Duration resendInterval) noexcept
 		{
 			resendInterval_ = resendInterval;
 		}
+
 
 		[[nodiscard]] ReliableSequence GetNextSequence() const noexcept
 		{
@@ -158,6 +192,11 @@ namespace common::net
 		[[nodiscard]] std::size_t GetMaxPendingPacketCount() const noexcept
 		{
 			return maxPendingPacketCount_;
+		}
+
+		[[nodiscard]] int GetMaxResendCount() const noexcept
+		{
+			return maxResendCount_;
 		}
 
 		[[nodiscard]] Duration GetResendInterval() const noexcept

@@ -19,6 +19,7 @@ namespace common::net
 		using TimePoint = ReliableUdpSendWindow::TimePoint;
 		using Duration = ReliableUdpSendWindow::Duration;
 		using ResendPacketList = ReliableUdpSendWindow::ResendPacketList;
+		using ResendResult = ReliableUdpSendWindow::ResendResult;
 
 	private:
 		ReliableAckTracker ackTracker_;
@@ -92,6 +93,11 @@ namespace common::net
 			return reliableHeader;
 		}
 
+		[[nodiscard]] ResendResult ExtractResendResult(TimePoint currentTime)
+		{
+			return sendWindow_.ExtractResendResult(currentTime);
+		}
+
 		[[nodiscard]] ResendPacketList ExtractResendPackets(TimePoint currentTime)
 		{
 			return sendWindow_.ExtractResendPackets(currentTime);
@@ -103,9 +109,19 @@ namespace common::net
 			sendWindow_.SetMaxPendingPacketCount(maxPendingPacketCount);
 		}
 
+		void SetMaxResendCount(int maxResendCount) noexcept
+		{
+			sendWindow_.SetMaxResendCount(maxResendCount);
+		}
+
 		void SetResendInterval(Duration resendInterval) noexcept
 		{
 			sendWindow_.SetResendInterval(resendInterval);
+		}
+
+		[[nodiscard]] int GetMaxResendCount() const noexcept
+		{
+			return sendWindow_.GetMaxResendCount();
 		}
 
 		[[nodiscard]] ReliableSequence GetNextSequence() const noexcept

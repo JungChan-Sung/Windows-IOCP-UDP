@@ -611,6 +611,7 @@ namespace server::net
 		};
 
 		std::vector<ReliableResendTask> resendTaskList;
+		std::uint64_t giveUpPacketCount = 0;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -618,12 +619,13 @@ namespace server::net
 			const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
 
 			peerRoomManager_.ForEachJoinedPeer(
-				[&resendTaskList, currentTime](PeerState& peerState)
+				[&resendTaskList, &giveUpPacketCount, currentTime](PeerState& peerState)
 				{
-					common::net::ReliableUdpSession::ResendPacketList resendPacketList = 
-						peerState.reliableSession.ExtractResendPackets(currentTime);
+					common::net::ReliableUdpSession::ResendResult resendResult = peerState.reliableSession.ExtractResendResult(currentTime);
 
-					for (common::net::ReliablePendingPacket& pendingPacket : resendPacketList)
+					giveUpPacketCount += static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
+
+					for (common::net::ReliablePendingPacket& pendingPacket : resendResult.resendPacketList)
 					{
 						ReliableResendTask resendTask{};
 						resendTask.remoteAddress = peerState.remoteAddress;
@@ -645,6 +647,14 @@ namespace server::net
 		}
 
 		serverMetricsCollector_.AddReliableResendPacketCount(static_cast<std::uint64_t>(resendTaskList.size()));
+		serverMetricsCollector_.AddReliableResendGiveUpPacketCount(giveUpPacketCount);
+
+		if (giveUpPacketCount > 0)
+		{
+			std::ostringstream stream;
+			stream << "Reliable resend give-up packets detected. Count=" << giveUpPacketCount;
+			LogWarning(stream.str());
+		}
 	}
 
 	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress)

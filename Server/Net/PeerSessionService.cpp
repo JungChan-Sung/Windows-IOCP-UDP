@@ -5,10 +5,11 @@
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Packet/GamePacket.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace server::net
 {
-	PeerSessionService::JoinResult server::net::PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult server::net::PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -49,6 +50,9 @@ namespace server::net
 			currentTime
 		);
 		peerState.lastInputSequence = 0;
+		peerState.reliableSession.SetMaxPendingPacketCount(reliableUdpConfig.maxPendingPacketCount);
+		peerState.reliableSession.SetMaxResendCount(reliableUdpConfig.maxResendCount);
+		peerState.reliableSession.SetResendInterval(common::time::Milliseconds(reliableUdpConfig.resendIntervalMilliseconds));
 
 		game::PlayerState playerState = CreateInitialPlayerState(playerId, spawnPosition, gameRuleConfig);
 		gameWorld.UpsertPlayer(std::move(playerState));

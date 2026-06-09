@@ -26,6 +26,14 @@ namespace server::config
 		std::chrono::seconds peerTimeout = std::chrono::seconds(10);
 	};
 
+	struct ReliableUdpConfig
+	{
+	public:
+		std::size_t maxPendingPacketCount = 64;
+		int maxResendCount = 10;
+		int resendIntervalMilliseconds = 100;
+	};
+
 	struct TickConfig
 	{
 	public:
@@ -66,5 +74,6 @@ namespace server::config
 		GameRuleConfig gameRule;
 		WeaponRuleConfig weaponRule;
 		DiagnosticsConfig diagnostics;
+		ReliableUdpConfig reliableUdp;
 	};
 }

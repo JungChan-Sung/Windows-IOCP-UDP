@@ -46,6 +46,7 @@ namespace
 		server::game::GameWorld& gameWorld,
 		const server::game::GameSimulation& gameSimulation,
 		const server::config::GameRuleConfig& gameRuleConfig,
+		const server::config::ReliableUdpConfig& reliableUdpConfig,
 		TimePoint currentTime
 	)
 	{
@@ -57,6 +58,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpConfig,
 			currentTime
 		);
 	}
@@ -76,6 +78,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(1);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -91,6 +94,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			now
 		);
 
@@ -133,6 +137,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(2);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -150,6 +155,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			firstTime
 		);
 
@@ -162,6 +168,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			secondTime
 		);
 
@@ -188,6 +195,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(3);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -203,6 +211,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			now
 		);
 
@@ -250,6 +259,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(5);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -267,6 +277,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			joinTime
 		);
 
@@ -320,6 +331,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(6);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -334,6 +346,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			now
 		);
 
@@ -358,6 +371,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(7);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -373,6 +387,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			now
 		);
 
@@ -421,6 +436,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(9);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -436,6 +452,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			now
 		);
 

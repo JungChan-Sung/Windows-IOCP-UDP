@@ -311,6 +311,65 @@ namespace
 
 		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
 	}
+	
+	void ApplyReliableUdpValue(
+		server::config::ServerConfig& serverConfig,
+		std::string_view section,
+		std::string_view key,
+		std::string_view value,
+		std::size_t lineNumber,
+		WarningList& warningList
+	)
+	{
+		const std::string normalizedKey = ToLowerCopy(key);
+
+		if (normalizedKey == "maxpendingpacketcount")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				serverConfig.reliableUdp.maxPendingPacketCount = static_cast<std::size_t>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "maxresendcount")
+		{
+			const std::optional<long long> parsedValue = TryParseSigned(value);
+			if (parsedValue.has_value() && *parsedValue >= 0)
+			{
+				serverConfig.reliableUdp.maxResendCount = static_cast<int>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "resendintervalmilliseconds")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				serverConfig.reliableUdp.resendIntervalMilliseconds = static_cast<int>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
+	}
 
 	void ApplyTickValue(
 		server::config::ServerConfig& serverConfig,
@@ -613,6 +672,12 @@ namespace
 		if (normalizedSection == "session")
 		{
 			ApplySessionValue(serverConfig, section, key, value, lineNumber, warningList);
+			return;
+		}
+
+		if (normalizedSection == "reliableudp")
+		{
+			ApplyReliableUdpValue(serverConfig, section, key, value, lineNumber, warningList);
 			return;
 		}
 

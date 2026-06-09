@@ -687,6 +687,7 @@ namespace server::net
 				gameWorld_,
 				gameSimulation_,
 				config_.gameRule,
+				config_.reliableUdp,
 				std::chrono::steady_clock::now()
 			);
 		}

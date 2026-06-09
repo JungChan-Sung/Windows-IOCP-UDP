@@ -74,7 +74,8 @@ namespace server::net
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,
-			const config::GameRuleConfig& gameRuleConfig, 
+			const config::GameRuleConfig& gameRuleConfig,
+			const config::ReliableUdpConfig& reliableUdpConfig,
 			TimePoint currentTime
 		) const;
 		[[nodiscard]] LeaveResult LeavePeer(

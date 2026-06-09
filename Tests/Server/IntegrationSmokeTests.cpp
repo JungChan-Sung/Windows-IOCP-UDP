@@ -99,6 +99,7 @@ namespace
 		server::game::GameWorld& gameWorld,
 		const server::game::GameSimulation& gameSimulation,
 		const server::config::GameRuleConfig& gameRuleConfig,
+		const server::config::ReliableUdpConfig& reliableUdpRuleConfig,
 		TimePoint currentTime
 	)
 	{
@@ -112,6 +113,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableUdpRuleConfig,
 			currentTime
 		);
 	}
@@ -126,6 +128,7 @@ namespace
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
 		server::config::WeaponRuleConfig weaponRuleConfig{};
+		server::config::ReliableUdpConfig reliableRuleConfig{};
 
 		const sockaddr_in firstRemoteAddress = MakeRemoteAddress(1);
 		const sockaddr_in secondRemoteAddress = MakeRemoteAddress(2);
@@ -143,6 +146,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableRuleConfig,
 			startTime
 		);
 
@@ -154,6 +158,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableRuleConfig,
 			startTime + std::chrono::milliseconds(1)
 		);
 
@@ -306,6 +311,7 @@ namespace
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableRuleConfig{};
 
 		const sockaddr_in firstRemoteAddress = MakeRemoteAddress(10);
 		const sockaddr_in secondRemoteAddress = MakeRemoteAddress(11);
@@ -323,6 +329,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableRuleConfig,
 			startTime
 		);
 
@@ -334,6 +341,7 @@ namespace
 			gameWorld,
 			gameSimulation,
 			gameRuleConfig,
+			reliableRuleConfig,
 			startTime + std::chrono::milliseconds(1)
 		);
 

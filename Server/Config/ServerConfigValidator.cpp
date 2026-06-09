@@ -82,6 +82,33 @@ namespace server::config
 			serverConfig.session.peerTimeout = defaultConfig.session.peerTimeout;
 		}
 
+		if (serverConfig.reliableUdp.maxPendingPacketCount == 0)
+		{
+			AddWarning(
+				warningList,
+				"ReliableUdp.MaxPendingPacketCount must be greater than 0. Default max pending packet count will be used."
+			);
+			serverConfig.reliableUdp.maxPendingPacketCount = defaultConfig.reliableUdp.maxPendingPacketCount;
+		}
+
+		if (serverConfig.reliableUdp.maxResendCount < 0)
+		{
+			AddWarning(
+				warningList,
+				"ReliableUdp.MaxResendCount must be greater than or equal to 0. Default max resend count will be used."
+			);
+			serverConfig.reliableUdp.maxResendCount = defaultConfig.reliableUdp.maxResendCount;
+		}
+
+		if (serverConfig.reliableUdp.resendIntervalMilliseconds <= 0)
+		{
+			AddWarning(
+				warningList,
+				"ReliableUdp.ResendIntervalMilliseconds must be greater than 0. Default resend interval will be used."
+			);
+			serverConfig.reliableUdp.resendIntervalMilliseconds = defaultConfig.reliableUdp.resendIntervalMilliseconds;
+		}
+
 		if (serverConfig.tick.tickInterval <= std::chrono::steady_clock::duration::zero())
 		{
 			AddWarning(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used.");

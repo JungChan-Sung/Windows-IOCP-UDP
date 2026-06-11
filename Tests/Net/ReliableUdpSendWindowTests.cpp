@@ -1,11 +1,9 @@
 #include "ReliableUdpSendWindowTests.h"
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
-#include <optional>
 
-#include <Common/Net/ReliableUdpSendWindow.h>
+#include <Common/Net/ReliableUdpSession.h>
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Tests/DebugTestResult.h>
@@ -17,256 +15,227 @@ namespace
 		return common::packet::PacketBuffer{ value };
 	}
 
-	void RunRegisterSentPacketTests(tests::DebugTestResult& result)
+	void RunBuildOutgoingHeaderWithoutAckTest(tests::DebugTestResult& result)
 	{
-		common::net::ReliableUdpSendWindow sendWindow;
-		const common::net::ReliableUdpSendWindow::TimePoint currentTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
+		common::net::ReliableUdpSession session;
 
-		const std::optional<common::net::ReliableSequence> firstSequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), currentTime);
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader header = session.BuildOutgoingHeader(sequence);
 
-		const std::optional<common::net::ReliableSequence> secondSequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('B'), currentTime);
+		tests::Expect(result, sequence == 1, "ReliableUdpSession: first outgoing sequence");
+		tests::Expect(result, header.sequence == 1, "ReliableUdpSession: outgoing header sequence");
+		tests::Expect(result, header.ackSequence == 0, "ReliableUdpSession: outgoing header default ack sequence");
+		tests::Expect(result, header.ackBitfield == 0, "ReliableUdpSession: outgoing header default ack bitfield");
+	}
 
-		tests::Expect(result, firstSequence.has_value(), "ReliableUdpSendWindow: first packet registered");
-		tests::Expect(result, secondSequence.has_value(), "ReliableUdpSendWindow: second packet registered");
+	void RunProcessReceivedDataHeaderUpdatesAckTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
 
-		if (firstSequence.has_value() && secondSequence.has_value())
+		common::net::ReliableUdpPacketHeader receivedHeader{};
+		receivedHeader.sequence = 10;
+		receivedHeader.ackSequence = 0;
+		receivedHeader.ackBitfield = 0;
+
+		const bool isNewReliablePacket = session.ProcessReceivedDataHeader(receivedHeader);
+
+		tests::Expect(result, isNewReliablePacket, "ReliableUdpSession: received data header is new");
+		tests::Expect(result, session.HasReceivedAnySequence(), "ReliableUdpSession: received any sequence");
+		tests::Expect(result, session.GetLatestReceivedSequence() == 10, "ReliableUdpSession: latest received sequence");
+		tests::Expect(result, session.GetAckBitfield() == 0, "ReliableUdpSession: first received ack bitfield");
+		tests::Expect(result, session.HasReceivedSequence(10), "ReliableUdpSession: received sequence acked");
+	}
+
+	void RunBuildOutgoingHeaderWithAckTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		common::net::ReliableUdpPacketHeader firstReceivedHeader{};
+		firstReceivedHeader.sequence = 10;
+
+		common::net::ReliableUdpPacketHeader secondReceivedHeader{};
+		secondReceivedHeader.sequence = 11;
+
+		const bool firstReceiveResult = session.ProcessReceivedDataHeader(firstReceivedHeader);
+		const bool secondReceiveResult = session.ProcessReceivedDataHeader(secondReceivedHeader);
+
+		tests::Expect(result, firstReceiveResult, "ReliableUdpSession: first received header is new");
+		tests::Expect(result, secondReceiveResult, "ReliableUdpSession: second received header is new");
+
+		const common::net::ReliableSequence outgoingSequence = session.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader outgoingHeader = session.BuildOutgoingHeader(outgoingSequence);
+
+		tests::Expect(result, outgoingHeader.sequence == 1, "ReliableUdpSession: outgoing sequence after received headers");
+		tests::Expect(result, outgoingHeader.ackSequence == 11, "ReliableUdpSession: outgoing ack sequence");
+		tests::Expect(result, outgoingHeader.ackBitfield == 1, "ReliableUdpSession: outgoing ack bitfield");
+	}
+
+	void RunProcessReceivedDataHeaderRemovesAckedPendingPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		const common::net::ReliableSequence firstSequence = session.AllocateOutgoingSequence();
+		const bool firstRegisterResult = session.RegisterSentPacket(firstSequence, MakePacketBuffer('A'), currentTime);
+
+		const common::net::ReliableSequence secondSequence = session.AllocateOutgoingSequence();
+		const bool secondRegisterResult = session.RegisterSentPacket(secondSequence, MakePacketBuffer('B'), currentTime);
+
+		tests::Expect(result, firstRegisterResult, "ReliableUdpSession: first sent packet registered");
+		tests::Expect(result, secondRegisterResult, "ReliableUdpSession: second sent packet registered");
+		tests::Expect(result, session.GetPendingPacketCount() == 2, "ReliableUdpSession: pending count before ack");
+
+		common::net::ReliableUdpPacketHeader receivedHeader{};
+		receivedHeader.sequence = 100;
+		receivedHeader.ackSequence = firstSequence;
+		receivedHeader.ackBitfield = 0;
+
+		const bool isNewReliablePacket = session.ProcessReceivedDataHeader(receivedHeader);
+
+		tests::Expect(result, isNewReliablePacket, "ReliableUdpSession: received ack header is new");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: pending count after ack");
+	}
+
+	void RunProcessReceivedAckRemovesPendingPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), currentTime);
+
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: pending count before ack-only");
+
+		common::net::ReliableUdpPacketHeader ackHeader{};
+		ackHeader.ackSequence = sequence;
+		ackHeader.ackBitfield = 0;
+
+		const bool ackProcessed = session.ProcessReceivedAck(ackHeader);
+
+		tests::Expect(result, ackProcessed, "ReliableUdpSession: ack-only processed");
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: pending count after ack-only");
+		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: ack-only does not update received sequence");
+	}
+
+	void RunProcessReceivedAckRejectsFutureAckTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), currentTime);
+
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before future ack");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: pending count before future ack");
+
+		common::net::ReliableUdpPacketHeader ackHeader{};
+		ackHeader.ackSequence = sequence + 10;
+		ackHeader.ackBitfield = 0xFFFFFFFF;
+
+		const bool ackProcessed = session.ProcessReceivedAck(ackHeader);
+
+		tests::Expect(result, !ackProcessed, "ReliableUdpSession: future ack rejected");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: future ack keeps pending packet");
+		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: rejected ack-only does not update received sequence");
+	}
+
+	void RunExtractResendPacketsTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+		session.SetResendInterval(std::chrono::milliseconds(100));
+
+		const common::net::ReliableUdpSession::TimePoint startTime = common::net::ReliableUdpSession::Clock::now();
+
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), startTime);
+
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before resend test");
+
+		const common::net::ReliableUdpSession::ResendPacketList earlyResendList =
+			session.ExtractResendPackets(startTime + std::chrono::milliseconds(50));
+
+		tests::Expect(result, earlyResendList.empty(), "ReliableUdpSession: early resend empty");
+
+		const common::net::ReliableUdpSession::ResendPacketList resendList =
+			session.ExtractResendPackets(startTime + std::chrono::milliseconds(100));
+
+		tests::Expect(result, resendList.size() == 1, "ReliableUdpSession: resend count");
+
+		if (resendList.size() == 1)
 		{
-			tests::Expect(result, *firstSequence == 1, "ReliableUdpSendWindow: first sequence is 1");
-			tests::Expect(result, *secondSequence == 2, "ReliableUdpSendWindow: second sequence is 2");
+			tests::Expect(result, resendList[0].sequence == sequence, "ReliableUdpSession: resend sequence");
+			tests::Expect(result, resendList[0].resendCount == 1, "ReliableUdpSession: resend count value");
 		}
-
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 2, "ReliableUdpSendWindow: pending count after register");
-		tests::Expect(result, sendWindow.GetNextSequence() == 3, "ReliableUdpSendWindow: next sequence after register");
-	}
-
-	void RunRejectEmptyPacketTest(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-
-		const std::optional<common::net::ReliableSequence> sequence =
-			sendWindow.RegisterSentPacket({}, common::net::ReliableUdpSendWindow::Clock::now());
-
-		tests::Expect(result, !sequence.has_value(), "ReliableUdpSendWindow: empty packet rejected");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 0, "ReliableUdpSendWindow: empty packet not pending");
-	}
-
-	void RunWindowFullTest(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-		sendWindow.SetMaxPendingPacketCount(1);
-
-		const common::net::ReliableUdpSendWindow::TimePoint currentTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		const std::optional<common::net::ReliableSequence> firstSequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), currentTime);
-
-		const std::optional<common::net::ReliableSequence> secondSequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('B'), currentTime);
-
-		tests::Expect(result, firstSequence.has_value(), "ReliableUdpSendWindow: first packet accepted before full");
-		tests::Expect(result, !secondSequence.has_value(), "ReliableUdpSendWindow: second packet rejected when full");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 1, "ReliableUdpSendWindow: full window pending count");
-	}
-
-	void RunProcessAckTests(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-
-		const common::net::ReliableUdpSendWindow::TimePoint currentTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		sendWindow.RegisterSentPacket(MakePacketBuffer('A'), currentTime); // 1
-		sendWindow.RegisterSentPacket(MakePacketBuffer('B'), currentTime); // 2
-		sendWindow.RegisterSentPacket(MakePacketBuffer('C'), currentTime); // 3
-
-		const bool directAckProcessed = sendWindow.ProcessAck(2, 0);
-
-		tests::Expect(result, directAckProcessed, "ReliableUdpSendWindow: direct ack processed");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 2, "ReliableUdpSendWindow: ack removes one packet");
-
-		const std::uint32_t ackBitfield = static_cast<std::uint32_t>(1) << 1;
-		const bool bitfieldAckProcessed = sendWindow.ProcessAck(3, ackBitfield);
-
-		tests::Expect(result, bitfieldAckProcessed, "ReliableUdpSendWindow: ack bitfield processed");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 0, "ReliableUdpSendWindow: ack bitfield removes remaining packets");
-	}
-
-	void RunZeroAckTest(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-
-		const common::net::ReliableUdpSendWindow::TimePoint currentTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		const std::optional<common::net::ReliableSequence> sequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), currentTime);
-
-		tests::Expect(result, sequence.has_value(), "ReliableUdpSendWindow: packet registered before zero ack");
-
-		const bool ackProcessed = sendWindow.ProcessAck(0, 0xFFFFFFFF);
-
-		tests::Expect(result, ackProcessed, "ReliableUdpSendWindow: zero ack accepted");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 1, "ReliableUdpSendWindow: zero ack keeps pending packet");
-	}
-
-	void RunFutureAckRejectedTest(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-
-		const common::net::ReliableUdpSendWindow::TimePoint currentTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		const std::optional<common::net::ReliableSequence> sequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), currentTime);
-
-		tests::Expect(result, sequence.has_value(), "ReliableUdpSendWindow: packet registered before future ack");
-
-		if (!sequence.has_value())
-		{
-			return;
-		}
-
-		const common::net::ReliableSequence futureAckSequence = *sequence + 10;
-		const bool ackProcessed = sendWindow.ProcessAck(futureAckSequence, 0xFFFFFFFF);
-
-		tests::Expect(result, !ackProcessed, "ReliableUdpSendWindow: future ack rejected");
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 1, "ReliableUdpSendWindow: future ack keeps pending packet");
-	}
-
-	void RunExtractResendPacketsTests(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-		sendWindow.SetResendInterval(std::chrono::milliseconds(100));
-
-		const common::net::ReliableUdpSendWindow::TimePoint startTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		sendWindow.RegisterSentPacket(MakePacketBuffer('A'), startTime);
-		sendWindow.RegisterSentPacket(MakePacketBuffer('B'), startTime);
-
-		const common::net::ReliableUdpSendWindow::ResendPacketList earlyResendList =
-			sendWindow.ExtractResendPackets(startTime + std::chrono::milliseconds(50));
-
-		tests::Expect(result, earlyResendList.empty(), "ReliableUdpSendWindow: early resend empty");
-
-		const common::net::ReliableUdpSendWindow::ResendPacketList resendList =
-			sendWindow.ExtractResendPackets(startTime + std::chrono::milliseconds(100));
-
-		tests::Expect(result, resendList.size() == 2, "ReliableUdpSendWindow: due resend count");
-
-		if (resendList.size() == 2)
-		{
-			tests::Expect(result, resendList[0].sequence == 1, "ReliableUdpSendWindow: first resend sequence");
-			tests::Expect(result, resendList[1].sequence == 2, "ReliableUdpSendWindow: second resend sequence");
-			tests::Expect(result, resendList[0].resendCount == 1, "ReliableUdpSendWindow: first resend count");
-			tests::Expect(result, resendList[1].resendCount == 1, "ReliableUdpSendWindow: second resend count");
-		}
-
-		const common::net::ReliableUdpSendWindow::ResendPacketList secondEarlyResendList =
-			sendWindow.ExtractResendPackets(startTime + std::chrono::milliseconds(150));
-
-		tests::Expect(result, secondEarlyResendList.empty(), "ReliableUdpSendWindow: second early resend empty");
 	}
 
 	void RunExtractResendResultGiveUpTest(tests::DebugTestResult& result)
 	{
-		common::net::ReliableUdpSendWindow sendWindow;
-		sendWindow.SetMaxResendCount(1);
-		sendWindow.SetResendInterval(std::chrono::milliseconds(100));
+		common::net::ReliableUdpSession session;
+		session.SetMaxResendCount(1);
+		session.SetResendInterval(std::chrono::milliseconds(100));
 
-		const common::net::ReliableUdpSendWindow::TimePoint startTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
+		const common::net::ReliableUdpSession::TimePoint startTime = common::net::ReliableUdpSession::Clock::now();
 
-		const std::optional<common::net::ReliableSequence> sequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), startTime);
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), startTime);
 
-		tests::Expect(result, sequence.has_value(), "ReliableUdpSendWindow: packet registered before give-up test");
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before give-up test");
 
-		if (!sequence.has_value())
-		{
-			return;
-		}
+		const common::net::ReliableUdpSession::ResendResult firstResult =
+			session.ExtractResendResult(startTime + std::chrono::milliseconds(100));
 
-		const common::net::ReliableUdpSendWindow::ResendResult firstResult =
-			sendWindow.ExtractResendResult(startTime + std::chrono::milliseconds(100));
-
-		tests::Expect(result, firstResult.resendPacketList.size() == 1, "ReliableUdpSendWindow: first timeout resends packet");
-		tests::Expect(result, firstResult.giveUpPacketList.empty(), "ReliableUdpSendWindow: first timeout does not give up packet");
+		tests::Expect(result, firstResult.resendPacketList.size() == 1, "ReliableUdpSession: first timeout resends packet");
+		tests::Expect(result, firstResult.giveUpPacketList.empty(), "ReliableUdpSession: first timeout does not give up packet");
 
 		if (firstResult.resendPacketList.size() == 1)
 		{
-			tests::Expect(result, firstResult.resendPacketList[0].sequence == *sequence, "ReliableUdpSendWindow: resend sequence before give-up");
-			tests::Expect(result, firstResult.resendPacketList[0].resendCount == 1, "ReliableUdpSendWindow: resend count before give-up");
+			tests::Expect(result, firstResult.resendPacketList[0].sequence == sequence, "ReliableUdpSession: resend sequence before give-up");
+			tests::Expect(result, firstResult.resendPacketList[0].resendCount == 1, "ReliableUdpSession: resend count before give-up");
 		}
 
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 1, "ReliableUdpSendWindow: resent packet remains pending");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: resent packet remains pending");
 
-		const common::net::ReliableUdpSendWindow::ResendResult secondResult =
-			sendWindow.ExtractResendResult(startTime + std::chrono::milliseconds(200));
+		const common::net::ReliableUdpSession::ResendResult secondResult =
+			session.ExtractResendResult(startTime + std::chrono::milliseconds(200));
 
-		tests::Expect(result, secondResult.resendPacketList.empty(), "ReliableUdpSendWindow: give-up timeout does not resend packet");
-		tests::Expect(result, secondResult.giveUpPacketList.size() == 1, "ReliableUdpSendWindow: give-up timeout extracts packet");
+		tests::Expect(result, secondResult.resendPacketList.empty(), "ReliableUdpSession: give-up timeout does not resend packet");
+		tests::Expect(result, secondResult.giveUpPacketList.size() == 1, "ReliableUdpSession: give-up timeout extracts packet");
 
 		if (secondResult.giveUpPacketList.size() == 1)
 		{
-			tests::Expect(result, secondResult.giveUpPacketList[0].sequence == *sequence, "ReliableUdpSendWindow: give-up sequence");
-			tests::Expect(result, secondResult.giveUpPacketList[0].resendCount == 1, "ReliableUdpSendWindow: give-up resend count");
+			tests::Expect(result, secondResult.giveUpPacketList[0].sequence == sequence, "ReliableUdpSession: give-up sequence");
+			tests::Expect(result, secondResult.giveUpPacketList[0].resendCount == 1, "ReliableUdpSession: give-up resend count");
 		}
 
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 0, "ReliableUdpSendWindow: give-up removes pending packet");
-	}
-
-	void RunExtractResendResultImmediateGiveUpTest(tests::DebugTestResult& result)
-	{
-		common::net::ReliableUdpSendWindow sendWindow;
-		sendWindow.SetMaxResendCount(0);
-		sendWindow.SetResendInterval(std::chrono::milliseconds(100));
-
-		const common::net::ReliableUdpSendWindow::TimePoint startTime =
-			common::net::ReliableUdpSendWindow::Clock::now();
-
-		const std::optional<common::net::ReliableSequence> sequence =
-			sendWindow.RegisterSentPacket(MakePacketBuffer('A'), startTime);
-
-		tests::Expect(result, sequence.has_value(), "ReliableUdpSendWindow: packet registered before immediate give-up test");
-
-		if (!sequence.has_value())
-		{
-			return;
-		}
-
-		const common::net::ReliableUdpSendWindow::ResendResult resultValue =
-			sendWindow.ExtractResendResult(startTime + std::chrono::milliseconds(100));
-
-		tests::Expect(result, resultValue.resendPacketList.empty(), "ReliableUdpSendWindow: max resend 0 does not resend packet");
-		tests::Expect(result, resultValue.giveUpPacketList.size() == 1, "ReliableUdpSendWindow: max resend 0 gives up packet");
-
-		if (resultValue.giveUpPacketList.size() == 1)
-		{
-			tests::Expect(result, resultValue.giveUpPacketList[0].sequence == *sequence, "ReliableUdpSendWindow: immediate give-up sequence");
-			tests::Expect(result, resultValue.giveUpPacketList[0].resendCount == 0, "ReliableUdpSendWindow: immediate give-up resend count");
-		}
-
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 0, "ReliableUdpSendWindow: immediate give-up removes pending packet");
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: give-up removes pending packet");
 	}
 
 	void RunResetTest(tests::DebugTestResult& result)
 	{
-		common::net::ReliableUdpSendWindow sendWindow;
+		common::net::ReliableUdpSession session;
 
-		sendWindow.RegisterSentPacket(
-			MakePacketBuffer('A'),
-			common::net::ReliableUdpSendWindow::Clock::now()
-		);
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
 
-		sendWindow.Reset();
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registerResult = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), currentTime);
 
-		tests::Expect(result, sendWindow.GetPendingPacketCount() == 0, "ReliableUdpSendWindow: reset clears pending packets");
-		tests::Expect(result, sendWindow.GetNextSequence() == 1, "ReliableUdpSendWindow: reset sequence");
+		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before reset");
+
+		common::net::ReliableUdpPacketHeader receivedHeader{};
+		receivedHeader.sequence = 10;
+		const bool isNewReliablePacket = session.ProcessReceivedDataHeader(receivedHeader);
+
+		tests::Expect(result, isNewReliablePacket, "ReliableUdpSession: received packet before reset");
+
+		session.Reset();
+
+		tests::Expect(result, session.GetNextSequence() == 1, "ReliableUdpSession: reset next sequence");
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: reset pending count");
+		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: reset ack tracker");
 	}
 }
 
@@ -276,18 +245,14 @@ namespace tests::net
 	{
 		tests::DebugTestResult result{};
 
-		RunRegisterSentPacketTests(result);
-		RunRejectEmptyPacketTest(result);
-		RunWindowFullTest(result);
-
-		RunProcessAckTests(result);
-		RunZeroAckTest(result);
-		RunFutureAckRejectedTest(result);
-
-		RunExtractResendPacketsTests(result);
+		RunBuildOutgoingHeaderWithoutAckTest(result);
+		RunProcessReceivedDataHeaderUpdatesAckTest(result);
+		RunBuildOutgoingHeaderWithAckTest(result);
+		RunProcessReceivedDataHeaderRemovesAckedPendingPacketTest(result);
+		RunProcessReceivedAckRemovesPendingPacketTest(result);
+		RunProcessReceivedAckRejectsFutureAckTest(result);
+		RunExtractResendPacketsTest(result);
 		RunExtractResendResultGiveUpTest(result);
-		RunExtractResendResultImmediateGiveUpTest(result);
-
 		RunResetTest(result);
 
 		return result;

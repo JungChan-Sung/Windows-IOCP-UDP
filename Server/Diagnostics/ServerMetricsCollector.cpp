@@ -24,6 +24,7 @@ namespace server::diagnostics
 		reliableUnknownPeerPacketCount_.store(0);
 		reliableUnknownPeerAckOnlyPacketCount_.store(0);
 		reliableUnknownPeerDataPacketCount_.store(0);
+		reliableInvalidAckPacketCount_.store(0);
 		reliableDataReceivePacketCount_.store(0);
 		reliableDataSendPacketCount_.store(0);
 		reliableAckOnlyReceivePacketCount_.store(0);
@@ -118,6 +119,11 @@ namespace server::diagnostics
 		++reliableUnknownPeerDataPacketCount_;
 	}
 
+	void ServerMetricsCollector::IncrementReliableInvalidAckPacketCount() noexcept
+	{
+		++reliableInvalidAckPacketCount_;
+	}
+
 	void ServerMetricsCollector::IncrementReliableDataReceivePacketCount() noexcept
 	{
 		++reliableDataReceivePacketCount_;
@@ -172,6 +178,7 @@ namespace server::diagnostics
 		snapshot.reliableUnknownPeerPacketCount = reliableUnknownPeerPacketCount_.load();
 		snapshot.reliableUnknownPeerAckOnlyPacketCount = reliableUnknownPeerAckOnlyPacketCount_.load();
 		snapshot.reliableUnknownPeerDataPacketCount = reliableUnknownPeerDataPacketCount_.load();
+		snapshot.reliableInvalidAckPacketCount = reliableInvalidAckPacketCount_.load();
 		snapshot.reliableDataReceivePacketCount = reliableDataReceivePacketCount_.load();
 		snapshot.reliableDataSendPacketCount = reliableDataSendPacketCount_.load();
 		snapshot.reliableAckOnlyReceivePacketCount = reliableAckOnlyReceivePacketCount_.load();

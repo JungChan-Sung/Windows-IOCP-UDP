@@ -66,9 +66,9 @@ namespace common::net
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 		}
 
-		void ProcessReceivedAck(const ReliableUdpPacketHeader& reliableHeader)
+		[[nodiscard]] bool ProcessReceivedAck(const ReliableUdpPacketHeader& reliableHeader)
 		{
-			sendWindow_.ProcessAck(reliableHeader.ackSequence, reliableHeader.ackBitfield);
+			return sendWindow_.ProcessAck(reliableHeader.ackSequence, reliableHeader.ackBitfield);
 		}
 		[[nodiscard]] bool ProcessReceivedDataHeader(const ReliableUdpPacketHeader& reliableHeader)
 		{

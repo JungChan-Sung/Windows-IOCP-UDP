@@ -112,8 +112,13 @@ namespace common::net
 			return sequence;
 		}
 
-		void ProcessAck(ReliableSequence ackSequence, std::uint32_t ackBitfield)
+		[[nodiscard]] bool ProcessAck(ReliableSequence ackSequence, std::uint32_t ackBitfield)
 		{
+			if (!CanProcessAck(ackSequence))
+			{
+				return false;
+			}
+
 			for (auto packetIterator = pendingPacketList_.begin(); packetIterator != pendingPacketList_.end();)
 			{
 				if (IsSequenceAcked(packetIterator->sequence, ackSequence, ackBitfield))
@@ -124,6 +129,19 @@ namespace common::net
 
 				++packetIterator;
 			}
+
+			return true;
+		}
+
+		[[nodiscard]] bool CanProcessAck(ReliableSequence ackSequence) const noexcept
+		{
+			if (ackSequence == 0)
+			{
+				return true;
+			}
+
+			const ReliableSequence latestAllocatedSequence = nextSequence_ - 1;
+			return !IsSequenceNewer(ackSequence, latestAllocatedSequence);
 		}
 
 		[[nodiscard]] ResendResult ExtractResendResult(TimePoint currentTime)

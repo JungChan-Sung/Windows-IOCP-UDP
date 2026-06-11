@@ -453,7 +453,12 @@ namespace server::net
 
 			if (isAckOnlyPacket)
 			{
-				peerState->reliableSession.ProcessReceivedAck(packetView->reliableHeader);
+				const bool ackProcessed = peerState->reliableSession.ProcessReceivedAck(packetView->reliableHeader);
+				if (!ackProcessed)
+				{
+					serverMetricsCollector_.IncrementReliableInvalidAckPacketCount();
+				}
+
 				serverMetricsCollector_.IncrementReliableAckOnlyReceivePacketCount();
 			}
 			else

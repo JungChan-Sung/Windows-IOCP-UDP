@@ -29,6 +29,7 @@ namespace server::diagnostics
 		std::uint64_t reliableUnknownPeerPacketCount = 0;
 		std::uint64_t reliableUnknownPeerAckOnlyPacketCount = 0;
 		std::uint64_t reliableUnknownPeerDataPacketCount = 0;
+		std::uint64_t reliableInvalidAckPacketCount = 0;
 		std::uint64_t reliableDataReceivePacketCount = 0;
 		std::uint64_t reliableDataSendPacketCount = 0;
 		std::uint64_t reliableAckOnlyReceivePacketCount = 0;

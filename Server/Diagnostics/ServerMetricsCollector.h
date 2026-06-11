@@ -30,6 +30,7 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> reliableUnknownPeerPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableUnknownPeerAckOnlyPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableUnknownPeerDataPacketCount_ = 0;
+		std::atomic<std::uint64_t> reliableInvalidAckPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableDataReceivePacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableDataSendPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableAckOnlyReceivePacketCount_ = 0;
@@ -71,6 +72,7 @@ namespace server::diagnostics
 		void IncrementReliableUnknownPeerPacketCount() noexcept;
 		void IncrementReliableUnknownPeerAckOnlyPacketCount() noexcept;
 		void IncrementReliableUnknownPeerDataPacketCount() noexcept;
+		void IncrementReliableInvalidAckPacketCount() noexcept;
 		void IncrementReliableDataReceivePacketCount() noexcept;
 		void IncrementReliableDataSendPacketCount() noexcept;
 		void IncrementReliableAckOnlyReceivePacketCount() noexcept;

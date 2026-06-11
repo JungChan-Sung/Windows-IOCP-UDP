@@ -476,6 +476,95 @@ namespace
 			"PeerSessionService: dead player original room remains");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 0, "PeerSessionService: dead player next room empty");
 	}
+
+	void RunJoinPeerAppliesReliableUdpConfigTest(tests::DebugTestResult& result)
+	{
+		server::net::PeerSessionService service;
+		server::net::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		server::game::GameSimulation gameSimulation;
+		server::config::GameRuleConfig gameRuleConfig{};
+
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		reliableUdpRuleConfig.maxPendingPacketCount = 3;
+		reliableUdpRuleConfig.maxResendCount = 1;
+		reliableUdpRuleConfig.resendIntervalMilliseconds = 150;
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(10);
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
+		constexpr common::game::RoomId initialRoomId = 1;
+		const TimePoint now = Clock::now();
+
+		const server::net::PeerSessionService::JoinResult joinResult = JoinPeerForTest(
+			service,
+			remoteAddress,
+			endpointKey,
+			initialRoomId,
+			peerRoomManager,
+			gameWorld,
+			gameSimulation,
+			gameRuleConfig,
+			reliableUdpRuleConfig,
+			now
+		);
+
+		tests::Expect(result, joinResult.shouldSendResponse, "PeerSessionService: reliable config join sends response");
+		tests::Expect(result, joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: reliable config join broadcasts joined");
+
+		server::net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: reliable config peer exists");
+
+		if (peerState == nullptr)
+		{
+			return;
+		}
+
+		const bool firstRegisterResult = peerState->reliableSession.RegisterSentPacket(
+			peerState->reliableSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'A' },
+			now
+		);
+		const bool secondRegisterResult = peerState->reliableSession.RegisterSentPacket(
+			peerState->reliableSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'B' },
+			now
+		);
+		const bool thirdRegisterResult = peerState->reliableSession.RegisterSentPacket(
+			peerState->reliableSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'C' },
+			now
+		);
+		const bool fourthRegisterResult = peerState->reliableSession.RegisterSentPacket(
+			peerState->reliableSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'D' },
+			now
+		);
+
+		tests::Expect(result, firstRegisterResult, "PeerSessionService: reliable config first pending packet accepted");
+		tests::Expect(result, secondRegisterResult, "PeerSessionService: reliable config second pending packet accepted");
+		tests::Expect(result, thirdRegisterResult, "PeerSessionService: reliable config third pending packet accepted");
+		tests::Expect(result, !fourthRegisterResult, "PeerSessionService: reliable max pending packet count applied");
+		tests::Expect(result, peerState->reliableSession.GetPendingPacketCount() == 3, "PeerSessionService: reliable pending count after max check");
+
+		const common::net::ReliableUdpSession::ResendResult earlyResult =
+			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(149));
+
+		tests::Expect(result, earlyResult.resendPacketList.empty(), "PeerSessionService: reliable resend interval blocks early resend");
+		tests::Expect(result, earlyResult.giveUpPacketList.empty(), "PeerSessionService: reliable resend interval blocks early give-up");
+
+		const common::net::ReliableUdpSession::ResendResult firstTimeoutResult =
+			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(150));
+
+		tests::Expect(result, firstTimeoutResult.resendPacketList.size() == 3, "PeerSessionService: reliable resend interval applied");
+		tests::Expect(result, firstTimeoutResult.giveUpPacketList.empty(), "PeerSessionService: reliable first timeout no give-up");
+
+		const common::net::ReliableUdpSession::ResendResult secondTimeoutResult =
+			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(300));
+
+		tests::Expect(result, secondTimeoutResult.resendPacketList.empty(), "PeerSessionService: reliable max resend no second resend");
+		tests::Expect(result, secondTimeoutResult.giveUpPacketList.size() == 3, "PeerSessionService: reliable max resend count applied");
+		tests::Expect(result, peerState->reliableSession.GetPendingPacketCount() == 0, "PeerSessionService: reliable give-up clears pending packets");
+	}
 }
 
 namespace tests::server
@@ -485,6 +574,7 @@ namespace tests::server
 		tests::DebugTestResult result{};
 
 		RunJoinPeerCreatesPeerAndPlayerTest(result);
+		RunJoinPeerAppliesReliableUdpConfigTest(result);
 		RunJoinExistingPeerReturnsExistingPlayerTest(result);
 		RunLeavePeerRemovesPeerAndPlayerTest(result);
 		RunLeaveUnknownPeerDoesNothingTest(result);

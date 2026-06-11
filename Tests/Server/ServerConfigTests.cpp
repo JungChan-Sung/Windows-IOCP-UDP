@@ -29,6 +29,11 @@ namespace
 			"InitialRoomId=3\n"
 			"PeerTimeoutSeconds=15\n"
 			"\n"
+			"[ReliableUdp]\n"
+			"MaxPendingPacketCount=128\n"
+			"MaxResendCount=7\n"
+			"ResendIntervalMilliseconds=250\n"
+			"\n"
 			"[Tick]\n"
 			"TickIntervalMs=33\n"
 			"FixedDeltaSeconds=0.033\n"
@@ -66,6 +71,9 @@ namespace
 		tests::Expect(result, config.network.recvContextCount == 64, "ServerConfig: recvContextCount");
 		tests::Expect(result, config.session.initialRoomId == 3, "ServerConfig: initialRoomId");
 		tests::Expect(result, config.session.peerTimeout == std::chrono::seconds(15), "ServerConfig: peerTimeout");
+		tests::Expect(result, config.reliableUdp.maxPendingPacketCount == 128, "ServerConfig: reliable maxPendingPacketCount");
+		tests::Expect(result, config.reliableUdp.maxResendCount == 7, "ServerConfig: reliable maxResendCount");
+		tests::Expect(result, config.reliableUdp.resendIntervalMilliseconds == 250, "ServerConfig: reliable resendIntervalMilliseconds");
 		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(33), "ServerConfig: tickInterval");
 		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfig: fixedDeltaSeconds");
 		tests::Expect(result, config.gameRule.initialPlayerHp == 5, "ServerConfig: initialPlayerHp");
@@ -98,6 +106,11 @@ namespace
 			"[Unknown]\n"
 			"Value=1\n"
 			"\n"
+			"[ReliableUdp]\n"
+			"MaxPendingPacketCount=0\n"
+			"MaxResendCount=-1\n"
+			"ResendIntervalMilliseconds=0\n"
+			"\n"
 			"[Tick]\n"
 			"TickIntervalMs=0\n"
 			"FixedDeltaSeconds=bad\n"
@@ -110,7 +123,7 @@ namespace
 		std::filesystem::remove(filePath);
 
 		tests::Expect(result, loadResult.loadedFromFile, "ServerConfig: invalid file loaded");
-		tests::Expect(result, loadResult.warningList.size() >= 7, "ServerConfig: invalid file warning count");
+		tests::Expect(result, loadResult.warningList.size() >= 10, "ServerConfig: invalid file warning count");
 	}
 
 	void RunMissingFileTest(tests::DebugTestResult& result)
@@ -132,6 +145,9 @@ namespace
 		config.network.port = 0;
 		config.session.initialRoomId = 0;
 		config.session.peerTimeout = std::chrono::seconds(0);
+		config.reliableUdp.maxPendingPacketCount = 0;
+		config.reliableUdp.maxResendCount = -1;
+		config.reliableUdp.resendIntervalMilliseconds = 0;
 		config.tick.tickInterval = std::chrono::milliseconds(0);
 		config.tick.fixedDeltaSeconds = 0.0F;
 		config.gameRule.initialPlayerHp = 0;
@@ -154,6 +170,21 @@ namespace
 		tests::Expect(result, config.network.recvContextCount > 0, "ServerConfigValidator: recv context count resolved");
 		tests::Expect(result, config.session.initialRoomId == defaultConfig.session.initialRoomId, "ServerConfigValidator: room normalized");
 		tests::Expect(result, config.session.peerTimeout == defaultConfig.session.peerTimeout, "ServerConfigValidator: timeout normalized");
+		tests::Expect(
+			result,
+			config.reliableUdp.maxPendingPacketCount == defaultConfig.reliableUdp.maxPendingPacketCount,
+			"ServerConfigValidator: reliable max pending packet count normalized"
+		);
+		tests::Expect(
+			result,
+			config.reliableUdp.maxResendCount == defaultConfig.reliableUdp.maxResendCount,
+			"ServerConfigValidator: reliable max resend count normalized"
+		);
+		tests::Expect(
+			result,
+			config.reliableUdp.resendIntervalMilliseconds == defaultConfig.reliableUdp.resendIntervalMilliseconds,
+			"ServerConfigValidator: reliable resend interval normalized"
+		);
 		tests::Expect(result, config.tick.tickInterval == defaultConfig.tick.tickInterval, "ServerConfigValidator: tick interval normalized");
 		tests::Expect(result, config.tick.fixedDeltaSeconds == defaultConfig.tick.fixedDeltaSeconds, "ServerConfigValidator: delta normalized");
 		tests::Expect(result, config.gameRule.initialPlayerHp == defaultConfig.gameRule.initialPlayerHp, "ServerConfigValidator: hp normalized");
@@ -174,6 +205,32 @@ namespace
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.Port cannot be 0. Default port will be used."),
 			"ServerConfigValidator: port warning message"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"ReliableUdp.MaxPendingPacketCount must be greater than 0. Default max pending packet count will be used."
+			),
+			"ServerConfigValidator: reliable max pending packet count warning message"
+		);
+
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"ReliableUdp.MaxResendCount must be greater than or equal to 0. Default max resend count will be used."
+			),
+			"ServerConfigValidator: reliable max resend count warning message"
+		);
+
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"ReliableUdp.ResendIntervalMilliseconds must be greater than 0. Default resend interval will be used."
+			),
+			"ServerConfigValidator: reliable resend interval warning message"
 		);
 		tests::Expect(
 			result,

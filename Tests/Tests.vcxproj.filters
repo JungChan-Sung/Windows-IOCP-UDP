@@ -177,6 +177,12 @@
     <ClCompile Include="Packet\PacketReliabilityTests.cpp">
       <Filter>소스 파일\Packet</Filter>
     </ClCompile>
+    <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -256,6 +262,9 @@
     </ClInclude>
     <ClInclude Include="Packet\PacketReliabilityTests.h">
       <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\InvalidPacketLogLimiterTests.h">
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -138,6 +138,7 @@
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp" />
     <ClCompile Include="..\Server\Game\GameSimulation.cpp" />
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
+    <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="..\Server\Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
     <ClCompile Include="..\Server\Net\PeerSessionService.cpp" />
@@ -158,6 +159,7 @@
     <ClCompile Include="Packet\PacketSerializationTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
+    <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
     <ClCompile Include="Server\PacketPayloadValidatorTests.cpp" />
     <ClCompile Include="Server\PeerSessionServiceTests.cpp" />
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp" />
@@ -191,6 +193,7 @@
     <ClInclude Include="Packet\PacketSerializationTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
+    <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />
     <ClInclude Include="Server\PacketPayloadValidatorTests.h" />
     <ClInclude Include="Server\PeerSessionServiceTests.h" />
     <ClInclude Include="Server\PlayerCommandServiceTests.h" />

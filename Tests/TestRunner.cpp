@@ -24,6 +24,7 @@
 #include "Server/UdpPacketDispatcherTests.h"
 #include "Server/SnapshotBroadcastBuilderTests.h"
 #include "Server/IntegrationSmokeTests.h"
+#include "Server/InvalidPacketLogLimiterTests.h"
 #include "Game/WorldCollisionTests.h"
 
 namespace tests
@@ -45,6 +46,7 @@ namespace tests
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
 		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());
 		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());
+		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());
 		MergeAndPrint(totalResult, "GameSimulation", server::RunGameSimulationTests());
 		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());
 		MergeAndPrint(totalResult, "PlayerCommandService", server::RunPlayerCommandServiceTests());

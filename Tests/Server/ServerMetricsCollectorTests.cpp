@@ -21,6 +21,13 @@ namespace
 		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: bullet snapshot send request count");
 		tests::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: impact effect send request count");
 		tests::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: initial timed out peer count");
+		tests::Expect(result, snapshot.reliableResendGiveUpPacketCount == 0, "ServerMetricsCollector: initial reliable resend give-up packet count");
+		tests::Expect(result, snapshot.reliableSendWindowFullCount == 0, "ServerMetricsCollector: initial reliable send window full count");
+		tests::Expect(result, snapshot.reliableUnknownPeerPacketCount == 0, "ServerMetricsCollector: initial reliable unknown peer packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerAckOnlyPacketCount == 0, "ServerMetricsCollector: initial reliable unknown peer ack-only packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 0, "ServerMetricsCollector: initial reliable unknown peer data packet count");
+		tests::Expect(result, snapshot.invalidReliablePacketCount == 0, "ServerMetricsCollector: initial invalid reliable packet count");
+		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 0, "ServerMetricsCollector: initial reliable invalid ack packet count");
 	}
 
 	void RunIncrementCountersTest(tests::DebugTestResult& result)
@@ -37,6 +44,14 @@ namespace
 		metricsCollector.IncrementFireRequestCount();
 		metricsCollector.IncrementLeaveRequestCount();
 		metricsCollector.IncrementJoinRoomRequestCount();
+		metricsCollector.AddReliableResendGiveUpPacketCount(3);
+		metricsCollector.IncrementReliableSendWindowFullCount();
+		metricsCollector.IncrementReliableSendWindowFullCount();
+		metricsCollector.IncrementReliableUnknownPeerPacketCount();
+		metricsCollector.IncrementReliableUnknownPeerAckOnlyPacketCount();
+		metricsCollector.IncrementReliableUnknownPeerDataPacketCount();
+		metricsCollector.IncrementInvalidReliablePacketCount();
+		metricsCollector.IncrementReliableInvalidAckPacketCount();
 
 		metricsCollector.AddPlayerSnapshotSendRequestCount(3);
 		metricsCollector.AddBulletSnapshotSendRequestCount(4);
@@ -57,6 +72,13 @@ namespace
 		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 4, "ServerMetricsCollector: bullet snapshot send request count");
 		tests::Expect(result, snapshot.impactEffectSendRequestCount == 5, "ServerMetricsCollector: impact effect send request count");
 		tests::Expect(result, snapshot.timedOutPeerCount == 2, "ServerMetricsCollector: timed out peer count");
+		tests::Expect(result, snapshot.reliableResendGiveUpPacketCount == 3, "ServerMetricsCollector: reliable resend give-up packet count");
+		tests::Expect(result, snapshot.reliableSendWindowFullCount == 2, "ServerMetricsCollector: reliable send window full count");
+		tests::Expect(result, snapshot.reliableUnknownPeerPacketCount == 1, "ServerMetricsCollector: reliable unknown peer packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerAckOnlyPacketCount == 1, "ServerMetricsCollector: reliable unknown peer ack-only packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 1, "ServerMetricsCollector: reliable unknown peer data packet count");
+		tests::Expect(result, snapshot.invalidReliablePacketCount == 1, "ServerMetricsCollector: invalid reliable packet count");
+		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 1, "ServerMetricsCollector: reliable invalid ack packet count");
 	}
 
 	void RunResetTest(tests::DebugTestResult& result)
@@ -74,6 +96,13 @@ namespace
 		metricsCollector.AddBulletSnapshotSendRequestCount(10);
 		metricsCollector.AddImpactEffectSendRequestCount(10);
 		metricsCollector.AddTimedOutPeerCount(10);
+		metricsCollector.AddReliableResendGiveUpPacketCount(10);
+		metricsCollector.IncrementReliableSendWindowFullCount();
+		metricsCollector.IncrementReliableUnknownPeerPacketCount();
+		metricsCollector.IncrementReliableUnknownPeerAckOnlyPacketCount();
+		metricsCollector.IncrementReliableUnknownPeerDataPacketCount();
+		metricsCollector.IncrementInvalidReliablePacketCount();
+		metricsCollector.IncrementReliableInvalidAckPacketCount();
 
 		metricsCollector.Reset();
 
@@ -90,6 +119,13 @@ namespace
 		tests::Expect(result, snapshot.bulletSnapshotSendRequestCount == 0, "ServerMetricsCollector: reset bullet snapshot send request count");
 		tests::Expect(result, snapshot.impactEffectSendRequestCount == 0, "ServerMetricsCollector: reset impact effect send request count");
 		tests::Expect(result, snapshot.timedOutPeerCount == 0, "ServerMetricsCollector: reset timed out peer count");
+		tests::Expect(result, snapshot.reliableResendGiveUpPacketCount == 0, "ServerMetricsCollector: reset reliable resend give-up packet count");
+		tests::Expect(result, snapshot.reliableSendWindowFullCount == 0, "ServerMetricsCollector: reset reliable send window full count");
+		tests::Expect(result, snapshot.reliableUnknownPeerPacketCount == 0, "ServerMetricsCollector: reset reliable unknown peer packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerAckOnlyPacketCount == 0, "ServerMetricsCollector: reset reliable unknown peer ack-only packet count");
+		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 0, "ServerMetricsCollector: reset reliable unknown peer data packet count");
+		tests::Expect(result, snapshot.invalidReliablePacketCount == 0, "ServerMetricsCollector: reset invalid reliable packet count");
+		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 0, "ServerMetricsCollector: reset reliable invalid ack packet count");
 	}
 }
 

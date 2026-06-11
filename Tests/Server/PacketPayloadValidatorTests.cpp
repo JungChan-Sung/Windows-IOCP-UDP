@@ -115,6 +115,16 @@ namespace
 		tests::Expect(result,
 			std::string_view(server::net::PacketPayloadValidator::ToString(Status::InvalidRoomId)) == "InvalidRoomId",
 			"PacketPayloadValidator: ToString InvalidRoomId");
+
+		tests::Expect(
+			result,
+			std::string_view(
+				server::net::PacketPayloadValidator::ToString(
+					static_cast<server::net::PacketPayloadValidator::PayloadValidationStatus>(999)
+				)
+			) == "Unknown",
+			"PacketPayloadValidator: ToString Unknown"
+		);
 	}
 }
 

@@ -703,13 +703,22 @@ namespace server::net
 			return;
 		}
 
-		packetSender_.SendJoinResponse(
+		const bool responseSent = packetSender_.SendJoinResponse(
 			joinResult.remoteAddress,
 			joinResult.playerId,
 			joinResult.roomId,
 			joinResult.spawnPosition.x,
 			joinResult.spawnPosition.y
 		);
+
+		if (!responseSent)
+		{
+			std::ostringstream stream;
+			stream << "Join response send failed. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
+				<< ", PlayerId=" << joinResult.playerId
+				<< ", RoomId=" << joinResult.roomId;
+			LogWarning(stream.str());
+		}
 
 		if (joinResult.shouldBroadcastPlayerJoined)
 		{
@@ -727,8 +736,11 @@ namespace server::net
 				joinResult.spawnPosition.x,
 				joinResult.spawnPosition.y
 			);
+
+			return;
 		}
-		else
+
+		if (responseSent)
 		{
 			std::ostringstream stream;
 			stream << "Join response sent to existing peer. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)

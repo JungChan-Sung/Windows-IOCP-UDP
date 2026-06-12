@@ -482,6 +482,8 @@ namespace client::game
 
 		localPredictedX_ = spawnX;
 		localPredictedY_ = spawnY;
+		localRenderCorrectionOffsetX_ = 0.0F;
+		localRenderCorrectionOffsetY_ = 0.0F;
 		isLocalPredictedInitialized_ = true;
 		pendingInputList_.clear();
 

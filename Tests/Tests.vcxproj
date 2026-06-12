@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="..\Client\Config\ClientConfigLoader.cpp" />
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
+    <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigValidator.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="..\Server\Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Client\ClientConfigTests.cpp" />
+    <ClCompile Include="Client\ClientWorldTests.cpp" />
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
     <ClCompile Include="Log\AsyncLogWriterTests.cpp" />
@@ -179,6 +181,7 @@
   <ItemGroup>
     <ClInclude Include="..\Common\Net\Endpoint.h" />
     <ClInclude Include="Client\ClientConfigTests.h" />
+    <ClInclude Include="Client\ClientWorldTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
     <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />

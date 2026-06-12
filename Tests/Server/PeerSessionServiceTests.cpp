@@ -188,6 +188,110 @@ namespace
 		}
 	}
 
+	void RunJoinExistingPeerReturnsCurrentStateTest(tests::DebugTestResult& result)
+	{
+		server::net::PeerSessionService service;
+		server::net::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		server::game::GameSimulation gameSimulation;
+		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(11);
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
+
+		constexpr common::game::RoomId initialRoomId = 1;
+		constexpr common::game::RoomId nextRoomId = 2;
+
+		const TimePoint joinTime = Clock::now();
+		const TimePoint roomChangeTime = joinTime + std::chrono::seconds(1);
+		const TimePoint retryTime = roomChangeTime + std::chrono::seconds(5);
+
+		const server::net::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
+			service,
+			remoteAddress,
+			endpointKey,
+			initialRoomId,
+			peerRoomManager,
+			gameWorld,
+			gameSimulation,
+			gameRuleConfig,
+			reliableUdpRuleConfig,
+			joinTime
+		);
+
+		const server::net::PeerSessionService::RoomChangeResult roomChangeResult = service.ChangePeerRoom(
+			endpointKey,
+			nextRoomId,
+			peerRoomManager,
+			gameWorld,
+			gameSimulation,
+			roomChangeTime
+		);
+
+		tests::Expect(result, roomChangeResult.changed,
+			"PeerSessionService: existing join current state room change succeeds");
+
+		const server::game::PlayerState* playerState = gameWorld.FindPlayer(firstJoinResult.playerId);
+		tests::Expect(result, playerState != nullptr,
+			"PeerSessionService: existing join current player exists");
+
+		if (playerState == nullptr)
+		{
+			return;
+		}
+
+		const float currentX = playerState->x;
+		const float currentY = playerState->y;
+
+		const server::net::PeerSessionService::JoinResult retryJoinResult = JoinPeerForTest(
+			service,
+			remoteAddress,
+			endpointKey,
+			initialRoomId,
+			peerRoomManager,
+			gameWorld,
+			gameSimulation,
+			gameRuleConfig,
+			reliableUdpRuleConfig,
+			retryTime
+		);
+
+		tests::Expect(result, retryJoinResult.shouldSendResponse,
+			"PeerSessionService: existing join current state sends response");
+		tests::Expect(result, !retryJoinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: existing join current state does not broadcast");
+		tests::Expect(result, retryJoinResult.playerId == firstJoinResult.playerId,
+			"PeerSessionService: existing join current state preserves player id");
+		tests::Expect(result, retryJoinResult.roomId == nextRoomId,
+			"PeerSessionService: existing join returns current room id");
+		tests::Expect(result, retryJoinResult.spawnPosition.x == currentX,
+			"PeerSessionService: existing join returns current x");
+		tests::Expect(result, retryJoinResult.spawnPosition.y == currentY,
+			"PeerSessionService: existing join returns current y");
+
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1,
+			"PeerSessionService: existing join current state peer count");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(initialRoomId) == 0,
+			"PeerSessionService: existing join initial room remains empty");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(nextRoomId) == 1,
+			"PeerSessionService: existing join current room member count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1,
+			"PeerSessionService: existing join current state player count");
+
+		const server::net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, peerState != nullptr,
+			"PeerSessionService: existing join current peer exists");
+
+		if (peerState != nullptr)
+		{
+			tests::Expect(result, peerState->roomId == nextRoomId,
+				"PeerSessionService: existing join preserves current peer room");
+			tests::Expect(result, peerState->lastRecvTime == retryTime,
+				"PeerSessionService: existing join current state refresh time");
+		}
+	}
+
 	void RunLeavePeerRemovesPeerAndPlayerTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService service;
@@ -576,6 +680,7 @@ namespace tests::server
 		RunJoinPeerCreatesPeerAndPlayerTest(result);
 		RunJoinPeerAppliesReliableUdpConfigTest(result);
 		RunJoinExistingPeerReturnsExistingPlayerTest(result);
+		RunJoinExistingPeerReturnsCurrentStateTest(result);
 		RunLeavePeerRemovesPeerAndPlayerTest(result);
 		RunLeaveUnknownPeerDoesNothingTest(result);
 		RunChangePeerRoomTest(result);

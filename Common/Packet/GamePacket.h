@@ -29,6 +29,7 @@ namespace common::packet
 	public:
 		PacketHeader header{ 0, PacketType::JoinResponse };
 		std::uint32_t playerId = 0;
+		std::int32_t roomId = 0;
 		float spawnX = 0.0F;
 		float spawnY = 0.0F;
 	};

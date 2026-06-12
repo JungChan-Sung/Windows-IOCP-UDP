@@ -706,6 +706,7 @@ namespace server::net
 		packetSender_.SendJoinResponse(
 			joinResult.remoteAddress,
 			joinResult.playerId,
+			joinResult.roomId,
 			joinResult.spawnPosition.x,
 			joinResult.spawnPosition.y
 		);

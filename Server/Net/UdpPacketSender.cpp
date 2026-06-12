@@ -87,10 +87,11 @@ namespace server::net
 		return sentCount;
 	}
 
-	bool UdpPacketSender::SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, float spawnX, float spawnY) const
+	bool UdpPacketSender::SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY) const
 	{
 		common::packet::JoinResponsePacket packet{};
 		packet.playerId = playerId;
+		packet.roomId = roomId;
 		packet.spawnX = spawnX;
 		packet.spawnY = spawnY;
 

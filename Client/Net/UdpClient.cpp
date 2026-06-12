@@ -466,7 +466,10 @@ namespace client::net
 			return;
 		}
 
-		world_->SetJoinState(packet.playerId, 1, packet.spawnX, packet.spawnY);
+		if (!world_->TrySetJoinState(packet.playerId, packet.roomId, packet.spawnX, packet.spawnY))
+		{
+			return;
+		}
 
 		game::ClientWorld::PlayerJoinedEvent playerJoinedEvent;
 		playerJoinedEvent.playerId = packet.playerId;

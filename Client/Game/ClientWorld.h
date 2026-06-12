@@ -176,7 +176,7 @@ namespace client::game
 		) noexcept;
 
 	public:
-		void SetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
+		[[nodiscard]] bool TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
 		void SetCurrentRoomId(RoomId roomId);
 		void SetInterpolationDelay(std::chrono::milliseconds interpolationDelay) noexcept;
 

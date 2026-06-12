@@ -73,6 +73,7 @@ namespace
 		{
 			common::packet::JoinResponsePacket packet{};
 			packet.playerId = 1001;
+			packet.roomId = 2;
 			packet.spawnX = 120.5F;
 			packet.spawnY = 240.25F;
 
@@ -80,6 +81,7 @@ namespace
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "JoinResponse: playerId");
+				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinResponse: roomId");
 				tests::Expect(result, roundTripPacket->spawnX == packet.spawnX, "JoinResponse: spawnX");
 				tests::Expect(result, roundTripPacket->spawnY == packet.spawnY, "JoinResponse: spawnY");
 			}

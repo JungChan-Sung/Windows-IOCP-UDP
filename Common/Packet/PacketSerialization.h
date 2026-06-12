@@ -491,6 +491,7 @@ namespace common::packet
 		static inline constexpr int fixedWireSize = static_cast<int>(
 			serializedPacketHeaderSize
 			+ uint32WireSize
+			+ int32WireSize
 			+ floatWireSize
 			+ floatWireSize
 			);
@@ -504,6 +505,7 @@ namespace common::packet
 		static void WritePayload(PacketWriter& writer, const JoinResponsePacket& packet)
 		{
 			writer.WriteUInt32(packet.playerId);
+			writer.WriteInt32(packet.roomId);
 			writer.WriteFloat(packet.spawnX);
 			writer.WriteFloat(packet.spawnY);
 		}
@@ -511,6 +513,7 @@ namespace common::packet
 		[[nodiscard]] static bool ReadPayload(PacketReader& reader, JoinResponsePacket& packet) noexcept
 		{
 			return reader.ReadUInt32(packet.playerId)
+				&& reader.ReadInt32(packet.roomId)
 				&& reader.ReadFloat(packet.spawnX)
 				&& reader.ReadFloat(packet.spawnY);
 		}

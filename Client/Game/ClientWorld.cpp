@@ -467,9 +467,14 @@ namespace client::game
 		interpolationDelay_ = defaultInterpolationDelay_;
 	}
 
-	void ClientWorld::SetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY)
+	bool ClientWorld::TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY)
 	{
 		std::scoped_lock lock(worldMutex_);
+
+		if (isJoined_ || localPlayerId == 0 || roomId <= 0)
+		{
+			return false;
+		}
 
 		localPlayerId_ = localPlayerId;
 		currentRoomId_ = roomId;
@@ -477,10 +482,10 @@ namespace client::game
 
 		localPredictedX_ = spawnX;
 		localPredictedY_ = spawnY;
-		localRenderCorrectionOffsetX_ = 0.0F;
-		localRenderCorrectionOffsetY_ = 0.0F;
 		isLocalPredictedInitialized_ = true;
 		pendingInputList_.clear();
+
+		return true;
 	}
 
 	void ClientWorld::SetCurrentRoomId(RoomId roomId)

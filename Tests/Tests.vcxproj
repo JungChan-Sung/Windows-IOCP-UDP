@@ -148,6 +148,7 @@
     <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Client\ClientConfigTests.cpp" />
     <ClCompile Include="Client\ClientWorldTests.cpp" />
+    <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
     <ClCompile Include="Log\AsyncLogWriterTests.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="..\Common\Net\Endpoint.h" />
     <ClInclude Include="Client\ClientConfigTests.h" />
     <ClInclude Include="Client\ClientWorldTests.h" />
+    <ClInclude Include="Client\JoinHandshakeStateTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
     <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />

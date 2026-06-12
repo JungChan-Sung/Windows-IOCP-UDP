@@ -5,6 +5,7 @@
 
 #include "Client/ClientConfigTests.h"
 #include "Client/ClientWorldTests.h"
+#include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
 #include "Net/ReliableUdpProtocolTests.h"
@@ -57,6 +58,7 @@ namespace tests
 		MergeAndPrint(totalResult, "IntegrationSmoke", server::RunIntegrationSmokeTests());
 		MergeAndPrint(totalResult, "ClientConfig", client::RunClientConfigTests());
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
+		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';

@@ -132,7 +132,12 @@ namespace client::app
 		isRunning_.store(true);
 
 		const auto currentTime = std::chrono::steady_clock::now();
-		nextJoinRetryTime_ = currentTime;
+
+		joinHandshakeState_.Begin(
+			currentTime,
+			config_.timing.joinRetryInterval
+		);
+
 		nextSimulationTickTime_ = currentTime;
 		nextRoomJoinTime_ = currentTime;
 		lastEffectUpdateTime_ = currentTime;
@@ -160,6 +165,7 @@ namespace client::app
 		}
 
 		updateThread_ = std::jthread();
+		joinHandshakeState_.Reset();
 
 		gameWindow_.Destroy();
 		udpClient_.Stop();
@@ -268,14 +274,15 @@ namespace client::app
 
 		if (!world_.IsJoined())
 		{
-			if (currentTime >= nextJoinRetryTime_)
+			if (joinHandshakeState_.TryStartAttempt(currentTime))
 			{
 				udpClient_.SendJoinRequest();
-				nextJoinRetryTime_ = currentTime + config_.timing.joinRetryInterval;
 			}
 
 			return;
 		}
+
+		joinHandshakeState_.Complete();
 
 		int processedSimulationTickCount = 0;
 		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)

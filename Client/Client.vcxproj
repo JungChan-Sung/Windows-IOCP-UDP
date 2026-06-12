@@ -172,6 +172,7 @@
     <ClInclude Include="Game\EffectConfig.h" />
     <ClInclude Include="Game\InputState.h" />
     <ClInclude Include="Net\ClientPacketDispatcher.h" />
+    <ClInclude Include="Net\JoinHandshakeState.h" />
     <ClInclude Include="Net\SnapshotChunkAssembler.h" />
     <ClInclude Include="Net\UdpClient.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />

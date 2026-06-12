@@ -161,6 +161,9 @@
     <ClInclude Include="Config\ClientTransportType.h">
       <Filter>헤더 파일\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Net\JoinHandshakeState.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Client.ini">

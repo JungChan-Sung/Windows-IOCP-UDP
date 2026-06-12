@@ -183,11 +183,14 @@
     <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
-    <ClCompile Include="Client\ClientWorldTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\Client\Game\ClientWorld.cpp">
       <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\ClientWorldTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\JoinHandshakeStateTests.cpp">
+      <Filter>소스 파일\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -273,7 +276,10 @@
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Client\ClientWorldTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\JoinHandshakeStateTests.h">
+      <Filter>헤더 파일\Client</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -12,6 +12,7 @@
 
 #include <Client/Config/ClientConfig.h>
 #include <Client/Game/ClientWorld.h>
+#include <Client/Net/JoinHandshakeState.h>
 #include <Client/Net/UdpClient.h>
 #include <Client/Render/GdiRenderer.h>
 #include <Client/Ui/GameWindow.h>
@@ -40,13 +41,13 @@ namespace client::app
 
 		game::ClientWorld world_;
 		net::UdpClient udpClient_;
+		net::JoinHandshakeState joinHandshakeState_;
 		ui::GameWindow gameWindow_;
 		render::GdiRenderer gdiRenderer_;
 
 		std::atomic<bool> isRunning_ = false;
 		std::jthread updateThread_;
 
-		std::chrono::steady_clock::time_point nextJoinRetryTime_;
 		std::chrono::steady_clock::time_point nextSimulationTickTime_;
 		std::chrono::steady_clock::time_point nextRoomJoinTime_;
 		std::chrono::steady_clock::time_point lastEffectUpdateTime_;

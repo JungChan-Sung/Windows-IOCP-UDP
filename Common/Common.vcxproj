@@ -41,6 +41,7 @@
     <ClInclude Include="Net\UdpContext.h" />
     <ClInclude Include="Net\Socket.h" />
     <ClInclude Include="Net\UdpFaultDecisionGenerator.h" />
+    <ClInclude Include="Net\UdpFaultPacketScheduler.h" />
     <ClInclude Include="Net\UdpFaultSimulationConfig.h" />
     <ClInclude Include="Net\UdpTypes.h" />
     <ClInclude Include="Net\WsaSession.h" />
@@ -65,6 +66,7 @@
     <ClCompile Include="Net\Socket.cpp" />
     <ClCompile Include="Net\UdpContext.cpp" />
     <ClCompile Include="Net\UdpFaultDecisionGenerator.cpp" />
+    <ClCompile Include="Net\UdpFaultPacketScheduler.cpp" />
     <ClCompile Include="Net\WsaSession.cpp" />
     <ClCompile Include="Threading\ThreadPool.cpp" />
   </ItemGroup>

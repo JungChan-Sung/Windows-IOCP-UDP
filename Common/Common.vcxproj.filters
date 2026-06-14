@@ -159,6 +159,9 @@
     <ClInclude Include="Net\UdpFaultDecisionGenerator.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Net\UdpFaultPacketScheduler.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -183,6 +186,9 @@
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
     <ClCompile Include="Net\UdpFaultDecisionGenerator.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpFaultPacketScheduler.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
   </ItemGroup>

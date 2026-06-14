@@ -13,9 +13,6 @@ namespace common::net
 	class UdpFaultDecisionGenerator
 	{
 	public:
-		using Config = UdpFaultSimulationConfig;
-
-	public:
 		struct Decision
 		{
 		public:
@@ -24,6 +21,9 @@ namespace common::net
 			bool shouldReorder = false;
 			time::Duration delay{};
 		};
+
+	public:
+		using Config = UdpFaultSimulationConfig;
 
 	private:
 		Config config_;

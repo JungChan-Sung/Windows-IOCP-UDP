@@ -177,6 +177,8 @@ namespace server::net
 			LogWarning(warning.message);
 		}
 
+		packetSender_.SetFaultSimulationConfig(config_.udpFaultSimulation);
+
 		invalidPacketLogLimiter_.Reset();
 		serverMetricsCollector_.Reset();
 
@@ -280,6 +282,7 @@ namespace server::net
 
 		udpTransport_.Stop();
 		packetSender_.DetachTransport();
+		packetSender_.ResetFaultSimulation();
 		packetDispatcher_.Clear();
 
 		{
@@ -349,6 +352,8 @@ namespace server::net
 
 		RemoveTimedOutPeers();
 		ProcessReliableResends();
+
+		packetSender_.FlushFaultSimulationPackets();
 
 		BroadcastPlayerSnapshots();
 		BroadcastBulletSnapshots();

@@ -3,11 +3,12 @@
 #include <chrono>
 #include <cstddef>
 
-#include <Common/Log/LogLevel.h>
 #include <Common/Game/GameRules.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/WeaponRules.h>
+#include <Common/Log/LogLevel.h>
+#include <Common/Net/UdpFaultSimulationConfig.h>
 
 namespace server::config
 {
@@ -71,6 +72,7 @@ namespace server::config
 		NetworkConfig network;
 		SessionConfig session;
 		ReliableUdpConfig reliableUdp;
+		common::net::UdpFaultSimulationConfig udpFaultSimulation;
 		TickConfig tick;
 		GameRuleConfig gameRule;
 		WeaponRuleConfig weaponRule;

@@ -153,6 +153,12 @@
     <ClInclude Include="Packet\PacketReliability.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
+    <ClInclude Include="Net\UdpFaultSimulationConfig.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpFaultDecisionGenerator.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -175,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="Log\AsyncLogWriter.cpp">
       <Filter>소스 파일\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpFaultDecisionGenerator.cpp">
+      <Filter>소스 파일\Net</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

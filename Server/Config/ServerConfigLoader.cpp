@@ -1,9 +1,10 @@
 #include "ServerConfigLoader.h"
 
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <chrono>
-#include <cctype>
+#include <cstdint>
 #include <fstream>
 #include <limits>
 #include <optional>
@@ -107,6 +108,24 @@ namespace
 		}
 
 		return value;
+	}
+
+	[[nodiscard]] std::optional<std::chrono::milliseconds> TryParseMilliseconds(std::string_view text) noexcept
+	{
+		const std::optional<unsigned long long> parsedValue = TryParseUnsigned(text);
+		if (!parsedValue.has_value())
+		{
+			return std::nullopt;
+		}
+
+		using MillisecondsRep = std::chrono::milliseconds::rep;
+
+		if (*parsedValue > static_cast<unsigned long long>(std::numeric_limits<MillisecondsRep>::max()))
+		{
+			return std::nullopt;
+		}
+
+		return std::chrono::milliseconds(static_cast<MillisecondsRep>(*parsedValue));
 	}
 
 	[[nodiscard]] std::optional<long long> TryParseSigned(std::string_view text) noexcept
@@ -359,6 +378,148 @@ namespace
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.reliableUdp.resendIntervalMilliseconds = static_cast<int>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
+	}
+
+	void ApplyUdpFaultSimulationValue(
+		server::config::ServerConfig& serverConfig,
+		std::string_view section,
+		std::string_view key,
+		std::string_view value,
+		std::size_t lineNumber,
+		WarningList& warningList
+	)
+	{
+		const std::string normalizedKey = ToLowerCopy(key);
+
+		if (normalizedKey == "enabled")
+		{
+			const std::optional<bool> parsedValue = TryParseBool(value);
+
+			if (parsedValue.has_value())
+			{
+				serverConfig.udpFaultSimulation.enabled = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "droprate")
+		{
+			const std::optional<float> parsedValue = TryParseFloat(value);
+
+			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
+			{
+				serverConfig.udpFaultSimulation.dropRate = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "duplicaterate")
+		{
+			const std::optional<float> parsedValue = TryParseFloat(value);
+
+			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
+			{
+				serverConfig.udpFaultSimulation.duplicateRate = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "reorderrate")
+		{
+			const std::optional<float> parsedValue = TryParseFloat(value);
+
+			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
+			{
+				serverConfig.udpFaultSimulation.reorderRate = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "mindelaymilliseconds")
+		{
+			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+
+			if (parsedValue.has_value())
+			{
+				serverConfig.udpFaultSimulation.minDelay = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "maxdelaymilliseconds")
+		{
+			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+
+			if (parsedValue.has_value())
+			{
+				serverConfig.udpFaultSimulation.maxDelay = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "reorderdelaymilliseconds")
+		{
+			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+
+			if (parsedValue.has_value())
+			{
+				serverConfig.udpFaultSimulation.reorderDelay = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "randomseed")
+		{
+			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+
+			if (parsedValue.has_value() && *parsedValue <= std::numeric_limits<std::uint32_t>::max())
+			{
+				serverConfig.udpFaultSimulation.randomSeed = static_cast<std::uint32_t>(*parsedValue);
 			}
 			else
 			{
@@ -678,6 +839,20 @@ namespace
 		if (normalizedSection == "reliableudp")
 		{
 			ApplyReliableUdpValue(serverConfig, section, key, value, lineNumber, warningList);
+			return;
+		}
+
+		if (normalizedSection == "udpfaultsimulation")
+		{
+			ApplyUdpFaultSimulationValue(
+				serverConfig,
+				section,
+				key,
+				value,
+				lineNumber,
+				warningList
+			);
+
 			return;
 		}
 

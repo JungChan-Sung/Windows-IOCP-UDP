@@ -128,6 +128,29 @@ namespace
 			);
 		}
 	}
+
+	void RunRandomDelayRangeTest(tests::DebugTestResult& result)
+	{
+		Config config{};
+		config.enabled = true;
+		config.minDelay = std::chrono::milliseconds(10);
+		config.maxDelay = std::chrono::milliseconds(50);
+		config.randomSeed = 12345;
+
+		Generator generator(config);
+
+		for (int index = 0; index < 100; ++index)
+		{
+			const Decision decision = generator.Generate();
+
+			tests::Expect(
+				result,
+				decision.delay >= std::chrono::milliseconds(10)
+				&& decision.delay <= std::chrono::milliseconds(50),
+				"UdpFaultDecisionGenerator: random delay stays within range"
+			);
+		}
+	}
 }
 
 namespace tests::net
@@ -141,6 +164,7 @@ namespace tests::net
 		RunGuaranteedFaultsTest(result);
 		RunSameSeedProducesSameSequenceTest(result);
 		RunResetReplaysSequenceTest(result);
+		RunRandomDelayRangeTest(result);
 
 		return result;
 	}

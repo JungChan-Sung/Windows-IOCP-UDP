@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -72,6 +73,8 @@ namespace client::net
 		bool enableChunkAssemblerDebugTests_ = config::defaultEnableChunkAssemblerDebugTests;
 		ClientPacketDispatcher packetDispatcher_;
 		SnapshotChunkAssembler snapshotChunkAssembler_;
+
+		std::mutex reliableSessionMutex_;
 		common::net::ReliableUdpSession reliableSession_;
 
 	public:

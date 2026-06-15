@@ -102,7 +102,12 @@ namespace client::net
 
 		world_ = &world;
 		inputSequence_ = 0;
-		reliableSession_.Reset();
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+			reliableSession_.Reset();
+		}
+
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
 		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
@@ -132,7 +137,12 @@ namespace client::net
 
 		world_ = nullptr;
 		inputSequence_ = 0;
-		reliableSession_.Reset();
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+			reliableSession_.Reset();
+		}
+
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
 	}
@@ -209,7 +219,12 @@ namespace client::net
 	void UdpClient::ProcessReliableResends()
 	{
 		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
-		const common::net::ReliableUdpSession::ResendPacketList resendPacketList = reliableSession_.ExtractResendPackets(currentTime);
+		common::net::ReliableUdpSession::ResendPacketList resendPacketList;
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+			resendPacketList = reliableSession_.ExtractResendPackets(currentTime);
+		}
 
 		for (const common::net::ReliablePendingPacket& pendingPacket : resendPacketList)
 		{
@@ -323,25 +338,26 @@ namespace client::net
 
 	bool UdpClient::SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket)
 	{
-		const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
-		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
+		std::optional<common::packet::PacketBuffer> reliablePacketBuffer;
 
-		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
-			common::packet::BuildReliableUdpPacket(
-				reliableHeader, 
-				serializedGamePacket
-			);
-
-		if (!reliablePacketBuffer.has_value())
 		{
-			return false;
-		}
+			std::scoped_lock lock(reliableSessionMutex_);
 
-		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+			const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
+			const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
 
-		if (!reliableSession_.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
-		{
-			return false;
+			reliablePacketBuffer = common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+			if (!reliablePacketBuffer.has_value())
+			{
+				return false;
+			}
+
+			const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+			if (!reliableSession_.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+			{
+				return false;
+			}
 		}
 
 		return SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size()));
@@ -349,7 +365,12 @@ namespace client::net
 
 	bool UdpClient::SendReliableAckPacket()
 	{
-		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingAckHeader();
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+			reliableHeader = reliableSession_.BuildOutgoingAckHeader();
+		}
 
 		const std::optional<common::packet::PacketBuffer> ackPacketBuffer = common::packet::BuildReliableUdpAckPacket(reliableHeader);
 		if (!ackPacketBuffer.has_value())
@@ -438,12 +459,20 @@ namespace client::net
 		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
 		if (isAckOnlyPacket)
 		{
-			reliableSession_.ProcessReceivedAck(packetView->reliableHeader);
+			std::scoped_lock lock(reliableSessionMutex_);
+			static_cast<void>(reliableSession_.ProcessReceivedAck(packetView->reliableHeader));
 			return;
 		}
 
-		const bool isNewReliablePacket = reliableSession_.ProcessReceivedDataHeader(packetView->reliableHeader);
-		SendReliableAckPacket();
+		bool isNewReliablePacket = false;
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+
+			isNewReliablePacket = reliableSession_.ProcessReceivedDataHeader(packetView->reliableHeader);
+		}
+
+		static_cast<void>(SendReliableAckPacket());
 
 		if (!isNewReliablePacket)
 		{

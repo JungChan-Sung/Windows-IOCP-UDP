@@ -109,6 +109,85 @@ namespace server::config
 			serverConfig.reliableUdp.resendIntervalMilliseconds = defaultConfig.reliableUdp.resendIntervalMilliseconds;
 		}
 
+		if (!std::isfinite(serverConfig.udpFaultSimulation.dropRate)
+			|| serverConfig.udpFaultSimulation.dropRate < 0.0F
+			|| serverConfig.udpFaultSimulation.dropRate > 1.0F)
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.DropRate must be between 0 and 1. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.dropRate = defaultConfig.udpFaultSimulation.dropRate;
+		}
+
+		if (!std::isfinite(serverConfig.udpFaultSimulation.duplicateRate)
+			|| serverConfig.udpFaultSimulation.duplicateRate < 0.0F
+			|| serverConfig.udpFaultSimulation.duplicateRate > 1.0F)
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.DuplicateRate must be between 0 and 1. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.duplicateRate = defaultConfig.udpFaultSimulation.duplicateRate;
+		}
+
+		if (!std::isfinite(serverConfig.udpFaultSimulation.reorderRate)
+			|| serverConfig.udpFaultSimulation.reorderRate < 0.0F
+			|| serverConfig.udpFaultSimulation.reorderRate > 1.0F)
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.ReorderRate must be between 0 and 1. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.reorderRate = defaultConfig.udpFaultSimulation.reorderRate;
+		}
+
+		if (serverConfig.udpFaultSimulation.minDelay < std::chrono::milliseconds::zero())
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.MinDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.minDelay = defaultConfig.udpFaultSimulation.minDelay;
+		}
+
+		if (serverConfig.udpFaultSimulation.maxDelay < std::chrono::milliseconds::zero())
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.MaxDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.maxDelay = defaultConfig.udpFaultSimulation.maxDelay;
+		}
+
+		if (serverConfig.udpFaultSimulation.reorderDelay < std::chrono::milliseconds::zero())
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.ReorderDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+			);
+
+			serverConfig.udpFaultSimulation.reorderDelay = defaultConfig.udpFaultSimulation.reorderDelay;
+		}
+
+		if (serverConfig.udpFaultSimulation.minDelay > serverConfig.udpFaultSimulation.maxDelay)
+		{
+			AddWarning(
+				warningList,
+				"UdpFaultSimulation.MinDelayMilliseconds is greater than MaxDelayMilliseconds. Values will be swapped."
+			);
+
+			std::swap(
+				serverConfig.udpFaultSimulation.minDelay,
+				serverConfig.udpFaultSimulation.maxDelay
+			);
+		}
+
 		if (serverConfig.tick.tickInterval <= std::chrono::steady_clock::duration::zero())
 		{
 			AddWarning(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used.");

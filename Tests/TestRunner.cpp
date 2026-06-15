@@ -13,6 +13,9 @@
 #include "Net/ReliableUdpPacketBuilderTests.h"
 #include "Net/ReliableUdpSendWindowTests.h"
 #include "Net/ReliableUdpSessionTests.h"
+#include "Net/UdpFaultDecisionGeneratorTests.h"
+#include "Net/UdpFaultPacketSchedulerTests.h"
+#include "Net/UdpFaultSimulatorTests.h"
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
 #include "Threading/ThreadPoolTests.h"
@@ -43,6 +46,9 @@ namespace tests
 		MergeAndPrint(totalResult, "ReliableUdpPacketBuilder", net::RunReliableUdpPacketBuilderTests());
 		MergeAndPrint(totalResult, "ReliableUdpSendWindow", net::RunReliableUdpSendWindowTests());
 		MergeAndPrint(totalResult, "ReliableUdpSession", net::RunReliableUdpSessionTests());
+		MergeAndPrint(totalResult, "UdpFaultDecisionGenerator", net::RunUdpFaultDecisionGeneratorTests());
+		MergeAndPrint(totalResult, "UdpFaultPacketScheduler", net::RunUdpFaultPacketSchedulerTests());
+		MergeAndPrint(totalResult, "UdpFaultSimulator", net::RunUdpFaultSimulatorTests());
 		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());

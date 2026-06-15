@@ -51,6 +51,8 @@ namespace server::diagnostics
 			<< ", PendingEffects=" << snapshot.pendingImpactEffectCount
 			<< ", PendingSendContexts=" << snapshot.pendingSendContextCount
 			<< ", ReliablePendingPackets=" << snapshot.reliablePendingPacketCount
+			<< ", FaultSimulationPendingPackets=" << snapshot.faultSimulationPendingPacketCount
+			<< ", FaultSimulationReleasedSendRequests=" << snapshot.metrics.faultSimulationReleasedSendRequestCount
 			<< ", ReliableResendPackets=" << snapshot.metrics.reliableResendPacketCount
 			<< ", ReliableResendGiveUps=" << snapshot.metrics.reliableResendGiveUpPacketCount
 			<< ", ReliableSendWindowFulls=" << snapshot.metrics.reliableSendWindowFullCount

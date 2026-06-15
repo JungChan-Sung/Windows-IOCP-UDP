@@ -177,6 +177,8 @@ namespace server::net
 			LogWarning(warning.message);
 		}
 
+		packetSender_.SetFaultSimulationConfig(config_.udpFaultSimulation);
+
 		invalidPacketLogLimiter_.Reset();
 		serverMetricsCollector_.Reset();
 
@@ -280,6 +282,7 @@ namespace server::net
 
 		udpTransport_.Stop();
 		packetSender_.DetachTransport();
+		packetSender_.ResetFaultSimulation();
 		packetDispatcher_.Clear();
 
 		{
@@ -349,6 +352,9 @@ namespace server::net
 
 		RemoveTimedOutPeers();
 		ProcessReliableResends();
+
+		const std::size_t faultSimulationReleasedSendRequestCount = packetSender_.FlushFaultSimulationPackets();
+		serverMetricsCollector_.AddFaultSimulationReleasedSendRequestCount(static_cast<std::uint64_t>(faultSimulationReleasedSendRequestCount));
 
 		BroadcastPlayerSnapshots();
 		BroadcastBulletSnapshots();
@@ -1157,6 +1163,9 @@ namespace server::net
 		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();
 
 		snapshot.pendingSendContextCount = udpTransport_.GetPendingSendContextCount();
+
+		snapshot.faultSimulationPendingPacketCount = packetSender_.GetFaultSimulationPendingPacketCount();
+
 		snapshot.udpSendCompletionCount = transportMetrics.sendCompletionCount;
 		snapshot.udpSendCompletionFailureCount = transportMetrics.sendCompletionFailureCount;
 		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;

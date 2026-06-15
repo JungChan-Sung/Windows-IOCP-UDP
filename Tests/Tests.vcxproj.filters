@@ -192,6 +192,15 @@
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp">
       <Filter>소스 파일\Client</Filter>
     </ClCompile>
+    <ClCompile Include="Net\UdpFaultDecisionGeneratorTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpFaultPacketSchedulerTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\UdpFaultSimulatorTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -280,6 +289,15 @@
     </ClInclude>
     <ClInclude Include="Client\JoinHandshakeStateTests.h">
       <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpFaultDecisionGeneratorTests.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpFaultPacketSchedulerTests.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\UdpFaultSimulatorTests.h">
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

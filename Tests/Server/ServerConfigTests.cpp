@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -299,6 +300,295 @@ namespace
 		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
 		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfigValidator: mismatch keeps fixed delta");
 	}
+
+	void RunLoadUdpFaultSimulationConfigTest(tests::DebugTestResult& result)
+	{
+		const std::filesystem::path filePath =
+			tests::MakeTempFilePath(
+				"WindowsIocpUdp_UdpFaultSimulationConfig_DebugTest.ini"
+			);
+
+		tests::WriteTextFile(
+			filePath,
+			"[UdpFaultSimulation]\n"
+			"Enabled=true\n"
+			"DropRate=0.25\n"
+			"DuplicateRate=0.5\n"
+			"ReorderRate=0.75\n"
+			"MinDelayMilliseconds=15\n"
+			"MaxDelayMilliseconds=80\n"
+			"ReorderDelayMilliseconds=125\n"
+			"RandomSeed=123456\n"
+		);
+
+		const server::config::ServerConfigLoadResult loadResult =
+			server::config::ServerConfigLoader::Load(filePath);
+
+		std::filesystem::remove(filePath);
+
+		tests::Expect(
+			result,
+			loadResult.loadedFromFile,
+			"ServerConfig: UDP fault simulation file loaded"
+		);
+		tests::Expect(
+			result,
+			loadResult.warningList.empty(),
+			"ServerConfig: valid UDP fault simulation has no warning"
+		);
+
+		const common::net::UdpFaultSimulationConfig& config =
+			loadResult.config.udpFaultSimulation;
+
+		tests::Expect(
+			result,
+			config.enabled,
+			"ServerConfig: UDP fault simulation enabled"
+		);
+		tests::Expect(
+			result,
+			config.dropRate == 0.25F,
+			"ServerConfig: UDP fault simulation drop rate"
+		);
+		tests::Expect(
+			result,
+			config.duplicateRate == 0.5F,
+			"ServerConfig: UDP fault simulation duplicate rate"
+		);
+		tests::Expect(
+			result,
+			config.reorderRate == 0.75F,
+			"ServerConfig: UDP fault simulation reorder rate"
+		);
+		tests::Expect(
+			result,
+			config.minDelay == std::chrono::milliseconds(15),
+			"ServerConfig: UDP fault simulation minimum delay"
+		);
+		tests::Expect(
+			result,
+			config.maxDelay == std::chrono::milliseconds(80),
+			"ServerConfig: UDP fault simulation maximum delay"
+		);
+		tests::Expect(
+			result,
+			config.reorderDelay == std::chrono::milliseconds(125),
+			"ServerConfig: UDP fault simulation reorder delay"
+		);
+		tests::Expect(
+			result,
+			config.randomSeed == 123456,
+			"ServerConfig: UDP fault simulation random seed"
+		);
+	}
+
+	void RunLoadInvalidUdpFaultSimulationConfigTest(
+		tests::DebugTestResult& result
+	)
+	{
+		const std::filesystem::path filePath =
+			tests::MakeTempFilePath(
+				"WindowsIocpUdp_InvalidUdpFaultSimulationConfig_DebugTest.ini"
+			);
+
+		tests::WriteTextFile(
+			filePath,
+			"[UdpFaultSimulation]\n"
+			"Enabled=invalid\n"
+			"DropRate=-0.1\n"
+			"DuplicateRate=1.1\n"
+			"ReorderRate=nan\n"
+			"MinDelayMilliseconds=-1\n"
+			"MaxDelayMilliseconds=invalid\n"
+			"ReorderDelayMilliseconds=-1\n"
+			"RandomSeed=4294967296\n"
+			"UnknownKey=1\n"
+		);
+
+		const server::config::ServerConfigLoadResult loadResult =
+			server::config::ServerConfigLoader::Load(filePath);
+
+		std::filesystem::remove(filePath);
+
+		const server::config::ServerConfig defaultConfig{};
+		const common::net::UdpFaultSimulationConfig& config =
+			loadResult.config.udpFaultSimulation;
+		const common::net::UdpFaultSimulationConfig& defaultFaultConfig =
+			defaultConfig.udpFaultSimulation;
+
+		tests::Expect(
+			result,
+			loadResult.loadedFromFile,
+			"ServerConfig: invalid UDP fault simulation file loaded"
+		);
+		tests::Expect(
+			result,
+			loadResult.warningList.size() == 9,
+			"ServerConfig: invalid UDP fault simulation warning count"
+		);
+
+		tests::Expect(
+			result,
+			config.enabled == defaultFaultConfig.enabled,
+			"ServerConfig: invalid UDP fault enabled ignored"
+		);
+		tests::Expect(
+			result,
+			config.dropRate == defaultFaultConfig.dropRate,
+			"ServerConfig: invalid UDP fault drop rate ignored"
+		);
+		tests::Expect(
+			result,
+			config.duplicateRate == defaultFaultConfig.duplicateRate,
+			"ServerConfig: invalid UDP fault duplicate rate ignored"
+		);
+		tests::Expect(
+			result,
+			config.reorderRate == defaultFaultConfig.reorderRate,
+			"ServerConfig: invalid UDP fault reorder rate ignored"
+		);
+		tests::Expect(
+			result,
+			config.minDelay == defaultFaultConfig.minDelay,
+			"ServerConfig: invalid UDP fault minimum delay ignored"
+		);
+		tests::Expect(
+			result,
+			config.maxDelay == defaultFaultConfig.maxDelay,
+			"ServerConfig: invalid UDP fault maximum delay ignored"
+		);
+		tests::Expect(
+			result,
+			config.reorderDelay == defaultFaultConfig.reorderDelay,
+			"ServerConfig: invalid UDP fault reorder delay ignored"
+		);
+		tests::Expect(
+			result,
+			config.randomSeed == defaultFaultConfig.randomSeed,
+			"ServerConfig: invalid UDP fault random seed ignored"
+		);
+	}
+
+	void RunValidatorUdpFaultSimulationNormalizeTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::config::ServerConfig config{};
+		const server::config::ServerConfig defaultConfig{};
+
+		config.udpFaultSimulation.dropRate =
+			std::numeric_limits<float>::quiet_NaN();
+		config.udpFaultSimulation.duplicateRate = -0.1F;
+		config.udpFaultSimulation.reorderRate = 1.1F;
+		config.udpFaultSimulation.minDelay = std::chrono::milliseconds(-1);
+		config.udpFaultSimulation.maxDelay = std::chrono::milliseconds(-2);
+		config.udpFaultSimulation.reorderDelay =
+			std::chrono::milliseconds(-3);
+
+		const std::vector<server::config::ServerConfigWarning> warningList =
+			server::config::ServerConfigValidator::ValidateAndNormalize(config);
+
+		const common::net::UdpFaultSimulationConfig& faultConfig =
+			config.udpFaultSimulation;
+		const common::net::UdpFaultSimulationConfig& defaultFaultConfig =
+			defaultConfig.udpFaultSimulation;
+
+		tests::Expect(
+			result,
+			faultConfig.dropRate == defaultFaultConfig.dropRate,
+			"ServerConfigValidator: UDP fault drop rate normalized"
+		);
+		tests::Expect(
+			result,
+			faultConfig.duplicateRate == defaultFaultConfig.duplicateRate,
+			"ServerConfigValidator: UDP fault duplicate rate normalized"
+		);
+		tests::Expect(
+			result,
+			faultConfig.reorderRate == defaultFaultConfig.reorderRate,
+			"ServerConfigValidator: UDP fault reorder rate normalized"
+		);
+		tests::Expect(
+			result,
+			faultConfig.minDelay == defaultFaultConfig.minDelay,
+			"ServerConfigValidator: UDP fault minimum delay normalized"
+		);
+		tests::Expect(
+			result,
+			faultConfig.maxDelay == defaultFaultConfig.maxDelay,
+			"ServerConfigValidator: UDP fault maximum delay normalized"
+		);
+		tests::Expect(
+			result,
+			faultConfig.reorderDelay == defaultFaultConfig.reorderDelay,
+			"ServerConfigValidator: UDP fault reorder delay normalized"
+		);
+
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"UdpFaultSimulation.DropRate must be between 0 and 1. "
+				"Default value will be used."
+			),
+			"ServerConfigValidator: UDP fault drop rate warning"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"UdpFaultSimulation.DuplicateRate must be between 0 and 1. "
+				"Default value will be used."
+			),
+			"ServerConfigValidator: UDP fault duplicate rate warning"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"UdpFaultSimulation.ReorderRate must be between 0 and 1. "
+				"Default value will be used."
+			),
+			"ServerConfigValidator: UDP fault reorder rate warning"
+		);
+	}
+
+	void RunValidatorUdpFaultSimulationDelaySwapTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::config::ServerConfig config{};
+
+		config.udpFaultSimulation.minDelay =
+			std::chrono::milliseconds(200);
+		config.udpFaultSimulation.maxDelay =
+			std::chrono::milliseconds(50);
+
+		const std::vector<server::config::ServerConfigWarning> warningList =
+			server::config::ServerConfigValidator::ValidateAndNormalize(config);
+
+		tests::Expect(
+			result,
+			config.udpFaultSimulation.minDelay
+			== std::chrono::milliseconds(50),
+			"ServerConfigValidator: UDP fault minimum delay swapped"
+		);
+		tests::Expect(
+			result,
+			config.udpFaultSimulation.maxDelay
+			== std::chrono::milliseconds(200),
+			"ServerConfigValidator: UDP fault maximum delay swapped"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"UdpFaultSimulation.MinDelayMilliseconds is greater than "
+				"MaxDelayMilliseconds. Values will be swapped."
+			),
+			"ServerConfigValidator: UDP fault delay swap warning"
+		);
+	}
 }
 
 namespace tests::server
@@ -310,8 +600,12 @@ namespace tests::server
 		RunLoadValidConfigTest(result);
 		RunLoadInvalidConfigTest(result);
 		RunLoadLogLevelAliasTest(result);
+		RunLoadUdpFaultSimulationConfigTest(result);
+		RunLoadInvalidUdpFaultSimulationConfigTest(result);
 		RunMissingFileTest(result);
 		RunValidatorNormalizeTest(result);
+		RunValidatorUdpFaultSimulationNormalizeTest(result);
+		RunValidatorUdpFaultSimulationDelaySwapTest(result);
 		RunValidatorTickDeltaMismatchWarningTest(result);
 
 		return result;

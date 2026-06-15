@@ -101,7 +101,7 @@ namespace common::net
 			return config_.minDelay;
 		}
 
-		std::uniform_int_distribution<time::Duration::rep> distribution(config_.minDelay.count(), config_.maxDelay.count());
-		return time::Duration(distribution(randomEngine_));
+		std::uniform_int_distribution<time::Milliseconds::rep> distribution(config_.minDelay.count(), config_.maxDelay.count());
+		return std::chrono::duration_cast<time::Duration>(time::Milliseconds(distribution(randomEngine_)));
 	}
 }

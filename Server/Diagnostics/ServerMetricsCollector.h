@@ -24,6 +24,8 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> bulletSnapshotSendRequestCount_ = 0;
 		std::atomic<std::uint64_t> impactEffectSendRequestCount_ = 0;
 
+		std::atomic<std::uint64_t> faultSimulationReleasedSendRequestCount_ = 0;
+
 		std::atomic<std::uint64_t> reliableResendPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableResendGiveUpPacketCount_ = 0;
 		std::atomic<std::uint64_t> reliableSendWindowFullCount_ = 0;
@@ -65,6 +67,8 @@ namespace server::diagnostics
 		void AddPlayerSnapshotSendRequestCount(std::uint64_t count) noexcept;
 		void AddBulletSnapshotSendRequestCount(std::uint64_t count) noexcept;
 		void AddImpactEffectSendRequestCount(std::uint64_t count) noexcept;
+
+		void AddFaultSimulationReleasedSendRequestCount(std::uint64_t count) noexcept;
 
 		void AddReliableResendPacketCount(std::uint64_t count) noexcept;
 		void AddReliableResendGiveUpPacketCount(std::uint64_t count) noexcept;

@@ -18,10 +18,13 @@ namespace server::diagnostics
 		std::uint64_t leaveRequestCount = 0;
 		std::uint64_t joinRoomRequestCount = 0;
 
-		// Counts successful async send request submissions. Actual send completion is handled by IOCP.
+		// Counts logical packet send requests accepted by UdpPacketSender.
+		// Fault simulation may drop, duplicate, or delay them before transport submission.
 		std::uint64_t playerSnapshotSendRequestCount = 0;
 		std::uint64_t bulletSnapshotSendRequestCount = 0;
 		std::uint64_t impactEffectSendRequestCount = 0;
+
+		std::uint64_t faultSimulationReleasedSendRequestCount = 0;
 
 		std::uint64_t reliableResendPacketCount = 0;
 		std::uint64_t reliableResendGiveUpPacketCount = 0;

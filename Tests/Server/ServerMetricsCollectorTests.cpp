@@ -28,6 +28,11 @@ namespace
 		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 0, "ServerMetricsCollector: initial reliable unknown peer data packet count");
 		tests::Expect(result, snapshot.invalidReliablePacketCount == 0, "ServerMetricsCollector: initial invalid reliable packet count");
 		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 0, "ServerMetricsCollector: initial reliable invalid ack packet count");
+		tests::Expect(
+			result,
+			snapshot.faultSimulationReleasedSendRequestCount == 0,
+			"ServerMetricsCollector: initial fault simulation released send request count"
+		);
 	}
 
 	void RunIncrementCountersTest(tests::DebugTestResult& result)
@@ -52,6 +57,7 @@ namespace
 		metricsCollector.IncrementReliableUnknownPeerDataPacketCount();
 		metricsCollector.IncrementInvalidReliablePacketCount();
 		metricsCollector.IncrementReliableInvalidAckPacketCount();
+		metricsCollector.AddFaultSimulationReleasedSendRequestCount(6);
 
 		metricsCollector.AddPlayerSnapshotSendRequestCount(3);
 		metricsCollector.AddBulletSnapshotSendRequestCount(4);
@@ -79,6 +85,11 @@ namespace
 		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 1, "ServerMetricsCollector: reliable unknown peer data packet count");
 		tests::Expect(result, snapshot.invalidReliablePacketCount == 1, "ServerMetricsCollector: invalid reliable packet count");
 		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 1, "ServerMetricsCollector: reliable invalid ack packet count");
+		tests::Expect(
+			result,
+			snapshot.faultSimulationReleasedSendRequestCount == 6,
+			"ServerMetricsCollector: fault simulation released send request count"
+		);
 	}
 
 	void RunResetTest(tests::DebugTestResult& result)
@@ -103,6 +114,7 @@ namespace
 		metricsCollector.IncrementReliableUnknownPeerDataPacketCount();
 		metricsCollector.IncrementInvalidReliablePacketCount();
 		metricsCollector.IncrementReliableInvalidAckPacketCount();
+		metricsCollector.AddFaultSimulationReleasedSendRequestCount(10);
 
 		metricsCollector.Reset();
 
@@ -126,6 +138,11 @@ namespace
 		tests::Expect(result, snapshot.reliableUnknownPeerDataPacketCount == 0, "ServerMetricsCollector: reset reliable unknown peer data packet count");
 		tests::Expect(result, snapshot.invalidReliablePacketCount == 0, "ServerMetricsCollector: reset invalid reliable packet count");
 		tests::Expect(result, snapshot.reliableInvalidAckPacketCount == 0, "ServerMetricsCollector: reset reliable invalid ack packet count");
+		tests::Expect(
+			result,
+			snapshot.faultSimulationReleasedSendRequestCount == 0,
+			"ServerMetricsCollector: reset fault simulation released send request count"
+		);
 	}
 }
 

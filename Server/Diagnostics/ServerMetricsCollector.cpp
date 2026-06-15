@@ -18,6 +18,8 @@ namespace server::diagnostics
 		bulletSnapshotSendRequestCount_.store(0);
 		impactEffectSendRequestCount_.store(0);
 
+		faultSimulationReleasedSendRequestCount_.store(0);
+
 		reliableResendPacketCount_.store(0);
 		reliableResendGiveUpPacketCount_.store(0);
 		reliableSendWindowFullCount_.store(0);
@@ -87,6 +89,11 @@ namespace server::diagnostics
 	void ServerMetricsCollector::AddImpactEffectSendRequestCount(std::uint64_t count) noexcept
 	{
 		impactEffectSendRequestCount_.fetch_add(count);
+	}
+
+	void ServerMetricsCollector::AddFaultSimulationReleasedSendRequestCount(std::uint64_t count) noexcept
+	{
+		faultSimulationReleasedSendRequestCount_.fetch_add(count);
 	}
 
 	void ServerMetricsCollector::AddReliableResendPacketCount(std::uint64_t count) noexcept
@@ -171,6 +178,8 @@ namespace server::diagnostics
 		snapshot.playerSnapshotSendRequestCount = playerSnapshotSendRequestCount_.load();
 		snapshot.bulletSnapshotSendRequestCount = bulletSnapshotSendRequestCount_.load();
 		snapshot.impactEffectSendRequestCount = impactEffectSendRequestCount_.load();
+
+		snapshot.faultSimulationReleasedSendRequestCount = faultSimulationReleasedSendRequestCount_.load();
 
 		snapshot.reliableResendPacketCount = reliableResendPacketCount_.load();
 		snapshot.reliableResendGiveUpPacketCount = reliableResendGiveUpPacketCount_.load();

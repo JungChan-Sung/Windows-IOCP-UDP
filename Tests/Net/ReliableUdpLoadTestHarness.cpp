@@ -44,6 +44,61 @@ namespace tests::net::reliableUdpLoadTest
 		return peerPairList;
 	}
 
+	ReliableUdpVirtualNetwork::Config MakeDefaultVirtualNetworkFaultConfig() noexcept
+	{
+		ReliableUdpVirtualNetwork::Config config{};
+		config.dropModulo = 5;
+		config.duplicateModulo = 7;
+		config.delayModulo = 3;
+		config.reorderModulo = 4;
+		config.delay = std::chrono::milliseconds(10);
+		config.reorderDelay = std::chrono::milliseconds(30);
+
+		return config;
+	}
+
+	void ConfigurePeerForVirtualNetwork(
+		SimulatedPeer& peer,
+		int maxResendCountValue
+	) noexcept
+	{
+		peer.session.SetMaxResendCount(maxResendCountValue);
+		peer.session.SetResendInterval(resendInterval);
+	}
+
+	VirtualNetworkResendPumpResult SubmitResendPacketsToVirtualNetwork(
+		SimulatedPeer& sender,
+		ReliableUdpVirtualNetwork& virtualNetwork,
+		ReliableUdpVirtualNetwork::Endpoint sourceEndpoint,
+		TimePoint currentTime
+	)
+	{
+		const common::net::ReliableUdpSession::ResendResult resendResult =
+			sender.session.ExtractResendResult(currentTime);
+
+		VirtualNetworkResendPumpResult result{};
+		result.extractedResendPacketCount =
+			static_cast<std::uint64_t>(
+				resendResult.resendPacketList.size()
+				);
+		result.giveUpPacketCount =
+			static_cast<std::uint64_t>(
+				resendResult.giveUpPacketList.size()
+				);
+
+		for (const common::net::ReliablePendingPacket& resendPacket :
+			resendResult.resendPacketList)
+		{
+			virtualNetwork.Submit(
+				sourceEndpoint,
+				resendPacket.packetBuffer,
+				currentTime
+			);
+		}
+
+		return result;
+	}
+
 	std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(
 		std::int32_t roomId
 	)

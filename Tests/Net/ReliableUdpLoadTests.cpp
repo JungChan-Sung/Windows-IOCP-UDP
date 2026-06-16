@@ -1,6 +1,5 @@
 #include "ReliableUdpLoadTests.h"
 
-#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -538,18 +537,14 @@ namespace tests::net::reliableUdpLoadTest
 		PeerPairList peerPairList = CreatePeerPairList(virtualNetworkClientCount);
 		std::vector<ReliableUdpVirtualNetwork> virtualNetworkList(peerPairList.size());
 
-		ReliableUdpVirtualNetwork::Config virtualNetworkConfig{};
-		virtualNetworkConfig.dropModulo = 5;
-		virtualNetworkConfig.duplicateModulo = 7;
-		virtualNetworkConfig.delayModulo = 3;
-		virtualNetworkConfig.reorderModulo = 4;
-		virtualNetworkConfig.delay = std::chrono::milliseconds(10);
-		virtualNetworkConfig.reorderDelay = std::chrono::milliseconds(30);
+		const ReliableUdpVirtualNetwork::Config virtualNetworkConfig = MakeDefaultVirtualNetworkFaultConfig();
 
 		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
 		{
-			peerPairList[clientIndex].client.session.SetMaxResendCount(virtualNetworkMaxResendCount);
-			peerPairList[clientIndex].client.session.SetResendInterval(resendInterval);
+			ConfigurePeerForVirtualNetwork(
+				peerPairList[clientIndex].client,
+				virtualNetworkMaxResendCount
+			);
 
 			virtualNetworkList[clientIndex].SetConfig(virtualNetworkConfig);
 		}
@@ -622,24 +617,16 @@ namespace tests::net::reliableUdpLoadTest
 				SimulatedPeerPair& peerPair = peerPairList[clientIndex];
 				ReliableUdpVirtualNetwork& virtualNetwork = virtualNetworkList[clientIndex];
 
-				const common::net::ReliableUdpSession::ResendResult resendResult =
-					peerPair.client.session.ExtractResendResult(currentTime);
-
-				extractedResendPacketCount +=
-					static_cast<std::uint64_t>(resendResult.resendPacketList.size());
-
-				giveUpPacketCount +=
-					static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
-
-				for (const common::net::ReliablePendingPacket& resendPacket :
-					resendResult.resendPacketList)
-				{
-					virtualNetwork.Submit(
+				const VirtualNetworkResendPumpResult resendPumpResult =
+					SubmitResendPacketsToVirtualNetwork(
+						peerPair.client,
+						virtualNetwork,
 						ReliableUdpVirtualNetwork::Endpoint::Client,
-						resendPacket.packetBuffer,
 						currentTime
 					);
-				}
+
+				extractedResendPacketCount += resendPumpResult.extractedResendPacketCount;
+				giveUpPacketCount += resendPumpResult.giveUpPacketCount;
 
 				ReliableUdpVirtualNetwork::PacketList serverPacketList =
 					virtualNetwork.ExtractReadyPackets(
@@ -756,25 +743,18 @@ namespace tests::net::reliableUdpLoadTest
 		PeerPairList peerPairList = CreatePeerPairList(virtualNetworkRoundTripClientCount);
 		std::vector<ReliableUdpVirtualNetwork> virtualNetworkList(peerPairList.size());
 
-		ReliableUdpVirtualNetwork::Config virtualNetworkConfig{};
-		virtualNetworkConfig.dropModulo = 5;
-		virtualNetworkConfig.duplicateModulo = 7;
-		virtualNetworkConfig.delayModulo = 3;
-		virtualNetworkConfig.reorderModulo = 4;
-		virtualNetworkConfig.delay = std::chrono::milliseconds(10);
-		virtualNetworkConfig.reorderDelay = std::chrono::milliseconds(30);
+		const ReliableUdpVirtualNetwork::Config virtualNetworkConfig = MakeDefaultVirtualNetworkFaultConfig();
 
 		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
 		{
-			peerPairList[clientIndex].client.session.SetMaxResendCount(
+			ConfigurePeerForVirtualNetwork(
+				peerPairList[clientIndex].client,
 				virtualNetworkRoundTripMaxResendCount
 			);
-			peerPairList[clientIndex].server.session.SetMaxResendCount(
+			ConfigurePeerForVirtualNetwork(
+				peerPairList[clientIndex].server,
 				virtualNetworkRoundTripMaxResendCount
 			);
-
-			peerPairList[clientIndex].client.session.SetResendInterval(resendInterval);
-			peerPairList[clientIndex].server.session.SetResendInterval(resendInterval);
 
 			virtualNetworkList[clientIndex].SetConfig(virtualNetworkConfig);
 		}
@@ -852,43 +832,33 @@ namespace tests::net::reliableUdpLoadTest
 				SimulatedPeerPair& peerPair = peerPairList[clientIndex];
 				ReliableUdpVirtualNetwork& virtualNetwork = virtualNetworkList[clientIndex];
 
-				const common::net::ReliableUdpSession::ResendResult clientResendResult =
-					peerPair.client.session.ExtractResendResult(currentTime);
+				const VirtualNetworkResendPumpResult clientResendPumpResult =
+					SubmitResendPacketsToVirtualNetwork(
+						peerPair.client,
+						virtualNetwork,
+						ReliableUdpVirtualNetwork::Endpoint::Client,
+						currentTime
+					);
 
 				extractedClientResendPacketCount +=
-					static_cast<std::uint64_t>(clientResendResult.resendPacketList.size());
+					clientResendPumpResult.extractedResendPacketCount;
 
 				clientGiveUpPacketCount +=
-					static_cast<std::uint64_t>(clientResendResult.giveUpPacketList.size());
+					clientResendPumpResult.giveUpPacketCount;
 
-				for (const common::net::ReliablePendingPacket& resendPacket :
-					clientResendResult.resendPacketList)
-				{
-					virtualNetwork.Submit(
-						ReliableUdpVirtualNetwork::Endpoint::Client,
-						resendPacket.packetBuffer,
+				const VirtualNetworkResendPumpResult serverResendPumpResult =
+					SubmitResendPacketsToVirtualNetwork(
+						peerPair.server,
+						virtualNetwork,
+						ReliableUdpVirtualNetwork::Endpoint::Server,
 						currentTime
 					);
-				}
-
-				const common::net::ReliableUdpSession::ResendResult serverResendResult =
-					peerPair.server.session.ExtractResendResult(currentTime);
 
 				extractedServerResendPacketCount +=
-					static_cast<std::uint64_t>(serverResendResult.resendPacketList.size());
+					serverResendPumpResult.extractedResendPacketCount;
 
 				serverGiveUpPacketCount +=
-					static_cast<std::uint64_t>(serverResendResult.giveUpPacketList.size());
-
-				for (const common::net::ReliablePendingPacket& resendPacket :
-					serverResendResult.resendPacketList)
-				{
-					virtualNetwork.Submit(
-						ReliableUdpVirtualNetwork::Endpoint::Server,
-						resendPacket.packetBuffer,
-						currentTime
-					);
-				}
+					serverResendPumpResult.giveUpPacketCount;
 
 				ReliableUdpVirtualNetwork::PacketList serverPacketList =
 					virtualNetwork.ExtractReadyPackets(

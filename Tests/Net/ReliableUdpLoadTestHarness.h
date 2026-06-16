@@ -40,6 +40,13 @@ namespace tests::net::reliableUdpLoadTest
 		std::optional<common::packet::PacketBuffer> ackPacketBuffer;
 	};
 
+	struct VirtualNetworkResendPumpResult
+	{
+	public:
+		std::uint64_t extractedResendPacketCount = 0;
+		std::uint64_t giveUpPacketCount = 0;
+	};
+
 	using PeerPairList = std::vector<SimulatedPeerPair>;
 	using TimePoint = common::net::ReliableUdpSession::TimePoint;
 
@@ -56,6 +63,20 @@ namespace tests::net::reliableUdpLoadTest
 	void ConfigurePeer(SimulatedPeer& peer) noexcept;
 
 	[[nodiscard]] PeerPairList CreatePeerPairList(std::size_t peerPairCount);
+
+	[[nodiscard]] ReliableUdpVirtualNetwork::Config MakeDefaultVirtualNetworkFaultConfig() noexcept;
+
+	void ConfigurePeerForVirtualNetwork(
+		SimulatedPeer& peer,
+		int maxResendCountValue
+	) noexcept;
+
+	[[nodiscard]] VirtualNetworkResendPumpResult SubmitResendPacketsToVirtualNetwork(
+		SimulatedPeer& sender,
+		ReliableUdpVirtualNetwork& virtualNetwork,
+		ReliableUdpVirtualNetwork::Endpoint sourceEndpoint,
+		TimePoint currentTime
+	);
 
 	[[nodiscard]] std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(
 		std::int32_t roomId

@@ -45,8 +45,13 @@ namespace tests::net::reliableUdpLoadTest
 	using PeerPairList = std::vector<SimulatedPeerPair>;
 	using TimePoint = common::net::ReliableUdpSession::TimePoint;
 
+	using PacketBufferList = std::vector<common::packet::PacketBuffer>;
+
 	static inline constexpr std::size_t roundTripClientCount = 32;
 	static inline constexpr std::size_t roundTripRequestCountPerClient = 128;
+
+	static inline constexpr std::size_t burstClientCount = 16;
+	static inline constexpr std::size_t burstRequestCountPerClient = 64;
 
 	static inline constexpr std::size_t resendClientCount = 16;
 	static inline constexpr std::size_t resendRequestCountPerClient = 64;
@@ -541,6 +546,140 @@ namespace tests::net::reliableUdpLoadTest
 			"ReliableUdpLoad: dropped ack pending packets cleared"
 		);
 	}
+
+	void RunBurstOutOfOrderAckLoadTest(tests::DebugTestResult& result)
+	{
+		PeerPairList peerPairList = CreatePeerPairList(burstClientCount);
+
+		std::vector<PacketBufferList> requestPacketTable(peerPairList.size());
+		TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		std::uint64_t buildFailureCount = 0;
+		std::uint64_t deliveredRequestCount = 0;
+		std::uint64_t deliveredAckCount = 0;
+		std::uint64_t expectedPendingPacketCount = 0;
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+			PacketBufferList& requestPacketList = requestPacketTable[clientIndex];
+
+			requestPacketList.reserve(burstRequestCountPerClient);
+
+			for (std::size_t requestIndex = 0; requestIndex < burstRequestCountPerClient; ++requestIndex)
+			{
+				const std::int32_t roomId =
+					static_cast<std::int32_t>((requestIndex + clientIndex) % 3) + 1;
+
+				const std::optional<common::packet::PacketBuffer> requestPayload =
+					SerializeJoinRoomRequest(roomId);
+
+				if (!requestPayload.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				const std::optional<common::packet::PacketBuffer> requestPacket =
+					BuildReliableDataPacket(
+						peerPair.client,
+						MakeConstPacketSpan(*requestPayload),
+						currentTime
+					);
+
+				if (!requestPacket.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				requestPacketList.push_back(*requestPacket);
+				++expectedPendingPacketCount;
+
+				currentTime += std::chrono::milliseconds(1);
+			}
+		}
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+
+			tests::Expect(
+				result,
+				peerPair.client.session.GetPendingPacketCount() == burstRequestCountPerClient,
+				"ReliableUdpLoad: burst pending count before ack"
+			);
+		}
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+			const PacketBufferList& requestPacketList = requestPacketTable[clientIndex];
+
+			PacketBufferList ackPacketList;
+			ackPacketList.reserve(requestPacketList.size());
+
+			for (const common::packet::PacketBuffer& requestPacket : requestPacketList)
+			{
+				const ReceiveResult receiveResult =
+					ReceiveReliablePacket(peerPair.server, requestPacket);
+
+				if (receiveResult.parsed
+					&& receiveResult.isNewDataPacket
+					&& receiveResult.packetType == common::packet::PacketType::JoinRoomRequest)
+				{
+					++deliveredRequestCount;
+				}
+
+				if (receiveResult.ackPacketBuffer.has_value())
+				{
+					ackPacketList.push_back(*receiveResult.ackPacketBuffer);
+				}
+			}
+
+			for (std::size_t ackIndex = ackPacketList.size(); ackIndex > 0; --ackIndex)
+			{
+				if (DeliverAckIfExists(peerPair.client, ackPacketList[ackIndex - 1]))
+				{
+					++deliveredAckCount;
+				}
+			}
+		}
+
+		const std::uint64_t expectedRequestCount =
+			static_cast<std::uint64_t>(burstClientCount * burstRequestCountPerClient);
+
+		tests::Expect(
+			result,
+			buildFailureCount == 0,
+			"ReliableUdpLoad: burst out-of-order ack build failures"
+		);
+		tests::Expect(
+			result,
+			expectedPendingPacketCount == expectedRequestCount,
+			"ReliableUdpLoad: burst expected pending packet count"
+		);
+		tests::Expect(
+			result,
+			deliveredRequestCount == expectedRequestCount,
+			"ReliableUdpLoad: burst request delivery count"
+		);
+		tests::Expect(
+			result,
+			deliveredAckCount == expectedRequestCount,
+			"ReliableUdpLoad: burst out-of-order ack delivery count"
+		);
+		tests::Expect(
+			result,
+			GetTotalServerNewDataPacketCount(peerPairList) == expectedRequestCount,
+			"ReliableUdpLoad: burst server received request count"
+		);
+		tests::Expect(
+			result,
+			HasNoPendingPackets(peerPairList),
+			"ReliableUdpLoad: burst pending packets cleared"
+		);
+	}
 }
 
 namespace tests::net
@@ -551,6 +690,7 @@ namespace tests::net
 
 		reliableUdpLoadTest::RunManyClientRoundTripLoadTest(result);
 		reliableUdpLoadTest::RunDroppedAckResendLoadTest(result);
+		reliableUdpLoadTest::RunBurstOutOfOrderAckLoadTest(result);
 
 		return result;
 	}

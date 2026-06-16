@@ -99,6 +99,63 @@ namespace tests::net::reliableUdpLoadTest
 		return result;
 	}
 
+	VirtualNetworkReceivePumpResult PumpReadyPacketsToReceiver(
+		SimulatedPeer& receiver,
+		ReliableUdpVirtualNetwork& virtualNetwork,
+		ReliableUdpVirtualNetwork::Endpoint receiverEndpoint,
+		common::packet::PacketType targetPacketType,
+		TimePoint currentTime
+	)
+	{
+		VirtualNetworkReceivePumpResult result{};
+
+		ReliableUdpVirtualNetwork::PacketList packetList =
+			virtualNetwork.ExtractReadyPackets(
+				receiverEndpoint,
+				currentTime
+			);
+
+		for (const ReliableUdpVirtualNetwork::Packet& packet : packetList)
+		{
+			const ReceiveResult receiveResult =
+				ReceiveReliablePacket(
+					receiver,
+					packet.packetBuffer
+				);
+
+			if (receiveResult.parsed && receiveResult.isAckOnly)
+			{
+				++result.deliveredAckOnlyPacketCount;
+				continue;
+			}
+
+			if (receiveResult.ackPacketBuffer.has_value())
+			{
+				virtualNetwork.Submit(
+					receiverEndpoint,
+					*receiveResult.ackPacketBuffer,
+					currentTime
+				);
+
+				++result.submittedAckPacketCount;
+			}
+
+			if (receiveResult.parsed && receiveResult.isNewDataPacket)
+			{
+				++result.deliveredNewDataPacketCount;
+			}
+
+			if (receiveResult.parsed
+				&& receiveResult.isNewDataPacket
+				&& receiveResult.packetType == targetPacketType)
+			{
+				++result.deliveredTargetPacketCount;
+			}
+		}
+
+		return result;
+	}
+
 	std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(
 		std::int32_t roomId
 	)

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <Common/Net/ReliableUdpSession.h>
+#include <Common/Packet/PacketType.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -628,58 +629,29 @@ namespace tests::net::reliableUdpLoadTest
 				extractedResendPacketCount += resendPumpResult.extractedResendPacketCount;
 				giveUpPacketCount += resendPumpResult.giveUpPacketCount;
 
-				ReliableUdpVirtualNetwork::PacketList serverPacketList =
-					virtualNetwork.ExtractReadyPackets(
+				const VirtualNetworkReceivePumpResult serverReceivePumpResult =
+					PumpReadyPacketsToReceiver(
+						peerPair.server,
+						virtualNetwork,
 						ReliableUdpVirtualNetwork::Endpoint::Server,
+						common::packet::PacketType::JoinRoomRequest,
 						currentTime
 					);
 
-				for (const ReliableUdpVirtualNetwork::Packet& serverPacket :
-					serverPacketList)
-				{
-					const ReceiveResult receiveResult =
-						ReceiveReliablePacket(
-							peerPair.server,
-							serverPacket.packetBuffer
-						);
+				deliveredRequestCount +=
+					serverReceivePumpResult.deliveredTargetPacketCount;
 
-					if (receiveResult.parsed
-						&& receiveResult.isNewDataPacket
-						&& receiveResult.packetType == common::packet::PacketType::JoinRoomRequest)
-					{
-						++deliveredRequestCount;
-					}
-
-					if (receiveResult.ackPacketBuffer.has_value())
-					{
-						virtualNetwork.Submit(
-							ReliableUdpVirtualNetwork::Endpoint::Server,
-							*receiveResult.ackPacketBuffer,
-							currentTime
-						);
-					}
-				}
-
-				ReliableUdpVirtualNetwork::PacketList clientPacketList =
-					virtualNetwork.ExtractReadyPackets(
+				const VirtualNetworkReceivePumpResult clientReceivePumpResult =
+					PumpReadyPacketsToReceiver(
+						peerPair.client,
+						virtualNetwork,
 						ReliableUdpVirtualNetwork::Endpoint::Client,
+						common::packet::PacketType::None,
 						currentTime
 					);
 
-				for (const ReliableUdpVirtualNetwork::Packet& clientPacket :
-					clientPacketList)
-				{
-					const ReceiveResult receiveResult =
-						ReceiveReliablePacket(
-							peerPair.client,
-							clientPacket.packetBuffer
-						);
-
-					if (receiveResult.parsed && receiveResult.isAckOnly)
-					{
-						++deliveredAckOnlyPacketCount;
-					}
-				}
+				deliveredAckOnlyPacketCount +=
+					clientReceivePumpResult.deliveredAckOnlyPacketCount;
 			}
 
 			if (deliveredRequestCount == expectedRequestCount
@@ -937,43 +909,20 @@ namespace tests::net::reliableUdpLoadTest
 					++submittedResponseCount;
 				}
 
-				ReliableUdpVirtualNetwork::PacketList clientPacketList =
-					virtualNetwork.ExtractReadyPackets(
+				const VirtualNetworkReceivePumpResult clientReceivePumpResult =
+					PumpReadyPacketsToReceiver(
+						peerPair.client,
+						virtualNetwork,
 						ReliableUdpVirtualNetwork::Endpoint::Client,
+						common::packet::PacketType::JoinRoomResponse,
 						currentTime
 					);
 
-				for (const ReliableUdpVirtualNetwork::Packet& clientPacket :
-					clientPacketList)
-				{
-					const ReceiveResult receiveResult =
-						ReceiveReliablePacket(
-							peerPair.client,
-							clientPacket.packetBuffer
-						);
+				deliveredClientAckOnlyPacketCount +=
+					clientReceivePumpResult.deliveredAckOnlyPacketCount;
 
-					if (receiveResult.parsed && receiveResult.isAckOnly)
-					{
-						++deliveredClientAckOnlyPacketCount;
-						continue;
-					}
-
-					if (receiveResult.ackPacketBuffer.has_value())
-					{
-						virtualNetwork.Submit(
-							ReliableUdpVirtualNetwork::Endpoint::Client,
-							*receiveResult.ackPacketBuffer,
-							currentTime
-						);
-					}
-
-					if (receiveResult.parsed
-						&& receiveResult.isNewDataPacket
-						&& receiveResult.packetType == common::packet::PacketType::JoinRoomResponse)
-					{
-						++deliveredResponseCount;
-					}
-				}
+				deliveredResponseCount +=
+					clientReceivePumpResult.deliveredTargetPacketCount;
 			}
 
 			if (deliveredRequestCount == expectedRoundTripCount

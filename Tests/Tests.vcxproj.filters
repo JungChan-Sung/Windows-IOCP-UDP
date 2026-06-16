@@ -207,6 +207,9 @@
     <ClCompile Include="Net\ReliableUdpVirtualNetwork.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -310,6 +313,9 @@
     </ClInclude>
     <ClInclude Include="Net\ReliableUdpVirtualNetwork.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ReliableUdpLoadTestHarness.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

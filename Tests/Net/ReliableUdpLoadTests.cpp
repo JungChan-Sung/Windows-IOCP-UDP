@@ -1,5 +1,6 @@
 #include "ReliableUdpLoadTests.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -52,6 +53,10 @@ namespace tests::net::reliableUdpLoadTest
 
 	static inline constexpr std::size_t burstClientCount = 16;
 	static inline constexpr std::size_t burstRequestCountPerClient = 64;
+
+	static inline constexpr std::size_t giveUpClientCount = 8;
+	static inline constexpr std::size_t giveUpRequestCountPerClient = 32;
+	static inline constexpr int giveUpMaxResendCount = 3;
 
 	static inline constexpr std::size_t resendClientCount = 16;
 	static inline constexpr std::size_t resendRequestCountPerClient = 64;
@@ -249,6 +254,23 @@ namespace tests::net::reliableUdpLoadTest
 		}
 
 		return true;
+	}
+
+	[[nodiscard]] std::size_t GetMaxClientPendingPacketCount(
+		const PeerPairList& peerPairList
+	) noexcept
+	{
+		std::size_t maxPendingPacketCountValue = 0;
+
+		for (const SimulatedPeerPair& peerPair : peerPairList)
+		{
+			maxPendingPacketCountValue = std::max(
+				maxPendingPacketCountValue,
+				peerPair.client.session.GetPendingPacketCount()
+			);
+		}
+
+		return maxPendingPacketCountValue;
 	}
 
 	[[nodiscard]] std::uint64_t GetTotalClientNewDataPacketCount(
@@ -680,6 +702,112 @@ namespace tests::net::reliableUdpLoadTest
 			"ReliableUdpLoad: burst pending packets cleared"
 		);
 	}
+
+	void RunGiveUpLoadTest(tests::DebugTestResult& result)
+	{
+		PeerPairList peerPairList = CreatePeerPairList(giveUpClientCount);
+
+		TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		std::uint64_t buildFailureCount = 0;
+		std::uint64_t registeredRequestCount = 0;
+		std::uint64_t extractedResendPacketCount = 0;
+		std::uint64_t giveUpPacketCount = 0;
+
+		for (SimulatedPeerPair& peerPair : peerPairList)
+		{
+			peerPair.client.session.SetMaxResendCount(giveUpMaxResendCount);
+		}
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+
+			for (std::size_t requestIndex = 0; requestIndex < giveUpRequestCountPerClient; ++requestIndex)
+			{
+				const std::int32_t roomId =
+					static_cast<std::int32_t>((requestIndex + clientIndex) % 3) + 1;
+
+				const std::optional<common::packet::PacketBuffer> requestPayload =
+					SerializeJoinRoomRequest(roomId);
+
+				if (!requestPayload.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				const std::optional<common::packet::PacketBuffer> requestPacket =
+					BuildReliableDataPacket(
+						peerPair.client,
+						MakeConstPacketSpan(*requestPayload),
+						currentTime
+					);
+
+				if (!requestPacket.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				// Intentionally do not deliver the packet and do not deliver ACK.
+				++registeredRequestCount;
+				currentTime += std::chrono::milliseconds(1);
+			}
+		}
+
+		const std::uint64_t expectedRequestCount =
+			static_cast<std::uint64_t>(giveUpClientCount * giveUpRequestCountPerClient);
+
+		tests::Expect(
+			result,
+			GetMaxClientPendingPacketCount(peerPairList) == giveUpRequestCountPerClient,
+			"ReliableUdpLoad: give-up pending count before resend"
+		);
+
+		for (int resendAttempt = 0; resendAttempt <= giveUpMaxResendCount; ++resendAttempt)
+		{
+			currentTime += resendInterval;
+
+			for (SimulatedPeerPair& peerPair : peerPairList)
+			{
+				const common::net::ReliableUdpSession::ResendResult resendResult =
+					peerPair.client.session.ExtractResendResult(currentTime);
+
+				extractedResendPacketCount +=
+					static_cast<std::uint64_t>(resendResult.resendPacketList.size());
+
+				giveUpPacketCount +=
+					static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
+			}
+		}
+
+		tests::Expect(
+			result,
+			buildFailureCount == 0,
+			"ReliableUdpLoad: give-up build failures"
+		);
+		tests::Expect(
+			result,
+			registeredRequestCount == expectedRequestCount,
+			"ReliableUdpLoad: give-up registered request count"
+		);
+		tests::Expect(
+			result,
+			extractedResendPacketCount == expectedRequestCount * giveUpMaxResendCount,
+			"ReliableUdpLoad: give-up resend extraction count"
+		);
+		tests::Expect(
+			result,
+			giveUpPacketCount == expectedRequestCount,
+			"ReliableUdpLoad: give-up packet count"
+		);
+		tests::Expect(
+			result,
+			HasNoPendingPackets(peerPairList),
+			"ReliableUdpLoad: give-up pending packets cleared"
+		);
+	}
 }
 
 namespace tests::net
@@ -691,6 +819,7 @@ namespace tests::net
 		reliableUdpLoadTest::RunManyClientRoundTripLoadTest(result);
 		reliableUdpLoadTest::RunDroppedAckResendLoadTest(result);
 		reliableUdpLoadTest::RunBurstOutOfOrderAckLoadTest(result);
+		reliableUdpLoadTest::RunGiveUpLoadTest(result);
 
 		return result;
 	}

@@ -66,6 +66,13 @@ namespace tests::net::reliableUdpLoadTest
 		std::uint64_t buildFailureCount = 0;
 	};
 
+	struct VirtualNetworkRequestSubmitResult
+	{
+	public:
+		std::uint64_t submittedRequestCount = 0;
+		std::uint64_t buildFailureCount = 0;
+	};
+
 	using PeerPairList = std::vector<SimulatedPeerPair>;
 	using TimePoint = common::net::ReliableUdpSession::TimePoint;
 
@@ -110,6 +117,13 @@ namespace tests::net::reliableUdpLoadTest
 		ReliableUdpVirtualNetwork& virtualNetwork,
 		std::size_t clientIndex,
 		TimePoint currentTime
+	);
+
+	[[nodiscard]] VirtualNetworkRequestSubmitResult SubmitJoinRoomRequestsToVirtualNetworks(
+		PeerPairList& peerPairList,
+		std::vector<ReliableUdpVirtualNetwork>& virtualNetworkList,
+		std::size_t requestCountPerClient,
+		TimePoint& currentTime
 	);
 
 	[[nodiscard]] std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(

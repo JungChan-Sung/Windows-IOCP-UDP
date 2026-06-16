@@ -248,6 +248,61 @@ namespace tests::net::reliableUdpLoadTest
 		return result;
 	}
 
+	VirtualNetworkRequestSubmitResult SubmitJoinRoomRequestsToVirtualNetworks(
+		PeerPairList& peerPairList,
+		std::vector<ReliableUdpVirtualNetwork>& virtualNetworkList,
+		std::size_t requestCountPerClient,
+		TimePoint& currentTime
+	)
+	{
+		VirtualNetworkRequestSubmitResult result{};
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+			ReliableUdpVirtualNetwork& virtualNetwork = virtualNetworkList[clientIndex];
+
+			for (std::size_t requestIndex = 0; requestIndex < requestCountPerClient; ++requestIndex)
+			{
+				const std::int32_t roomId =
+					static_cast<std::int32_t>((requestIndex + clientIndex) % 3) + 1;
+
+				const std::optional<common::packet::PacketBuffer> requestPayload =
+					SerializeJoinRoomRequest(roomId);
+
+				if (!requestPayload.has_value())
+				{
+					++result.buildFailureCount;
+					continue;
+				}
+
+				const std::optional<common::packet::PacketBuffer> requestPacket =
+					BuildReliableDataPacket(
+						peerPair.client,
+						MakeConstPacketSpan(*requestPayload),
+						currentTime
+					);
+
+				if (!requestPacket.has_value())
+				{
+					++result.buildFailureCount;
+					continue;
+				}
+
+				virtualNetwork.Submit(
+					ReliableUdpVirtualNetwork::Endpoint::Client,
+					*requestPacket,
+					currentTime
+				);
+
+				++result.submittedRequestCount;
+				currentTime += std::chrono::milliseconds(1);
+			}
+		}
+
+		return result;
+	}
+
 	std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(
 		std::int32_t roomId
 	)

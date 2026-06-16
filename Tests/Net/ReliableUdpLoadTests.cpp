@@ -15,6 +15,8 @@
 
 #include <Tests/DebugTestResult.h>
 
+#include "ReliableUdpVirtualNetwork.h"
+
 namespace tests::net::reliableUdpLoadTest
 {
 	struct SimulatedPeer
@@ -64,6 +66,11 @@ namespace tests::net::reliableUdpLoadTest
 	static inline constexpr std::chrono::milliseconds resendInterval = std::chrono::milliseconds(10);
 	static inline constexpr std::size_t maxPendingPacketCount = 4096;
 	static inline constexpr int maxResendCount = 8;
+
+	static inline constexpr std::size_t virtualNetworkClientCount = 8;
+	static inline constexpr std::size_t virtualNetworkRequestCountPerClient = 32;
+	static inline constexpr int virtualNetworkMaxResendCount = 30;
+	static inline constexpr int virtualNetworkMaxIterationCount = 2000;
 
 	[[nodiscard]] common::packet::ConstPacketSpan MakeConstPacketSpan(
 		const common::packet::PacketBuffer& packetBuffer
@@ -271,6 +278,21 @@ namespace tests::net::reliableUdpLoadTest
 		}
 
 		return maxPendingPacketCountValue;
+	}
+
+	[[nodiscard]] bool HasNoVirtualNetworkPendingPackets(
+		const std::vector<ReliableUdpVirtualNetwork>& virtualNetworkList
+	) noexcept
+	{
+		for (const ReliableUdpVirtualNetwork& virtualNetwork : virtualNetworkList)
+		{
+			if (virtualNetwork.GetPendingPacketCount() != 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	[[nodiscard]] std::uint64_t GetTotalClientNewDataPacketCount(
@@ -808,6 +830,224 @@ namespace tests::net::reliableUdpLoadTest
 			"ReliableUdpLoad: give-up pending packets cleared"
 		);
 	}
+
+	void RunVirtualNetworkFaultLoadTest(tests::DebugTestResult& result)
+	{
+		PeerPairList peerPairList = CreatePeerPairList(virtualNetworkClientCount);
+		std::vector<ReliableUdpVirtualNetwork> virtualNetworkList(peerPairList.size());
+
+		ReliableUdpVirtualNetwork::Config virtualNetworkConfig{};
+		virtualNetworkConfig.dropModulo = 5;
+		virtualNetworkConfig.duplicateModulo = 7;
+		virtualNetworkConfig.delayModulo = 3;
+		virtualNetworkConfig.reorderModulo = 4;
+		virtualNetworkConfig.delay = std::chrono::milliseconds(10);
+		virtualNetworkConfig.reorderDelay = std::chrono::milliseconds(30);
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			peerPairList[clientIndex].client.session.SetMaxResendCount(virtualNetworkMaxResendCount);
+			peerPairList[clientIndex].client.session.SetResendInterval(resendInterval);
+
+			virtualNetworkList[clientIndex].SetConfig(virtualNetworkConfig);
+		}
+
+		TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+
+		std::uint64_t buildFailureCount = 0;
+		std::uint64_t submittedRequestCount = 0;
+		std::uint64_t deliveredRequestCount = 0;
+		std::uint64_t deliveredAckOnlyPacketCount = 0;
+		std::uint64_t extractedResendPacketCount = 0;
+		std::uint64_t giveUpPacketCount = 0;
+
+		for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+		{
+			SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+			ReliableUdpVirtualNetwork& virtualNetwork = virtualNetworkList[clientIndex];
+
+			for (std::size_t requestIndex = 0; requestIndex < virtualNetworkRequestCountPerClient; ++requestIndex)
+			{
+				const std::int32_t roomId =
+					static_cast<std::int32_t>((requestIndex + clientIndex) % 3) + 1;
+
+				const std::optional<common::packet::PacketBuffer> requestPayload =
+					SerializeJoinRoomRequest(roomId);
+
+				if (!requestPayload.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				const std::optional<common::packet::PacketBuffer> requestPacket =
+					BuildReliableDataPacket(
+						peerPair.client,
+						MakeConstPacketSpan(*requestPayload),
+						currentTime
+					);
+
+				if (!requestPacket.has_value())
+				{
+					++buildFailureCount;
+					continue;
+				}
+
+				virtualNetwork.Submit(
+					ReliableUdpVirtualNetwork::Endpoint::Client,
+					*requestPacket,
+					currentTime
+				);
+
+				++submittedRequestCount;
+				currentTime += std::chrono::milliseconds(1);
+			}
+		}
+
+		const std::uint64_t expectedRequestCount =
+			static_cast<std::uint64_t>(
+				virtualNetworkClientCount * virtualNetworkRequestCountPerClient
+				);
+
+		bool completed = false;
+
+		for (int iteration = 0; iteration < virtualNetworkMaxIterationCount; ++iteration)
+		{
+			currentTime += std::chrono::milliseconds(5);
+
+			for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
+			{
+				SimulatedPeerPair& peerPair = peerPairList[clientIndex];
+				ReliableUdpVirtualNetwork& virtualNetwork = virtualNetworkList[clientIndex];
+
+				const common::net::ReliableUdpSession::ResendResult resendResult =
+					peerPair.client.session.ExtractResendResult(currentTime);
+
+				extractedResendPacketCount +=
+					static_cast<std::uint64_t>(resendResult.resendPacketList.size());
+
+				giveUpPacketCount +=
+					static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
+
+				for (const common::net::ReliablePendingPacket& resendPacket :
+					resendResult.resendPacketList)
+				{
+					virtualNetwork.Submit(
+						ReliableUdpVirtualNetwork::Endpoint::Client,
+						resendPacket.packetBuffer,
+						currentTime
+					);
+				}
+
+				ReliableUdpVirtualNetwork::PacketList serverPacketList =
+					virtualNetwork.ExtractReadyPackets(
+						ReliableUdpVirtualNetwork::Endpoint::Server,
+						currentTime
+					);
+
+				for (const ReliableUdpVirtualNetwork::Packet& serverPacket :
+					serverPacketList)
+				{
+					const ReceiveResult receiveResult =
+						ReceiveReliablePacket(
+							peerPair.server,
+							serverPacket.packetBuffer
+						);
+
+					if (receiveResult.parsed
+						&& receiveResult.isNewDataPacket
+						&& receiveResult.packetType == common::packet::PacketType::JoinRoomRequest)
+					{
+						++deliveredRequestCount;
+					}
+
+					if (receiveResult.ackPacketBuffer.has_value())
+					{
+						virtualNetwork.Submit(
+							ReliableUdpVirtualNetwork::Endpoint::Server,
+							*receiveResult.ackPacketBuffer,
+							currentTime
+						);
+					}
+				}
+
+				ReliableUdpVirtualNetwork::PacketList clientPacketList =
+					virtualNetwork.ExtractReadyPackets(
+						ReliableUdpVirtualNetwork::Endpoint::Client,
+						currentTime
+					);
+
+				for (const ReliableUdpVirtualNetwork::Packet& clientPacket :
+					clientPacketList)
+				{
+					const ReceiveResult receiveResult =
+						ReceiveReliablePacket(
+							peerPair.client,
+							clientPacket.packetBuffer
+						);
+
+					if (receiveResult.parsed && receiveResult.isAckOnly)
+					{
+						++deliveredAckOnlyPacketCount;
+					}
+				}
+			}
+
+			if (deliveredRequestCount == expectedRequestCount
+				&& HasNoPendingPackets(peerPairList)
+				&& HasNoVirtualNetworkPendingPackets(virtualNetworkList))
+			{
+				completed = true;
+				break;
+			}
+		}
+
+		tests::Expect(
+			result,
+			buildFailureCount == 0,
+			"ReliableUdpLoad: virtual network build failures"
+		);
+		tests::Expect(
+			result,
+			submittedRequestCount == expectedRequestCount,
+			"ReliableUdpLoad: virtual network submitted request count"
+		);
+		tests::Expect(
+			result,
+			deliveredRequestCount == expectedRequestCount,
+			"ReliableUdpLoad: virtual network delivered request count"
+		);
+		tests::Expect(
+			result,
+			deliveredAckOnlyPacketCount >= expectedRequestCount,
+			"ReliableUdpLoad: virtual network ack delivery count"
+		);
+		tests::Expect(
+			result,
+			extractedResendPacketCount > 0,
+			"ReliableUdpLoad: virtual network resend occurred"
+		);
+		tests::Expect(
+			result,
+			giveUpPacketCount == 0,
+			"ReliableUdpLoad: virtual network no give-up"
+		);
+		tests::Expect(
+			result,
+			completed,
+			"ReliableUdpLoad: virtual network completed"
+		);
+		tests::Expect(
+			result,
+			HasNoPendingPackets(peerPairList),
+			"ReliableUdpLoad: virtual network reliable pending cleared"
+		);
+		tests::Expect(
+			result,
+			HasNoVirtualNetworkPendingPackets(virtualNetworkList),
+			"ReliableUdpLoad: virtual network pending cleared"
+		);
+	}
 }
 
 namespace tests::net
@@ -820,6 +1060,7 @@ namespace tests::net
 		reliableUdpLoadTest::RunDroppedAckResendLoadTest(result);
 		reliableUdpLoadTest::RunBurstOutOfOrderAckLoadTest(result);
 		reliableUdpLoadTest::RunGiveUpLoadTest(result);
+		reliableUdpLoadTest::RunVirtualNetworkFaultLoadTest(result);
 
 		return result;
 	}

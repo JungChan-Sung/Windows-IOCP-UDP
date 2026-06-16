@@ -158,6 +158,7 @@
     <ClCompile Include="Net\ReliableUdpProtocolTests.cpp" />
     <ClCompile Include="Net\ReliableUdpSendWindowTests.cpp" />
     <ClCompile Include="Net\ReliableUdpSessionTests.cpp" />
+    <ClCompile Include="Net\ReliableUdpVirtualNetwork.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssemblerCoreTests.cpp" />
     <ClCompile Include="Net\UdpFaultDecisionGeneratorTests.cpp" />
     <ClCompile Include="Net\UdpFaultPacketSchedulerTests.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="Net\ReliableUdpProtocolTests.h" />
     <ClInclude Include="Net\ReliableUdpSendWindowTests.h" />
     <ClInclude Include="Net\ReliableUdpSessionTests.h" />
+    <ClInclude Include="Net\ReliableUdpVirtualNetwork.h" />
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h" />
     <ClInclude Include="Net\UdpFaultDecisionGeneratorTests.h" />
     <ClInclude Include="Net\UdpFaultPacketSchedulerTests.h" />

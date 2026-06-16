@@ -56,6 +56,16 @@ namespace tests::net::reliableUdpLoadTest
 		std::uint64_t submittedAckPacketCount = 0;
 	};
 
+	struct VirtualNetworkRequestResponsePumpResult
+	{
+	public:
+		std::uint64_t deliveredAckOnlyPacketCount = 0;
+		std::uint64_t deliveredRequestPacketCount = 0;
+		std::uint64_t submittedAckPacketCount = 0;
+		std::uint64_t submittedResponsePacketCount = 0;
+		std::uint64_t buildFailureCount = 0;
+	};
+
 	using PeerPairList = std::vector<SimulatedPeerPair>;
 	using TimePoint = common::net::ReliableUdpSession::TimePoint;
 
@@ -92,6 +102,13 @@ namespace tests::net::reliableUdpLoadTest
 		ReliableUdpVirtualNetwork& virtualNetwork,
 		ReliableUdpVirtualNetwork::Endpoint receiverEndpoint,
 		common::packet::PacketType targetPacketType,
+		TimePoint currentTime
+	);
+
+	[[nodiscard]] VirtualNetworkRequestResponsePumpResult PumpJoinRoomRequestsAndSubmitResponses(
+		SimulatedPeer& serverPeer,
+		ReliableUdpVirtualNetwork& virtualNetwork,
+		std::size_t clientIndex,
 		TimePoint currentTime
 	);
 

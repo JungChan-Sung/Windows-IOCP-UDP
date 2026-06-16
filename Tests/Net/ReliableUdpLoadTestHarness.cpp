@@ -156,6 +156,98 @@ namespace tests::net::reliableUdpLoadTest
 		return result;
 	}
 
+	VirtualNetworkRequestResponsePumpResult PumpJoinRoomRequestsAndSubmitResponses(
+		SimulatedPeer& serverPeer,
+		ReliableUdpVirtualNetwork& virtualNetwork,
+		std::size_t clientIndex,
+		TimePoint currentTime
+	)
+	{
+		VirtualNetworkRequestResponsePumpResult result{};
+
+		ReliableUdpVirtualNetwork::PacketList packetList =
+			virtualNetwork.ExtractReadyPackets(
+				ReliableUdpVirtualNetwork::Endpoint::Server,
+				currentTime
+			);
+
+		for (const ReliableUdpVirtualNetwork::Packet& packet : packetList)
+		{
+			const ReceiveResult receiveResult =
+				ReceiveReliablePacket(
+					serverPeer,
+					packet.packetBuffer
+				);
+
+			if (receiveResult.parsed && receiveResult.isAckOnly)
+			{
+				++result.deliveredAckOnlyPacketCount;
+				continue;
+			}
+
+			if (receiveResult.ackPacketBuffer.has_value())
+			{
+				virtualNetwork.Submit(
+					ReliableUdpVirtualNetwork::Endpoint::Server,
+					*receiveResult.ackPacketBuffer,
+					currentTime
+				);
+
+				++result.submittedAckPacketCount;
+			}
+
+			if (!receiveResult.parsed
+				|| !receiveResult.isNewDataPacket
+				|| receiveResult.packetType != common::packet::PacketType::JoinRoomRequest)
+			{
+				continue;
+			}
+
+			++result.deliveredRequestPacketCount;
+
+			const std::int32_t roomId =
+				static_cast<std::int32_t>(
+					(clientIndex + result.deliveredRequestPacketCount) % 3
+					) + 1;
+
+			const std::optional<common::packet::PacketBuffer> responsePayload =
+				SerializeJoinRoomResponse(
+					roomId,
+					100.0F + static_cast<float>(clientIndex),
+					200.0F + static_cast<float>(result.deliveredRequestPacketCount)
+				);
+
+			if (!responsePayload.has_value())
+			{
+				++result.buildFailureCount;
+				continue;
+			}
+
+			const std::optional<common::packet::PacketBuffer> responsePacket =
+				BuildReliableDataPacket(
+					serverPeer,
+					MakeConstPacketSpan(*responsePayload),
+					currentTime
+				);
+
+			if (!responsePacket.has_value())
+			{
+				++result.buildFailureCount;
+				continue;
+			}
+
+			virtualNetwork.Submit(
+				ReliableUdpVirtualNetwork::Endpoint::Server,
+				*responsePacket,
+				currentTime
+			);
+
+			++result.submittedResponsePacketCount;
+		}
+
+		return result;
+	}
+
 	std::optional<common::packet::PacketBuffer> SerializeJoinRoomRequest(
 		std::int32_t roomId
 	)

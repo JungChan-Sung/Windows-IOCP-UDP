@@ -832,82 +832,25 @@ namespace tests::net::reliableUdpLoadTest
 				serverGiveUpPacketCount +=
 					serverResendPumpResult.giveUpPacketCount;
 
-				ReliableUdpVirtualNetwork::PacketList serverPacketList =
-					virtualNetwork.ExtractReadyPackets(
-						ReliableUdpVirtualNetwork::Endpoint::Server,
+				const VirtualNetworkRequestResponsePumpResult requestResponsePumpResult =
+					PumpJoinRoomRequestsAndSubmitResponses(
+						peerPair.server,
+						virtualNetwork,
+						clientIndex,
 						currentTime
 					);
 
-				for (const ReliableUdpVirtualNetwork::Packet& serverPacket :
-					serverPacketList)
-				{
-					const ReceiveResult receiveResult =
-						ReceiveReliablePacket(
-							peerPair.server,
-							serverPacket.packetBuffer
-						);
+				deliveredServerAckOnlyPacketCount +=
+					requestResponsePumpResult.deliveredAckOnlyPacketCount;
 
-					if (receiveResult.parsed && receiveResult.isAckOnly)
-					{
-						++deliveredServerAckOnlyPacketCount;
-						continue;
-					}
+				deliveredRequestCount +=
+					requestResponsePumpResult.deliveredRequestPacketCount;
 
-					if (receiveResult.ackPacketBuffer.has_value())
-					{
-						virtualNetwork.Submit(
-							ReliableUdpVirtualNetwork::Endpoint::Server,
-							*receiveResult.ackPacketBuffer,
-							currentTime
-						);
-					}
+				submittedResponseCount +=
+					requestResponsePumpResult.submittedResponsePacketCount;
 
-					if (!receiveResult.parsed
-						|| !receiveResult.isNewDataPacket
-						|| receiveResult.packetType != common::packet::PacketType::JoinRoomRequest)
-					{
-						continue;
-					}
-
-					++deliveredRequestCount;
-
-					const std::int32_t roomId =
-						static_cast<std::int32_t>((clientIndex + deliveredRequestCount) % 3) + 1;
-
-					const std::optional<common::packet::PacketBuffer> responsePayload =
-						SerializeJoinRoomResponse(
-							roomId,
-							100.0F + static_cast<float>(clientIndex),
-							200.0F + static_cast<float>(deliveredRequestCount)
-						);
-
-					if (!responsePayload.has_value())
-					{
-						++buildFailureCount;
-						continue;
-					}
-
-					const std::optional<common::packet::PacketBuffer> responsePacket =
-						BuildReliableDataPacket(
-							peerPair.server,
-							MakeConstPacketSpan(*responsePayload),
-							currentTime
-						);
-
-					if (!responsePacket.has_value())
-					{
-						++buildFailureCount;
-						continue;
-					}
-
-					virtualNetwork.Submit(
-						ReliableUdpVirtualNetwork::Endpoint::Server,
-						*responsePacket,
-						currentTime
-					);
-
-					++submittedResponseCount;
-				}
+				buildFailureCount +=
+					requestResponsePumpResult.buildFailureCount;
 
 				const VirtualNetworkReceivePumpResult clientReceivePumpResult =
 					PumpReadyPacketsToReceiver(

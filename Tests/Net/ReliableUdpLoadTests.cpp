@@ -563,7 +563,7 @@ namespace tests::net::reliableUdpLoadTest
 			SubmitJoinRoomRequestsToVirtualNetworks(
 				peerPairList,
 				virtualNetworkList,
-				virtualNetworkRoundTripRequestCountPerClient,
+				virtualNetworkRequestCountPerClient,
 				currentTime
 			);
 
@@ -648,7 +648,7 @@ namespace tests::net::reliableUdpLoadTest
 		);
 		tests::Expect(
 			result,
-			deliveredAckOnlyPacketCount > 0,
+			deliveredAckOnlyPacketCount >= expectedRequestCount,
 			"ReliableUdpLoad: virtual network ack delivery count"
 		);
 		tests::Expect(
@@ -842,12 +842,12 @@ namespace tests::net::reliableUdpLoadTest
 		);
 		tests::Expect(
 			result,
-			deliveredClientAckOnlyPacketCount > 0,
+			deliveredClientAckOnlyPacketCount >= expectedRoundTripCount,
 			"ReliableUdpLoad: virtual network round trip client ack delivery count"
 		);
 		tests::Expect(
 			result,
-			deliveredServerAckOnlyPacketCount > 0,
+			deliveredServerAckOnlyPacketCount >= expectedRoundTripCount,
 			"ReliableUdpLoad: virtual network round trip server ack delivery count"
 		);
 		tests::Expect(

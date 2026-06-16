@@ -205,7 +205,7 @@
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\ReliableUdpVirtualNetwork.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -309,7 +309,7 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\ReliableUdpVirtualNetwork.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

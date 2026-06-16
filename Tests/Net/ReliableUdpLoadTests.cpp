@@ -19,15 +19,15 @@ namespace tests::net::reliableUdpLoadTest
 	static inline constexpr std::size_t roundTripClientCount = 32;
 	static inline constexpr std::size_t roundTripRequestCountPerClient = 128;
 
+	static inline constexpr std::size_t resendClientCount = 16;
+	static inline constexpr std::size_t resendRequestCountPerClient = 64;
+
 	static inline constexpr std::size_t burstClientCount = 16;
 	static inline constexpr std::size_t burstRequestCountPerClient = 64;
 
 	static inline constexpr std::size_t giveUpClientCount = 8;
 	static inline constexpr std::size_t giveUpRequestCountPerClient = 32;
 	static inline constexpr int giveUpMaxResendCount = 3;
-
-	static inline constexpr std::size_t resendClientCount = 16;
-	static inline constexpr std::size_t resendRequestCountPerClient = 64;
 
 	static inline constexpr std::size_t virtualNetworkClientCount = 8;
 	static inline constexpr std::size_t virtualNetworkRequestCountPerClient = 32;

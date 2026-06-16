@@ -201,6 +201,9 @@
     <ClCompile Include="Net\UdpFaultSimulatorTests.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\ReliableUdpLoadTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -297,6 +300,9 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\UdpFaultSimulatorTests.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ReliableUdpLoadTests.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>

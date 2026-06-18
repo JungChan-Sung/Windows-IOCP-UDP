@@ -372,7 +372,7 @@ namespace
 			return;
 		}
 
-		if (normalizedKey == "resendintervalmilliseconds")
+		if (normalizedKey == "resendintervalms" || normalizedKey == "resendintervalmilliseconds")
 		{
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
@@ -465,7 +465,7 @@ namespace
 			return;
 		}
 
-		if (normalizedKey == "mindelaymilliseconds")
+		if (normalizedKey == "mindelayms" || normalizedKey == "mindelaymilliseconds")
 		{
 			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
 
@@ -481,7 +481,7 @@ namespace
 			return;
 		}
 
-		if (normalizedKey == "maxdelaymilliseconds")
+		if (normalizedKey == "maxdelayms" || normalizedKey == "maxdelaymilliseconds")
 		{
 			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
 

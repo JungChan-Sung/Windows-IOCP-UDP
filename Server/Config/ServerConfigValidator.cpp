@@ -104,7 +104,7 @@ namespace server::config
 		{
 			AddWarning(
 				warningList,
-				"ReliableUdp.ResendIntervalMilliseconds must be greater than 0. Default resend interval will be used."
+				"ReliableUdp.ResendIntervalMs must be greater than 0. Default resend interval will be used."
 			);
 			serverConfig.reliableUdp.resendIntervalMilliseconds = defaultConfig.reliableUdp.resendIntervalMilliseconds;
 		}
@@ -149,7 +149,7 @@ namespace server::config
 		{
 			AddWarning(
 				warningList,
-				"UdpFaultSimulation.MinDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+				"UdpFaultSimulation.MinDelayMs must be greater than or equal to 0. Default value will be used."
 			);
 
 			serverConfig.udpFaultSimulation.minDelay = defaultConfig.udpFaultSimulation.minDelay;
@@ -159,7 +159,7 @@ namespace server::config
 		{
 			AddWarning(
 				warningList,
-				"UdpFaultSimulation.MaxDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+				"UdpFaultSimulation.MaxDelayMs must be greater than or equal to 0. Default value will be used."
 			);
 
 			serverConfig.udpFaultSimulation.maxDelay = defaultConfig.udpFaultSimulation.maxDelay;
@@ -169,7 +169,7 @@ namespace server::config
 		{
 			AddWarning(
 				warningList,
-				"UdpFaultSimulation.ReorderDelayMilliseconds must be greater than or equal to 0. Default value will be used."
+				"UdpFaultSimulation.ReorderDelayMs must be greater than or equal to 0. Default value will be used."
 			);
 
 			serverConfig.udpFaultSimulation.reorderDelay = defaultConfig.udpFaultSimulation.reorderDelay;
@@ -179,7 +179,7 @@ namespace server::config
 		{
 			AddWarning(
 				warningList,
-				"UdpFaultSimulation.MinDelayMilliseconds is greater than MaxDelayMilliseconds. Values will be swapped."
+				"UdpFaultSimulation.MinDelayMs is greater than MaxDelayMs. Values will be swapped."
 			);
 
 			std::swap(

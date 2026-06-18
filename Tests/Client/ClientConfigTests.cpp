@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <Common/Time/TimeTypes.h>
+
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
 #include <Client/Config/ClientTransportType.h>
@@ -65,15 +67,15 @@ namespace
 		);
 		tests::Expect(result, config.network.iocpWorkerThreadCount == 2, "ClientConfig: iocpWorkerThreadCount");
 		tests::Expect(result, config.network.iocpRecvContextCount == 8, "ClientConfig: iocpRecvContextCount");
-		tests::Expect(result, config.timing.updateSleepInterval == std::chrono::milliseconds(2), "ClientConfig: updateSleep");
-		tests::Expect(result, config.timing.joinRetryInterval == std::chrono::milliseconds(1500), "ClientConfig: joinRetry");
-		tests::Expect(result, config.timing.roomJoinInterval == std::chrono::milliseconds(300), "ClientConfig: roomJoin");
-		tests::Expect(result, config.timing.interpolationAdjustStep == std::chrono::milliseconds(15), "ClientConfig: adjustStep");
-		tests::Expect(result, config.interpolation.defaultDelay == std::chrono::milliseconds(120), "ClientConfig: defaultDelay");
-		tests::Expect(result, config.interpolation.minDelay == std::chrono::milliseconds(10), "ClientConfig: minDelay");
-		tests::Expect(result, config.interpolation.maxDelay == std::chrono::milliseconds(600), "ClientConfig: maxDelay");
-		tests::Expect(result, config.snapshot.assemblyTimeout == std::chrono::milliseconds(700), "ClientConfig: assemblyTimeout");
-		tests::Expect(result, config.simulation.tickInterval == std::chrono::milliseconds(40), "ClientConfig: simulation tick");
+		tests::Expect(result, config.timing.updateSleepInterval == common::time::Milliseconds(2), "ClientConfig: updateSleep");
+		tests::Expect(result, config.timing.joinRetryInterval == common::time::Milliseconds(1500), "ClientConfig: joinRetry");
+		tests::Expect(result, config.timing.roomJoinInterval == common::time::Milliseconds(300), "ClientConfig: roomJoin");
+		tests::Expect(result, config.timing.interpolationAdjustStep == common::time::Milliseconds(15), "ClientConfig: adjustStep");
+		tests::Expect(result, config.interpolation.defaultDelay == common::time::Milliseconds(120), "ClientConfig: defaultDelay");
+		tests::Expect(result, config.interpolation.minDelay == common::time::Milliseconds(10), "ClientConfig: minDelay");
+		tests::Expect(result, config.interpolation.maxDelay == common::time::Milliseconds(600), "ClientConfig: maxDelay");
+		tests::Expect(result, config.snapshot.assemblyTimeout == common::time::Milliseconds(700), "ClientConfig: assemblyTimeout");
+		tests::Expect(result, config.simulation.tickInterval == common::time::Milliseconds(40), "ClientConfig: simulation tick");
 		tests::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
 		tests::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
 	}
@@ -131,15 +133,15 @@ namespace
 		config.network.serverPort = 0;
 		config.network.iocpWorkerThreadCount = 0;
 		config.network.iocpRecvContextCount = 0;
-		config.timing.updateSleepInterval = std::chrono::milliseconds(0);
-		config.timing.joinRetryInterval = std::chrono::milliseconds(0);
-		config.timing.roomJoinInterval = std::chrono::milliseconds(0);
-		config.timing.interpolationAdjustStep = std::chrono::milliseconds(0);
-		config.interpolation.defaultDelay = std::chrono::milliseconds(999);
-		config.interpolation.minDelay = std::chrono::milliseconds(600);
-		config.interpolation.maxDelay = std::chrono::milliseconds(100);
-		config.snapshot.assemblyTimeout = std::chrono::milliseconds(0);
-		config.simulation.tickInterval = std::chrono::milliseconds(0);
+		config.timing.updateSleepInterval = common::time::Milliseconds(0);
+		config.timing.joinRetryInterval = common::time::Milliseconds(0);
+		config.timing.roomJoinInterval = common::time::Milliseconds(0);
+		config.timing.interpolationAdjustStep = common::time::Milliseconds(0);
+		config.interpolation.defaultDelay = common::time::Milliseconds(999);
+		config.interpolation.minDelay = common::time::Milliseconds(600);
+		config.interpolation.maxDelay = common::time::Milliseconds(100);
+		config.snapshot.assemblyTimeout = common::time::Milliseconds(0);
+		config.simulation.tickInterval = common::time::Milliseconds(0);
 		config.simulation.deltaSeconds = 0.0F;
 
 		const std::vector<client::config::ClientConfigWarning> warningList = client::config::ClientConfigValidator::ValidateAndNormalize(config);
@@ -244,16 +246,16 @@ namespace
 	void RunValidatorInterpolationDefaultDelayClampTest(tests::DebugTestResult& result)
 	{
 		client::config::ClientConfig lowerConfig{};
-		lowerConfig.interpolation.minDelay = std::chrono::milliseconds(100);
-		lowerConfig.interpolation.maxDelay = std::chrono::milliseconds(300);
-		lowerConfig.interpolation.defaultDelay = std::chrono::milliseconds(50);
+		lowerConfig.interpolation.minDelay = common::time::Milliseconds(100);
+		lowerConfig.interpolation.maxDelay = common::time::Milliseconds(300);
+		lowerConfig.interpolation.defaultDelay = common::time::Milliseconds(50);
 
 		const std::vector<client::config::ClientConfigWarning> lowerWarningList =
 			client::config::ClientConfigValidator::ValidateAndNormalize(lowerConfig);
 
 		tests::Expect(
 			result,
-			lowerConfig.interpolation.defaultDelay == std::chrono::milliseconds(100),
+			lowerConfig.interpolation.defaultDelay == common::time::Milliseconds(100),
 			"ClientConfigValidator: default delay clamped to min"
 		);
 
@@ -264,16 +266,16 @@ namespace
 		);
 
 		client::config::ClientConfig upperConfig{};
-		upperConfig.interpolation.minDelay = std::chrono::milliseconds(100);
-		upperConfig.interpolation.maxDelay = std::chrono::milliseconds(300);
-		upperConfig.interpolation.defaultDelay = std::chrono::milliseconds(500);
+		upperConfig.interpolation.minDelay = common::time::Milliseconds(100);
+		upperConfig.interpolation.maxDelay = common::time::Milliseconds(300);
+		upperConfig.interpolation.defaultDelay = common::time::Milliseconds(500);
 
 		const std::vector<client::config::ClientConfigWarning> upperWarningList =
 			client::config::ClientConfigValidator::ValidateAndNormalize(upperConfig);
 
 		tests::Expect(
 			result,
-			upperConfig.interpolation.defaultDelay == std::chrono::milliseconds(300),
+			upperConfig.interpolation.defaultDelay == common::time::Milliseconds(300),
 			"ClientConfigValidator: default delay clamped to max"
 		);
 

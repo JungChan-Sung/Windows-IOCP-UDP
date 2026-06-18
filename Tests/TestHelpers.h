@@ -7,6 +7,8 @@
 #include <string_view>
 #include <thread>
 
+#include <Common/Time/TimeTypes.h>
+
 namespace tests
 {
 	[[nodiscard]] inline std::filesystem::path MakeTempFilePath(std::string_view fileName)
@@ -21,7 +23,7 @@ namespace tests
 	}
 
 	template <typename TPredicate>
-	[[nodiscard]] bool WaitUntil(TPredicate predicate, std::chrono::milliseconds timeout)
+	[[nodiscard]] bool WaitUntil(TPredicate predicate, common::time::Milliseconds timeout)
 	{
 		const auto startTime = std::chrono::steady_clock::now();
 
@@ -32,7 +34,7 @@ namespace tests
 				return false;
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			std::this_thread::sleep_for(common::time::Milliseconds(1));
 		}
 
 		return true;

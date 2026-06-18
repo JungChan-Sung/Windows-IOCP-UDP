@@ -51,8 +51,8 @@ namespace tests::net::reliableUdpLoadTest
 		config.duplicateModulo = 7;
 		config.delayModulo = 3;
 		config.reorderModulo = 4;
-		config.delay = std::chrono::milliseconds(10);
-		config.reorderDelay = std::chrono::milliseconds(30);
+		config.delay = common::time::Milliseconds(10);
+		config.reorderDelay = common::time::Milliseconds(30);
 
 		return config;
 	}
@@ -296,7 +296,7 @@ namespace tests::net::reliableUdpLoadTest
 				);
 
 				++result.submittedRequestCount;
-				currentTime += std::chrono::milliseconds(1);
+				currentTime += common::time::Milliseconds(1);
 			}
 		}
 

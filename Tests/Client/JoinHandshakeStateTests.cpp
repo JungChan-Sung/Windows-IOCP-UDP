@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include <Common/Time/TimeTypes.h>
+
 #include <Client/Net/JoinHandshakeState.h>
 
 #include <Tests/DebugTestResult.h>
@@ -34,7 +36,7 @@ namespace
 		JoinHandshakeState handshakeState;
 
 		const TimePoint beginTime{};
-		handshakeState.Begin(beginTime, std::chrono::milliseconds(500));
+		handshakeState.Begin(beginTime, common::time::Milliseconds(500));
 
 		tests::Expect(
 			result,
@@ -54,13 +56,13 @@ namespace
 		JoinHandshakeState handshakeState;
 
 		const TimePoint beginTime{};
-		const auto retryInterval = std::chrono::milliseconds(500);
+		const auto retryInterval = common::time::Milliseconds(500);
 
 		handshakeState.Begin(beginTime, retryInterval);
 
 		const bool firstAttemptResult = handshakeState.TryStartAttempt(beginTime);
 		const bool earlyAttemptResult =
-			handshakeState.TryStartAttempt(beginTime + std::chrono::milliseconds(499));
+			handshakeState.TryStartAttempt(beginTime + common::time::Milliseconds(499));
 		const bool retryAttemptResult =
 			handshakeState.TryStartAttempt(beginTime + retryInterval);
 
@@ -88,7 +90,7 @@ namespace
 		JoinHandshakeState handshakeState;
 
 		const TimePoint beginTime{};
-		handshakeState.Begin(beginTime, std::chrono::milliseconds(500));
+		handshakeState.Begin(beginTime, common::time::Milliseconds(500));
 		handshakeState.TryStartAttempt(beginTime);
 		handshakeState.Complete();
 
@@ -110,7 +112,7 @@ namespace
 		JoinHandshakeState handshakeState;
 
 		const TimePoint beginTime{};
-		handshakeState.Begin(beginTime, std::chrono::milliseconds(500));
+		handshakeState.Begin(beginTime, common::time::Milliseconds(500));
 		handshakeState.Complete();
 		handshakeState.Reset();
 

@@ -4,6 +4,8 @@
 #include <limits>
 #include <utility>
 
+#include <Common/Time/TimeTypes.h>
+
 namespace
 {
 	void AddWarning(std::vector<client::config::ClientConfigWarning>& warningList, std::string message)
@@ -55,25 +57,25 @@ namespace client::config
 			clientConfig.network.iocpRecvContextCount = defaultConfig.network.iocpRecvContextCount;
 		}
 
-		if (clientConfig.timing.updateSleepInterval <= std::chrono::milliseconds(0))
+		if (clientConfig.timing.updateSleepInterval <= common::time::Milliseconds(0))
 		{
 			AddWarning(warningList, "Timing.UpdateSleepMs must be greater than 0. Default update sleep will be used.");
 			clientConfig.timing.updateSleepInterval = defaultConfig.timing.updateSleepInterval;
 		}
 
-		if (clientConfig.timing.joinRetryInterval <= std::chrono::milliseconds(0))
+		if (clientConfig.timing.joinRetryInterval <= common::time::Milliseconds(0))
 		{
 			AddWarning(warningList, "Timing.JoinRetryMs must be greater than 0. Default join retry interval will be used.");
 			clientConfig.timing.joinRetryInterval = defaultConfig.timing.joinRetryInterval;
 		}
 
-		if (clientConfig.timing.roomJoinInterval <= std::chrono::milliseconds(0))
+		if (clientConfig.timing.roomJoinInterval <= common::time::Milliseconds(0))
 		{
 			AddWarning(warningList, "Timing.RoomJoinMs must be greater than 0. Default room join interval will be used.");
 			clientConfig.timing.roomJoinInterval = defaultConfig.timing.roomJoinInterval;
 		}
 
-		if (clientConfig.timing.interpolationAdjustStep <= std::chrono::milliseconds(0))
+		if (clientConfig.timing.interpolationAdjustStep <= common::time::Milliseconds(0))
 		{
 			AddWarning(
 				warningList,
@@ -105,13 +107,13 @@ namespace client::config
 			clientConfig.interpolation.defaultDelay = clientConfig.interpolation.maxDelay;
 		}
 
-		if (clientConfig.snapshot.assemblyTimeout <= std::chrono::milliseconds(0))
+		if (clientConfig.snapshot.assemblyTimeout <= common::time::Milliseconds(0))
 		{
 			AddWarning(warningList, "Snapshot.AssemblyTimeoutMs must be greater than 0. Default timeout will be used.");
 			clientConfig.snapshot.assemblyTimeout = defaultConfig.snapshot.assemblyTimeout;
 		}
 
-		if (clientConfig.simulation.tickInterval <= std::chrono::milliseconds(0))
+		if (clientConfig.simulation.tickInterval <= common::time::Milliseconds(0))
 		{
 			AddWarning(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used.");
 			clientConfig.simulation.tickInterval = defaultConfig.simulation.tickInterval;

@@ -74,8 +74,8 @@ namespace
 		tests::Expect(result, config.session.peerTimeout == std::chrono::seconds(15), "ServerConfig: peerTimeout");
 		tests::Expect(result, config.reliableUdp.maxPendingPacketCount == 128, "ServerConfig: reliable maxPendingPacketCount");
 		tests::Expect(result, config.reliableUdp.maxResendCount == 7, "ServerConfig: reliable maxResendCount");
-		tests::Expect(result, config.reliableUdp.resendIntervalMilliseconds == 250, "ServerConfig: reliable resendIntervalMilliseconds");
-		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(33), "ServerConfig: tickInterval");
+		tests::Expect(result, config.reliableUdp.resendInterval == common::time::Milliseconds(250), "ServerConfig: reliable resendIntervalMilliseconds");
+		tests::Expect(result, config.tick.tickInterval == common::time::Milliseconds(33), "ServerConfig: tickInterval");
 		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfig: fixedDeltaSeconds");
 		tests::Expect(result, config.gameRule.initialPlayerHp == 5, "ServerConfig: initialPlayerHp");
 		tests::Expect(result, config.gameRule.respawnDelaySeconds == 2.5F, "ServerConfig: respawnDelaySeconds");
@@ -148,8 +148,8 @@ namespace
 		config.session.peerTimeout = std::chrono::seconds(0);
 		config.reliableUdp.maxPendingPacketCount = 0;
 		config.reliableUdp.maxResendCount = -1;
-		config.reliableUdp.resendIntervalMilliseconds = 0;
-		config.tick.tickInterval = std::chrono::milliseconds(0);
+		config.reliableUdp.resendInterval = common::time::Milliseconds(0);
+		config.tick.tickInterval = common::time::Milliseconds(0);
 		config.tick.fixedDeltaSeconds = 0.0F;
 		config.gameRule.initialPlayerHp = 0;
 		config.gameRule.respawnDelaySeconds = -1.0F;
@@ -183,7 +183,7 @@ namespace
 		);
 		tests::Expect(
 			result,
-			config.reliableUdp.resendIntervalMilliseconds == defaultConfig.reliableUdp.resendIntervalMilliseconds,
+			config.reliableUdp.resendInterval == defaultConfig.reliableUdp.resendInterval,
 			"ServerConfigValidator: reliable resend interval normalized"
 		);
 		tests::Expect(result, config.tick.tickInterval == defaultConfig.tick.tickInterval, "ServerConfigValidator: tick interval normalized");
@@ -282,7 +282,7 @@ namespace
 	{
 		server::config::ServerConfig config{};
 
-		config.tick.tickInterval = std::chrono::milliseconds(50);
+		config.tick.tickInterval = common::time::Milliseconds(50);
 		config.tick.fixedDeltaSeconds = 0.033F;
 
 		const std::vector<server::config::ServerConfigWarning> warningList =
@@ -297,7 +297,7 @@ namespace
 		);
 
 		tests::Expect(result, hasMismatchWarning, "ServerConfigValidator: tick delta mismatch warning");
-		tests::Expect(result, config.tick.tickInterval == std::chrono::milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
+		tests::Expect(result, config.tick.tickInterval == common::time::Milliseconds(50), "ServerConfigValidator: mismatch keeps tick interval");
 		tests::Expect(result, config.tick.fixedDeltaSeconds == 0.033F, "ServerConfigValidator: mismatch keeps fixed delta");
 	}
 
@@ -362,17 +362,17 @@ namespace
 		);
 		tests::Expect(
 			result,
-			config.minDelay == std::chrono::milliseconds(15),
+			config.minDelay == common::time::Milliseconds(15),
 			"ServerConfig: UDP fault simulation minimum delay"
 		);
 		tests::Expect(
 			result,
-			config.maxDelay == std::chrono::milliseconds(80),
+			config.maxDelay == common::time::Milliseconds(80),
 			"ServerConfig: UDP fault simulation maximum delay"
 		);
 		tests::Expect(
 			result,
-			config.reorderDelay == std::chrono::milliseconds(125),
+			config.reorderDelay == common::time::Milliseconds(125),
 			"ServerConfig: UDP fault simulation reorder delay"
 		);
 		tests::Expect(
@@ -480,10 +480,10 @@ namespace
 			std::numeric_limits<float>::quiet_NaN();
 		config.udpFaultSimulation.duplicateRate = -0.1F;
 		config.udpFaultSimulation.reorderRate = 1.1F;
-		config.udpFaultSimulation.minDelay = std::chrono::milliseconds(-1);
-		config.udpFaultSimulation.maxDelay = std::chrono::milliseconds(-2);
+		config.udpFaultSimulation.minDelay = common::time::Milliseconds(-1);
+		config.udpFaultSimulation.maxDelay = common::time::Milliseconds(-2);
 		config.udpFaultSimulation.reorderDelay =
-			std::chrono::milliseconds(-3);
+			common::time::Milliseconds(-3);
 
 		const std::vector<server::config::ServerConfigWarning> warningList =
 			server::config::ServerConfigValidator::ValidateAndNormalize(config);
@@ -560,9 +560,9 @@ namespace
 		server::config::ServerConfig config{};
 
 		config.udpFaultSimulation.minDelay =
-			std::chrono::milliseconds(200);
+			common::time::Milliseconds(200);
 		config.udpFaultSimulation.maxDelay =
-			std::chrono::milliseconds(50);
+			common::time::Milliseconds(50);
 
 		const std::vector<server::config::ServerConfigWarning> warningList =
 			server::config::ServerConfigValidator::ValidateAndNormalize(config);
@@ -570,13 +570,13 @@ namespace
 		tests::Expect(
 			result,
 			config.udpFaultSimulation.minDelay
-			== std::chrono::milliseconds(50),
+			== common::time::Milliseconds(50),
 			"ServerConfigValidator: UDP fault minimum delay swapped"
 		);
 		tests::Expect(
 			result,
 			config.udpFaultSimulation.maxDelay
-			== std::chrono::milliseconds(200),
+			== common::time::Milliseconds(200),
 			"ServerConfigValidator: UDP fault maximum delay swapped"
 		);
 		tests::Expect(
@@ -625,22 +625,22 @@ namespace
 		);
 		tests::Expect(
 			result,
-			loadResult.config.reliableUdp.resendIntervalMilliseconds == 123,
+			loadResult.config.reliableUdp.resendInterval == common::time::Milliseconds(123),
 			"ServerConfig: ReliableUdp.ResendIntervalMs alias parsed"
 		);
 		tests::Expect(
 			result,
-			loadResult.config.udpFaultSimulation.minDelay == std::chrono::milliseconds(10),
+			loadResult.config.udpFaultSimulation.minDelay == common::time::Milliseconds(10),
 			"ServerConfig: UdpFaultSimulation.MinDelayMs alias parsed"
 		);
 		tests::Expect(
 			result,
-			loadResult.config.udpFaultSimulation.maxDelay == std::chrono::milliseconds(50),
+			loadResult.config.udpFaultSimulation.maxDelay == common::time::Milliseconds(50),
 			"ServerConfig: UdpFaultSimulation.MaxDelayMs alias parsed"
 		);
 		tests::Expect(
 			result,
-			loadResult.config.udpFaultSimulation.reorderDelay == std::chrono::milliseconds(30),
+			loadResult.config.udpFaultSimulation.reorderDelay == common::time::Milliseconds(30),
 			"ServerConfig: UdpFaultSimulation.ReorderDelayMs alias parsed"
 		);
 	}

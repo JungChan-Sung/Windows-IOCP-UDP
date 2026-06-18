@@ -8,6 +8,7 @@
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/SnapshotChunkAssemblerCore.h>
 #include <Common/Packet/GamePacket.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfigDefaults.h>
 
@@ -42,7 +43,7 @@ namespace client::net
 	private:
 		BulletAssemblerCore bulletAssemblerCore_;
 		ImpactEffectAssemblerCore impactEffectAssemblerCore_;
-		std::chrono::milliseconds assemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
+		common::time::Milliseconds assemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
 
 	public:
 		SnapshotChunkAssembler() = default;
@@ -66,9 +67,9 @@ namespace client::net
 		);
 
 	public:
-		void SetAssemblyTimeout(std::chrono::milliseconds assemblyTimeout) noexcept;
+		void SetAssemblyTimeout(common::time::Milliseconds assemblyTimeout) noexcept;
 
-		[[nodiscard]] std::chrono::milliseconds GetAssemblyTimeout() const noexcept
+		[[nodiscard]] common::time::Milliseconds GetAssemblyTimeout() const noexcept
 		{
 			return assemblyTimeout_;
 		}

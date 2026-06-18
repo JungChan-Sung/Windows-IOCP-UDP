@@ -12,6 +12,8 @@
 #include <system_error>
 #include <utility>
 
+#include <Common/Time/TimeTypes.h>
+
 #include <Client/Config/ClientTransportType.h>
 
 namespace
@@ -280,7 +282,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.timing.updateSleepInterval = std::chrono::milliseconds(*parsedValue);
+				clientConfig.timing.updateSleepInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -295,7 +297,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.timing.joinRetryInterval = std::chrono::milliseconds(*parsedValue);
+				clientConfig.timing.joinRetryInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -310,7 +312,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.timing.roomJoinInterval = std::chrono::milliseconds(*parsedValue);
+				clientConfig.timing.roomJoinInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -325,7 +327,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.timing.interpolationAdjustStep = std::chrono::milliseconds(*parsedValue);
+				clientConfig.timing.interpolationAdjustStep = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -354,7 +356,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
-				clientConfig.interpolation.defaultDelay = std::chrono::milliseconds(*parsedValue);
+				clientConfig.interpolation.defaultDelay = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -369,7 +371,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
-				clientConfig.interpolation.minDelay = std::chrono::milliseconds(*parsedValue);
+				clientConfig.interpolation.minDelay = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -384,7 +386,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
-				clientConfig.interpolation.maxDelay = std::chrono::milliseconds(*parsedValue);
+				clientConfig.interpolation.maxDelay = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -413,7 +415,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.snapshot.assemblyTimeout = std::chrono::milliseconds(*parsedValue);
+				clientConfig.snapshot.assemblyTimeout = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -442,7 +444,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				clientConfig.simulation.tickInterval = std::chrono::milliseconds(*parsedValue);
+				clientConfig.simulation.tickInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{

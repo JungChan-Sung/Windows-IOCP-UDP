@@ -209,8 +209,8 @@ namespace
 	{
 		Config config{};
 		config.enabled = true;
-		config.minDelay = std::chrono::milliseconds(100);
-		config.maxDelay = std::chrono::milliseconds(100);
+		config.minDelay = common::time::Milliseconds(100);
+		config.maxDelay = common::time::Milliseconds(100);
 
 		Simulator simulator;
 		simulator.SetConfig(config);
@@ -240,7 +240,7 @@ namespace
 		);
 
 		const PacketList earlyPacketList = simulator.ExtractReadyPackets(
-			currentTime + std::chrono::milliseconds(99)
+			currentTime + common::time::Milliseconds(99)
 		);
 
 		tests::Expect(
@@ -255,7 +255,7 @@ namespace
 		);
 
 		const PacketList readyPacketList = simulator.ExtractReadyPackets(
-			currentTime + std::chrono::milliseconds(100)
+			currentTime + common::time::Milliseconds(100)
 		);
 
 		tests::Expect(

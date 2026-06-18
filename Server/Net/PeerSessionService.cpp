@@ -53,7 +53,7 @@ namespace server::net
 
 		peerState.reliableSession.SetMaxPendingPacketCount(reliableUdpConfig.maxPendingPacketCount);
 		peerState.reliableSession.SetMaxResendCount(reliableUdpConfig.maxResendCount);
-		peerState.reliableSession.SetResendInterval(common::time::Milliseconds(reliableUdpConfig.resendIntervalMilliseconds));
+		peerState.reliableSession.SetResendInterval(reliableUdpConfig.resendInterval);
 
 		game::PlayerState playerState = CreateInitialPlayerState(playerId, spawnPosition, gameRuleConfig);
 		gameWorld.UpsertPlayer(std::move(playerState));

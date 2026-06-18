@@ -110,7 +110,7 @@ namespace
 		return value;
 	}
 
-	[[nodiscard]] std::optional<std::chrono::milliseconds> TryParseMilliseconds(std::string_view text) noexcept
+	[[nodiscard]] std::optional<common::time::Milliseconds> TryParseMilliseconds(std::string_view text) noexcept
 	{
 		const std::optional<unsigned long long> parsedValue = TryParseUnsigned(text);
 		if (!parsedValue.has_value())
@@ -118,14 +118,14 @@ namespace
 			return std::nullopt;
 		}
 
-		using MillisecondsRep = std::chrono::milliseconds::rep;
+		using MillisecondsRep = common::time::Milliseconds::rep;
 
 		if (*parsedValue > static_cast<unsigned long long>(std::numeric_limits<MillisecondsRep>::max()))
 		{
 			return std::nullopt;
 		}
 
-		return std::chrono::milliseconds(static_cast<MillisecondsRep>(*parsedValue));
+		return common::time::Milliseconds(static_cast<MillisecondsRep>(*parsedValue));
 	}
 
 	[[nodiscard]] std::optional<long long> TryParseSigned(std::string_view text) noexcept
@@ -374,10 +374,10 @@ namespace
 
 		if (normalizedKey == "resendintervalms" || normalizedKey == "resendintervalmilliseconds")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
-			if (parsedValue.has_value() && *parsedValue > 0)
+			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
+			if (parsedValue.has_value() && *parsedValue > common::time::Milliseconds::zero())
 			{
-				serverConfig.reliableUdp.resendIntervalMilliseconds = static_cast<int>(*parsedValue);
+				serverConfig.reliableUdp.resendInterval = *parsedValue;
 			}
 			else
 			{
@@ -467,7 +467,7 @@ namespace
 
 		if (normalizedKey == "mindelayms" || normalizedKey == "mindelaymilliseconds")
 		{
-			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -483,7 +483,7 @@ namespace
 
 		if (normalizedKey == "maxdelayms" || normalizedKey == "maxdelaymilliseconds")
 		{
-			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -499,7 +499,7 @@ namespace
 
 		if (normalizedKey == "reorderdelayms" || normalizedKey == "reorderdelaymilliseconds")
 		{
-			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -548,7 +548,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				serverConfig.tick.tickInterval = std::chrono::milliseconds(*parsedValue);
+				serverConfig.tick.tickInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{

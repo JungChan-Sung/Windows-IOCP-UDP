@@ -43,7 +43,7 @@ namespace
 		Decision decision{};
 		decision.shouldDrop = true;
 		decision.shouldDuplicate = true;
-		decision.delay = std::chrono::milliseconds(100);
+		decision.delay = common::time::Milliseconds(100);
 
 		const Scheduler::SubmitResult submitResult = scheduler.Submit(
 			remoteAddress,
@@ -136,7 +136,7 @@ namespace
 		const TimePoint currentTime{};
 
 		Decision decision{};
-		decision.delay = std::chrono::milliseconds(100);
+		decision.delay = common::time::Milliseconds(100);
 
 		const Scheduler::SubmitResult submitResult = scheduler.Submit(
 			remoteAddress,
@@ -149,14 +149,14 @@ namespace
 		tests::Expect(result, scheduler.GetPendingPacketCount() == 1, "UdpFaultPacketScheduler: delayed packet queued");
 
 		const PacketList earlyPacketList = scheduler.ExtractReadyPackets(
-			currentTime + std::chrono::milliseconds(99)
+			currentTime + common::time::Milliseconds(99)
 		);
 
 		tests::Expect(result, earlyPacketList.empty(), "UdpFaultPacketScheduler: delayed packet blocked before release");
 		tests::Expect(result, scheduler.GetPendingPacketCount() == 1, "UdpFaultPacketScheduler: early extraction preserves packet");
 
 		const PacketList readyPacketList = scheduler.ExtractReadyPackets(
-			currentTime + std::chrono::milliseconds(100)
+			currentTime + common::time::Milliseconds(100)
 		);
 
 		tests::Expect(result, readyPacketList.size() == 1, "UdpFaultPacketScheduler: delayed packet released");
@@ -183,10 +183,10 @@ namespace
 
 		Decision firstDecision{};
 		firstDecision.shouldReorder = true;
-		firstDecision.delay = std::chrono::milliseconds(100);
+		firstDecision.delay = common::time::Milliseconds(100);
 
 		Decision secondDecision{};
-		secondDecision.delay = std::chrono::milliseconds(50);
+		secondDecision.delay = common::time::Milliseconds(50);
 
 		static_cast<void>(scheduler.Submit(
 			remoteAddress,
@@ -203,7 +203,7 @@ namespace
 		));
 
 		const PacketList readyPacketList = scheduler.ExtractReadyPackets(
-			currentTime + std::chrono::milliseconds(100)
+			currentTime + common::time::Milliseconds(100)
 		);
 
 		tests::Expect(result, readyPacketList.size() == 2, "UdpFaultPacketScheduler: release order packet count");

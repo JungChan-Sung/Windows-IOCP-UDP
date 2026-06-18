@@ -97,7 +97,7 @@ namespace tests::net::reliableUdpSessionTest
 	void RunExtractResendPacketsTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpSession session;
-		session.SetResendInterval(std::chrono::milliseconds(100));
+		session.SetResendInterval(common::time::Milliseconds(100));
 
 		const common::net::ReliableUdpSession::TimePoint startTime = common::net::ReliableUdpSession::Clock::now();
 
@@ -105,12 +105,12 @@ namespace tests::net::reliableUdpSessionTest
 		session.RegisterSentPacket(sequence, MakePacketBuffer('A'), startTime);
 
 		const common::net::ReliableUdpSession::ResendPacketList earlyResendList =
-			session.ExtractResendPackets(startTime + std::chrono::milliseconds(50));
+			session.ExtractResendPackets(startTime + common::time::Milliseconds(50));
 
 		tests::Expect(result, earlyResendList.empty(), "ReliableUdpSession: early resend empty");
 
 		const common::net::ReliableUdpSession::ResendPacketList resendList =
-			session.ExtractResendPackets(startTime + std::chrono::milliseconds(100));
+			session.ExtractResendPackets(startTime + common::time::Milliseconds(100));
 
 		tests::Expect(result, resendList.size() == 1, "ReliableUdpSession: resend count");
 

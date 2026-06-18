@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include <Common/Threading/ThreadPool.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Tests/DebugTestResult.h>
 #include <Tests/TestHelpers.h>
@@ -113,7 +114,7 @@ namespace
 			{
 				return executedCount.load() == 1;
 			},
-			std::chrono::milliseconds(1000)
+			common::time::Milliseconds(1000)
 		);
 
 		tests::Expect(result, started, "ThreadPool: single task start succeeds");
@@ -151,7 +152,7 @@ namespace
 			{
 				return executedCount.load() == taskCount;
 			},
-			std::chrono::milliseconds(1000)
+			common::time::Milliseconds(1000)
 		);
 
 		tests::Expect(result, started, "ThreadPool: many task start succeeds");
@@ -189,7 +190,7 @@ namespace
 			{
 				return executedCount.load() == 1;
 			},
-			std::chrono::milliseconds(1000)
+			common::time::Milliseconds(1000)
 		);
 
 		tests::Expect(result, started, "ThreadPool: exception task start succeeds");

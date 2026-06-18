@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <Common/Net/SnapshotChunkAssemblerCore.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace
 {
@@ -288,7 +289,7 @@ namespace
 		LogList logList;
 
 		const auto oldTime = std::chrono::steady_clock::now();
-		const auto currentTime = oldTime + std::chrono::milliseconds(1000);
+		const auto currentTime = oldTime + common::time::Milliseconds(1000);
 
 		const std::optional<AssembledChunk> partialResult = assemblerCore.PushChunk(
 			MakeChunk(1, 700, 0, 2, { TestData{ 1, 1.0F, 2.0F } }),
@@ -300,7 +301,7 @@ namespace
 
 		assemblerCore.CleanupExpiredAssemblies(
 			currentTime,
-			std::chrono::milliseconds(100),
+			common::time::Milliseconds(100),
 			[&logList](const char* tag, RoomId roomId, std::uint32_t serverTick, std::uint16_t chunkIndex, std::uint16_t chunkCount,
 				std::uint16_t receivedChunkCount, std::uint32_t lastAppliedTick, std::size_t payloadCount)
 			{

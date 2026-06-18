@@ -80,7 +80,7 @@ namespace tests::net::reliableUdpLoadTest
 
 	static inline constexpr std::size_t maxPendingPacketCount = 4096;
 	static inline constexpr int maxResendCount = 8;
-	static inline constexpr std::chrono::milliseconds resendInterval = std::chrono::milliseconds(10);
+	static inline constexpr common::time::Milliseconds resendInterval = common::time::Milliseconds(10);
 
 	[[nodiscard]] common::packet::ConstPacketSpan MakeConstPacketSpan(
 		const common::packet::PacketBuffer& packetBuffer

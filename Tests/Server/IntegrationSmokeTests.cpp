@@ -159,7 +159,7 @@ namespace
 			gameSimulation,
 			gameRuleConfig,
 			reliableRuleConfig,
-			startTime + std::chrono::milliseconds(1)
+			startTime + common::time::Milliseconds(1)
 		);
 
 		tests::Expect(result, firstJoinResult.shouldSendResponse, "IntegrationSmoke: first join sends response");
@@ -174,7 +174,7 @@ namespace
 		inputCommandPacket.inputSequence = 1;
 		inputCommandPacket.inputFlags = common::game::InputFlags::Right;
 
-		const TimePoint inputTime = startTime + std::chrono::milliseconds(10);
+		const TimePoint inputTime = startTime + common::time::Milliseconds(10);
 
 		const bool inputApplied = playerCommandService.ApplyInputCommand(
 			firstEndpointKey,
@@ -186,7 +186,7 @@ namespace
 
 		tests::Expect(result, inputApplied, "IntegrationSmoke: input command applied");
 
-		const TimePoint fireTime = startTime + std::chrono::milliseconds(20);
+		const TimePoint fireTime = startTime + common::time::Milliseconds(20);
 
 		const bool fireSucceeded = playerCommandService.FireBullet(
 			firstEndpointKey,
@@ -342,7 +342,7 @@ namespace
 			gameSimulation,
 			gameRuleConfig,
 			reliableRuleConfig,
-			startTime + std::chrono::milliseconds(1)
+			startTime + common::time::Milliseconds(1)
 		);
 
 		const server::net::PeerSessionService::RoomChangeResult roomChangeResult = peerSessionService.ChangePeerRoom(
@@ -351,7 +351,7 @@ namespace
 			peerRoomManager,
 			gameWorld,
 			gameSimulation,
-			startTime + std::chrono::milliseconds(10)
+			startTime + common::time::Milliseconds(10)
 		);
 
 		gameWorld.AdvanceServerTick();

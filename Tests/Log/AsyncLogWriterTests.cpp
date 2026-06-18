@@ -4,6 +4,7 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Tests/DebugTestResult.h>
 #include <Tests/TestHelpers.h>
@@ -91,7 +92,7 @@ namespace
 			{
 				return logWriter.GetPendingTaskCount() == 0;
 			},
-			std::chrono::milliseconds(1000)
+			common::time::Milliseconds(1000)
 		);
 
 		tests::Expect(result, started, "AsyncLogWriter: enqueue start succeeds");

@@ -100,13 +100,13 @@ namespace server::config
 			serverConfig.reliableUdp.maxResendCount = defaultConfig.reliableUdp.maxResendCount;
 		}
 
-		if (serverConfig.reliableUdp.resendIntervalMilliseconds <= 0)
+		if (serverConfig.reliableUdp.resendInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(
 				warningList,
 				"ReliableUdp.ResendIntervalMs must be greater than 0. Default resend interval will be used."
 			);
-			serverConfig.reliableUdp.resendIntervalMilliseconds = defaultConfig.reliableUdp.resendIntervalMilliseconds;
+			serverConfig.reliableUdp.resendInterval = defaultConfig.reliableUdp.resendInterval;
 		}
 
 		if (!std::isfinite(serverConfig.udpFaultSimulation.dropRate)
@@ -145,7 +145,7 @@ namespace server::config
 			serverConfig.udpFaultSimulation.reorderRate = defaultConfig.udpFaultSimulation.reorderRate;
 		}
 
-		if (serverConfig.udpFaultSimulation.minDelay < std::chrono::milliseconds::zero())
+		if (serverConfig.udpFaultSimulation.minDelay < common::time::Milliseconds::zero())
 		{
 			AddWarning(
 				warningList,
@@ -155,7 +155,7 @@ namespace server::config
 			serverConfig.udpFaultSimulation.minDelay = defaultConfig.udpFaultSimulation.minDelay;
 		}
 
-		if (serverConfig.udpFaultSimulation.maxDelay < std::chrono::milliseconds::zero())
+		if (serverConfig.udpFaultSimulation.maxDelay < common::time::Milliseconds::zero())
 		{
 			AddWarning(
 				warningList,
@@ -165,7 +165,7 @@ namespace server::config
 			serverConfig.udpFaultSimulation.maxDelay = defaultConfig.udpFaultSimulation.maxDelay;
 		}
 
-		if (serverConfig.udpFaultSimulation.reorderDelay < std::chrono::milliseconds::zero())
+		if (serverConfig.udpFaultSimulation.reorderDelay < common::time::Milliseconds::zero())
 		{
 			AddWarning(
 				warningList,

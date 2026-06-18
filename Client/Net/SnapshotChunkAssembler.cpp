@@ -8,6 +8,8 @@
 #include <utility>
 #include <concepts>
 
+#include <Common/Time/TimeTypes.h>
+
 #include <Client/Config/ClientConfigDefaults.h>
 
 namespace
@@ -224,9 +226,9 @@ namespace client::net
 		return ToAssembledImpactEffectPacket(std::move(*assembledChunk));
 	}
 
-	void SnapshotChunkAssembler::SetAssemblyTimeout(std::chrono::milliseconds assemblyTimeout) noexcept
+	void SnapshotChunkAssembler::SetAssemblyTimeout(common::time::Milliseconds assemblyTimeout) noexcept
 	{
-		if (assemblyTimeout <= std::chrono::milliseconds(0))
+		if (assemblyTimeout <= common::time::Milliseconds(0))
 		{
 			assemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
 			return;

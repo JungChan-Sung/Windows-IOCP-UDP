@@ -146,7 +146,7 @@ namespace
 	void RunExtractResendPacketsTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpSession session;
-		session.SetResendInterval(std::chrono::milliseconds(100));
+		session.SetResendInterval(common::time::Milliseconds(100));
 
 		const common::net::ReliableUdpSession::TimePoint startTime = common::net::ReliableUdpSession::Clock::now();
 
@@ -156,12 +156,12 @@ namespace
 		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before resend test");
 
 		const common::net::ReliableUdpSession::ResendPacketList earlyResendList =
-			session.ExtractResendPackets(startTime + std::chrono::milliseconds(50));
+			session.ExtractResendPackets(startTime + common::time::Milliseconds(50));
 
 		tests::Expect(result, earlyResendList.empty(), "ReliableUdpSession: early resend empty");
 
 		const common::net::ReliableUdpSession::ResendPacketList resendList =
-			session.ExtractResendPackets(startTime + std::chrono::milliseconds(100));
+			session.ExtractResendPackets(startTime + common::time::Milliseconds(100));
 
 		tests::Expect(result, resendList.size() == 1, "ReliableUdpSession: resend count");
 
@@ -176,7 +176,7 @@ namespace
 	{
 		common::net::ReliableUdpSession session;
 		session.SetMaxResendCount(1);
-		session.SetResendInterval(std::chrono::milliseconds(100));
+		session.SetResendInterval(common::time::Milliseconds(100));
 
 		const common::net::ReliableUdpSession::TimePoint startTime = common::net::ReliableUdpSession::Clock::now();
 
@@ -186,7 +186,7 @@ namespace
 		tests::Expect(result, registerResult, "ReliableUdpSession: sent packet registered before give-up test");
 
 		const common::net::ReliableUdpSession::ResendResult firstResult =
-			session.ExtractResendResult(startTime + std::chrono::milliseconds(100));
+			session.ExtractResendResult(startTime + common::time::Milliseconds(100));
 
 		tests::Expect(result, firstResult.resendPacketList.size() == 1, "ReliableUdpSession: first timeout resends packet");
 		tests::Expect(result, firstResult.giveUpPacketList.empty(), "ReliableUdpSession: first timeout does not give up packet");
@@ -200,7 +200,7 @@ namespace
 		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: resent packet remains pending");
 
 		const common::net::ReliableUdpSession::ResendResult secondResult =
-			session.ExtractResendResult(startTime + std::chrono::milliseconds(200));
+			session.ExtractResendResult(startTime + common::time::Milliseconds(200));
 
 		tests::Expect(result, secondResult.resendPacketList.empty(), "ReliableUdpSession: give-up timeout does not resend packet");
 		tests::Expect(result, secondResult.giveUpPacketList.size() == 1, "ReliableUdpSession: give-up timeout extracts packet");

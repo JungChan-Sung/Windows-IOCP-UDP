@@ -9,6 +9,7 @@
 #include <Common/Game/WeaponRules.h>
 #include <Common/Log/LogLevel.h>
 #include <Common/Net/UdpFaultSimulationConfig.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace server::config
 {
@@ -24,7 +25,7 @@ namespace server::config
 	{
 	public:
 		common::game::RoomId initialRoomId = 1;
-		std::chrono::seconds peerTimeout = std::chrono::seconds(10);
+		common::time::Seconds peerTimeout = std::chrono::seconds(10);
 	};
 
 	struct ReliableUdpConfig
@@ -32,7 +33,7 @@ namespace server::config
 	public:
 		std::size_t maxPendingPacketCount = 64;
 		int maxResendCount = 10;
-		int resendIntervalMilliseconds = 100;
+		common::time::Milliseconds resendInterval = common::time::Milliseconds(100);
 	};
 
 	struct TickConfig

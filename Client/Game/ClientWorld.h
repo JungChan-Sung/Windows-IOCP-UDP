@@ -10,6 +10,7 @@
 #include <Common/Packet/GamePacket.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/InputFlags.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace client::game
 {
@@ -123,10 +124,10 @@ namespace client::game
 		RenderBulletStateList renderBulletStateList_;
 		RenderImpactEffectStateList renderImpactEffectStateList_;
 
-		std::chrono::milliseconds defaultInterpolationDelay_;
-		std::chrono::milliseconds minInterpolationDelay_;
-		std::chrono::milliseconds maxInterpolationDelay_;
-		std::chrono::milliseconds interpolationDelay_;
+		common::time::Milliseconds defaultInterpolationDelay_;
+		common::time::Milliseconds minInterpolationDelay_;
+		common::time::Milliseconds maxInterpolationDelay_;
+		common::time::Milliseconds interpolationDelay_;
 
 		float localPredictedX_ = 0.0F;
 		float localPredictedY_ = 0.0F;
@@ -170,15 +171,15 @@ namespace client::game
 		void Clear() noexcept;
 		void ResetLocalPlayerPrediction(float x, float y) noexcept;
 		void SetInterpolationSettings(
-			std::chrono::milliseconds defaultDelay,
-			std::chrono::milliseconds minDelay,
-			std::chrono::milliseconds maxDelay
+			common::time::Milliseconds defaultDelay,
+			common::time::Milliseconds minDelay,
+			common::time::Milliseconds maxDelay
 		) noexcept;
 
 	public:
 		[[nodiscard]] bool TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
 		void SetCurrentRoomId(RoomId roomId);
-		void SetInterpolationDelay(std::chrono::milliseconds interpolationDelay) noexcept;
+		void SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept;
 
 		[[nodiscard]] bool IsJoined() const noexcept;
 		[[nodiscard]] PlayerId GetLocalPlayerId() const noexcept;

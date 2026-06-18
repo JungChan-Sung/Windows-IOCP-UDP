@@ -96,7 +96,7 @@ namespace tests::net::reliableUdpLoadTest
 
 				if (!requestReceiveResult.isNewDataPacket)
 				{
-					currentTime += std::chrono::milliseconds(1);
+					currentTime += common::time::Milliseconds(1);
 					continue;
 				}
 
@@ -141,7 +141,7 @@ namespace tests::net::reliableUdpLoadTest
 					++ackDeliveryCount;
 				}
 
-				currentTime += std::chrono::milliseconds(1);
+				currentTime += common::time::Milliseconds(1);
 			}
 		}
 
@@ -254,7 +254,7 @@ namespace tests::net::reliableUdpLoadTest
 					}
 				}
 
-				currentTime += std::chrono::milliseconds(1);
+				currentTime += common::time::Milliseconds(1);
 			}
 		}
 
@@ -342,7 +342,7 @@ namespace tests::net::reliableUdpLoadTest
 				requestPacketList.push_back(*requestPacket);
 				++expectedPendingPacketCount;
 
-				currentTime += std::chrono::milliseconds(1);
+				currentTime += common::time::Milliseconds(1);
 			}
 		}
 
@@ -476,7 +476,7 @@ namespace tests::net::reliableUdpLoadTest
 
 				// Intentionally do not deliver the packet and do not deliver ACK.
 				++registeredRequestCount;
-				currentTime += std::chrono::milliseconds(1);
+				currentTime += common::time::Milliseconds(1);
 			}
 		}
 
@@ -579,7 +579,7 @@ namespace tests::net::reliableUdpLoadTest
 
 		for (int iteration = 0; iteration < virtualNetworkMaxIterationCount; ++iteration)
 		{
-			currentTime += std::chrono::milliseconds(5);
+			currentTime += common::time::Milliseconds(5);
 
 			for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
 			{
@@ -733,7 +733,7 @@ namespace tests::net::reliableUdpLoadTest
 
 		for (int iteration = 0; iteration < virtualNetworkRoundTripMaxIterationCount; ++iteration)
 		{
-			currentTime += std::chrono::milliseconds(5);
+			currentTime += common::time::Milliseconds(5);
 
 			for (std::size_t clientIndex = 0; clientIndex < peerPairList.size(); ++clientIndex)
 			{

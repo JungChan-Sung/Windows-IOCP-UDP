@@ -7,6 +7,7 @@
 #include <Common/Packet/GamePacket.h>
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/RoomLayout.h>
+#include <Common/Time/TimeTypes.h>
 #include <Common/Game/WorldCollision.h>
 
 #include <Client/Game/ClientTuning.h>
@@ -457,7 +458,7 @@ namespace client::game
 		}
 	}
 
-	void ClientWorld::SetInterpolationSettings(std::chrono::milliseconds defaultDelay, std::chrono::milliseconds minDelay, std::chrono::milliseconds maxDelay) noexcept
+	void ClientWorld::SetInterpolationSettings(common::time::Milliseconds defaultDelay, common::time::Milliseconds minDelay, common::time::Milliseconds maxDelay) noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 
@@ -497,7 +498,7 @@ namespace client::game
 	}
 
 
-	void ClientWorld::SetInterpolationDelay(std::chrono::milliseconds interpolationDelay) noexcept
+	void ClientWorld::SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 
@@ -622,7 +623,7 @@ namespace client::game
 		return renderImpactEffectStateList_;
 	}
 
-	std::chrono::milliseconds ClientWorld::GetInterpolationDelay() const noexcept
+	common::time::Milliseconds ClientWorld::GetInterpolationDelay() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 		return interpolationDelay_;

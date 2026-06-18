@@ -592,7 +592,7 @@ namespace
 		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
 		reliableUdpRuleConfig.maxPendingPacketCount = 3;
 		reliableUdpRuleConfig.maxResendCount = 1;
-		reliableUdpRuleConfig.resendIntervalMilliseconds = 150;
+		reliableUdpRuleConfig.resendInterval = common::time::Milliseconds(150);
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(10);
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
@@ -651,19 +651,19 @@ namespace
 		tests::Expect(result, peerState->reliableSession.GetPendingPacketCount() == 3, "PeerSessionService: reliable pending count after max check");
 
 		const common::net::ReliableUdpSession::ResendResult earlyResult =
-			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(149));
+			peerState->reliableSession.ExtractResendResult(now + common::time::Milliseconds(149));
 
 		tests::Expect(result, earlyResult.resendPacketList.empty(), "PeerSessionService: reliable resend interval blocks early resend");
 		tests::Expect(result, earlyResult.giveUpPacketList.empty(), "PeerSessionService: reliable resend interval blocks early give-up");
 
 		const common::net::ReliableUdpSession::ResendResult firstTimeoutResult =
-			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(150));
+			peerState->reliableSession.ExtractResendResult(now + common::time::Milliseconds(150));
 
 		tests::Expect(result, firstTimeoutResult.resendPacketList.size() == 3, "PeerSessionService: reliable resend interval applied");
 		tests::Expect(result, firstTimeoutResult.giveUpPacketList.empty(), "PeerSessionService: reliable first timeout no give-up");
 
 		const common::net::ReliableUdpSession::ResendResult secondTimeoutResult =
-			peerState->reliableSession.ExtractResendResult(now + std::chrono::milliseconds(300));
+			peerState->reliableSession.ExtractResendResult(now + common::time::Milliseconds(300));
 
 		tests::Expect(result, secondTimeoutResult.resendPacketList.empty(), "PeerSessionService: reliable max resend no second resend");
 		tests::Expect(result, secondTimeoutResult.giveUpPacketList.size() == 3, "PeerSessionService: reliable max resend count applied");

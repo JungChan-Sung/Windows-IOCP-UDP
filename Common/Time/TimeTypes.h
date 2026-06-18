@@ -8,4 +8,5 @@ namespace common::time
 	using TimePoint = Clock::time_point;
 	using Duration = Clock::duration;
 	using Milliseconds = std::chrono::milliseconds;
+	using Seconds = std::chrono::seconds;
 }

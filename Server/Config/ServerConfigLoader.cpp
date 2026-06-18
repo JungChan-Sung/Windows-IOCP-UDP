@@ -497,7 +497,7 @@ namespace
 			return;
 		}
 
-		if (normalizedKey == "reorderdelaymilliseconds")
+		if (normalizedKey == "reorderdelayms" || normalizedKey == "reorderdelaymilliseconds")
 		{
 			const std::optional<std::chrono::milliseconds> parsedValue = TryParseMilliseconds(value);
 

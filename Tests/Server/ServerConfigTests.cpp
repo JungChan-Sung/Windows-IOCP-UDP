@@ -229,7 +229,7 @@ namespace
 			result,
 			tests::ContainsWarningMessage(
 				warningList,
-				"ReliableUdp.ResendIntervalMilliseconds must be greater than 0. Default resend interval will be used."
+				"ReliableUdp.ResendIntervalMs must be greater than 0. Default resend interval will be used."
 			),
 			"ServerConfigValidator: reliable resend interval warning message"
 		);
@@ -583,10 +583,65 @@ namespace
 			result,
 			tests::ContainsWarningMessage(
 				warningList,
-				"UdpFaultSimulation.MinDelayMilliseconds is greater than "
-				"MaxDelayMilliseconds. Values will be swapped."
+				"UdpFaultSimulation.MinDelayMs is greater than "
+				"MaxDelayMs. Values will be swapped."
 			),
 			"ServerConfigValidator: UDP fault delay swap warning"
+		);
+	}
+
+	void RunLoadShortMillisecondsAliasTest(tests::DebugTestResult& result)
+	{
+		const std::filesystem::path filePath =
+			tests::MakeTempFilePath(
+				"WindowsIocpUdp_ServerConfig_ShortMillisecondsAlias_DebugTest.ini"
+			);
+
+		tests::WriteTextFile(
+			filePath,
+			"[ReliableUdp]\n"
+			"ResendIntervalMs=123\n"
+			"\n"
+			"[UdpFaultSimulation]\n"
+			"MinDelayMs=10\n"
+			"MaxDelayMs=50\n"
+			"ReorderDelayMs=30\n"
+		);
+
+		const server::config::ServerConfigLoadResult loadResult =
+			server::config::ServerConfigLoader::Load(filePath);
+
+		std::filesystem::remove(filePath);
+
+		tests::Expect(
+			result,
+			loadResult.loadedFromFile,
+			"ServerConfig: short millisecond alias file loaded"
+		);
+		tests::Expect(
+			result,
+			loadResult.warningList.empty(),
+			"ServerConfig: short millisecond alias has no loader warning"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.reliableUdp.resendIntervalMilliseconds == 123,
+			"ServerConfig: ReliableUdp.ResendIntervalMs alias parsed"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.udpFaultSimulation.minDelay == std::chrono::milliseconds(10),
+			"ServerConfig: UdpFaultSimulation.MinDelayMs alias parsed"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.udpFaultSimulation.maxDelay == std::chrono::milliseconds(50),
+			"ServerConfig: UdpFaultSimulation.MaxDelayMs alias parsed"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.udpFaultSimulation.reorderDelay == std::chrono::milliseconds(30),
+			"ServerConfig: UdpFaultSimulation.ReorderDelayMs alias parsed"
 		);
 	}
 }
@@ -600,6 +655,7 @@ namespace tests::server
 		RunLoadValidConfigTest(result);
 		RunLoadInvalidConfigTest(result);
 		RunLoadLogLevelAliasTest(result);
+		RunLoadShortMillisecondsAliasTest(result);
 		RunLoadUdpFaultSimulationConfigTest(result);
 		RunLoadInvalidUdpFaultSimulationConfigTest(result);
 		RunMissingFileTest(result);

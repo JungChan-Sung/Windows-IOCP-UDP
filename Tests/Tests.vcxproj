@@ -150,6 +150,7 @@
     <ClCompile Include="Client\ClientWorldTests.cpp" />
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
+    <ClCompile Include="Config\ConfigTextTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
     <ClCompile Include="Log\AsyncLogWriterTests.cpp" />
     <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Client\ClientWorldTests.h" />
     <ClInclude Include="Client\JoinHandshakeStateTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
+    <ClInclude Include="Config\ConfigTextTests.h" />
     <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />
     <ClInclude Include="Log\AsyncLogWriterTests.h" />

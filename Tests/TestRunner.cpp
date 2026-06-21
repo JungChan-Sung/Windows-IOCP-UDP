@@ -7,6 +7,7 @@
 #include "Client/ClientWorldTests.h"
 #include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
+#include "Config/ConfigTextTests.h"
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
 #include "Net/ReliableUdpProtocolTests.h"
 #include "Net/ReliableUdpPacketHeaderTests.h"
@@ -54,6 +55,7 @@ namespace tests
 		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
+		MergeAndPrint(totalResult, "ConfigText", config::RunConfigTextTests());
 		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());
 		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());
 		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());

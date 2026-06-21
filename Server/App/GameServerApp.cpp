@@ -135,8 +135,12 @@ namespace server::app
 
 	void GameServerApp::LogStartupConfig(const config::ServerConfig& serverConfig) const
 	{
-		const auto tickIntervalMs =
-			std::chrono::duration_cast<std::chrono::milliseconds>(serverConfig.tick.tickInterval).count();
+		const auto tickIntervalMs = std::chrono::duration_cast<std::chrono::milliseconds>(serverConfig.tick.tickInterval).count();
+
+		const auto resendIntervalMs = serverConfig.reliableUdp.resendInterval.count();
+		const auto faultMinDelayMs = serverConfig.udpFaultSimulation.minDelay.count();
+		const auto faultMaxDelayMs = serverConfig.udpFaultSimulation.maxDelay.count();
+		const auto faultReorderDelayMs = serverConfig.udpFaultSimulation.reorderDelay.count();
 
 		std::ostringstream stream;
 		stream << "UDP game server started. "
@@ -145,6 +149,17 @@ namespace server::app
 			<< ", RecvContextCount=" << serverConfig.network.recvContextCount
 			<< ", InitialRoomId=" << serverConfig.session.initialRoomId
 			<< ", PeerTimeoutSeconds=" << serverConfig.session.peerTimeout.count()
+			<< ", ReliableMaxPendingPacketCount=" << serverConfig.reliableUdp.maxPendingPacketCount
+			<< ", ReliableMaxResendCount=" << serverConfig.reliableUdp.maxResendCount
+			<< ", ReliableResendIntervalMs=" << resendIntervalMs
+			<< ", UdpFaultEnabled=" << std::boolalpha << serverConfig.udpFaultSimulation.enabled
+			<< ", UdpFaultDropRate=" << serverConfig.udpFaultSimulation.dropRate
+			<< ", UdpFaultDuplicateRate=" << serverConfig.udpFaultSimulation.duplicateRate
+			<< ", UdpFaultReorderRate=" << serverConfig.udpFaultSimulation.reorderRate
+			<< ", UdpFaultMinDelayMs=" << faultMinDelayMs
+			<< ", UdpFaultMaxDelayMs=" << faultMaxDelayMs
+			<< ", UdpFaultReorderDelayMs=" << faultReorderDelayMs
+			<< ", UdpFaultRandomSeed=" << serverConfig.udpFaultSimulation.randomSeed
 			<< ", TickIntervalMs=" << tickIntervalMs
 			<< ", FixedDeltaSeconds=" << serverConfig.tick.fixedDeltaSeconds
 			<< ", InitialPlayerHp=" << serverConfig.gameRule.initialPlayerHp
@@ -156,7 +171,7 @@ namespace server::app
 			<< ", BasicBulletLifeSeconds=" << serverConfig.weaponRule.basicWeaponRule.bulletLifeSeconds
 			<< ", BasicBulletRadius=" << serverConfig.weaponRule.basicWeaponRule.bulletRadius
 			<< ", BasicFireCooldownSeconds=" << serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds
-			<< ", EnableStatusLog=" << std::boolalpha << serverConfig.diagnostics.enableStatusLog
+			<< ", EnableStatusLog=" << serverConfig.diagnostics.enableStatusLog
 			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count()
 			<< ", LogLevel=" << ::ToString(serverConfig.diagnostics.logLevel)
 			<< ", AsyncLogWorkerThreadCount=" << serverConfig.diagnostics.asyncLogWorkerThreadCount;

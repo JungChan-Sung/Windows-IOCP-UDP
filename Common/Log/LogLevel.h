@@ -1,5 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <cctype>
+#include <optional>
+#include <string_view>
+
 namespace common::log
 {
 	enum class LogLevel
@@ -33,5 +38,65 @@ namespace common::log
 		default:
 			return "Unknown";
 		}
+	}
+
+	[[nodiscard]] inline bool EqualsIgnoreCase(std::string_view left, std::string_view right) noexcept
+	{
+		return left.size() == right.size()
+			&& std::ranges::equal(
+				left,
+				right,
+				[](unsigned char leftCharacter, unsigned char rightCharacter)
+				{
+					return std::tolower(leftCharacter) == std::tolower(rightCharacter);
+				}
+			);
+	}
+
+	[[nodiscard]] inline std::string_view TrimLogLevelText(std::string_view text) noexcept
+	{
+		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.front())) != 0)
+		{
+			text.remove_prefix(1);
+		}
+
+		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back())) != 0)
+		{
+			text.remove_suffix(1);
+		}
+
+		return text;
+	}
+
+	[[nodiscard]] inline std::optional<LogLevel> TryParseLogLevel(std::string_view text) noexcept
+	{
+		text = TrimLogLevelText(text);
+
+		if (EqualsIgnoreCase(text, "trace"))
+		{
+			return LogLevel::Trace;
+		}
+
+		if (EqualsIgnoreCase(text, "debug"))
+		{
+			return LogLevel::Debug;
+		}
+
+		if (EqualsIgnoreCase(text, "info"))
+		{
+			return LogLevel::Info;
+		}
+
+		if (EqualsIgnoreCase(text, "warning") || EqualsIgnoreCase(text, "warn"))
+		{
+			return LogLevel::Warning;
+		}
+
+		if (EqualsIgnoreCase(text, "error"))
+		{
+			return LogLevel::Error;
+		}
+
+		return std::nullopt;
 	}
 }

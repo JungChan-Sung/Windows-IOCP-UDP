@@ -11,6 +11,7 @@
 #include <utility>
 
 #include <Common/Config/ConfigText.h>
+#include <Common/Log/LogLevel.h>
 
 #include "ServerConfigValidator.h"
 
@@ -46,38 +47,6 @@ namespace
 		std::ostringstream stream;
 		stream << "Unknown config section ignored. Section=[" << section << "]";
 		return stream.str();
-	}
-
-	[[nodiscard]] std::optional<common::log::LogLevel> TryParseLogLevel(std::string_view value) noexcept
-	{
-		const std::string normalizedValue = common::config::ToLowerCopy(common::config::Trim(value));
-
-		if (normalizedValue == "trace")
-		{
-			return common::log::LogLevel::Trace;
-		}
-
-		if (normalizedValue == "debug")
-		{
-			return common::log::LogLevel::Debug;
-		}
-
-		if (normalizedValue == "info")
-		{
-			return common::log::LogLevel::Info;
-		}
-
-		if (normalizedValue == "warning" || normalizedValue == "warn")
-		{
-			return common::log::LogLevel::Warning;
-		}
-
-		if (normalizedValue == "error")
-		{
-			return common::log::LogLevel::Error;
-		}
-
-		return std::nullopt;
 	}
 
 	void ApplyNetworkValue(
@@ -636,7 +605,7 @@ namespace
 
 		if (normalizedKey == "loglevel")
 		{
-			const std::optional<common::log::LogLevel> parsedValue = TryParseLogLevel(value);
+			const std::optional<common::log::LogLevel> parsedValue = common::log::TryParseLogLevel(value);
 			if (parsedValue.has_value())
 			{
 				serverConfig.diagnostics.logLevel = *parsedValue;

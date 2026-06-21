@@ -64,6 +64,9 @@
     <Filter Include="헤더 파일\Config">
       <UniqueIdentifier>{822a68ea-55a4-4c4c-acbd-6b267bbd6e4e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Config">
+      <UniqueIdentifier>{63890266-194c-4eb4-a2e9-8271a4fe68c6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests.cpp">
@@ -210,14 +213,14 @@
     <ClCompile Include="Net\ReliableUdpVirtualNetwork.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
-    <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Config\ConfigTextTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp">
+      <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Log\LogLevelTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Log</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -323,14 +326,14 @@
     <ClInclude Include="Net\ReliableUdpVirtualNetwork.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
-    <ClInclude Include="Net\ReliableUdpLoadTestHarness.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Config\ConfigTextTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Config</Filter>
     </ClInclude>
     <ClInclude Include="Log\LogLevelTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\ReliableUdpLoadTestHarness.h">
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

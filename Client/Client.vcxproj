@@ -160,7 +160,6 @@
   <ItemGroup>
     <ClInclude Include="App\GameClientApp.h" />
     <ClInclude Include="Config\ClientConfig.h" />
-    <ClInclude Include="Config\ClientConfigDebugTests.h" />
     <ClInclude Include="Config\ClientConfigDefaults.h" />
     <ClInclude Include="Config\ClientConfigLoader.h" />
     <ClInclude Include="Config\ClientConfigValidator.h" />

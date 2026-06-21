@@ -1,6 +1,7 @@
 #include "ClientConfigLoader.h"
 
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -11,6 +12,8 @@
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientTransportType.h>
+
+#include "ClientConfigValidator.h"
 
 namespace
 {
@@ -518,8 +521,22 @@ namespace client::config
 		return loadResult;
 	}
 
+	ClientConfigLoadResult ClientConfigLoader::LoadValidated(const std::filesystem::path& filePath)
+	{
+		ClientConfigLoadResult loadResult = Load(filePath);
+
+		std::vector<ClientConfigWarning> validationWarningList = ClientConfigValidator::ValidateAndNormalize(loadResult.config);
+
+		loadResult.warningList.insert(
+			loadResult.warningList.end(),
+			std::make_move_iterator(validationWarningList.begin()),
+			std::make_move_iterator(validationWarningList.end())
+		);
+		return loadResult;
+	}
+
 	ClientConfig ClientConfigLoader::LoadOrDefault(const std::filesystem::path& filePath)
 	{
-		return Load(filePath).config;
+		return LoadValidated(filePath).config;
 	}
 }

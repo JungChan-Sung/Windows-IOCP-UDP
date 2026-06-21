@@ -149,9 +149,6 @@
     <ClInclude Include="Config\ClientConfigDefaults.h">
       <Filter>헤더 파일\Config</Filter>
     </ClInclude>
-    <ClInclude Include="Config\ClientConfigDebugTests.h">
-      <Filter>헤더 파일\Config</Filter>
-    </ClInclude>
     <ClInclude Include="Net\UdpSocketTransport.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>

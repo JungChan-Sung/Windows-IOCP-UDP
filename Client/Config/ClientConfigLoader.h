@@ -30,6 +30,7 @@ namespace client::config
 
 	public:
 		[[nodiscard]] static ClientConfigLoadResult Load(const std::filesystem::path& filePath);
+		[[nodiscard]] static ClientConfigLoadResult LoadValidated(const std::filesystem::path& filePath);
 		[[nodiscard]] static ClientConfig LoadOrDefault(const std::filesystem::path& filePath);
 	};
 }

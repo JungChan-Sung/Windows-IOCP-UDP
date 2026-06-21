@@ -285,6 +285,56 @@ namespace
 			"ClientConfigValidator: default delay upper warning message"
 		);
 	}
+
+	void RunLoadValidatedNormalizesConfigTest(tests::DebugTestResult& result)
+	{
+		const std::filesystem::path filePath =
+			tests::MakeTempFilePath("WindowsIocpUdp_ClientConfig_LoadValidated_DebugTest.ini");
+
+		tests::WriteTextFile(
+			filePath,
+			"[Network]\n"
+			"ServerIp=\n"
+			"IocpWorkerThreadCount=0\n"
+			"IocpRecvContextCount=0\n"
+			"\n"
+			"[Timing]\n"
+			"UpdateSleepMs=0\n"
+		);
+
+		client::config::ClientConfigLoadResult loadResult =
+			client::config::ClientConfigLoader::LoadValidated(filePath);
+
+		std::filesystem::remove(filePath);
+
+		const client::config::ClientConfig defaultConfig{};
+
+		tests::Expect(
+			result,
+			loadResult.loadedFromFile,
+			"ClientConfig: LoadValidated file loaded"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.network.serverIp == defaultConfig.network.serverIp,
+			"ClientConfig: LoadValidated normalizes server ip"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.network.iocpWorkerThreadCount == defaultConfig.network.iocpWorkerThreadCount,
+			"ClientConfig: LoadValidated normalizes IOCP worker thread count"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
+			"ClientConfig: LoadValidated normalizes update sleep"
+		);
+		tests::Expect(
+			result,
+			!loadResult.warningList.empty(),
+			"ClientConfig: LoadValidated returns validation warnings"
+		);
+	}
 }
 
 namespace tests::client
@@ -299,6 +349,7 @@ namespace tests::client
 		RunMissingFileTest(result);
 		RunValidatorNormalizeTest(result);
 		RunValidatorInterpolationDefaultDelayClampTest(result);
+		RunLoadValidatedNormalizesConfigTest(result);
 
 		return result;
 	}

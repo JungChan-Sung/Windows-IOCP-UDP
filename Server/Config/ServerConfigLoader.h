@@ -30,7 +30,7 @@ namespace server::config
 
 	public:
 		[[nodiscard]] static ServerConfigLoadResult Load(const std::filesystem::path& filePath);
-
+		[[nodiscard]] static ServerConfigLoadResult LoadValidated(const std::filesystem::path& filePath);
 		[[nodiscard]] static ServerConfig LoadOrDefault(const std::filesystem::path& filePath);
 	};
 }

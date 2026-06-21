@@ -644,6 +644,53 @@ namespace
 			"ServerConfig: UdpFaultSimulation.ReorderDelayMs alias parsed"
 		);
 	}
+
+	void RunLoadValidatedNormalizesConfigTest(tests::DebugTestResult& result)
+	{
+		const std::filesystem::path filePath =
+			tests::MakeTempFilePath("WindowsIocpUdp_ServerConfig_LoadValidated_DebugTest.ini");
+
+		tests::WriteTextFile(
+			filePath,
+			"[Network]\n"
+			"WorkerThreadCount=0\n"
+			"RecvContextCount=0\n"
+			"\n"
+			"[ReliableUdp]\n"
+			"ResendIntervalMs=0\n"
+		);
+
+		server::config::ServerConfigLoadResult loadResult =
+			server::config::ServerConfigLoader::LoadValidated(filePath);
+
+		std::filesystem::remove(filePath);
+
+		tests::Expect(
+			result,
+			loadResult.loadedFromFile,
+			"ServerConfig: LoadValidated file loaded"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.network.workerThreadCount > 0,
+			"ServerConfig: LoadValidated resolves worker thread count"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.network.recvContextCount > 0,
+			"ServerConfig: LoadValidated resolves recv context count"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.reliableUdp.resendInterval == server::config::ServerConfig{}.reliableUdp.resendInterval,
+			"ServerConfig: LoadValidated normalizes reliable UDP resend interval"
+		);
+		tests::Expect(
+			result,
+			!loadResult.warningList.empty(),
+			"ServerConfig: LoadValidated returns validation warnings"
+		);
+	}
 }
 
 namespace tests::server
@@ -663,6 +710,7 @@ namespace tests::server
 		RunValidatorUdpFaultSimulationNormalizeTest(result);
 		RunValidatorUdpFaultSimulationDelaySwapTest(result);
 		RunValidatorTickDeltaMismatchWarningTest(result);
+		RunLoadValidatedNormalizesConfigTest(result);
 
 		return result;
 	}

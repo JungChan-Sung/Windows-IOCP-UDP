@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -10,6 +11,8 @@
 #include <utility>
 
 #include <Common/Config/ConfigText.h>
+
+#include "ServerConfigValidator.h"
 
 namespace
 {
@@ -813,8 +816,22 @@ namespace server::config
 		return loadResult;
 	}
 
+	ServerConfigLoadResult ServerConfigLoader::LoadValidated(const std::filesystem::path& filePath)
+	{
+		ServerConfigLoadResult loadResult = Load(filePath);
+
+		std::vector<ServerConfigWarning> validationWarningList = ServerConfigValidator::ValidateAndNormalize(loadResult.config);
+
+		loadResult.warningList.insert(
+			loadResult.warningList.end(),
+			std::make_move_iterator(validationWarningList.begin()),
+			std::make_move_iterator(validationWarningList.end())
+		);
+		return loadResult;
+	}
+
 	ServerConfig ServerConfigLoader::LoadOrDefault(const std::filesystem::path& filePath)
 	{
-		return Load(filePath).config;
+		return LoadValidated(filePath).config;
 	}
 }

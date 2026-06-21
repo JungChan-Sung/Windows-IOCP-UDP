@@ -43,6 +43,9 @@
     <Filter Include="헤더 파일\Time">
       <UniqueIdentifier>{d5d22f42-bea4-400c-89e7-48f5ab6af1b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Config">
+      <UniqueIdentifier>{3c7d05db-ab8c-431a-96fd-5652e05f5291}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -164,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="Net\UdpFaultSimulator.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ConfigText.h">
+      <Filter>헤더 파일\Config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,18 +1,15 @@
 #include "ServerConfigLoader.h"
 
-#include <algorithm>
-#include <cctype>
-#include <charconv>
 #include <chrono>
 #include <cstdint>
 #include <fstream>
-#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
+
+#include <Common/Config/ConfigText.h>
 
 namespace
 {
@@ -48,155 +45,9 @@ namespace
 		return stream.str();
 	}
 
-	[[nodiscard]] std::string_view Trim(std::string_view text) noexcept
-	{
-		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.front())) != 0)
-		{
-			text.remove_prefix(1);
-		}
-
-		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back())) != 0)
-		{
-			text.remove_suffix(1);
-		}
-
-		return text;
-	}
-
-	[[nodiscard]] std::string_view RemoveComment(std::string_view text) noexcept
-	{
-		const std::size_t commentPosition = text.find_first_of("#;");
-		if (commentPosition == std::string_view::npos)
-		{
-			return text;
-		}
-
-		return text.substr(0, commentPosition);
-	}
-
-	[[nodiscard]] std::string ToLowerCopy(std::string_view text)
-	{
-		std::string result(text);
-		std::ranges::transform(
-			result,
-			result.begin(),
-			[](unsigned char character)
-			{
-				return static_cast<char>(std::tolower(character));
-			}
-		);
-
-		return result;
-	}
-
-	[[nodiscard]] std::optional<unsigned long long> TryParseUnsigned(std::string_view text) noexcept
-	{
-		text = Trim(text);
-		if (text.empty())
-		{
-			return std::nullopt;
-		}
-
-		unsigned long long value = 0;
-		const char* begin = text.data();
-		const char* end = text.data() + text.size();
-
-		const auto [position, errorCode] = std::from_chars(begin, end, value);
-		if (errorCode != std::errc{} || position != end)
-		{
-			return std::nullopt;
-		}
-
-		return value;
-	}
-
-	[[nodiscard]] std::optional<common::time::Milliseconds> TryParseMilliseconds(std::string_view text) noexcept
-	{
-		const std::optional<unsigned long long> parsedValue = TryParseUnsigned(text);
-		if (!parsedValue.has_value())
-		{
-			return std::nullopt;
-		}
-
-		using MillisecondsRep = common::time::Milliseconds::rep;
-
-		if (*parsedValue > static_cast<unsigned long long>(std::numeric_limits<MillisecondsRep>::max()))
-		{
-			return std::nullopt;
-		}
-
-		return common::time::Milliseconds(static_cast<MillisecondsRep>(*parsedValue));
-	}
-
-	[[nodiscard]] std::optional<long long> TryParseSigned(std::string_view text) noexcept
-	{
-		text = Trim(text);
-		if (text.empty())
-		{
-			return std::nullopt;
-		}
-
-		long long value = 0;
-		const char* begin = text.data();
-		const char* end = text.data() + text.size();
-
-		const auto [position, errorCode] = std::from_chars(begin, end, value);
-		if (errorCode != std::errc{} || position != end)
-		{
-			return std::nullopt;
-		}
-
-		return value;
-	}
-
-	[[nodiscard]] std::optional<float> TryParseFloat(std::string_view text)
-	{
-		text = Trim(text);
-		if (text.empty())
-		{
-			return std::nullopt;
-		}
-
-		try
-		{
-			std::string valueText(text);
-
-			std::size_t processedCount = 0;
-			const float value = std::stof(valueText, &processedCount);
-
-			if (processedCount != valueText.size())
-			{
-				return std::nullopt;
-			}
-
-			return value;
-		}
-		catch (...)
-		{
-			return std::nullopt;
-		}
-	}
-
-	[[nodiscard]] std::optional<bool> TryParseBool(std::string_view text)
-	{
-		const std::string normalizedText = ToLowerCopy(Trim(text));
-
-		if (normalizedText == "true" || normalizedText == "1" || normalizedText == "yes" || normalizedText == "on")
-		{
-			return true;
-		}
-
-		if (normalizedText == "false" || normalizedText == "0" || normalizedText == "no" || normalizedText == "off")
-		{
-			return false;
-		}
-
-		return std::nullopt;
-	}
-
 	[[nodiscard]] std::optional<common::log::LogLevel> TryParseLogLevel(std::string_view value) noexcept
 	{
-		const std::string normalizedValue = ToLowerCopy(Trim(value));
+		const std::string normalizedValue = common::config::ToLowerCopy(common::config::Trim(value));
 
 		if (normalizedValue == "trace")
 		{
@@ -235,11 +86,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "port")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value()
 				&& *parsedValue > 0
 				&& *parsedValue <= std::numeric_limits<unsigned short>::max())
@@ -256,7 +107,7 @@ namespace
 
 		if (normalizedKey == "workerthreadcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
 				serverConfig.network.workerThreadCount = static_cast<std::size_t>(*parsedValue);
@@ -271,7 +122,7 @@ namespace
 
 		if (normalizedKey == "recvcontextcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
 				serverConfig.network.recvContextCount = static_cast<std::size_t>(*parsedValue);
@@ -296,11 +147,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "initialroomid")
 		{
-			const std::optional<long long> parsedValue = TryParseSigned(value);
+			const std::optional<long long> parsedValue = common::config::TryParseSigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.session.initialRoomId = static_cast<common::game::RoomId>(*parsedValue);
@@ -315,7 +166,7 @@ namespace
 
 		if (normalizedKey == "peertimeoutseconds")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.session.peerTimeout = std::chrono::seconds(*parsedValue);
@@ -340,11 +191,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "maxpendingpacketcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.reliableUdp.maxPendingPacketCount = static_cast<std::size_t>(*parsedValue);
@@ -359,7 +210,7 @@ namespace
 
 		if (normalizedKey == "maxresendcount")
 		{
-			const std::optional<long long> parsedValue = TryParseSigned(value);
+			const std::optional<long long> parsedValue = common::config::TryParseSigned(value);
 			if (parsedValue.has_value() && *parsedValue >= 0)
 			{
 				serverConfig.reliableUdp.maxResendCount = static_cast<int>(*parsedValue);
@@ -374,7 +225,7 @@ namespace
 
 		if (normalizedKey == "resendintervalms" || normalizedKey == "resendintervalmilliseconds")
 		{
-			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = common::config::TryParseMilliseconds(value);
 			if (parsedValue.has_value() && *parsedValue > common::time::Milliseconds::zero())
 			{
 				serverConfig.reliableUdp.resendInterval = *parsedValue;
@@ -399,11 +250,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "enabled")
 		{
-			const std::optional<bool> parsedValue = TryParseBool(value);
+			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
 
 			if (parsedValue.has_value())
 			{
@@ -419,7 +270,7 @@ namespace
 
 		if (normalizedKey == "droprate")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 
 			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
 			{
@@ -435,7 +286,7 @@ namespace
 
 		if (normalizedKey == "duplicaterate")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 
 			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
 			{
@@ -451,7 +302,7 @@ namespace
 
 		if (normalizedKey == "reorderrate")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 
 			if (parsedValue.has_value() && *parsedValue >= 0.0F && *parsedValue <= 1.0F)
 			{
@@ -467,7 +318,7 @@ namespace
 
 		if (normalizedKey == "mindelayms" || normalizedKey == "mindelaymilliseconds")
 		{
-			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = common::config::TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -483,7 +334,7 @@ namespace
 
 		if (normalizedKey == "maxdelayms" || normalizedKey == "maxdelaymilliseconds")
 		{
-			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = common::config::TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -499,7 +350,7 @@ namespace
 
 		if (normalizedKey == "reorderdelayms" || normalizedKey == "reorderdelaymilliseconds")
 		{
-			const std::optional<common::time::Milliseconds> parsedValue = TryParseMilliseconds(value);
+			const std::optional<common::time::Milliseconds> parsedValue = common::config::TryParseMilliseconds(value);
 
 			if (parsedValue.has_value())
 			{
@@ -515,7 +366,7 @@ namespace
 
 		if (normalizedKey == "randomseed")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 
 			if (parsedValue.has_value() && *parsedValue <= std::numeric_limits<std::uint32_t>::max())
 			{
@@ -541,11 +392,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "tickintervalms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.tick.tickInterval = common::time::Milliseconds(*parsedValue);
@@ -560,7 +411,7 @@ namespace
 
 		if (normalizedKey == "fixeddeltaseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue > 0.0F)
 			{
 				serverConfig.tick.fixedDeltaSeconds = *parsedValue;
@@ -585,11 +436,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "initialplayerhp")
 		{
-			const std::optional<long long> parsedValue = TryParseSigned(value);
+			const std::optional<long long> parsedValue = common::config::TryParseSigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.gameRule.initialPlayerHp = static_cast<int>(*parsedValue);
@@ -604,7 +455,7 @@ namespace
 
 		if (normalizedKey == "respawndelayseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue >= 0.0F)
 			{
 				serverConfig.gameRule.respawnDelaySeconds = *parsedValue;
@@ -619,7 +470,7 @@ namespace
 
 		if (normalizedKey == "respawninvincibilityseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue >= 0.0F)
 			{
 				serverConfig.gameRule.respawnInvincibilitySeconds = *parsedValue;
@@ -634,7 +485,7 @@ namespace
 
 		if (normalizedKey == "hitflashdurationseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue >= 0.0F)
 			{
 				serverConfig.gameRule.hitFlashDurationSeconds = *parsedValue;
@@ -659,11 +510,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "bulletdamage")
 		{
-			const std::optional<long long> parsedValue = TryParseSigned(value);
+			const std::optional<long long> parsedValue = common::config::TryParseSigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.weaponRule.basicWeaponRule.bulletDamage = static_cast<int>(*parsedValue);
@@ -678,7 +529,7 @@ namespace
 
 		if (normalizedKey == "bulletspeed")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue > 0.0F)
 			{
 				serverConfig.weaponRule.basicWeaponRule.bulletSpeed = *parsedValue;
@@ -693,7 +544,7 @@ namespace
 
 		if (normalizedKey == "bulletlifeseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue > 0.0F)
 			{
 				serverConfig.weaponRule.basicWeaponRule.bulletLifeSeconds = *parsedValue;
@@ -708,7 +559,7 @@ namespace
 
 		if (normalizedKey == "bulletradius")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue > 0.0F)
 			{
 				serverConfig.weaponRule.basicWeaponRule.bulletRadius = *parsedValue;
@@ -723,7 +574,7 @@ namespace
 
 		if (normalizedKey == "firecooldownseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue >= 0.0F)
 			{
 				serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds = *parsedValue;
@@ -748,11 +599,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "enablestatuslog")
 		{
-			const std::optional<bool> parsedValue = TryParseBool(value);
+			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
 			if (parsedValue.has_value())
 			{
 				serverConfig.diagnostics.enableStatusLog = *parsedValue;
@@ -767,7 +618,7 @@ namespace
 
 		if (normalizedKey == "statuslogintervalseconds")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.diagnostics.statusLogInterval = std::chrono::seconds(*parsedValue);
@@ -797,7 +648,7 @@ namespace
 
 		if (normalizedKey == "asynclogworkerthreadcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				serverConfig.diagnostics.asyncLogWorkerThreadCount = static_cast<std::size_t>(*parsedValue);
@@ -822,7 +673,7 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedSection = ToLowerCopy(section);
+		const std::string normalizedSection = common::config::ToLowerCopy(section);
 
 		if (normalizedSection == "network")
 		{
@@ -911,7 +762,7 @@ namespace server::config
 		{
 			++lineNumber;
 
-			std::string_view text = Trim(RemoveComment(line));
+			std::string_view text = common::config::Trim(common::config::RemoveComment(line));
 			if (text.empty())
 			{
 				continue;
@@ -922,7 +773,7 @@ namespace server::config
 				text.remove_prefix(1);
 				text.remove_suffix(1);
 
-				currentSection = std::string{ Trim(text) };
+				currentSection = std::string{ common::config::Trim(text) };
 				continue;
 			}
 
@@ -937,8 +788,8 @@ namespace server::config
 				continue;
 			}
 
-			const std::string_view key = Trim(text.substr(0, equalPosition));
-			const std::string_view value = Trim(text.substr(equalPosition + 1));
+			const std::string_view key = common::config::Trim(text.substr(0, equalPosition));
+			const std::string_view value = common::config::Trim(text.substr(equalPosition + 1));
 
 			if (currentSection.empty())
 			{

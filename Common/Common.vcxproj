@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Config\ConfigText.h" />
     <ClInclude Include="Game\GameRules.h" />
     <ClInclude Include="Game\GameTypes.h" />
     <ClInclude Include="Game\InputFlags.h" />

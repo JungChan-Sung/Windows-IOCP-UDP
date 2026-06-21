@@ -1,17 +1,13 @@
 #include "ClientConfigLoader.h"
 
-#include <algorithm>
-#include <charconv>
-#include <cctype>
 #include <fstream>
-#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
 
+#include <Common/Config/ConfigText.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientTransportType.h>
@@ -50,117 +46,9 @@ namespace
 		return stream.str();
 	}
 
-	[[nodiscard]] std::string_view Trim(std::string_view text) noexcept
-	{
-		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.front())) != 0)
-		{
-			text.remove_prefix(1);
-		}
-
-		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back())) != 0)
-		{
-			text.remove_suffix(1);
-		}
-
-		return text;
-	}
-
-	[[nodiscard]] std::string_view RemoveComment(std::string_view text) noexcept
-	{
-		const std::size_t commentPosition = text.find_first_of("#;");
-		if (commentPosition == std::string_view::npos)
-		{
-			return text;
-		}
-
-		return text.substr(0, commentPosition);
-	}
-
-	[[nodiscard]] std::string ToLowerCopy(std::string_view text)
-	{
-		std::string result(text);
-
-		std::ranges::transform(
-			result,
-			result.begin(),
-			[](unsigned char character)
-			{
-				return static_cast<char>(std::tolower(character));
-			}
-		);
-
-		return result;
-	}
-
-	[[nodiscard]] std::optional<unsigned long long> TryParseUnsigned(std::string_view text) noexcept
-	{
-		text = Trim(text);
-		if (text.empty())
-		{
-			return std::nullopt;
-		}
-
-		unsigned long long value = 0;
-		const char* begin = text.data();
-		const char* end = text.data() + text.size();
-
-		const auto [position, errorCode] = std::from_chars(begin, end, value);
-		if (errorCode != std::errc{} || position != end)
-		{
-			return std::nullopt;
-		}
-
-		return value;
-	}
-
-	[[nodiscard]] std::optional<bool> TryParseBool(std::string_view text)
-	{
-		const std::string normalizedText = ToLowerCopy(Trim(text));
-
-		if (normalizedText == "true" || normalizedText == "1" || normalizedText == "yes" || normalizedText == "on")
-		{
-			return true;
-		}
-
-		if (normalizedText == "false" || normalizedText == "0" || normalizedText == "no" || normalizedText == "off")
-		{
-			return false;
-		}
-
-		return std::nullopt;
-	}
-
-	[[nodiscard]] std::optional<float> TryParseFloat(std::string_view text)
-	{
-		text = Trim(text);
-		if (text.empty())
-		{
-			return std::nullopt;
-		}
-
-		try
-		{
-			std::string valueText(text);
-
-			std::size_t processedCount = 0;
-			const float value = std::stof(valueText, &processedCount);
-
-			if (processedCount != valueText.size())
-			{
-				return std::nullopt;
-			}
-
-			return value;
-		}
-		catch (...)
-		{
-			return std::nullopt;
-		}
-	}
-
 	[[nodiscard]] std::optional<client::config::ClientTransportType> TryParseClientTransportType(std::string_view value)
 	{
-		const std::string normalizedValue = ToLowerCopy(Trim(value));
+		const std::string normalizedValue = common::config::ToLowerCopy(common::config::Trim(value));
 
 		if (normalizedValue == "socket")
 		{
@@ -184,11 +72,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "serverip")
 		{
-			value = Trim(value);
+			value = common::config::Trim(value);
 			if (!value.empty())
 			{
 				clientConfig.network.serverIp = std::string(value);
@@ -203,7 +91,7 @@ namespace
 
 		if (normalizedKey == "serverport")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value()
 				&& *parsedValue > 0
 				&& *parsedValue <= std::numeric_limits<unsigned short>::max())
@@ -235,7 +123,7 @@ namespace
 
 		if (normalizedKey == "iocpworkerthreadcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.network.iocpWorkerThreadCount = static_cast<std::size_t>(*parsedValue);
@@ -250,7 +138,7 @@ namespace
 
 		if (normalizedKey == "iocprecvcontextcount")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.network.iocpRecvContextCount = static_cast<std::size_t>(*parsedValue);
@@ -275,11 +163,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "updatesleepms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.timing.updateSleepInterval = common::time::Milliseconds(*parsedValue);
@@ -294,7 +182,7 @@ namespace
 
 		if (normalizedKey == "joinretryms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.timing.joinRetryInterval = common::time::Milliseconds(*parsedValue);
@@ -309,7 +197,7 @@ namespace
 
 		if (normalizedKey == "roomjoinms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.timing.roomJoinInterval = common::time::Milliseconds(*parsedValue);
@@ -324,7 +212,7 @@ namespace
 
 		if (normalizedKey == "interpolationadjuststepms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.timing.interpolationAdjustStep = common::time::Milliseconds(*parsedValue);
@@ -349,11 +237,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "defaultdelayms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
 				clientConfig.interpolation.defaultDelay = common::time::Milliseconds(*parsedValue);
@@ -368,7 +256,7 @@ namespace
 
 		if (normalizedKey == "mindelayms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
 				clientConfig.interpolation.minDelay = common::time::Milliseconds(*parsedValue);
@@ -383,7 +271,7 @@ namespace
 
 		if (normalizedKey == "maxdelayms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value())
 			{
 				clientConfig.interpolation.maxDelay = common::time::Milliseconds(*parsedValue);
@@ -408,11 +296,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "assemblytimeoutms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.snapshot.assemblyTimeout = common::time::Milliseconds(*parsedValue);
@@ -437,11 +325,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "tickintervalms")
 		{
-			const std::optional<unsigned long long> parsedValue = TryParseUnsigned(value);
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.simulation.tickInterval = common::time::Milliseconds(*parsedValue);
@@ -456,7 +344,7 @@ namespace
 
 		if (normalizedKey == "deltaseconds")
 		{
-			const std::optional<float> parsedValue = TryParseFloat(value);
+			const std::optional<float> parsedValue = common::config::TryParseFloat(value);
 			if (parsedValue.has_value() && *parsedValue > 0.0F)
 			{
 				clientConfig.simulation.deltaSeconds = *parsedValue;
@@ -481,11 +369,11 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedKey = ToLowerCopy(key);
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
 		if (normalizedKey == "enablechunkassemblerdebugtests")
 		{
-			const std::optional<bool> parsedValue = TryParseBool(value);
+			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
 			if (parsedValue.has_value())
 			{
 				clientConfig.diagnostics.enableChunkAssemblerDebugTests = *parsedValue;
@@ -510,7 +398,7 @@ namespace
 		WarningList& warningList
 	)
 	{
-		const std::string normalizedSection = ToLowerCopy(section);
+		const std::string normalizedSection = common::config::ToLowerCopy(section);
 
 		if (normalizedSection == "network")
 		{
@@ -579,7 +467,7 @@ namespace client::config
 		{
 			++lineNumber;
 
-			std::string_view text = Trim(RemoveComment(line));
+			std::string_view text = common::config::Trim(common::config::RemoveComment(line));
 			if (text.empty())
 			{
 				continue;
@@ -590,7 +478,7 @@ namespace client::config
 				text.remove_prefix(1);
 				text.remove_suffix(1);
 
-				currentSection = std::string{ Trim(text) };
+				currentSection = std::string{ common::config::Trim(text) };
 				continue;
 			}
 
@@ -605,8 +493,8 @@ namespace client::config
 				continue;
 			}
 
-			const std::string_view key = Trim(text.substr(0, equalPosition));
-			const std::string_view value = Trim(text.substr(equalPosition + 1));
+			const std::string_view key = common::config::Trim(text.substr(0, equalPosition));
+			const std::string_view value = common::config::Trim(text.substr(equalPosition + 1));
 
 			if (currentSection.empty())
 			{

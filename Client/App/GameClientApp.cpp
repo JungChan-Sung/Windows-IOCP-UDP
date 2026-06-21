@@ -210,7 +210,10 @@ namespace client::app
 			<< ", UpdateSleepMs=" << config_.timing.updateSleepInterval.count()
 			<< ", JoinRetryMs=" << config_.timing.joinRetryInterval.count()
 			<< ", RoomJoinMs=" << config_.timing.roomJoinInterval.count()
-			<< ", InterpolationDelayMs=" << config_.interpolation.defaultDelay.count()
+			<< ", InterpolationAdjustStepMs=" << config_.timing.interpolationAdjustStep.count()
+			<< ", InterpolationDefaultDelayMs=" << config_.interpolation.defaultDelay.count()
+			<< ", InterpolationMinDelayMs=" << config_.interpolation.minDelay.count()
+			<< ", InterpolationMaxDelayMs=" << config_.interpolation.maxDelay.count()
 			<< ", SnapshotAssemblyTimeoutMs=" << config_.snapshot.assemblyTimeout.count()
 			<< ", SimulationTickIntervalMs=" << config_.simulation.tickInterval.count()
 			<< ", SimulationDeltaSeconds=" << config_.simulation.deltaSeconds

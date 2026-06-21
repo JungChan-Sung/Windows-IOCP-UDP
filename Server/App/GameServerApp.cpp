@@ -107,7 +107,7 @@ namespace server::app
 
 	config::ServerConfigLoadResult GameServerApp::BuildServerConfig(unsigned short port) const
 	{
-		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::Load("Server.ini");
+		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::LoadValidated("Server.ini");
 
 		if (port != 0)
 		{

@@ -8,12 +8,10 @@
 #include <string_view>
 #include <type_traits>
 #include <variant>
-#include <vector>
 
 #include <Common/String/StringFormat.h>
 
 #include <Client/Config/ClientConfigLoader.h>
-#include <Client/Config/ClientConfigValidator.h>
 #include <Client/Config/ClientTransportType.h>
 
 namespace
@@ -181,7 +179,7 @@ namespace client::app
 
 	config::ClientConfig GameClientApp::BuildClientConfig(const char* serverIp, unsigned short serverPort) const
 	{
-		config::ClientConfigLoadResult loadResult = config::ClientConfigLoader::Load("Client.ini");
+		config::ClientConfigLoadResult loadResult = config::ClientConfigLoader::LoadValidated("Client.ini");
 		OutputClientConfigWarnings(loadResult.warningList);
 
 		config::ClientConfig clientConfig = loadResult.config;
@@ -195,10 +193,6 @@ namespace client::app
 		{
 			clientConfig.network.serverPort = serverPort;
 		}
-
-		const std::vector<config::ClientConfigWarning> validationWarningList
-			= config::ClientConfigValidator::ValidateAndNormalize(clientConfig);
-		OutputClientConfigWarnings(validationWarningList);
 
 		return clientConfig;
 	}

@@ -5,7 +5,6 @@
 #include <chrono>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <type_traits>
 #include <variant>
@@ -13,33 +12,6 @@
 #include <Common/String/StringFormat.h>
 
 #include <Server/Config/ServerConfigLoader.h>
-
-namespace
-{
-	[[nodiscard]] std::string_view ToString(common::log::LogLevel logLevel) noexcept
-	{
-		switch (logLevel)
-		{
-		case common::log::LogLevel::Trace:
-			return "Trace";
-
-		case common::log::LogLevel::Debug:
-			return "Debug";
-
-		case common::log::LogLevel::Info:
-			return "Info";
-
-		case common::log::LogLevel::Warning:
-			return "Warning";
-
-		case common::log::LogLevel::Error:
-			return "Error";
-
-		default:
-			return "Unknown";
-		}
-	}
-}
 
 namespace server::app
 {
@@ -173,7 +145,7 @@ namespace server::app
 			<< ", BasicFireCooldownSeconds=" << serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds
 			<< ", EnableStatusLog=" << serverConfig.diagnostics.enableStatusLog
 			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count()
-			<< ", LogLevel=" << ::ToString(serverConfig.diagnostics.logLevel)
+			<< ", LogLevel=" << common::log::ToString(serverConfig.diagnostics.logLevel)
 			<< ", AsyncLogWorkerThreadCount=" << serverConfig.diagnostics.asyncLogWorkerThreadCount;
 
 		logger_.Info(stream.str());

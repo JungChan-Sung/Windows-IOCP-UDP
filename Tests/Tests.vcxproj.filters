@@ -216,6 +216,9 @@
     <ClCompile Include="Config\ConfigTextTests.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Log\LogLevelTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -324,6 +327,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Config\ConfigTextTests.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Log\LogLevelTests.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

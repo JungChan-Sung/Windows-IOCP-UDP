@@ -153,6 +153,7 @@
     <ClCompile Include="Config\ConfigTextTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
     <ClCompile Include="Log\AsyncLogWriterTests.cpp" />
+    <ClCompile Include="Log\LogLevelTests.cpp" />
     <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp" />
     <ClCompile Include="Net\ReliableUdpLoadTests.cpp" />
     <ClCompile Include="Net\ReliableUdpPacketBuilderTests.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="DebugTestResult.h" />
     <ClInclude Include="Game\WorldCollisionTests.h" />
     <ClInclude Include="Log\AsyncLogWriterTests.h" />
+    <ClInclude Include="Log\LogLevelTests.h" />
     <ClInclude Include="Net\ReliableUdpLoadTestHarness.h" />
     <ClInclude Include="Net\ReliableUdpLoadTests.h" />
     <ClInclude Include="Net\ReliableUdpPacketBuilderTests.h" />

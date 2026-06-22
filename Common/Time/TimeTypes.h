@@ -4,9 +4,15 @@
 
 namespace common::time
 {
-	using Clock = std::chrono::steady_clock;
+	using SteadyClock = std::chrono::steady_clock;
+	using Clock = SteadyClock;
 	using TimePoint = Clock::time_point;
 	using Duration = Clock::duration;
+
+	using SystemClock = std::chrono::system_clock;
+	using SystemTimePoint = SystemClock::time_point;
+	using SystemDuration = SystemClock::duration;
+
 	using Milliseconds = std::chrono::milliseconds;
 	using Seconds = std::chrono::seconds;
 }

@@ -1,5 +1,7 @@
 #include "LogFormatterTests.h"
-#include "LogFormatterTests.h"
+
+#include <chrono>
+#include <string>
 
 #include <Common/Log/LogFormatter.h>
 #include <Common/Log/LogLevel.h>
@@ -8,6 +10,25 @@
 
 namespace tests::log
 {
+	void RunTimestampFormatTest(tests::DebugTestResult& result)
+	{
+		const std::chrono::system_clock::time_point timestamp =
+			std::chrono::sys_days(std::chrono::year(2026) / std::chrono::June / 23)
+			+ std::chrono::hours(12)
+			+ std::chrono::minutes(34)
+			+ std::chrono::seconds(56)
+			+ std::chrono::milliseconds(123);
+
+		const common::log::LogRecord logRecord =
+			common::log::MakeLogRecord(timestamp, common::log::LogLevel::Info, "timestamp test");
+
+		tests::Expect(
+			result,
+			common::log::FormatLogMessage(logRecord) == "[2026-06-23 12:34:56.123][Info] timestamp test",
+			"LogFormatter: timestamp record message"
+		);
+	}
+
 	tests::DebugTestResult RunLogFormatterTests()
 	{
 		tests::DebugTestResult result{};
@@ -55,6 +76,8 @@ namespace tests::log
 			logRecord.message == "copied message",
 			"LogRecord: message copied"
 		);
+
+		RunTimestampFormatTest(result);
 
 		return result;
 	}

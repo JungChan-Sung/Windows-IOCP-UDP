@@ -223,7 +223,7 @@
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
     <ClCompile Include="Log\LogFormatterTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Log</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -339,7 +339,7 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Log\LogFormatterTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Log</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

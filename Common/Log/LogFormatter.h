@@ -1,10 +1,10 @@
 #pragma once
-#pragma once
 
 #include <string>
 #include <string_view>
 
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/LogRecord.h>
 
 namespace common::log
 {
@@ -19,5 +19,10 @@ namespace common::log
 		result += message;
 
 		return result;
+	}
+
+	[[nodiscard]] inline std::string FormatLogMessage(const LogRecord& logRecord)
+	{
+		return FormatLogMessage(logRecord.logLevel, logRecord.message);
 	}
 }

@@ -30,6 +30,32 @@ namespace tests::log
 			"LogFormatter: empty message"
 		);
 
+		tests::Expect(
+			result,
+			common::log::FormatLogMessage(
+				common::log::LogRecord{
+					.logLevel = common::log::LogLevel::Debug,
+					.message = "record message",
+				}
+				) == "[Debug] record message",
+			"LogFormatter: record message"
+		);
+
+		const common::log::LogRecord logRecord =
+			common::log::MakeLogRecord(common::log::LogLevel::Warning, "copied message");
+
+		tests::Expect(
+			result,
+			logRecord.logLevel == common::log::LogLevel::Warning,
+			"LogRecord: level copied"
+		);
+
+		tests::Expect(
+			result,
+			logRecord.message == "copied message",
+			"LogRecord: message copied"
+		);
+
 		return result;
 	}
 }

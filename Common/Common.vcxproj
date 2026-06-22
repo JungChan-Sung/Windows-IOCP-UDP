@@ -33,6 +33,7 @@
     <ClInclude Include="Log\ILogger.h" />
     <ClInclude Include="Log\LogFormatter.h" />
     <ClInclude Include="Log\LogLevel.h" />
+    <ClInclude Include="Log\LogRecord.h" />
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\IocpHandle.h" />
     <ClInclude Include="Net\ReliableUdpPacketHeader.h" />

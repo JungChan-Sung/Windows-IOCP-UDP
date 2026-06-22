@@ -1,13 +1,10 @@
 #include "AsyncLogWriter.h"
 
-#include <expected>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
 
-#include <Common/Log/LogRecord.h>
 #include <Common/String/StringFormat.h>
 
 namespace common::log
@@ -83,31 +80,32 @@ namespace common::log
 		threadPool_.StopAfterDrain();
 	}
 
-	bool AsyncLogWriter::Log(LogLevel logLevel, std::string_view message) const
+	bool AsyncLogWriter::Log(const LogRecord& logRecord) const
 	{
 		if (!isStarted_.load())
 		{
 			return false;
 		}
 
-		if (!ShouldEnqueue(logLevel))
+		if (!ShouldEnqueue(logRecord.logLevel))
 		{
 			return false;
 		}
 
-		LogRecord logRecord = MakeLogRecord(logLevel, message);
+		const ILogger* logger = logger_;
+		LogRecord copiedLogRecord = logRecord;
 
 		return threadPool_.Enqueue(
-			[this, logRecord = std::move(logRecord)]()
+			[logger, logRecord = std::move(copiedLogRecord)]()
 			{
-				logger_.Log(logRecord);
+				logger->Log(logRecord);
 			}
 		);
 	}
 
 	bool AsyncLogWriter::ShouldEnqueue(LogLevel logLevel) const noexcept
 	{
-		return static_cast<int>(logLevel) >= static_cast<int>(logger_.GetMinimumLogLevel());
+		return static_cast<int>(logLevel) >= static_cast<int>(defaultLogger_.GetMinimumLogLevel());
 	}
 
 	std::size_t AsyncLogWriter::GetPendingTaskCount() const

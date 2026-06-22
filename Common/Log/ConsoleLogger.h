@@ -27,8 +27,7 @@ namespace common::log
 		ConsoleLogger& operator=(ConsoleLogger&&) = delete;
 
 	public:
-		bool Log(LogLevel logLevel, std::string_view message) const override;
-		bool Log(const LogRecord& logRecord) const;
+		bool Log(const LogRecord& logRecord) const override;
 
 	public:
 		void SetMinimumLogLevel(LogLevel logLevel) noexcept

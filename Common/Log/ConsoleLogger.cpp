@@ -6,11 +6,6 @@
 
 namespace common::log
 {
-	bool ConsoleLogger::Log(LogLevel logLevel, std::string_view message) const
-	{
-		return Log(MakeLogRecord(logLevel, message));
-	}
-
 	bool ConsoleLogger::Log(const LogRecord& logRecord) const
 	{
 		if (!ShouldLog(logRecord.logLevel))

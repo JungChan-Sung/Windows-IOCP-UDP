@@ -4,6 +4,7 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/NullLogger.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Tests/DebugTestResult.h>
@@ -80,7 +81,9 @@ namespace
 
 	void RunLogEnqueueSucceedsTest(tests::DebugTestResult& result)
 	{
+		common::log::NullLogger nullLogger;
 		common::log::AsyncLogWriter logWriter;
+		logWriter.SetLogger(nullLogger);
 
 		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
 		const bool started = startResult.has_value();
@@ -104,7 +107,9 @@ namespace
 
 	void RunMinimumLogLevelFiltersTest(tests::DebugTestResult& result)
 	{
+		common::log::NullLogger nullLogger;
 		common::log::AsyncLogWriter logWriter;
+		logWriter.SetLogger(nullLogger);
 
 		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
 		const bool started = startResult.has_value();

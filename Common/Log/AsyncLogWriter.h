@@ -28,10 +28,13 @@ namespace common::log
 		using StartResult = std::expected<void, StartError>;
 
 	private:
-		ConsoleLogger logger_;
-		mutable threading::ThreadPool threadPool_;
+		ConsoleLogger defaultLogger_;
+		const ILogger* logger_ = &defaultLogger_;
 
+		mutable threading::ThreadPool threadPool_;
 		mutable std::atomic<bool> isStarted_ = false;
+
+		std::atomic<LogLevel> minimumLogLevel_ = LogLevel::Info;
 
 	public:
 		AsyncLogWriter() = default;
@@ -50,20 +53,31 @@ namespace common::log
 		[[nodiscard]] StartResult Start(std::size_t workerThreadCount = 1);
 		void Stop() noexcept;
 
-		bool Log(LogLevel logLevel, std::string_view message) const override;
+		bool Log(const LogRecord& logRecord) const override;
 
 	private:
 		[[nodiscard]] bool ShouldEnqueue(LogLevel logLevel) const noexcept;
 
 	public:
+		void SetLogger(const ILogger& logger) noexcept
+		{
+			logger_ = &logger;
+		}
+
+		void ResetLogger() noexcept
+		{
+			logger_ = &defaultLogger_;
+		}
+
 		void SetMinimumLogLevel(LogLevel logLevel) noexcept
 		{
-			logger_.SetMinimumLogLevel(logLevel);
+			minimumLogLevel_.store(logLevel);
+			defaultLogger_.SetMinimumLogLevel(logLevel);
 		}
 
 		[[nodiscard]] LogLevel GetMinimumLogLevel() const noexcept
 		{
-			return logger_.GetMinimumLogLevel();
+			return minimumLogLevel_.load();
 		}
 
 		[[nodiscard]] bool IsStarted() const noexcept

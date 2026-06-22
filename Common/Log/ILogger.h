@@ -3,6 +3,7 @@
 #include <string_view>
 
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/LogRecord.h>
 
 namespace common::log
 {
@@ -19,7 +20,12 @@ namespace common::log
 		ILogger& operator=(ILogger&&) = delete;
 
 	public:
-		virtual bool Log(LogLevel logLevel, std::string_view message) const = 0;
+		virtual bool Log(const LogRecord& logRecord) const = 0;
+
+		bool Log(LogLevel logLevel, std::string_view message) const
+		{
+			return Log(MakeLogRecord(logLevel, message));
+		}
 
 		bool Trace(std::string_view message) const
 		{

@@ -177,6 +177,9 @@
     <ClInclude Include="Log\LogRecord.h">
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
+    <ClInclude Include="Log\NullLogger.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

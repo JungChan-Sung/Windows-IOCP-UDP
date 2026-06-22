@@ -11,7 +11,7 @@ namespace common::log
 	struct LogRecord
 	{
 	public:
-		time::SystemTimePoint timestamp;
+		time::SystemTimePoint timestamp = time::SystemClock::now();
 		LogLevel logLevel = LogLevel::Info;
 		std::string message;
 	};

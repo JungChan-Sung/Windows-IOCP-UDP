@@ -41,6 +41,5 @@ namespace common::log
 
 	private:
 		[[nodiscard]] bool ShouldLog(LogLevel logLevel) const noexcept;
-		[[nodiscard]] static std::string_view ToString(LogLevel logLevel) noexcept;
 	};
 }

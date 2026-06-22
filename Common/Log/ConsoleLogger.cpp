@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <Common/Log/LogFormatter.h>
+
 namespace common::log
 {
 	bool ConsoleLogger::Log(LogLevel logLevel, std::string_view message) const
@@ -14,7 +16,7 @@ namespace common::log
 		std::scoped_lock lock(logMutex_);
 
 		std::ostream& outputStream = (logLevel >= LogLevel::Warning) ? std::cerr : std::cout;
-		outputStream << '[' << common::log::ToString(logLevel) << "] " << message << '\n';
+		outputStream << FormatLogMessage(logLevel, message) << '\n';
 
 		return true;
 	}

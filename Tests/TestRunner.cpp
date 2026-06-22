@@ -22,6 +22,7 @@
 #include "Packet/PacketReliabilityTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
+#include "Log/LogFormatterTests.h"
 #include "Log/LogLevelTests.h"
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
@@ -55,8 +56,9 @@ namespace tests
 		MergeAndPrint(totalResult, "UdpFaultSimulator", net::RunUdpFaultSimulatorTests());
 		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
-		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
 		MergeAndPrint(totalResult, "LogLevel", log::RunLogLevelTests());
+		MergeAndPrint(totalResult, "LogFormatter", log::RunLogFormatterTests());
+		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
 		MergeAndPrint(totalResult, "ConfigText", config::RunConfigTextTests());
 		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());
 		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());

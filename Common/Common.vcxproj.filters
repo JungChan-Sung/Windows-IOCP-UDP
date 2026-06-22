@@ -171,6 +171,9 @@
     <ClInclude Include="Config\ConfigText.h">
       <Filter>헤더 파일\Config</Filter>
     </ClInclude>
+    <ClInclude Include="Log\LogFormatter.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

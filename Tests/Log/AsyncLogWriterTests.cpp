@@ -10,6 +10,8 @@
 #include <Tests/DebugTestResult.h>
 #include <Tests/TestHelpers.h>
 
+#include "MemoryLogger.h"
+
 namespace
 {
 	void RunStartStopTest(tests::DebugTestResult& result)
@@ -125,6 +127,61 @@ namespace
 
 		logWriter.Stop();
 	}
+
+	void RunInjectedLoggerReceivesRecordTest(tests::DebugTestResult& result)
+	{
+		tests::log::MemoryLogger memoryLogger;
+		common::log::AsyncLogWriter logWriter;
+		logWriter.SetLogger(memoryLogger);
+
+		const common::time::SystemTimePoint before = common::time::SystemClock::now();
+
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+		const bool started = startResult.has_value();
+
+		const bool logged = logWriter.Warning("captured warning log");
+
+		const bool received = tests::WaitUntil(
+			[&memoryLogger]()
+			{
+				return memoryLogger.GetLogRecordCount() == 1;
+			},
+			common::time::Milliseconds(1000)
+		);
+
+		const common::time::SystemTimePoint after = common::time::SystemClock::now();
+
+		const std::vector<common::log::LogRecord> logRecordList = memoryLogger.GetLogRecords();
+
+		tests::Expect(result, started, "AsyncLogWriter: injected logger start succeeds");
+		tests::Expect(result, logged, "AsyncLogWriter: injected logger enqueue succeeds");
+		tests::Expect(result, received, "AsyncLogWriter: injected logger receives record");
+
+		if (!logRecordList.empty())
+		{
+			const common::log::LogRecord& logRecord = logRecordList.front();
+
+			tests::Expect(
+				result,
+				logRecord.logLevel == common::log::LogLevel::Warning,
+				"AsyncLogWriter: injected logger receives level"
+			);
+
+			tests::Expect(
+				result,
+				logRecord.message == "captured warning log",
+				"AsyncLogWriter: injected logger receives message"
+			);
+
+			tests::Expect(
+				result,
+				logRecord.timestamp >= before && logRecord.timestamp <= after,
+				"AsyncLogWriter: injected logger receives enqueue timestamp"
+			);
+		}
+
+		logWriter.Stop();
+	}
 }
 
 namespace tests::log
@@ -140,6 +197,7 @@ namespace tests::log
 		RunLogAfterStopFailsTest(result);
 		RunLogEnqueueSucceedsTest(result);
 		RunMinimumLogLevelFiltersTest(result);
+		RunInjectedLoggerReceivesRecordTest(result);
 
 		return result;
 	}

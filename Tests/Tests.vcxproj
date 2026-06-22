@@ -200,6 +200,7 @@
     <ClInclude Include="Log\AsyncLogWriterTests.h" />
     <ClInclude Include="Log\LogFormatterTests.h" />
     <ClInclude Include="Log\LogLevelTests.h" />
+    <ClInclude Include="Log\MemoryLogger.h" />
     <ClInclude Include="Net\ReliableUdpLoadTestHarness.h" />
     <ClInclude Include="Net\ReliableUdpLoadTests.h" />
     <ClInclude Include="Net\ReliableUdpPacketBuilderTests.h" />

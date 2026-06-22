@@ -10,6 +10,9 @@ namespace common::log
 	class NullLogger final : public ILogger
 	{
 	public:
+		using ILogger::Log;
+
+	public:
 		NullLogger() = default;
 		~NullLogger() noexcept override = default;
 

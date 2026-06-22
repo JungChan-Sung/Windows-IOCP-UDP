@@ -12,6 +12,9 @@ namespace common::log
 {
 	class ConsoleLogger final : public ILogger
 	{
+	public:
+		using ILogger::Log;
+
 	private:
 		mutable std::mutex logMutex_;
 		std::atomic<LogLevel> minimumLogLevel_ = LogLevel::Info;

@@ -341,5 +341,8 @@
     <ClInclude Include="Log\LogFormatterTests.h">
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
+    <ClInclude Include="Log\MemoryLogger.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

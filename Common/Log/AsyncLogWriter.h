@@ -17,6 +17,9 @@ namespace common::log
 	class AsyncLogWriter final : public ILogger
 	{
 	public:
+		using ILogger::Log;
+
+	public:
 		enum class StartFailure
 		{
 			InvalidWorkerThreadCount,

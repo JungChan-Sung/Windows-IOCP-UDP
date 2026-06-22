@@ -3,22 +3,24 @@
 #include <iostream>
 
 #include <Common/Log/LogFormatter.h>
-#include <Common/Log/LogRecord.h>
 
 namespace common::log
 {
 	bool ConsoleLogger::Log(LogLevel logLevel, std::string_view message) const
 	{
-		if (!ShouldLog(logLevel))
+		return Log(MakeLogRecord(logLevel, message));
+	}
+
+	bool ConsoleLogger::Log(const LogRecord& logRecord) const
+	{
+		if (!ShouldLog(logRecord.logLevel))
 		{
 			return false;
 		}
 
 		std::scoped_lock lock(logMutex_);
 
-		const LogRecord logRecord = MakeLogRecord(logLevel, message);
-
-		std::ostream& outputStream = (logLevel >= LogLevel::Warning) ? std::cerr : std::cout;
+		std::ostream& outputStream = (logRecord.logLevel >= LogLevel::Warning) ? std::cerr : std::cout;
 		outputStream << FormatLogMessage(logRecord) << '\n';
 
 		return true;

@@ -7,6 +7,7 @@
 #include <utility>
 #include <variant>
 
+#include <Common/Log/LogRecord.h>
 #include <Common/String/StringFormat.h>
 
 namespace common::log
@@ -94,12 +95,12 @@ namespace common::log
 			return false;
 		}
 
-		std::string copiedMessage(message);
+		LogRecord logRecord = MakeLogRecord(logLevel, message);
 
 		return threadPool_.Enqueue(
-			[this, logLevel, copiedMessage = std::move(copiedMessage)]()
+			[this, logRecord = std::move(logRecord)]()
 			{
-				logger_.Log(logLevel, copiedMessage);
+				logger_.Log(logRecord);
 			}
 		);
 	}

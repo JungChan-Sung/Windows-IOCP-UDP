@@ -6,6 +6,7 @@
 
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/LogRecord.h>
 
 namespace common::log
 {
@@ -27,6 +28,7 @@ namespace common::log
 
 	public:
 		bool Log(LogLevel logLevel, std::string_view message) const override;
+		bool Log(const LogRecord& logRecord) const;
 
 	public:
 		void SetMinimumLogLevel(LogLevel logLevel) noexcept

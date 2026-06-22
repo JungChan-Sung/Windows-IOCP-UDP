@@ -24,6 +24,7 @@
 #include "Log/AsyncLogWriterTests.h"
 #include "Log/LogFormatterTests.h"
 #include "Log/LogLevelTests.h"
+#include "Log/LogMessageBuilderTests.h"
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
 #include "Server/GameSimulationTests.h"
@@ -58,6 +59,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
 		MergeAndPrint(totalResult, "LogLevel", log::RunLogLevelTests());
 		MergeAndPrint(totalResult, "LogFormatter", log::RunLogFormatterTests());
+		MergeAndPrint(totalResult, "LogMessageBuilder", log::RunLogMessageBuilderTests());
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
 		MergeAndPrint(totalResult, "ConfigText", config::RunConfigTextTests());
 		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());

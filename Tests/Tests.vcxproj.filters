@@ -225,6 +225,9 @@
     <ClCompile Include="Log\LogFormatterTests.cpp">
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
+    <ClCompile Include="Log\LogMessageBuilderTests.cpp">
+      <Filter>소스 파일\Log</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -342,6 +345,9 @@
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
     <ClInclude Include="Log\MemoryLogger.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Log\LogMessageBuilderTests.h">
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
   </ItemGroup>

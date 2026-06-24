@@ -33,7 +33,7 @@ namespace client::app
 		};
 
 	public:
-		using RunError = std::variant<RunFailure, net::UdpClient::StartError>;
+		using RunError = std::variant<RunFailure, common::log::AsyncLogWriter::StartError, net::UdpClient::StartError>;
 		using RunResult = std::expected<void, RunError>;
 
 	private:
@@ -42,13 +42,13 @@ namespace client::app
 	private:
 		config::ClientConfig config_;
 
+		common::log::AsyncLogWriter logger_;
+
 		game::ClientWorld world_;
 		net::UdpClient udpClient_;
 		net::JoinHandshakeState joinHandshakeState_;
 		ui::GameWindow gameWindow_;
 		render::GdiRenderer gdiRenderer_;
-
-		common::log::AsyncLogWriter logger_;
 
 		std::atomic<bool> isRunning_ = false;
 		std::jthread updateThread_;

@@ -107,9 +107,11 @@ namespace server::app
 
 	void GameServerApp::LogStartupConfig(const config::ServerConfig& serverConfig) const
 	{
+		const auto tickIntervalMs = std::chrono::duration_cast<common::time::Milliseconds>(serverConfig.tick.tickInterval).count();
+
 		const std::string message =
 			common::log::LogMessageBuilder{}
-			.Append("Server configuration loaded. ")
+			.Append("UDP game server started. ")
 			.AppendNamedValue("Port", serverConfig.network.port)
 			.AppendCommaNamedValue("WorkerThreadCount", serverConfig.network.workerThreadCount)
 			.AppendCommaNamedValue("RecvContextCount", serverConfig.network.recvContextCount)
@@ -126,8 +128,17 @@ namespace server::app
 			.AppendCommaNamedValue("UdpFaultMaxDelayMs", serverConfig.udpFaultSimulation.maxDelay.count())
 			.AppendCommaNamedValue("UdpFaultReorderDelayMs", serverConfig.udpFaultSimulation.reorderDelay.count())
 			.AppendCommaNamedValue("UdpFaultRandomSeed", serverConfig.udpFaultSimulation.randomSeed)
-			.AppendCommaNamedValue("TickIntervalMs", serverConfig.tick.tickInterval.count())
+			.AppendCommaNamedValue("TickIntervalMs", tickIntervalMs)
 			.AppendCommaNamedValue("FixedDeltaSeconds", serverConfig.tick.fixedDeltaSeconds)
+			.AppendCommaNamedValue("InitialPlayerHp", serverConfig.gameRule.initialPlayerHp)
+			.AppendCommaNamedValue("RespawnDelaySeconds", serverConfig.gameRule.respawnDelaySeconds)
+			.AppendCommaNamedValue("RespawnInvincibilitySeconds", serverConfig.gameRule.respawnInvincibilitySeconds)
+			.AppendCommaNamedValue("HitFlashDurationSeconds", serverConfig.gameRule.hitFlashDurationSeconds)
+			.AppendCommaNamedValue("BasicBulletDamage", serverConfig.weaponRule.basicWeaponRule.bulletDamage)
+			.AppendCommaNamedValue("BasicBulletSpeed", serverConfig.weaponRule.basicWeaponRule.bulletSpeed)
+			.AppendCommaNamedValue("BasicBulletLifeSeconds", serverConfig.weaponRule.basicWeaponRule.bulletLifeSeconds)
+			.AppendCommaNamedValue("BasicBulletRadius", serverConfig.weaponRule.basicWeaponRule.bulletRadius)
+			.AppendCommaNamedValue("BasicFireCooldownSeconds", serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds)
 			.AppendCommaNamedValue("EnableStatusLog", serverConfig.diagnostics.enableStatusLog)
 			.AppendCommaNamedValue("StatusLogIntervalSeconds", serverConfig.diagnostics.statusLogInterval.count())
 			.AppendCommaNamedValue("LogLevel", common::log::ToString(serverConfig.diagnostics.logLevel))
@@ -135,6 +146,7 @@ namespace server::app
 			.Build();
 
 		logger_.Info(message);
+		logger_.Info("Press ESC to stop.");
 	}
 
 	void GameServerApp::MainLoop() noexcept

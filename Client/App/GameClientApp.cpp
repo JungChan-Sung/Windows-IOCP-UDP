@@ -34,21 +34,6 @@ namespace
 			::OutputDebugStringA(stream.str().c_str());
 		}
 	}
-
-	[[nodiscard]] std::string_view ToString(client::config::ClientTransportType transportType) noexcept
-	{
-		switch (transportType)
-		{
-		case client::config::ClientTransportType::Socket:
-			return "Socket";
-
-		case client::config::ClientTransportType::Iocp:
-			return "Iocp";
-
-		default:
-			return "Unknown";
-		}
-	}
 }
 
 namespace client::app
@@ -81,6 +66,10 @@ namespace client::app
 				{
 					return common::string::FormatScopedName("UdpClient", net::UdpClient::ToString(error));
 				}
+				else if constexpr (std::is_same_v<ErrorType, common::log::AsyncLogWriter::StartError>)
+				{
+					return common::string::FormatScopedName("Logger", common::log::AsyncLogWriter::ToString(error));
+				}
 				else
 				{
 					return "Unknown";
@@ -98,6 +87,13 @@ namespace client::app
 		}
 
 		config_ = BuildClientConfig(serverIp, serverPort);
+
+		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(1);
+		if (!loggerStartResult.has_value())
+		{
+			return std::unexpected(RunError{ loggerStartResult.error() });
+		}
+
 		OutputStartupConfig();
 
 		world_.SetInterpolationSettings(
@@ -117,6 +113,8 @@ namespace client::app
 		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
 		if (!udpClientStartResult.has_value())
 		{
+			logger_.Stop();
+
 			return std::unexpected(RunError{ udpClientStartResult.error() });
 		}
 
@@ -124,6 +122,8 @@ namespace client::app
 		{
 			udpClient_.Stop();
 			world_.Clear();
+			logger_.Stop();
+
 			return std::unexpected(RunError{ RunFailure::GameWindowCreateFailed });
 		}
 
@@ -201,10 +201,10 @@ namespace client::app
 	{
 		const std::string message =
 			common::log::LogMessageBuilder{}
-			.Append("Client configuration loaded. ")
+			.Append("Client config. ")
 			.AppendNamedValue("ServerIp", config_.network.serverIp)
 			.AppendCommaNamedValue("ServerPort", config_.network.serverPort)
-			.AppendCommaNamedValue("TransportType", config_.network.transportType)
+			.AppendCommaNamedValue("TransportType", client::config::ToString(config_.network.transportType))
 			.AppendCommaNamedValue("IocpWorkerThreadCount", config_.network.iocpWorkerThreadCount)
 			.AppendCommaNamedValue("IocpRecvContextCount", config_.network.iocpRecvContextCount)
 			.AppendCommaNamedValue("UpdateSleepMs", config_.timing.updateSleepInterval.count())

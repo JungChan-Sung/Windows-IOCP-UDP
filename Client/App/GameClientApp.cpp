@@ -2,7 +2,6 @@
 
 #include <Windows.h>
 
-#include <sstream>
 #include <span>
 #include <string>
 #include <string_view>
@@ -14,28 +13,6 @@
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientTransportType.h>
-
-namespace
-{
-	void OutputClientConfigWarnings(std::span<const client::config::ClientConfigWarning> warningList)
-	{
-		for (const client::config::ClientConfigWarning& warning : warningList)
-		{
-			std::ostringstream stream;
-
-			if (warning.lineNumber == 0)
-			{
-				stream << warning.message << '\n';
-			}
-			else
-			{
-				stream << "Client.ini:" << warning.lineNumber << ": " << warning.message << '\n';
-			}
-
-			::OutputDebugStringA(stream.str().c_str());
-		}
-	}
-}
 
 namespace client::app
 {
@@ -87,7 +64,8 @@ namespace client::app
 			return std::unexpected(RunError{ RunFailure::AlreadyRunning });
 		}
 
-		config_ = BuildClientConfig(serverIp, serverPort);
+		const config::ClientConfigLoadResult loadResult = BuildClientConfig(serverIp, serverPort);
+		config_ = loadResult.config;
 
 		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(1);
 		if (!loggerStartResult.has_value())
@@ -95,6 +73,7 @@ namespace client::app
 			return std::unexpected(RunError{ loggerStartResult.error() });
 		}
 
+		LogConfigWarnings(loadResult.warningList);
 		OutputStartupConfig();
 
 		world_.SetInterpolationSettings(
@@ -179,24 +158,43 @@ namespace client::app
 		return {};
 	}
 
-	config::ClientConfig GameClientApp::BuildClientConfig(const char* serverIp, unsigned short serverPort) const
+	config::ClientConfigLoadResult GameClientApp::BuildClientConfig(const char* serverIp, unsigned short serverPort) const
 	{
 		config::ClientConfigLoadResult loadResult = config::ClientConfigLoader::LoadValidated("Client.ini");
-		OutputClientConfigWarnings(loadResult.warningList);
-
-		config::ClientConfig clientConfig = loadResult.config;
 
 		if (serverIp != nullptr && serverIp[0] != '\0')
 		{
-			clientConfig.network.serverIp = serverIp;
+			loadResult.config.network.serverIp = serverIp;
 		}
 
 		if (serverPort != 0)
 		{
-			clientConfig.network.serverPort = serverPort;
+			loadResult.config.network.serverPort = serverPort;
 		}
 
-		return clientConfig;
+		return loadResult;
+	}
+
+	void GameClientApp::LogConfigWarnings(std::span<const config::ClientConfigWarning> warningList) const
+	{
+		for (const config::ClientConfigWarning& warning : warningList)
+		{
+			if (warning.lineNumber == 0)
+			{
+				logger_.Warning(warning.message);
+				continue;
+			}
+
+			const std::string message =
+				common::log::LogMessageBuilder{}
+				.Append("Client.ini:")
+				.Append(warning.lineNumber)
+				.Append(": ")
+				.Append(warning.message)
+				.Build();
+
+			logger_.Warning(message);
+		}
 	}
 
 	void GameClientApp::OutputStartupConfig() const

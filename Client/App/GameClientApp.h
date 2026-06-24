@@ -74,8 +74,9 @@ namespace client::app
 		[[nodiscard]] RunResult Run(HINSTANCE instanceHandle, const char* serverIp = nullptr, unsigned short serverPort = 0);
 
 	private:
-		[[nodiscard]] config::ClientConfig BuildClientConfig(const char* serverIp, unsigned short serverPort) const;
+		[[nodiscard]] config::ClientConfigLoadResult BuildClientConfig(const char* serverIp, unsigned short serverPort) const;
 
+		void LogConfigWarnings(std::span<const config::ClientConfigWarning> warningList) const;
 		void OutputStartupConfig() const;
 
 		int MessageLoop();

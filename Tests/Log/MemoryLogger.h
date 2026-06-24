@@ -25,7 +25,7 @@ namespace tests::log
 		MemoryLogger& operator=(MemoryLogger&&) = delete;
 
 	public:
-		using ILogger::Log;
+		using common::log::ILogger::Log;
 
 		bool Log(const common::log::LogRecord& logRecord) const override
 		{

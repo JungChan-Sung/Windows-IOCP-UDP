@@ -1,9 +1,7 @@
 #pragma once
 
-#include <string_view>
-
 #include <Common/Log/ILogger.h>
-#include <Common/Log/LogLevel.h>
+#include <Common/Log/LogRecord.h>
 
 namespace common::log
 {
@@ -25,6 +23,8 @@ namespace common::log
 	public:
 		bool Log(const LogRecord& logRecord) const override
 		{
+			static_cast<void>(logRecord);
+
 			return true;
 		}
 	};

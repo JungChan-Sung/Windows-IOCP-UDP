@@ -125,6 +125,12 @@ namespace client::config
 			clientConfig.simulation.deltaSeconds = defaultConfig.simulation.deltaSeconds;
 		}
 
+		if (clientConfig.diagnostics.asyncLogWorkerThreadCount == 0)
+		{
+			AddWarning(warningList, "Diagnostics.AsyncLogWorkerThreadCount must be greater than 0. Default async log worker thread count will be used.");
+			clientConfig.diagnostics.asyncLogWorkerThreadCount = defaultConfig.diagnostics.asyncLogWorkerThreadCount;
+		}
+
 		return warningList;
 	}
 }

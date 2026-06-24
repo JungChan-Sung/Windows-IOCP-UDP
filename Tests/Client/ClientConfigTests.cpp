@@ -5,8 +5,11 @@
 #include <string>
 #include <vector>
 
+#include <Common/Log/LogLevel.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Client/Config/ClientConfig.h>
+#include <Client/Config/ClientConfigDefaults.h>
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientConfigValidator.h>
 #include <Client/Config/ClientTransportType.h>
@@ -48,8 +51,8 @@ namespace
 			"\n"
 			"[Diagnostics]\n"
 			"EnableChunkAssemblerDebugTests=false\n"
-			"LogLevel = Debug\n"
-			"AsyncLogWorkerThreadCount = 2\n"
+			"LogLevel=Debug\n"
+			"AsyncLogWorkerThreadCount=2\n"
 		);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
@@ -82,13 +85,12 @@ namespace
 		tests::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
 		tests::Expect(
 			result,
-			loadResult.config.diagnostics.logLevel == common::log::LogLevel::Debug,
+			config.diagnostics.logLevel == common::log::LogLevel::Debug,
 			"ClientConfig: load diagnostics log level"
 		);
-
 		tests::Expect(
 			result,
-			loadResult.config.diagnostics.asyncLogWorkerThreadCount == 2,
+			config.diagnostics.asyncLogWorkerThreadCount == 2,
 			"ClientConfig: load async log worker thread count"
 		);
 	}
@@ -117,21 +119,20 @@ namespace
 			"\n"
 			"[Diagnostics]\n"
 			"EnableChunkAssemblerDebugTests=maybe\n"
-			"LogLevel = Verbose\n"
-			"AsyncLogWorkerThreadCount = 0\n"
+			"LogLevel=Verbose\n"
+			"AsyncLogWorkerThreadCount=0\n"
 		);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
-		tests::Expect(result, loadResult.warningList.size() >= 9, "ClientConfig: invalid file warning count");
+		tests::Expect(result, loadResult.warningList.size() >= 11, "ClientConfig: invalid file warning count");
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.logLevel == client::config::defaultLogLevel,
 			"ClientConfig: invalid log level keeps default"
 		);
-
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.asyncLogWorkerThreadCount == client::config::defaultAsyncLogWorkerThreadCount,
@@ -169,8 +170,10 @@ namespace
 		config.snapshot.assemblyTimeout = common::time::Milliseconds(0);
 		config.simulation.tickInterval = common::time::Milliseconds(0);
 		config.simulation.deltaSeconds = 0.0F;
+		config.diagnostics.asyncLogWorkerThreadCount = 0;
 
-		const std::vector<client::config::ClientConfigWarning> warningList = client::config::ClientConfigValidator::ValidateAndNormalize(config);
+		const std::vector<client::config::ClientConfigWarning> warningList =
+			client::config::ClientConfigValidator::ValidateAndNormalize(config);
 
 		tests::Expect(result, !warningList.empty(), "ClientConfigValidator: warning generated");
 		tests::Expect(result, config.network.serverIp == defaultConfig.network.serverIp, "ClientConfigValidator: serverIp normalized");
@@ -185,18 +188,41 @@ namespace
 			config.network.iocpRecvContextCount == defaultConfig.network.iocpRecvContextCount,
 			"ClientConfigValidator: iocp recv context count normalized"
 		);
-		tests::Expect(result, config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
-			"ClientConfigValidator: update sleep normalized");
-		tests::Expect(result, config.interpolation.minDelay == defaultConfig.interpolation.minDelay,
-			"ClientConfigValidator: min delay normalized");
-		tests::Expect(result, config.interpolation.maxDelay == defaultConfig.interpolation.maxDelay,
-			"ClientConfigValidator: max delay normalized");
-		tests::Expect(result, config.snapshot.assemblyTimeout == defaultConfig.snapshot.assemblyTimeout,
-			"ClientConfigValidator: snapshot timeout normalized");
-		tests::Expect(result, config.simulation.tickInterval == defaultConfig.simulation.tickInterval,
-			"ClientConfigValidator: simulation tick normalized");
-		tests::Expect(result, config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
-			"ClientConfigValidator: simulation delta normalized");
+		tests::Expect(
+			result,
+			config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
+			"ClientConfigValidator: update sleep normalized"
+		);
+		tests::Expect(
+			result,
+			config.interpolation.minDelay == defaultConfig.interpolation.minDelay,
+			"ClientConfigValidator: min delay normalized"
+		);
+		tests::Expect(
+			result,
+			config.interpolation.maxDelay == defaultConfig.interpolation.maxDelay,
+			"ClientConfigValidator: max delay normalized"
+		);
+		tests::Expect(
+			result,
+			config.snapshot.assemblyTimeout == defaultConfig.snapshot.assemblyTimeout,
+			"ClientConfigValidator: snapshot timeout normalized"
+		);
+		tests::Expect(
+			result,
+			config.simulation.tickInterval == defaultConfig.simulation.tickInterval,
+			"ClientConfigValidator: simulation tick normalized"
+		);
+		tests::Expect(
+			result,
+			config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
+			"ClientConfigValidator: simulation delta normalized"
+		);
+		tests::Expect(
+			result,
+			config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
+			"ClientConfigValidator: async log worker thread count normalized"
+		);
 
 		tests::Expect(
 			result,
@@ -232,6 +258,11 @@ namespace
 			result,
 			tests::ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
 			"ClientConfigValidator: simulation delta warning message"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount must be greater than 0. Default async log worker thread count will be used."),
+			"ClientConfigValidator: async log worker warning message"
 		);
 	}
 
@@ -284,7 +315,6 @@ namespace
 			lowerConfig.interpolation.defaultDelay == common::time::Milliseconds(100),
 			"ClientConfigValidator: default delay clamped to min"
 		);
-
 		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
@@ -304,7 +334,6 @@ namespace
 			upperConfig.interpolation.defaultDelay == common::time::Milliseconds(300),
 			"ClientConfigValidator: default delay clamped to max"
 		);
-
 		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
@@ -326,6 +355,9 @@ namespace
 			"\n"
 			"[Timing]\n"
 			"UpdateSleepMs=0\n"
+			"\n"
+			"[Diagnostics]\n"
+			"AsyncLogWorkerThreadCount=0\n"
 		);
 
 		client::config::ClientConfigLoadResult loadResult =
@@ -354,6 +386,11 @@ namespace
 			result,
 			loadResult.config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfig: LoadValidated normalizes update sleep"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
+			"ClientConfig: LoadValidated normalizes async log worker thread count"
 		);
 		tests::Expect(
 			result,

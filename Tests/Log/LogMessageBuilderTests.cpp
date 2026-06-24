@@ -22,8 +22,21 @@ namespace tests::log
 
 		tests::Expect(
 			result,
-			message == "Port=9000, Enabled=1",
+			message == "Port=9000, Enabled=true",
 			"LogMessageBuilder: append values"
+		);
+
+		const std::string namedValueMessage =
+			common::log::LogMessageBuilder{}
+			.AppendNamedValue("Port", 9000)
+			.AppendCommaNamedValue("Enabled", true)
+			.AppendCommaNamedValue("Name", "Server")
+			.Build();
+
+		tests::Expect(
+			result,
+			namedValueMessage == "Port=9000, Enabled=true, Name=Server",
+			"LogMessageBuilder: append named values"
 		);
 
 		const std::string emptyMessage =

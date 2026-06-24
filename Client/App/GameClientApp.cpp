@@ -67,7 +67,9 @@ namespace client::app
 		const config::ClientConfigLoadResult loadResult = BuildClientConfig(serverIp, serverPort);
 		config_ = loadResult.config;
 
-		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(1);
+		logger_.SetMinimumLogLevel(config_.diagnostics.logLevel);
+
+		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(config_.diagnostics.asyncLogWorkerThreadCount);
 		if (!loggerStartResult.has_value())
 		{
 			return std::unexpected(RunError{ loggerStartResult.error() });
@@ -218,6 +220,8 @@ namespace client::app
 			.AppendCommaNamedValue("SimulationTickIntervalMs", config_.simulation.tickInterval.count())
 			.AppendCommaNamedValue("SimulationDeltaSeconds", config_.simulation.deltaSeconds)
 			.AppendCommaNamedValue("EnableChunkAssemblerDebugTests", config_.diagnostics.enableChunkAssemblerDebugTests)
+			.AppendCommaNamedValue("LogLevel", common::log::ToString(config_.diagnostics.logLevel))
+			.AppendCommaNamedValue("AsyncLogWorkerThreadCount", config_.diagnostics.asyncLogWorkerThreadCount)
 			.Build();
 
 		logger_.Info(message);

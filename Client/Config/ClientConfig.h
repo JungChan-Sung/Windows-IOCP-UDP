@@ -53,6 +53,8 @@ namespace client::config
 	{
 	public:
 		bool enableChunkAssemblerDebugTests = defaultEnableChunkAssemblerDebugTests;
+		common::log::LogLevel logLevel = defaultLogLevel;
+		std::size_t asyncLogWorkerThreadCount = defaultAsyncLogWorkerThreadCount;
 	};
 
 	struct ClientConfig

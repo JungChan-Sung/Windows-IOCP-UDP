@@ -48,6 +48,8 @@ namespace
 			"\n"
 			"[Diagnostics]\n"
 			"EnableChunkAssemblerDebugTests=false\n"
+			"LogLevel = Debug\n"
+			"AsyncLogWorkerThreadCount = 2\n"
 		);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
@@ -78,6 +80,17 @@ namespace
 		tests::Expect(result, config.simulation.tickInterval == common::time::Milliseconds(40), "ClientConfig: simulation tick");
 		tests::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
 		tests::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
+		tests::Expect(
+			result,
+			loadResult.config.diagnostics.logLevel == common::log::LogLevel::Debug,
+			"ClientConfig: load diagnostics log level"
+		);
+
+		tests::Expect(
+			result,
+			loadResult.config.diagnostics.asyncLogWorkerThreadCount == 2,
+			"ClientConfig: load async log worker thread count"
+		);
 	}
 
 	void RunLoadInvalidConfigTest(tests::DebugTestResult& result)
@@ -104,6 +117,8 @@ namespace
 			"\n"
 			"[Diagnostics]\n"
 			"EnableChunkAssemblerDebugTests=maybe\n"
+			"LogLevel = Verbose\n"
+			"AsyncLogWorkerThreadCount = 0\n"
 		);
 
 		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
@@ -111,6 +126,17 @@ namespace
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
 		tests::Expect(result, loadResult.warningList.size() >= 9, "ClientConfig: invalid file warning count");
+		tests::Expect(
+			result,
+			loadResult.config.diagnostics.logLevel == client::config::defaultLogLevel,
+			"ClientConfig: invalid log level keeps default"
+		);
+
+		tests::Expect(
+			result,
+			loadResult.config.diagnostics.asyncLogWorkerThreadCount == client::config::defaultAsyncLogWorkerThreadCount,
+			"ClientConfig: invalid async log worker count keeps default"
+		);
 	}
 
 	void RunMissingFileTest(tests::DebugTestResult& result)

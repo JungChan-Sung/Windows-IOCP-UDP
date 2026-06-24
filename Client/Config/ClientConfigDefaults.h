@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <Common/Game/SimulationConstants.h>
+#include <Common/Log/LogLevel.h>
 
 namespace client::config
 {
@@ -23,6 +24,9 @@ namespace client::config
 	inline constexpr std::chrono::milliseconds defaultSnapshotAssemblyTimeout = std::chrono::milliseconds(500);
 
 	inline constexpr bool defaultEnableChunkAssemblerDebugTests = true;
+
+	inline constexpr common::log::LogLevel defaultLogLevel = common::log::LogLevel::Info;
+	inline constexpr std::size_t defaultAsyncLogWorkerThreadCount = 1;
 
 	inline constexpr std::chrono::milliseconds defaultSimulationTickInterval = common::game::defaultFixedTickInterval;
 	inline constexpr float defaultSimulationDeltaSeconds = common::game::defaultFixedDeltaSeconds;

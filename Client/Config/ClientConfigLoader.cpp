@@ -389,6 +389,39 @@ namespace
 			return;
 		}
 
+		if (normalizedKey == "loglevel")
+		{
+			const std::optional<common::log::LogLevel> parsedValue =
+				common::log::TryParseLogLevel(value);
+
+			if (parsedValue.has_value())
+			{
+				clientConfig.diagnostics.logLevel = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "asynclogworkerthreadcount")
+		{
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
+
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				clientConfig.diagnostics.asyncLogWorkerThreadCount = static_cast<std::size_t>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
 		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
 	}
 

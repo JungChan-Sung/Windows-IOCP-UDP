@@ -4,11 +4,13 @@
 #include <cstdint>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include <Common/Config/ConfigText.h>
 #include <Common/Log/LogLevel.h>

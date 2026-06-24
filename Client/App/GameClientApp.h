@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <expected>
+#include <span>
 #include <string>
 #include <thread>
 #include <variant>
@@ -14,6 +15,7 @@
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfig.h>
+#include <Client/Config/ClientConfigLoader.h>
 #include <Client/Game/ClientWorld.h>
 #include <Client/Net/JoinHandshakeState.h>
 #include <Client/Net/UdpClient.h>

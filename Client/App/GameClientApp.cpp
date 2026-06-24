@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 
+#include <sstream>
 #include <span>
 #include <string>
 #include <string_view>
@@ -168,6 +169,7 @@ namespace client::app
 		gameWindow_.Destroy();
 		udpClient_.Stop();
 		world_.Clear();
+		logger_.Stop();
 
 		if (exitCode != 0)
 		{

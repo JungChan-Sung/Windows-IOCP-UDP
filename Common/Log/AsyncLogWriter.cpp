@@ -105,7 +105,7 @@ namespace common::log
 
 	bool AsyncLogWriter::ShouldEnqueue(LogLevel logLevel) const noexcept
 	{
-		return static_cast<int>(logLevel) >= static_cast<int>(defaultLogger_.GetMinimumLogLevel());
+		return static_cast<int>(logLevel) >= static_cast<int>(minimumLogLevel_.load());
 	}
 
 	std::size_t AsyncLogWriter::GetPendingTaskCount() const

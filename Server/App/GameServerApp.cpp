@@ -99,9 +99,15 @@ namespace server::app
 				continue;
 			}
 
-			std::ostringstream stream;
-			stream << "Server.ini:" << warning.lineNumber << ": " << warning.message;
-			logger_.Warning(stream.str());
+			const std::string message =
+				common::log::LogMessageBuilder{}
+				.Append("Server.ini:")
+				.Append(warning.lineNumber)
+				.Append(": ")
+				.Append(warning.message)
+				.Build();
+
+			logger_.Warning(message);
 		}
 	}
 

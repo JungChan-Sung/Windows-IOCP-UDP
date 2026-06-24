@@ -2,7 +2,6 @@
 
 #include <Windows.h>
 
-#include <sstream>
 #include <span>
 #include <string>
 #include <string_view>
@@ -10,6 +9,7 @@
 #include <variant>
 
 #include <Common/String/StringFormat.h>
+#include <Common/Log/LogMessageBuilder.h>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientTransportType.h>
@@ -199,28 +199,28 @@ namespace client::app
 
 	void GameClientApp::OutputStartupConfig() const
 	{
-		std::ostringstream stream;
+		const std::string message =
+			common::log::LogMessageBuilder{}
+			.Append("Client configuration loaded. ")
+			.AppendNamedValue("ServerIp", config_.network.serverIp)
+			.AppendCommaNamedValue("ServerPort", config_.network.serverPort)
+			.AppendCommaNamedValue("TransportType", config_.network.transportType)
+			.AppendCommaNamedValue("IocpWorkerThreadCount", config_.network.iocpWorkerThreadCount)
+			.AppendCommaNamedValue("IocpRecvContextCount", config_.network.iocpRecvContextCount)
+			.AppendCommaNamedValue("UpdateSleepMs", config_.timing.updateSleepInterval.count())
+			.AppendCommaNamedValue("JoinRetryMs", config_.timing.joinRetryInterval.count())
+			.AppendCommaNamedValue("RoomJoinMs", config_.timing.roomJoinInterval.count())
+			.AppendCommaNamedValue("InterpolationAdjustStepMs", config_.timing.interpolationAdjustStep.count())
+			.AppendCommaNamedValue("InterpolationDefaultDelayMs", config_.interpolation.defaultDelay.count())
+			.AppendCommaNamedValue("InterpolationMinDelayMs", config_.interpolation.minDelay.count())
+			.AppendCommaNamedValue("InterpolationMaxDelayMs", config_.interpolation.maxDelay.count())
+			.AppendCommaNamedValue("SnapshotAssemblyTimeoutMs", config_.snapshot.assemblyTimeout.count())
+			.AppendCommaNamedValue("SimulationTickIntervalMs", config_.simulation.tickInterval.count())
+			.AppendCommaNamedValue("SimulationDeltaSeconds", config_.simulation.deltaSeconds)
+			.AppendCommaNamedValue("EnableChunkAssemblerDebugTests", config_.diagnostics.enableChunkAssemblerDebugTests)
+			.Build();
 
-		stream << "Client config. "
-			<< "ServerIp=" << config_.network.serverIp
-			<< ", ServerPort=" << config_.network.serverPort
-			<< ", TransportType=" << ::ToString(config_.network.transportType)
-			<< ", IocpWorkerThreadCount=" << config_.network.iocpWorkerThreadCount
-			<< ", IocpRecvContextCount=" << config_.network.iocpRecvContextCount
-			<< ", UpdateSleepMs=" << config_.timing.updateSleepInterval.count()
-			<< ", JoinRetryMs=" << config_.timing.joinRetryInterval.count()
-			<< ", RoomJoinMs=" << config_.timing.roomJoinInterval.count()
-			<< ", InterpolationAdjustStepMs=" << config_.timing.interpolationAdjustStep.count()
-			<< ", InterpolationDefaultDelayMs=" << config_.interpolation.defaultDelay.count()
-			<< ", InterpolationMinDelayMs=" << config_.interpolation.minDelay.count()
-			<< ", InterpolationMaxDelayMs=" << config_.interpolation.maxDelay.count()
-			<< ", SnapshotAssemblyTimeoutMs=" << config_.snapshot.assemblyTimeout.count()
-			<< ", SimulationTickIntervalMs=" << config_.simulation.tickInterval.count()
-			<< ", SimulationDeltaSeconds=" << config_.simulation.deltaSeconds
-			<< ", EnableChunkAssemblerDebugTests=" << std::boolalpha << config_.diagnostics.enableChunkAssemblerDebugTests
-			<< '\n';
-
-		::OutputDebugStringA(stream.str().c_str());
+		logger_.Info(message);
 	}
 
 	int GameClientApp::MessageLoop()

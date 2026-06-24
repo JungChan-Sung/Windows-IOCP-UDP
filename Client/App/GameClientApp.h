@@ -10,6 +10,9 @@
 #include <thread>
 #include <variant>
 
+#include <Common/Log/AsyncLogWriter.h>
+#include <Common/Time/TimeTypes.h>
+
 #include <Client/Config/ClientConfig.h>
 #include <Client/Game/ClientWorld.h>
 #include <Client/Net/JoinHandshakeState.h>
@@ -45,12 +48,14 @@ namespace client::app
 		ui::GameWindow gameWindow_;
 		render::GdiRenderer gdiRenderer_;
 
+		common::log::AsyncLogWriter logger_;
+
 		std::atomic<bool> isRunning_ = false;
 		std::jthread updateThread_;
 
-		std::chrono::steady_clock::time_point nextSimulationTickTime_;
-		std::chrono::steady_clock::time_point nextRoomJoinTime_;
-		std::chrono::steady_clock::time_point lastEffectUpdateTime_;
+		common::time::TimePoint nextSimulationTickTime_;
+		common::time::TimePoint nextRoomJoinTime_;
+		common::time::TimePoint lastEffectUpdateTime_;
 
 	public:
 		GameClientApp() = default;

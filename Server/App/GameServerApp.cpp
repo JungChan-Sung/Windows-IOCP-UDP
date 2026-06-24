@@ -3,13 +3,13 @@
 #include <Windows.h>
 
 #include <chrono>
-#include <sstream>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <variant>
 
 #include <Common/String/StringFormat.h>
+#include <Common/Log/LogMessageBuilder.h>
 
 #include <Server/Config/ServerConfigLoader.h>
 
@@ -107,49 +107,34 @@ namespace server::app
 
 	void GameServerApp::LogStartupConfig(const config::ServerConfig& serverConfig) const
 	{
-		const auto tickIntervalMs = std::chrono::duration_cast<std::chrono::milliseconds>(serverConfig.tick.tickInterval).count();
+		const std::string message =
+			common::log::LogMessageBuilder{}
+			.Append("Server configuration loaded. ")
+			.AppendNamedValue("Port", serverConfig.network.port)
+			.AppendCommaNamedValue("WorkerThreadCount", serverConfig.network.workerThreadCount)
+			.AppendCommaNamedValue("RecvContextCount", serverConfig.network.recvContextCount)
+			.AppendCommaNamedValue("InitialRoomId", serverConfig.session.initialRoomId)
+			.AppendCommaNamedValue("PeerTimeoutSeconds", serverConfig.session.peerTimeout.count())
+			.AppendCommaNamedValue("ReliableMaxPendingPacketCount", serverConfig.reliableUdp.maxPendingPacketCount)
+			.AppendCommaNamedValue("ReliableMaxResendCount", serverConfig.reliableUdp.maxResendCount)
+			.AppendCommaNamedValue("ReliableResendIntervalMs", serverConfig.reliableUdp.resendInterval.count())
+			.AppendCommaNamedValue("UdpFaultEnabled", serverConfig.udpFaultSimulation.enabled)
+			.AppendCommaNamedValue("UdpFaultDropRate", serverConfig.udpFaultSimulation.dropRate)
+			.AppendCommaNamedValue("UdpFaultDuplicateRate", serverConfig.udpFaultSimulation.duplicateRate)
+			.AppendCommaNamedValue("UdpFaultReorderRate", serverConfig.udpFaultSimulation.reorderRate)
+			.AppendCommaNamedValue("UdpFaultMinDelayMs", serverConfig.udpFaultSimulation.minDelay.count())
+			.AppendCommaNamedValue("UdpFaultMaxDelayMs", serverConfig.udpFaultSimulation.maxDelay.count())
+			.AppendCommaNamedValue("UdpFaultReorderDelayMs", serverConfig.udpFaultSimulation.reorderDelay.count())
+			.AppendCommaNamedValue("UdpFaultRandomSeed", serverConfig.udpFaultSimulation.randomSeed)
+			.AppendCommaNamedValue("TickIntervalMs", serverConfig.tick.tickInterval.count())
+			.AppendCommaNamedValue("FixedDeltaSeconds", serverConfig.tick.fixedDeltaSeconds)
+			.AppendCommaNamedValue("EnableStatusLog", serverConfig.diagnostics.enableStatusLog)
+			.AppendCommaNamedValue("StatusLogIntervalSeconds", serverConfig.diagnostics.statusLogInterval.count())
+			.AppendCommaNamedValue("LogLevel", common::log::ToString(serverConfig.diagnostics.logLevel))
+			.AppendCommaNamedValue("AsyncLogWorkerThreadCount", serverConfig.diagnostics.asyncLogWorkerThreadCount)
+			.Build();
 
-		const auto resendIntervalMs = serverConfig.reliableUdp.resendInterval.count();
-		const auto faultMinDelayMs = serverConfig.udpFaultSimulation.minDelay.count();
-		const auto faultMaxDelayMs = serverConfig.udpFaultSimulation.maxDelay.count();
-		const auto faultReorderDelayMs = serverConfig.udpFaultSimulation.reorderDelay.count();
-
-		std::ostringstream stream;
-		stream << "UDP game server started. "
-			<< "Port=" << serverConfig.network.port
-			<< ", WorkerThreadCount=" << serverConfig.network.workerThreadCount
-			<< ", RecvContextCount=" << serverConfig.network.recvContextCount
-			<< ", InitialRoomId=" << serverConfig.session.initialRoomId
-			<< ", PeerTimeoutSeconds=" << serverConfig.session.peerTimeout.count()
-			<< ", ReliableMaxPendingPacketCount=" << serverConfig.reliableUdp.maxPendingPacketCount
-			<< ", ReliableMaxResendCount=" << serverConfig.reliableUdp.maxResendCount
-			<< ", ReliableResendIntervalMs=" << resendIntervalMs
-			<< ", UdpFaultEnabled=" << std::boolalpha << serverConfig.udpFaultSimulation.enabled
-			<< ", UdpFaultDropRate=" << serverConfig.udpFaultSimulation.dropRate
-			<< ", UdpFaultDuplicateRate=" << serverConfig.udpFaultSimulation.duplicateRate
-			<< ", UdpFaultReorderRate=" << serverConfig.udpFaultSimulation.reorderRate
-			<< ", UdpFaultMinDelayMs=" << faultMinDelayMs
-			<< ", UdpFaultMaxDelayMs=" << faultMaxDelayMs
-			<< ", UdpFaultReorderDelayMs=" << faultReorderDelayMs
-			<< ", UdpFaultRandomSeed=" << serverConfig.udpFaultSimulation.randomSeed
-			<< ", TickIntervalMs=" << tickIntervalMs
-			<< ", FixedDeltaSeconds=" << serverConfig.tick.fixedDeltaSeconds
-			<< ", InitialPlayerHp=" << serverConfig.gameRule.initialPlayerHp
-			<< ", RespawnDelaySeconds=" << serverConfig.gameRule.respawnDelaySeconds
-			<< ", RespawnInvincibilitySeconds=" << serverConfig.gameRule.respawnInvincibilitySeconds
-			<< ", HitFlashDurationSeconds=" << serverConfig.gameRule.hitFlashDurationSeconds
-			<< ", BasicBulletDamage=" << serverConfig.weaponRule.basicWeaponRule.bulletDamage
-			<< ", BasicBulletSpeed=" << serverConfig.weaponRule.basicWeaponRule.bulletSpeed
-			<< ", BasicBulletLifeSeconds=" << serverConfig.weaponRule.basicWeaponRule.bulletLifeSeconds
-			<< ", BasicBulletRadius=" << serverConfig.weaponRule.basicWeaponRule.bulletRadius
-			<< ", BasicFireCooldownSeconds=" << serverConfig.weaponRule.basicWeaponRule.fireCooldownSeconds
-			<< ", EnableStatusLog=" << serverConfig.diagnostics.enableStatusLog
-			<< ", StatusLogIntervalSeconds=" << serverConfig.diagnostics.statusLogInterval.count()
-			<< ", LogLevel=" << common::log::ToString(serverConfig.diagnostics.logLevel)
-			<< ", AsyncLogWorkerThreadCount=" << serverConfig.diagnostics.asyncLogWorkerThreadCount;
-
-		logger_.Info(stream.str());
-		logger_.Info("Press ESC to stop.");
+		logger_.Info(message);
 	}
 
 	void GameServerApp::MainLoop() noexcept

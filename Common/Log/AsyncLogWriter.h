@@ -10,6 +10,7 @@
 #include <Common/Log/ConsoleLogger.h>
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/LogRecord.h>
 #include <Common/Threading/ThreadPool.h>
 
 namespace common::log

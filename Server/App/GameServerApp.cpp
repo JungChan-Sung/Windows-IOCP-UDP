@@ -9,6 +9,7 @@
 #include <variant>
 
 #include <Common/String/StringFormat.h>
+#include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/LogMessageBuilder.h>
 
 #include <Server/Config/ServerConfigLoader.h>
@@ -53,6 +54,8 @@ namespace server::app
 			return std::unexpected(RunError{ loggerStartResult.error() });
 		}
 
+		common::log::AsyncLogWriterGuard loggerGuard(logger_);
+
 		LogConfigWarnings(loadResult.warningList);
 
 		udpServer_.AttachLogger(logger_);
@@ -61,7 +64,6 @@ namespace server::app
 		if (!udpServerStartResult.has_value())
 		{
 			udpServer_.DetachLogger();
-			logger_.Stop();
 			return std::unexpected(RunError{ udpServerStartResult.error() });
 		}
 
@@ -71,8 +73,6 @@ namespace server::app
 
 		udpServer_.Stop();
 		udpServer_.DetachLogger();
-
-		logger_.Stop();
 
 		return {};
 	}

@@ -4,6 +4,7 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/NullLogger.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -182,6 +183,48 @@ namespace
 
 		logWriter.Stop();
 	}
+
+	void RunGuardStopsWriterTest(tests::DebugTestResult& result)
+	{
+		common::log::NullLogger nullLogger;
+		common::log::AsyncLogWriter logWriter;
+		logWriter.SetLogger(nullLogger);
+
+		const common::log::AsyncLogWriter::StartResult startResult = logWriter.Start(1);
+
+		tests::Expect(
+			result,
+			startResult.has_value(),
+			"AsyncLogWriterGuard: start succeeds"
+		);
+
+		if (!startResult.has_value())
+		{
+			return;
+		}
+
+		{
+			common::log::AsyncLogWriterGuard guard(logWriter);
+
+			tests::Expect(
+				result,
+				guard.IsActive(),
+				"AsyncLogWriterGuard: guard active"
+			);
+
+			tests::Expect(
+				result,
+				logWriter.IsStarted(),
+				"AsyncLogWriterGuard: writer started"
+			);
+		}
+
+		tests::Expect(
+			result,
+			!logWriter.IsStarted(),
+			"AsyncLogWriterGuard: writer stopped on scope exit"
+		);
+	}
 }
 
 namespace tests::log
@@ -198,6 +241,7 @@ namespace tests::log
 		RunLogEnqueueSucceedsTest(result);
 		RunMinimumLogLevelFiltersTest(result);
 		RunInjectedLoggerReceivesRecordTest(result);
+		RunGuardStopsWriterTest(result);
 
 		return result;
 	}

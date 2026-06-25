@@ -9,6 +9,7 @@
 #include <variant>
 
 #include <Common/String/StringFormat.h>
+#include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/LogMessageBuilder.h>
 
 #include <Client/Config/ClientConfigLoader.h>
@@ -75,6 +76,8 @@ namespace client::app
 			return std::unexpected(RunError{ loggerStartResult.error() });
 		}
 
+		common::log::AsyncLogWriterGuard loggerGuard(logger_);
+
 		LogConfigWarnings(loadResult.warningList);
 		OutputStartupConfig();
 
@@ -95,8 +98,6 @@ namespace client::app
 		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
 		if (!udpClientStartResult.has_value())
 		{
-			logger_.Stop();
-
 			return std::unexpected(RunError{ udpClientStartResult.error() });
 		}
 
@@ -104,7 +105,6 @@ namespace client::app
 		{
 			udpClient_.Stop();
 			world_.Clear();
-			logger_.Stop();
 
 			return std::unexpected(RunError{ RunFailure::GameWindowCreateFailed });
 		}
@@ -150,7 +150,6 @@ namespace client::app
 		gameWindow_.Destroy();
 		udpClient_.Stop();
 		world_.Clear();
-		logger_.Stop();
 
 		if (exitCode != 0)
 		{

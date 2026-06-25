@@ -31,6 +31,7 @@
     <ClInclude Include="Log\AsyncLogWriter.h" />
     <ClInclude Include="Log\AsyncLogWriterGuard.h" />
     <ClInclude Include="Log\ConsoleLogger.h" />
+    <ClInclude Include="Log\DebugOutputLogger.h" />
     <ClInclude Include="Log\ILogger.h" />
     <ClInclude Include="Log\LogFormatter.h" />
     <ClInclude Include="Log\LogLevel.h" />
@@ -69,6 +70,7 @@
   <ItemGroup>
     <ClCompile Include="Log\AsyncLogWriter.cpp" />
     <ClCompile Include="Log\ConsoleLogger.cpp" />
+    <ClCompile Include="Log\DebugOutputLogger.cpp" />
     <ClCompile Include="Net\IocpHandle.cpp" />
     <ClCompile Include="Net\Socket.cpp" />
     <ClCompile Include="Net\UdpContext.cpp" />

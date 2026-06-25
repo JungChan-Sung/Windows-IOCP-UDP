@@ -12,6 +12,7 @@
 #include <variant>
 
 #include <Common/Log/AsyncLogWriter.h>
+#include <Common/Log/DebugOutputLogger.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfig.h>
@@ -44,6 +45,7 @@ namespace client::app
 	private:
 		config::ClientConfig config_;
 
+		common::log::DebugOutputLogger debugOutputLogger_;
 		common::log::AsyncLogWriter logger_;
 
 		game::ClientWorld world_;

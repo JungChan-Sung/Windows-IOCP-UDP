@@ -186,6 +186,9 @@
     <ClInclude Include="Log\AsyncLogWriterGuard.h">
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
+    <ClInclude Include="Log\DebugOutputLogger.h">
+      <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -217,6 +220,9 @@
     </ClCompile>
     <ClCompile Include="Net\UdpFaultSimulator.cpp">
       <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Log\DebugOutputLogger.cpp">
+      <Filter>소스 파일\Log</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

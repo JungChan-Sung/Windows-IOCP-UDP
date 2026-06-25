@@ -68,6 +68,9 @@ namespace client::app
 		const config::ClientConfigLoadResult loadResult = BuildClientConfig(serverIp, serverPort);
 		config_ = loadResult.config;
 
+		debugOutputLogger_.SetMinimumLogLevel(config_.diagnostics.logLevel);
+
+		logger_.SetLogger(debugOutputLogger_);
 		logger_.SetMinimumLogLevel(config_.diagnostics.logLevel);
 
 		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(config_.diagnostics.asyncLogWorkerThreadCount);

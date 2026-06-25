@@ -78,6 +78,8 @@ namespace client::app
 
 		common::log::AsyncLogWriterGuard loggerGuard(logger_);
 
+		udpClient_.AttachLogger(logger_);
+
 		LogConfigWarnings(loadResult.warningList);
 		OutputStartupConfig();
 
@@ -98,12 +100,15 @@ namespace client::app
 		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
 		if (!udpClientStartResult.has_value())
 		{
+			udpClient_.DetachLogger();
+
 			return std::unexpected(RunError{ udpClientStartResult.error() });
 		}
 
 		if (!gameWindow_.Create(instanceHandle, world_, gdiRenderer_, L"UDP Game Client"))
 		{
 			udpClient_.Stop();
+			udpClient_.DetachLogger();
 			world_.Clear();
 
 			return std::unexpected(RunError{ RunFailure::GameWindowCreateFailed });
@@ -149,6 +154,7 @@ namespace client::app
 
 		gameWindow_.Destroy();
 		udpClient_.Stop();
+		udpClient_.DetachLogger();
 		world_.Clear();
 
 		if (exitCode != 0)

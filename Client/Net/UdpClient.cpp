@@ -8,6 +8,8 @@
 #include <variant>
 
 #include <Common/Net/ReliableUdpSession.h>
+#include <Common/Log/ILogger.h>
+#include <Common/Log/LogMessageBuilder.h>
 #include <Common/Packet/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/PacketReliability.h>
@@ -97,6 +99,7 @@ namespace client::net
 	{
 		if (isRunning_.load())
 		{
+			LogWarning("UdpClient start ignored because it is already running.");
 			return std::unexpected(StartError{ StartFailure::AlreadyRunning });
 		}
 
@@ -116,6 +119,8 @@ namespace client::net
 		const StartResult startTransportResult = StartTransport(serverIp, serverPort);
 		if (!startTransportResult.has_value())
 		{
+			LogError("UdpClient transport start failed.");
+
 			world_ = nullptr;
 			packetDispatcher_.Clear();
 			snapshotChunkAssembler_.Clear();
@@ -123,6 +128,17 @@ namespace client::net
 		}
 
 		isRunning_.store(true);
+
+		const std::string message =
+			common::log::LogMessageBuilder{}
+			.Append("UdpClient started. ")
+			.AppendNamedValue("ServerIp", serverIp)
+			.AppendCommaNamedValue("ServerPort", serverPort)
+			.AppendCommaNamedValue("TransportType", client::config::ToString(transportType_))
+			.Build();
+
+		LogInfo(message);
+
 		return {};
 	}
 
@@ -145,6 +161,18 @@ namespace client::net
 
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
+
+		LogInfo("UdpClient stopped.");
+	}
+
+	void UdpClient::AttachLogger(common::log::ILogger& logger) noexcept
+	{
+		logger_ = &logger;
+	}
+
+	void UdpClient::DetachLogger() noexcept
+	{
+		logger_ = nullptr;
 	}
 
 	bool UdpClient::SendJoinRequest()
@@ -248,9 +276,11 @@ namespace client::net
 			);
 			if (!startResult.has_value())
 			{
+				LogError("UdpClient socket transport start failed.");
 				return std::unexpected(StartError{ startResult.error() });
 			}
 
+			LogInfo("UdpClient socket transport started.");
 			return {};
 		}
 
@@ -268,9 +298,11 @@ namespace client::net
 			);
 			if (!startResult.has_value())
 			{
+				LogError("UdpClient IOCP transport start failed.");
 				return std::unexpected(StartError{ startResult.error() });
 			}
 
+			LogInfo("UdpClient IOCP transport started.");
 			return {};
 		}
 
@@ -621,6 +653,46 @@ namespace client::net
 			assembledBulletSnapshot->roomId,
 			assembledBulletSnapshot->impactEffectDataList
 		);
+	}
+
+	void UdpClient::LogDebug(std::string_view message) const
+	{
+		if (logger_ == nullptr)
+		{
+			return;
+		}
+
+		logger_->Debug(message);
+	}
+
+	void UdpClient::LogInfo(std::string_view message) const
+	{
+		if (logger_ == nullptr)
+		{
+			return;
+		}
+
+		logger_->Info(message);
+	}
+
+	void UdpClient::LogWarning(std::string_view message) const
+	{
+		if (logger_ == nullptr)
+		{
+			return;
+		}
+
+		logger_->Warning(message);
+	}
+
+	void UdpClient::LogError(std::string_view message) const
+	{
+		if (logger_ == nullptr)
+		{
+			return;
+		}
+
+		logger_->Error(message);
 	}
 
 	void UdpClient::SetTransportConfig(config::ClientTransportType transportType, std::size_t iocpWorkerThreadCount, std::size_t iocpRecvContextCount) noexcept

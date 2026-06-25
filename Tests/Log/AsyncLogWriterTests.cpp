@@ -3,8 +3,10 @@
 #include <chrono>
 
 #include <Common/Log/AsyncLogWriter.h>
-#include <Common/Log/LogLevel.h>
 #include <Common/Log/AsyncLogWriterGuard.h>
+#include <Common/Log/ILogger.h>
+#include <Common/Log/LogLevel.h>
+#include <Common/Log/LogMessageBuilder.h>
 #include <Common/Log/NullLogger.h>
 #include <Common/Time/TimeTypes.h>
 

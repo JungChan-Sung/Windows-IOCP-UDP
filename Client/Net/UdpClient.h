@@ -21,6 +21,16 @@
 #include <Client/Net/UdpIocpTransport.h>
 #include <Client/Net/UdpSocketTransport.h>
 
+namespace client::game
+{
+	class ClientWorld;
+}
+
+namespace common::log
+{
+	class ILogger;
+}
+
 namespace common::packet
 {
 	struct JoinResponsePacket;
@@ -30,11 +40,6 @@ namespace common::packet
 	struct PlayerSnapshotPacket;
 	struct BulletSnapshotPacket;
 	struct ImpactEffectPacket;
-}
-
-namespace client::game
-{
-	class ClientWorld;
 }
 
 namespace client::net
@@ -61,6 +66,8 @@ namespace client::net
 	private:
 		UdpSocketTransport socketTransport_;
 		UdpIocpTransport iocpTransport_;
+
+		common::log::ILogger* logger_ = nullptr;
 
 		config::ClientTransportType transportType_ = config::ClientTransportType::Socket;
 		std::size_t iocpWorkerThreadCount_ = config::defaultIocpWorkerThreadCount;
@@ -94,6 +101,9 @@ namespace client::net
 		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);
 		void Stop() noexcept;
 
+		void AttachLogger(common::log::ILogger& logger) noexcept;
+		void DetachLogger() noexcept;
+
 		[[nodiscard]] bool SendJoinRequest();
 		[[nodiscard]] bool SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence);
 		[[nodiscard]] bool SendFireRequest();
@@ -121,6 +131,11 @@ namespace client::net
 		void HandlePlayerSnapshot(const common::packet::PlayerSnapshotPacket& packet);
 		void HandleBulletSnapshot(const common::packet::BulletSnapshotPacket& packet);
 		void HandleImpactEffectPacket(const common::packet::ImpactEffectPacket& packet);
+
+		void LogDebug(std::string_view message) const;
+		void LogInfo(std::string_view message) const;
+		void LogWarning(std::string_view message) const;
+		void LogError(std::string_view message) const;
 
 	public:
 		void SetTransportConfig(

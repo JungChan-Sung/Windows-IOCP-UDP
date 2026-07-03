@@ -7,6 +7,7 @@
     <BuildDependency Project="Common/Common.vcxproj" />
   </Project>
   <Project Path="Common/Common.vcxproj" Id="efd8fd17-79e1-488b-8a94-01c6f3a33e40" />
+  <Project Path="Persistence/Persistence.vcxproj" Id="70690650-b649-46a4-b526-de96339eb8c7" />
   <Project Path="Server/Server.vcxproj" Id="93ad7b95-c9a1-414d-ba8e-f965afe6c775">
     <BuildDependency Project="Common/Common.vcxproj" />
   </Project>

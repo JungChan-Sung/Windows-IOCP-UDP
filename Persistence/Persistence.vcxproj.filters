@@ -45,8 +45,11 @@
     <ClInclude Include="Odbc\OdbcDiagnostic.h">
       <Filter>헤더 파일\Odbc</Filter>
     </ClInclude>
+    <ClInclude Include="Core\PersistenceRuntime.h">
+      <Filter>헤더 파일\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Odbc\OdbcConnection.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Odbc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -67,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="Odbc\OdbcConnection.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\PersistenceRuntime.cpp">
+      <Filter>소스 파일\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

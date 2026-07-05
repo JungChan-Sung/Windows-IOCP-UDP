@@ -7,7 +7,7 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 
-#include <Persistence/Core/DatabaseError.h>
+#include <Persistence/Core/PersistenceRuntime.h>
 
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Net/UdpServer.h>
@@ -26,6 +26,7 @@ namespace server::app
 
 	private:
 		common::log::AsyncLogWriter logger_;
+		persistence::PersistenceRuntime persistenceRuntime_;
 		net::UdpServer udpServer_;
 
 	public:

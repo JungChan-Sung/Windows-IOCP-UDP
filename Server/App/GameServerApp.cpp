@@ -3,7 +3,6 @@
 #include <Windows.h>
 
 #include <chrono>
-#include <expected>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -14,63 +13,12 @@
 #include <Common/Log/LogMessageBuilder.h>
 
 #include <Persistence/Core/DatabaseError.h>
-#include <Persistence/Odbc/OdbcConnection.h>
-#include <Persistence/Odbc/OdbcEnvironment.h>
 
 #include <Server/Config/ServerConfigLoader.h>
 
 namespace
 {
 	using DatabaseStartupResult = std::expected<void, persistence::core::DatabaseError>;
-
-	[[nodiscard]] DatabaseStartupResult StartDatabaseIfEnabled(
-		const server::config::DatabaseConfig& databaseConfig,
-		persistence::odbc::OdbcEnvironment& databaseEnvironment,
-		persistence::odbc::OdbcConnection& databaseConnection,
-		const common::log::AsyncLogWriter& logger
-	)
-	{
-		if (!databaseConfig.enabled)
-		{
-			logger.Info("Database connection is disabled.");
-			return {};
-		}
-
-		if (databaseConfig.connectionString.empty())
-		{
-			return std::unexpected(persistence::core::DatabaseError{
-				.failure = persistence::core::DatabaseFailure::ConnectionOpenFailed,
-				.message = "Database connection string is empty.",
-				});
-		}
-
-		const persistence::odbc::OdbcEnvironment::InitializeResult initializeResult = databaseEnvironment.Initialize();
-		if (!initializeResult.has_value())
-		{
-			return std::unexpected(initializeResult.error());
-		}
-
-		const persistence::odbc::OdbcConnection::OpenResult openResult = databaseConnection.Open(
-			databaseEnvironment,
-			persistence::odbc::OdbcConnectionOpenConfig{
-				.connectionString = databaseConfig.connectionString,
-				.connectionTimeoutSeconds = databaseConfig.connectionTimeoutSeconds,
-			}
-			);
-		if (!openResult.has_value())
-		{
-			return std::unexpected(openResult.error());
-		}
-
-		const persistence::odbc::OdbcConnection::HealthCheckResult healthCheckResult = databaseConnection.ExecuteHealthCheck();
-		if (!healthCheckResult.has_value())
-		{
-			return std::unexpected(healthCheckResult.error());
-		}
-
-		logger.Info("Database health check succeeded.");
-		return {};
-	}
 }
 
 namespace server::app
@@ -121,19 +69,25 @@ namespace server::app
 
 		LogConfigWarnings(loadResult.warningList);
 
-		persistence::odbc::OdbcEnvironment databaseEnvironment;
-		persistence::odbc::OdbcConnection databaseConnection;
-
-		const DatabaseStartupResult databaseStartupResult = StartDatabaseIfEnabled(
-			loadResult.config.database,
-			databaseEnvironment,
-			databaseConnection,
-			logger_
-		);
-		if (!databaseStartupResult.has_value())
+		const persistence::PersistenceRuntime::StartResult persistenceStartResult = persistenceRuntime_.Start(
+			persistence::PersistenceRuntimeStartConfig{
+				.enabled = loadResult.config.database.enabled,
+				.connectionString = loadResult.config.database.connectionString,
+				.connectionTimeoutSeconds = loadResult.config.database.connectionTimeoutSeconds,
+			});
+		if (!persistenceStartResult.has_value())
 		{
-			logger_.Error(common::string::FormatScopedName("Database", persistence::core::ToString(databaseStartupResult.error())));
-			return std::unexpected(RunError{ databaseStartupResult.error() });
+			logger_.Error(common::string::FormatScopedName("Database", persistence::core::ToString(persistenceStartResult.error())));
+			return std::unexpected(RunError{ persistenceStartResult.error() });
+		}
+
+		if (persistenceRuntime_.IsStarted())
+		{
+			logger_.Info("Database health check succeeded.");
+		}
+		else
+		{
+			logger_.Info("Database connection is disabled.");
 		}
 
 		udpServer_.AttachLogger(logger_);
@@ -151,6 +105,8 @@ namespace server::app
 
 		udpServer_.Stop();
 		udpServer_.DetachLogger();
+
+		persistenceRuntime_.Stop();
 
 		return {};
 	}

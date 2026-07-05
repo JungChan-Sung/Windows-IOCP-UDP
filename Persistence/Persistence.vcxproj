@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h" />
+    <ClInclude Include="Core\PersistenceRuntime.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Odbc\OdbcConnection.h" />
     <ClInclude Include="Odbc\OdbcDiagnostic.h" />
@@ -165,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp" />
+    <ClCompile Include="Core\PersistenceRuntime.cpp" />
     <ClCompile Include="Odbc\OdbcConnection.cpp" />
     <ClCompile Include="Odbc\OdbcDiagnostic.cpp" />
     <ClCompile Include="Odbc\OdbcEnvironment.cpp" />

@@ -16,11 +16,6 @@
 
 #include <Server/Config/ServerConfigLoader.h>
 
-namespace
-{
-	using DatabaseStartupResult = std::expected<void, persistence::core::DatabaseError>;
-}
-
 namespace server::app
 {
 	std::string GameServerApp::ToString(const RunError& runError)

@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <string>
 
 #include <Common/Game/GameRules.h>
 #include <Common/Game/GameTypes.h>
@@ -58,6 +59,14 @@ namespace server::config
 		common::game::WeaponRule basicWeaponRule = common::game::defaultBasicWeaponRule;
 	};
 
+	struct DatabaseConfig
+	{
+	public:
+		bool enabled = false;
+		std::string connectionString;
+		int connectionTimeoutSeconds = 5;
+	};
+
 	struct DiagnosticsConfig
 	{
 	public:
@@ -77,6 +86,7 @@ namespace server::config
 		TickConfig tick;
 		GameRuleConfig gameRule;
 		WeaponRuleConfig weaponRule;
+		DatabaseConfig database;
 		DiagnosticsConfig diagnostics;
 	};
 }

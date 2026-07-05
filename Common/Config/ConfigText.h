@@ -29,7 +29,13 @@ namespace common::config
 
 	[[nodiscard]] inline std::string_view RemoveComment(std::string_view text) noexcept
 	{
-		const std::size_t commentPosition = text.find_first_of("#;");
+		const std::string_view trimmedText = Trim(text);
+		if (!trimmedText.empty() && trimmedText.front() == ';')
+		{
+			return {};
+		}
+
+		const std::size_t commentPosition = text.find('#');
 		if (commentPosition == std::string_view::npos)
 		{
 			return text;

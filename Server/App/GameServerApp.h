@@ -7,6 +7,8 @@
 
 #include <Common/Log/AsyncLogWriter.h>
 
+#include <Persistence/Core/DatabaseError.h>
+
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Net/UdpServer.h>
 
@@ -15,7 +17,11 @@ namespace server::app
 	class GameServerApp
 	{
 	public:
-		using RunError = std::variant<common::log::AsyncLogWriter::StartError, net::UdpServer::StartError>;
+		using RunError = std::variant<
+			common::log::AsyncLogWriter::StartError,
+			net::UdpServer::StartError,
+			persistence::core::DatabaseError
+		>;
 		using RunResult = std::expected<void, RunError>;
 
 	private:

@@ -564,6 +564,56 @@ namespace
 		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
 	}
 
+	void ApplyDatabaseValue(
+		server::config::ServerConfig& serverConfig,
+		std::string_view section,
+		std::string_view key,
+		std::string_view value,
+		std::size_t lineNumber,
+		WarningList& warningList
+	)
+	{
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
+
+		if (normalizedKey == "enabled")
+		{
+			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
+			if (parsedValue.has_value())
+			{
+				serverConfig.database.enabled = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "connectionstring")
+		{
+			serverConfig.database.connectionString = std::string(value);
+			return;
+		}
+
+		if (normalizedKey == "connectiontimeoutseconds")
+		{
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0 && *parsedValue <= static_cast<unsigned long long>(std::numeric_limits<int>::max()))
+			{
+				serverConfig.database.connectionTimeoutSeconds = static_cast<int>(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
+	}
+
 	void ApplyDiagnosticsValue(
 		server::config::ServerConfig& serverConfig,
 		std::string_view section,
@@ -696,6 +746,12 @@ namespace
 		if (normalizedSection == "weapon.basic")
 		{
 			ApplyBasicWeaponRuleValue(serverConfig, section, key, value, lineNumber, warningList);
+			return;
+		}
+
+		if (normalizedSection == "database")
+		{
+			ApplyDatabaseValue(serverConfig, section, key, value, lineNumber, warningList);
 			return;
 		}
 

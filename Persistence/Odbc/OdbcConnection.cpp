@@ -6,6 +6,7 @@
 #include <string>
 
 #include <Persistence/Odbc/OdbcDiagnostic.h>
+#include <Persistence/Odbc/OdbcStatement.h>
 
 namespace persistence::odbc
 {
@@ -107,85 +108,42 @@ namespace persistence::odbc
 				});
 		}
 
-		SQLHSTMT statementHandle = SQL_NULL_HSTMT;
+		OdbcStatement statement;
 
-		const SQLRETURN allocationResult = ::SQLAllocHandle(
-			SQL_HANDLE_STMT,
-			connectionHandle_,
-			&statementHandle
-		);
-
-		if (!SQL_SUCCEEDED(allocationResult))
+		const OdbcStatement::ExecuteResult executeResult = statement.ExecuteDirect(*this, "SELECT 1");
+		if (!executeResult.has_value())
 		{
-			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::StatementAllocationFailed,
-				.handleType = SQL_HANDLE_DBC,
-				.handle = connectionHandle_,
-				.message = "Failed to allocate ODBC statement handle.",
-				}));
+			return std::unexpected(executeResult.error());
 		}
 
-		char query[] = "SELECT 1";
-
-		const SQLRETURN executeResult = ::SQLExecDirectA(
-			statementHandle,
-			reinterpret_cast<SQLCHAR*>(query),
-			SQL_NTS
-		);
-
-		if (!SQL_SUCCEEDED(executeResult))
+		const OdbcStatement::FetchResult fetchResult = statement.Fetch();
+		if (!fetchResult.has_value())
 		{
-			const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::HealthCheckFailed,
-				.handleType = SQL_HANDLE_STMT,
-				.handle = statementHandle,
-				.message = "Failed to execute database health check query.",
-				});
-
-			::SQLFreeHandle(SQL_HANDLE_STMT, statementHandle);
-			return std::unexpected(error);
+			return std::unexpected(fetchResult.error());
 		}
 
-		const SQLRETURN fetchResult = ::SQLFetch(statementHandle);
-		if (!SQL_SUCCEEDED(fetchResult))
+		if (!*fetchResult)
 		{
-			const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
+			return std::unexpected(core::DatabaseError{
 				.failure = core::DatabaseFailure::HealthCheckFailed,
-				.handleType = SQL_HANDLE_STMT,
-				.handle = statementHandle,
 				.message = "Database health check query returned no row.",
 				});
-
-			::SQLFreeHandle(SQL_HANDLE_STMT, statementHandle);
-			return std::unexpected(error);
 		}
 
-		SQLLEN indicator = 0;
-		SQLINTEGER value = 0;
-
-		const SQLRETURN getDataResult = ::SQLGetData(
-			statementHandle,
-			static_cast<SQLUSMALLINT>(1),
-			SQL_C_SLONG,
-			static_cast<SQLPOINTER>(&value),
-			static_cast<SQLLEN>(sizeof(value)),
-			&indicator
-		);
-
-		if (!SQL_SUCCEEDED(getDataResult) || value != 1)
+		const OdbcStatement::ReadInt32Result readResult = statement.ReadInt32(static_cast<SQLUSMALLINT>(1));
+		if (!readResult.has_value())
 		{
-			const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
+			return std::unexpected(readResult.error());
+		}
+
+		if (*readResult != 1)
+		{
+			return std::unexpected(core::DatabaseError{
 				.failure = core::DatabaseFailure::HealthCheckFailed,
-				.handleType = SQL_HANDLE_STMT,
-				.handle = statementHandle,
 				.message = "Database health check query returned an invalid value.",
 				});
-
-			::SQLFreeHandle(SQL_HANDLE_STMT, statementHandle);
-			return std::unexpected(error);
 		}
 
-		::SQLFreeHandle(SQL_HANDLE_STMT, statementHandle);
 		return {};
 	}
 }

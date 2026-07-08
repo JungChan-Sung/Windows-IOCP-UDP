@@ -155,6 +155,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Account\AccountRepository.h" />
     <ClInclude Include="Core\DatabaseError.h" />
     <ClInclude Include="Core\PersistenceRuntime.h" />
     <ClInclude Include="Odbc\OdbcConnection.h" />
@@ -165,6 +166,7 @@
     <ClInclude Include="Schema\DatabaseSchema.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Account\AccountRepository.cpp" />
     <ClCompile Include="Core\DatabaseError.cpp" />
     <ClCompile Include="Core\PersistenceRuntime.cpp" />
     <ClCompile Include="Odbc\OdbcConnection.cpp" />

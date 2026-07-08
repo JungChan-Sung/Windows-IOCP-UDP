@@ -31,6 +31,12 @@
     <Filter Include="소스 파일\Schema">
       <UniqueIdentifier>{73f5f040-c901-4a0c-aceb-dc11c1a8f225}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Account">
+      <UniqueIdentifier>{57b5e610-808c-48cd-ab0a-73b7af1dd4ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Account">
+      <UniqueIdentifier>{6334921d-69c9-49de-9ad6-59b56db208b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h">
@@ -57,6 +63,9 @@
     <ClInclude Include="Schema\DatabaseSchema.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Account\AccountRepository.h">
+      <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -79,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="Schema\DatabaseSchema.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\AccountRepository.cpp">
+      <Filter>소스 파일\Account</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

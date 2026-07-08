@@ -60,4 +60,22 @@ namespace persistence
 		environment_.Close();
 		enabled_ = false;
 	}
+
+	PersistenceRuntime::CreateAccountResult PersistenceRuntime::CreateAccount(const account::AccountCreateRequest& request)
+	{
+		account::AccountRepository repository(connection_);
+		return repository.CreateAccount(request);
+	}
+
+	PersistenceRuntime::FindAccountResult PersistenceRuntime::FindAccountByLoginName(std::string_view loginName)
+	{
+		account::AccountRepository repository(connection_);
+		return repository.FindAccountByLoginName(loginName);
+	}
+
+	PersistenceRuntime::ExistsAccountResult PersistenceRuntime::ExistsByLoginName(std::string_view loginName)
+	{
+		account::AccountRepository repository(connection_);
+		return repository.ExistsByLoginName(loginName);
+	}
 }

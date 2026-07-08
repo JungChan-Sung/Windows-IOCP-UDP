@@ -3,6 +3,7 @@
 #include <expected>
 #include <string_view>
 
+#include <Persistence/Account/AccountRepository.h>
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 #include <Persistence/Odbc/OdbcEnvironment.h>
@@ -22,6 +23,10 @@ namespace persistence
 	public:
 		using StartResult = std::expected<void, core::DatabaseError>;
 
+		using CreateAccountResult = account::AccountRepository::CreateAccountResult;
+		using FindAccountResult = account::AccountRepository::FindAccountResult;
+		using ExistsAccountResult = account::AccountRepository::ExistsResult;
+
 	private:
 		odbc::OdbcEnvironment environment_;
 		odbc::OdbcConnection connection_;
@@ -40,6 +45,10 @@ namespace persistence
 	public:
 		[[nodiscard]] StartResult Start(const PersistenceRuntimeStartConfig& startConfig);
 		void Stop() noexcept;
+
+		[[nodiscard]] CreateAccountResult CreateAccount(const account::AccountCreateRequest& request);
+		[[nodiscard]] FindAccountResult FindAccountByLoginName(std::string_view loginName);
+		[[nodiscard]] ExistsAccountResult ExistsByLoginName(std::string_view loginName);
 
 	public:
 		[[nodiscard]] bool IsEnabled() const noexcept

@@ -12,6 +12,8 @@ namespace persistence::core
 		ConnectionAllocationFailed,
 		ConnectionOpenFailed,
 		StatementAllocationFailed,
+		StatementPrepareFailed,
+		StatementParameterBindFailed,
 		StatementExecutionFailed,
 		StatementFetchFailed,
 		StatementDataReadFailed,

@@ -23,6 +23,12 @@ namespace persistence::core
 		case DatabaseFailure::StatementAllocationFailed:
 			return "StatementAllocationFailed";
 
+		case DatabaseFailure::StatementPrepareFailed:
+			return "StatementPrepareFailed";
+
+		case DatabaseFailure::StatementParameterBindFailed:
+			return "StatementParameterBindFailed";
+
 		case DatabaseFailure::StatementExecutionFailed:
 			return "StatementExecutionFailed";
 

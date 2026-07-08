@@ -1,5 +1,7 @@
 #include "PersistenceRuntime.h"
 
+#include <Persistence/Schema/DatabaseSchema.h>
+
 namespace persistence
 {
 	PersistenceRuntime::StartResult PersistenceRuntime::Start(const PersistenceRuntimeStartConfig& startConfig)
@@ -41,6 +43,12 @@ namespace persistence
 		if (!healthCheckResult.has_value())
 		{
 			return std::unexpected(healthCheckResult.error());
+		}
+
+		const schema::DatabaseSchema::InitializeResult schemaInitializeResult = schema::DatabaseSchema::Initialize(connection_);
+		if (!schemaInitializeResult.has_value())
+		{
+			return std::unexpected(schemaInitializeResult.error());
 		}
 
 		return {};

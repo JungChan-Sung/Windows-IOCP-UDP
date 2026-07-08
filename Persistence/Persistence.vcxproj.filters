@@ -25,6 +25,12 @@
     <Filter Include="소스 파일\Odbc">
       <UniqueIdentifier>{06246c11-8228-4b66-a9ae-0d2326c5f97d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Schema">
+      <UniqueIdentifier>{e23cab2b-bd92-4afb-b262-08d22075e733}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Schema">
+      <UniqueIdentifier>{73f5f040-c901-4a0c-aceb-dc11c1a8f225}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h">
@@ -48,6 +54,9 @@
     <ClInclude Include="Odbc\OdbcStatement.h">
       <Filter>헤더 파일\Odbc</Filter>
     </ClInclude>
+    <ClInclude Include="Schema\DatabaseSchema.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -67,6 +76,9 @@
     </ClCompile>
     <ClCompile Include="Odbc\OdbcConnection.cpp">
       <Filter>소스 파일\Odbc</Filter>
+    </ClCompile>
+    <ClCompile Include="Schema\DatabaseSchema.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

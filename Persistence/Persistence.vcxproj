@@ -162,6 +162,7 @@
     <ClInclude Include="Odbc\OdbcDiagnosticContext.h" />
     <ClInclude Include="Odbc\OdbcEnvironment.h" />
     <ClInclude Include="Odbc\OdbcStatement.h" />
+    <ClInclude Include="Schema\DatabaseSchema.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp" />
@@ -170,6 +171,7 @@
     <ClCompile Include="Odbc\OdbcDiagnostic.cpp" />
     <ClCompile Include="Odbc\OdbcEnvironment.cpp" />
     <ClCompile Include="Odbc\OdbcStatement.cpp" />
+    <ClCompile Include="Schema\DatabaseSchema.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

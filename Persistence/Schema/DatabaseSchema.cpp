@@ -1,0 +1,36 @@
+#include "DatabaseSchema.h"
+
+#include <Persistence/Odbc/OdbcStatement.h>
+
+namespace persistence::schema
+{
+	DatabaseSchema::InitializeResult DatabaseSchema::Initialize(odbc::OdbcConnection& connection)
+	{
+		constexpr char createAccountsTableQuery[] = R"sql(
+IF OBJECT_ID(N'dbo.accounts', N'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.accounts
+	(
+		account_id BIGINT IDENTITY(1,1) NOT NULL,
+		login_name NVARCHAR(50) NOT NULL,
+		password_hash NVARCHAR(255) NOT NULL,
+		nickname NVARCHAR(50) NOT NULL,
+		created_at_utc DATETIME2(3) NOT NULL CONSTRAINT DF_accounts_created_at_utc DEFAULT SYSUTCDATETIME(),
+
+		CONSTRAINT PK_accounts PRIMARY KEY (account_id),
+		CONSTRAINT UQ_accounts_login_name UNIQUE (login_name)
+	);
+END
+)sql";
+
+		odbc::OdbcStatement statement;
+
+		const odbc::OdbcStatement::ExecuteResult executeResult = statement.ExecuteDirect(connection, createAccountsTableQuery);
+		if (!executeResult.has_value())
+		{
+			return std::unexpected(executeResult.error());
+		}
+
+		return {};
+	}
+}

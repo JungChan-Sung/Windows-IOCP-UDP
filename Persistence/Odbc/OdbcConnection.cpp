@@ -110,38 +110,22 @@ namespace persistence::odbc
 
 		OdbcStatement statement;
 
-		const OdbcStatement::ExecuteResult executeResult = statement.ExecuteDirect(*this, "SELECT 1");
+		const OdbcStatement::ExecuteResult prepareResult = statement.Prepare(*this, "SELECT ?");
+		if (!prepareResult.has_value())
+		{
+			return std::unexpected(prepareResult.error());
+		}
+
+		const OdbcStatement::BindResult bindResult = statement.BindInputInt64(static_cast<SQLUSMALLINT>(1), 1);
+		if (!bindResult.has_value())
+		{
+			return std::unexpected(bindResult.error());
+		}
+
+		const OdbcStatement::ExecuteResult executeResult = statement.Execute();
 		if (!executeResult.has_value())
 		{
 			return std::unexpected(executeResult.error());
-		}
-
-		const OdbcStatement::FetchResult fetchResult = statement.Fetch();
-		if (!fetchResult.has_value())
-		{
-			return std::unexpected(fetchResult.error());
-		}
-
-		if (!*fetchResult)
-		{
-			return std::unexpected(core::DatabaseError{
-				.failure = core::DatabaseFailure::HealthCheckFailed,
-				.message = "Database health check query returned no row.",
-				});
-		}
-
-		const OdbcStatement::ReadInt32Result readResult = statement.ReadInt32(static_cast<SQLUSMALLINT>(1));
-		if (!readResult.has_value())
-		{
-			return std::unexpected(readResult.error());
-		}
-
-		if (*readResult != 1)
-		{
-			return std::unexpected(core::DatabaseError{
-				.failure = core::DatabaseFailure::HealthCheckFailed,
-				.message = "Database health check query returned an invalid value.",
-				});
 		}
 
 		return {};

@@ -67,6 +67,12 @@
     <Filter Include="소스 파일\Config">
       <UniqueIdentifier>{63890266-194c-4eb4-a2e9-8271a4fe68c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Persistence">
+      <UniqueIdentifier>{e2e079a5-b129-4c46-9b7b-38f843f75629}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Persistence">
+      <UniqueIdentifier>{8d442364-e3af-43c4-a1a7-bccf4a858ccf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests.cpp">
@@ -228,6 +234,9 @@
     <ClCompile Include="Log\LogMessageBuilderTests.cpp">
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
+    <ClCompile Include="Persistence\AccountRepositoryIntegrationTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -349,6 +358,9 @@
     </ClInclude>
     <ClInclude Include="Log\LogMessageBuilderTests.h">
       <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Persistence\AccountRepositoryIntegrationTests.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

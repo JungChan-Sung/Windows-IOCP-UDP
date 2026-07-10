@@ -34,13 +34,36 @@ namespace
 		tests::Expect(
 			result,
 			common::config::RemoveComment("Value=1 # comment") == "Value=1 ",
-			"ConfigText: remove hash comment"
+			"ConfigText: remove inline hash comment"
 		);
+
 		tests::Expect(
 			result,
-			common::config::RemoveComment("Value=1 ; comment") == "Value=1 ",
-			"ConfigText: remove semicolon comment"
+			common::config::RemoveComment("; comment").empty(),
+			"ConfigText: remove semicolon line comment"
 		);
+
+		tests::Expect(
+			result,
+			common::config::RemoveComment("   ; comment").empty(),
+			"ConfigText: remove indented semicolon line comment"
+		);
+
+		tests::Expect(
+			result,
+			common::config::RemoveComment("Value=1 ; comment") == "Value=1 ; comment",
+			"ConfigText: preserve inline semicolon"
+		);
+
+		tests::Expect(
+			result,
+			common::config::RemoveComment(
+				"ConnectionString=Driver={ODBC Driver 18 for SQL Server};Server=localhost;Database=WindowsIocpUdp;"
+			)
+			== "ConnectionString=Driver={ODBC Driver 18 for SQL Server};Server=localhost;Database=WindowsIocpUdp;",
+			"ConfigText: preserve ODBC connection string semicolons"
+		);
+
 		tests::Expect(
 			result,
 			common::config::RemoveComment("Value=1") == "Value=1",

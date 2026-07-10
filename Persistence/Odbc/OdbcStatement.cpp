@@ -40,6 +40,13 @@ namespace persistence::odbc
 			reinterpret_cast<SQLCHAR*>(queryText.data()),
 			SQL_NTS
 		);
+
+		if (executeResult == SQL_NO_DATA)
+		{
+			statementHandle_ = statementHandle;
+			return {};
+		}
+
 		if (!SQL_SUCCEEDED(executeResult))
 		{
 			const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
@@ -197,6 +204,12 @@ namespace persistence::odbc
 		}
 
 		const SQLRETURN executeResult = ::SQLExecute(statementHandle_);
+
+		if (executeResult == SQL_NO_DATA)
+		{
+			return {};
+		}
+
 		if (!SQL_SUCCEEDED(executeResult))
 		{
 			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{

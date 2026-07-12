@@ -1,5 +1,6 @@
 #include "PacketSerializationTests.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -387,6 +388,51 @@ namespace
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count size mismatch rejected");
 		}
 	}
+
+	void RunInputCommandWireFormatRegressionTest(tests::DebugTestResult& result)
+	{
+		common::packet::InputCommandPacket packet{};
+		packet.inputSequence = 0x01020304;
+		packet.inputFlags = common::game::InputFlags::Up | common::game::InputFlags::Left;
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket
+			= common::packet::SerializePacket(packet);
+
+		tests::Expect(
+			result,
+			serializedPacket.has_value(),
+			"InputCommandWireFormat: serialize"
+		);
+
+		if (!serializedPacket.has_value())
+		{
+			return;
+		}
+
+		const common::packet::PacketBuffer expectedBuffer{
+			static_cast<char>(0x0B),
+			static_cast<char>(0x00),
+
+			static_cast<char>(0x03),
+			static_cast<char>(0x00),
+
+			static_cast<char>(0x02),
+			static_cast<char>(0x00),
+
+			static_cast<char>(0x04),
+			static_cast<char>(0x03),
+			static_cast<char>(0x02),
+			static_cast<char>(0x01),
+
+			static_cast<char>(0x05),
+		};
+
+		tests::Expect(
+			result,
+			*serializedPacket == expectedBuffer,
+			"InputCommandWireFormat: exact serialized bytes"
+		);
+	}
 }
 
 namespace tests::packet
@@ -401,6 +447,7 @@ namespace tests::packet
 		RunImpactEffectRoundTripTest(result);
 		RunInvalidPacketTests(result);
 		RunInvalidVariablePacketTests(result);
+		RunInputCommandWireFormatRegressionTest(result);
 
 		return result;
 	}

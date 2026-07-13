@@ -222,6 +222,36 @@
     <ClInclude Include="Net\Snapshot\SnapshotChunkAssemblerCore.h">
       <Filter>헤더 파일\Net\Snapshot</Filter>
     </ClInclude>
+    <ClInclude Include="Packet\Game\SessionPacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\SessionPacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\RoomPacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\RoomPacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\CommandPacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\CommandPacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\SnapshotPacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\SnapshotPacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\EffectPacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\EffectPacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

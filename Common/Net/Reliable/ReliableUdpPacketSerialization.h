@@ -7,7 +7,7 @@
 
 namespace common::net
 {
-	inline void WriteReliableUdpPacketHeader(packet::PacketWriter& writer, const net::ReliableUdpPacketHeader& reliableHeader)
+	inline void WriteReliableUdpPacketHeader(packet::PacketWriter& writer, const ReliableUdpPacketHeader& reliableHeader)
 	{
 		writer.WriteUInt32(reliableHeader.sequence);
 		writer.WriteUInt32(reliableHeader.ackSequence);

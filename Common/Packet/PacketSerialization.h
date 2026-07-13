@@ -1,4 +1,7 @@
 #pragma once
 
-#include <Common/Packet/Serialization/PacketSerializationCore.h>
-#include <Common/Packet/Game/GamePacketCodec.h>
+#include <optional>
+
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
+#include <Common/Packet/Serialization/PacketReader.h>
+#include <Common/Packet/Serialization/PacketWriter.h>

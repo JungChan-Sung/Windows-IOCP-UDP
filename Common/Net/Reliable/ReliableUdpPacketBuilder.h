@@ -1,16 +1,17 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <optional>
 #include <span>
 
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Net/Reliable/ReliableUdpPacketSerialization.h>
+#include <Common/Packet/Serialization/PacketSerializationCore.h>
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
-#include <Common/Packet/PacketSerialization.h>
 
 namespace common::net
 {
@@ -45,12 +46,12 @@ namespace common::net
 			return std::nullopt;
 		}
 
-		if (IsReliablePacketHeader(*gamePacketHeader))
+		if (packet::IsReliablePacketHeader(*gamePacketHeader))
 		{
 			return std::nullopt;
 		}
 
-		if (GetPacketHeaderProtocolVersion(*gamePacketHeader) != packet::protocolVersion)
+		if (packet::GetPacketHeaderProtocolVersion(*gamePacketHeader) != packet::protocolVersion)
 		{
 			return std::nullopt;
 		}
@@ -132,7 +133,7 @@ namespace common::net
 		packet::PacketReader reader(packetData, packetSize);
 
 		packet::PacketHeader packetHeader{};
-		if (!ReadPacketHeader(reader, packetHeader))
+		if (!packet::ReadPacketHeader(reader, packetHeader))
 		{
 			return std::nullopt;
 		}
@@ -142,12 +143,12 @@ namespace common::net
 			return std::nullopt;
 		}
 
-		if (!IsReliablePacketHeader(packetHeader))
+		if (!packet::IsReliablePacketHeader(packetHeader))
 		{
 			return std::nullopt;
 		}
 
-		if (GetPacketHeaderProtocolVersion(packetHeader) != packet::protocolVersion)
+		if (packet::GetPacketHeaderProtocolVersion(packetHeader) != packet::protocolVersion)
 		{
 			return std::nullopt;
 		}

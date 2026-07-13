@@ -52,6 +52,18 @@
     <Filter Include="헤더 파일\Packet\Game">
       <UniqueIdentifier>{f3b31893-a873-49bc-92bf-986c40b6b730}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Net\Snapshot">
+      <UniqueIdentifier>{b10e4ec1-3b53-49be-a948-a4b863fd0f69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Net\Fault">
+      <UniqueIdentifier>{5a62726e-58e5-4947-a586-8fa254e27f72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Net\Reliable">
+      <UniqueIdentifier>{e3efc807-3b87-49c9-ba30-1f5e07b09186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Net\Fault">
+      <UniqueIdentifier>{a8c0ed73-1bc1-4acb-a49e-a09e8a2f5f98}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -111,9 +123,6 @@
     <ClInclude Include="Game\InputFlags.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Net\SnapshotChunkAssemblerCore.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
     <ClInclude Include="Packet\PacketConstants.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
@@ -132,24 +141,6 @@
     <ClInclude Include="String\StringFormat.h">
       <Filter>헤더 파일\String</Filter>
     </ClInclude>
-    <ClInclude Include="Net\ReliableUdpProtocol.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\ReliableUdpSendWindow.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\ReliableUdpPacketHeader.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Packet\ReliableUdpPacketSerialization.h">
-      <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\ReliableUdpSession.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Packet\ReliableUdpPacketBuilder.h">
-      <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
     <ClInclude Include="Packet\PacketBuffer.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
@@ -158,18 +149,6 @@
     </ClInclude>
     <ClInclude Include="Packet\PacketReliability.h">
       <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\UdpFaultSimulationConfig.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\UdpFaultDecisionGenerator.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\UdpFaultPacketScheduler.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\UdpFaultSimulator.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Config\ConfigText.h">
       <Filter>헤더 파일\Config</Filter>
@@ -210,6 +189,39 @@
     <ClInclude Include="Packet\Game\GamePacketCodec.h">
       <Filter>헤더 파일\Packet\Game</Filter>
     </ClInclude>
+    <ClInclude Include="Net\Fault\UdpFaultDecisionGenerator.h">
+      <Filter>헤더 파일\Net\Fault</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Fault\UdpFaultPacketScheduler.h">
+      <Filter>헤더 파일\Net\Fault</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Fault\UdpFaultSimulationConfig.h">
+      <Filter>헤더 파일\Net\Fault</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Fault\UdpFaultSimulator.h">
+      <Filter>헤더 파일\Net\Fault</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpPacketBuilder.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpPacketHeader.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpPacketSerialization.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpProtocol.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpSendWindow.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Reliable\ReliableUdpSession.h">
+      <Filter>헤더 파일\Net\Reliable</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Snapshot\SnapshotChunkAssemblerCore.h">
+      <Filter>헤더 파일\Net\Snapshot</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -233,17 +245,17 @@
     <ClCompile Include="Log\AsyncLogWriter.cpp">
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
-    <ClCompile Include="Net\UdpFaultDecisionGenerator.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\UdpFaultPacketScheduler.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\UdpFaultSimulator.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Log\DebugOutputLogger.cpp">
       <Filter>소스 파일\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Fault\UdpFaultDecisionGenerator.cpp">
+      <Filter>소스 파일\Net\Fault</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Fault\UdpFaultPacketScheduler.cpp">
+      <Filter>소스 파일\Net\Fault</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Fault\UdpFaultSimulator.cpp">
+      <Filter>소스 파일\Net\Fault</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

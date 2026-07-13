@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Common/Game/GameTypes.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 namespace server::game
 {

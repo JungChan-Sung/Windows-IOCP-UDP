@@ -46,6 +46,12 @@
     <Filter Include="헤더 파일\Config">
       <UniqueIdentifier>{3c7d05db-ab8c-431a-96fd-5652e05f5291}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Packet\Serialization">
+      <UniqueIdentifier>{ad5f5169-3b03-40cb-bde8-3f7e210d1732}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Packet\Game">
+      <UniqueIdentifier>{f3b31893-a873-49bc-92bf-986c40b6b730}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -64,9 +70,6 @@
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
     <ClInclude Include="Packet\PacketHeader.h">
-      <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Packet\GamePacket.h">
       <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
     <ClInclude Include="Net\WsaSession.h">
@@ -188,6 +191,24 @@
     </ClInclude>
     <ClInclude Include="Log\DebugOutputLogger.h">
       <Filter>헤더 파일\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Serialization\PacketSerializationCore.h">
+      <Filter>헤더 파일\Packet\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Serialization\PacketCodec.h">
+      <Filter>헤더 파일\Packet\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Serialization\PacketReader.h">
+      <Filter>헤더 파일\Packet\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Serialization\PacketWriter.h">
+      <Filter>헤더 파일\Packet\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\GamePacket.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Game\GamePacketCodec.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

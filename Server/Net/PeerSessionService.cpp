@@ -4,7 +4,7 @@
 
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/InputFlags.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::net

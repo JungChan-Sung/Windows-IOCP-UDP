@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 namespace server::net
 {

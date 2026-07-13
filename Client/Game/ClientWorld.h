@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Time/TimeTypes.h>

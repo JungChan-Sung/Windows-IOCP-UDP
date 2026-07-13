@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <optional>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/ReliableUdpPacketBuilder.h>
 

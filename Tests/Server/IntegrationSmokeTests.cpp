@@ -10,7 +10,7 @@
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
 #include <Server/Config/ServerConfig.h>

@@ -10,7 +10,7 @@
 #include <Common/Net/ReliableUdpSession.h>
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogMessageBuilder.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/ReliableUdpPacketBuilder.h>

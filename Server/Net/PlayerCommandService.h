@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>

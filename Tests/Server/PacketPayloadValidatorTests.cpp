@@ -4,7 +4,7 @@
 #include <string_view>
 
 #include <Common/Game/InputFlags.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Net/PacketPayloadValidator.h>
 

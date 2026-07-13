@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <optional>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 #include <Client/Net/SnapshotChunkAssembler.h>
 

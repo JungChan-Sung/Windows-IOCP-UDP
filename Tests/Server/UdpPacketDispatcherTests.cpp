@@ -7,7 +7,7 @@
 #include <optional>
 #include <string_view>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
 #include <Server/Net/UdpPacketDispatcher.h>

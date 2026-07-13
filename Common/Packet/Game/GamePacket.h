@@ -5,9 +5,8 @@
 #include <cstddef>
 
 #include <Common/Game/InputFlags.h>
-
-#include "PacketConstants.h"
-#include "PacketHeader.h"
+#include <Common/Packet/PacketConstants.h>
+#include <Common/Packet/PacketHeader.h>
 
 namespace common::packet
 {

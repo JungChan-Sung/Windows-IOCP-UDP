@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "GamePacket.h"
-#include "PacketConstants.h"
-#include "PacketHeader.h"
-#include "PacketType.h"
+#include <Common/Packet/Game/GamePacket.h>
+#include <Common/Packet/PacketConstants.h>
+#include <Common/Packet/PacketHeader.h>
+#include <Common/Packet/PacketType.h>
 
 namespace common::packet
 {

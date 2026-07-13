@@ -7,7 +7,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/SnapshotChunkAssemblerCore.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfigDefaults.h>

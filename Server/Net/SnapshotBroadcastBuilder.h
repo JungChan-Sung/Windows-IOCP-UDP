@@ -9,7 +9,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Game/GameWorld.h>
 #include <Server/Net/PeerState.h>

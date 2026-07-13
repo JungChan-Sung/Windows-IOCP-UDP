@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <optional>
 
-#include <Common/Packet/GamePacket.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketHeader.h>
 
 namespace server::net

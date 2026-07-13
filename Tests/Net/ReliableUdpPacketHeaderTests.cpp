@@ -2,8 +2,8 @@
 
 #include <optional>
 
-#include <Common/Net/ReliableUdpPacketHeader.h>
-#include <Common/Packet/ReliableUdpPacketSerialization.h>
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpPacketSerialization.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -27,7 +27,7 @@ namespace tests::net::reliableUdpPacketHeaderTest
 
 		common::packet::PacketWriter writer;
 		writer.Reserve(common::net::reliableUdpPacketHeaderWireSize);
-		common::packet::WriteReliableUdpPacketHeader(writer, reliableHeader);
+		common::net::WriteReliableUdpPacketHeader(writer, reliableHeader);
 
 		const common::packet::PacketBuffer packetBuffer = writer.TakeBuffer();
 
@@ -38,7 +38,7 @@ namespace tests::net::reliableUdpPacketHeaderTest
 		);
 
 		const std::optional<common::net::ReliableUdpPacketHeader> deserializedHeader =
-			common::packet::DeserializeReliableUdpPacketHeader(
+			common::net::DeserializeReliableUdpPacketHeader(
 				packetBuffer.data(),
 				static_cast<int>(packetBuffer.size())
 			);
@@ -72,7 +72,7 @@ namespace tests::net::reliableUdpPacketHeaderTest
 	void RunDeserializeInvalidBufferTest(tests::DebugTestResult& result)
 	{
 		const std::optional<common::net::ReliableUdpPacketHeader> nullHeader =
-			common::packet::DeserializeReliableUdpPacketHeader(nullptr, 0);
+			common::net::DeserializeReliableUdpPacketHeader(nullptr, 0);
 
 		tests::Expect(
 			result,
@@ -82,7 +82,7 @@ namespace tests::net::reliableUdpPacketHeaderTest
 
 		const char shortBuffer[4]{};
 		const std::optional<common::net::ReliableUdpPacketHeader> shortHeader =
-			common::packet::DeserializeReliableUdpPacketHeader(
+			common::net::DeserializeReliableUdpPacketHeader(
 				shortBuffer,
 				static_cast<int>(sizeof(shortBuffer))
 			);

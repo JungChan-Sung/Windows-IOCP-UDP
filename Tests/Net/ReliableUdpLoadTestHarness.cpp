@@ -5,9 +5,11 @@
 #include <cstdint>
 #include <optional>
 
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Packet/ReliableUdpPacketBuilder.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace tests::net::reliableUdpLoadTest
 {
@@ -340,7 +342,7 @@ namespace tests::net::reliableUdpLoadTest
 			sender.session.BuildOutgoingHeader(sequence);
 
 		std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
-			common::packet::BuildReliableUdpPacket(
+			common::net::BuildReliableUdpPacket(
 				reliableHeader,
 				serializedGamePacket
 			);
@@ -369,7 +371,7 @@ namespace tests::net::reliableUdpLoadTest
 		const common::net::ReliableUdpPacketHeader reliableHeader =
 			sender.session.BuildOutgoingAckHeader();
 
-		return common::packet::BuildReliableUdpAckPacket(reliableHeader);
+		return common::net::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
 	ReceiveResult ReceiveReliablePacket(
@@ -379,8 +381,8 @@ namespace tests::net::reliableUdpLoadTest
 	{
 		ReceiveResult result{};
 
-		const std::optional<common::packet::ReliableUdpPacketView> packetView =
-			common::packet::ParseReliableUdpPacket(
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
 				packetBuffer.data(),
 				static_cast<int>(packetBuffer.size())
 			);

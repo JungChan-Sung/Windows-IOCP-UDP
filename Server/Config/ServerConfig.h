@@ -9,7 +9,7 @@
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/WeaponRules.h>
 #include <Common/Log/LogLevel.h>
-#include <Common/Net/UdpFaultSimulationConfig.h>
+#include <Common/Net/Fault/UdpFaultSimulationConfig.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::config

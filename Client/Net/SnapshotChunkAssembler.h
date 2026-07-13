@@ -6,7 +6,7 @@
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
-#include <Common/Net/SnapshotChunkAssemblerCore.h>
+#include <Common/Net/Snapshot/SnapshotChunkAssemblerCore.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 

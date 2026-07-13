@@ -3,7 +3,7 @@
 #include <array>
 #include <chrono>
 
-#include <Common/Net/UdpFaultDecisionGenerator.h>
+#include <Common/Net/Fault/UdpFaultDecisionGenerator.h>
 
 #include <Tests/DebugTestResult.h>
 

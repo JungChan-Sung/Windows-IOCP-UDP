@@ -9,7 +9,7 @@
 #include <string_view>
 #include <variant>
 
-#include <Common/Net/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Packet/PacketBuffer.h>

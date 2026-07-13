@@ -5,7 +5,7 @@
 #include <chrono>
 #include <cstdint>
 
-#include <Common/Net/UdpFaultPacketScheduler.h>
+#include <Common/Net/Fault/UdpFaultPacketScheduler.h>
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Tests/DebugTestResult.h>

@@ -6,7 +6,7 @@
 #include <optional>
 #include <vector>
 
-#include <Common/Net/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/PacketType.h>
 
 #include <Tests/DebugTestResult.h>

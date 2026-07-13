@@ -5,37 +5,37 @@
 #include <optional>
 #include <span>
 
-#include <Common/Net/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpPacketSerialization.h>
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Packet/ReliableUdpPacketSerialization.h>
 
-namespace common::packet
+namespace common::net
 {
-	inline constexpr std::size_t reliableUdpPacketHeaderOffset = serializedPacketHeaderSize;
-	inline constexpr std::size_t reliableUdpPayloadOffset = serializedPacketHeaderSize + net::reliableUdpPacketHeaderWireSize;
+	inline constexpr std::size_t reliableUdpPacketHeaderOffset = packet::serializedPacketHeaderSize;
+	inline constexpr std::size_t reliableUdpPayloadOffset = packet::serializedPacketHeaderSize + reliableUdpPacketHeaderWireSize;
 
 	struct ReliableUdpPacketView
 	{
 	public:
-		PacketHeader packetHeader{};
-		net::ReliableUdpPacketHeader reliableHeader{};
-		ConstPacketSpan payload;
+		packet::PacketHeader packetHeader{};
+		ReliableUdpPacketHeader reliableHeader{};
+		packet::ConstPacketSpan payload;
 	};
 
-	[[nodiscard]] inline std::optional<PacketBuffer> BuildReliableUdpPacket(
-		const net::ReliableUdpPacketHeader& reliableHeader,
-		ConstPacketSpan serializedGamePacket
+	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildReliableUdpPacket(
+		const ReliableUdpPacketHeader& reliableHeader,
+		packet::ConstPacketSpan serializedGamePacket
 	)
 	{
-		if (serializedGamePacket.size() <= serializedPacketHeaderSize)
+		if (serializedGamePacket.size() <= packet::serializedPacketHeaderSize)
 		{
 			return std::nullopt;
 		}
 
-		const std::optional<PacketHeader> gamePacketHeader = DeserializePacketHeader(
+		const std::optional<packet::PacketHeader> gamePacketHeader = packet::DeserializePacketHeader(
 			serializedGamePacket.data(),
 			static_cast<int>(serializedGamePacket.size())
 		);
@@ -50,7 +50,7 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		if (GetPacketHeaderProtocolVersion(*gamePacketHeader) != protocolVersion)
+		if (GetPacketHeaderProtocolVersion(*gamePacketHeader) != packet::protocolVersion)
 		{
 			return std::nullopt;
 		}
@@ -60,10 +60,10 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		const std::size_t payloadSize = serializedGamePacket.size() - serializedPacketHeaderSize;
+		const std::size_t payloadSize = serializedGamePacket.size() - packet::serializedPacketHeaderSize;
 		const std::size_t reliablePacketSize = reliableUdpPayloadOffset + payloadSize;
 
-		if (reliablePacketSize > maxSerializedPacketSize)
+		if (reliablePacketSize > packet::maxSerializedPacketSize)
 		{
 			return std::nullopt;
 		}
@@ -73,16 +73,16 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		PacketWriter writer;
+		packet::PacketWriter writer;
 		writer.Reserve(reliablePacketSize);
 
-		WritePacketHeader(writer, static_cast<std::uint16_t>(reliablePacketSize), gamePacketHeader->type, true);
+		packet::WritePacketHeader(writer, static_cast<std::uint16_t>(reliablePacketSize), gamePacketHeader->type, true);
 
 		WriteReliableUdpPacketHeader(writer, reliableHeader);
 
-		PacketBuffer packetBuffer = writer.TakeBuffer();
+		packet::PacketBuffer packetBuffer = writer.TakeBuffer();
 
-		const std::span<const char> payload = serializedGamePacket.subspan(serializedPacketHeaderSize);
+		const std::span<const char> payload = serializedGamePacket.subspan(packet::serializedPacketHeaderSize);
 		packetBuffer.insert(packetBuffer.end(), payload.begin(), payload.end());
 
 		if (packetBuffer.size() != reliablePacketSize)
@@ -93,11 +93,11 @@ namespace common::packet
 		return packetBuffer;
 	}
 
-	[[nodiscard]] inline std::optional<PacketBuffer> BuildReliableUdpAckPacket(const net::ReliableUdpPacketHeader& reliableHeader)
+	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildReliableUdpAckPacket(const ReliableUdpPacketHeader& reliableHeader)
 	{
 		const std::size_t packetSize = reliableUdpPayloadOffset;
 
-		if (packetSize > maxSerializedPacketSize)
+		if (packetSize > packet::maxSerializedPacketSize)
 		{
 			return std::nullopt;
 		}
@@ -107,18 +107,13 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		PacketWriter writer;
+		packet::PacketWriter writer;
 		writer.Reserve(packetSize);
 
-		WritePacketHeader(
-			writer,
-			static_cast<std::uint16_t>(packetSize),
-			PacketType::None,
-			true
-		);
+		packet::WritePacketHeader(writer, static_cast<std::uint16_t>(packetSize), packet::PacketType::None, true);
 		WriteReliableUdpPacketHeader(writer, reliableHeader);
 
-		PacketBuffer packetBuffer = writer.TakeBuffer();
+		packet::PacketBuffer packetBuffer = writer.TakeBuffer();
 		if (packetBuffer.size() != packetSize)
 		{
 			return std::nullopt;
@@ -134,9 +129,9 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		PacketReader reader(packetData, packetSize);
+		packet::PacketReader reader(packetData, packetSize);
 
-		PacketHeader packetHeader{};
+		packet::PacketHeader packetHeader{};
 		if (!ReadPacketHeader(reader, packetHeader))
 		{
 			return std::nullopt;
@@ -152,12 +147,12 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		if (GetPacketHeaderProtocolVersion(packetHeader) != protocolVersion)
+		if (GetPacketHeaderProtocolVersion(packetHeader) != packet::protocolVersion)
 		{
 			return std::nullopt;
 		}
 
-		net::ReliableUdpPacketHeader reliableHeader{};
+		ReliableUdpPacketHeader reliableHeader{};
 		if (!ReadReliableUdpPacketHeader(reader, reliableHeader))
 		{
 			return std::nullopt;
@@ -174,18 +169,16 @@ namespace common::packet
 		return packetView;
 	}
 
-	[[nodiscard]] inline std::optional<PacketBuffer> BuildGamePacketFromReliableUdpPacketView(
-		const ReliableUdpPacketView& packetView
-	)
+	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildGamePacketFromReliableUdpPacketView(const ReliableUdpPacketView& packetView)
 	{
 		if (packetView.payload.empty())
 		{
 			return std::nullopt;
 		}
 
-		const std::size_t gamePacketSize = serializedPacketHeaderSize + packetView.payload.size();
+		const std::size_t gamePacketSize = packet::serializedPacketHeaderSize + packetView.payload.size();
 
-		if (gamePacketSize > maxSerializedPacketSize)
+		if (gamePacketSize > packet::maxSerializedPacketSize)
 		{
 			return std::nullopt;
 		}
@@ -195,16 +188,12 @@ namespace common::packet
 			return std::nullopt;
 		}
 
-		PacketWriter writer;
+		packet::PacketWriter writer;
 		writer.Reserve(gamePacketSize);
 
-		WritePacketHeader(
-			writer,
-			static_cast<std::uint16_t>(gamePacketSize),
-			packetView.packetHeader.type
-		);
+		packet::WritePacketHeader(writer, static_cast<std::uint16_t>(gamePacketSize), packetView.packetHeader.type);
 
-		PacketBuffer packetBuffer = writer.TakeBuffer();
+		packet::PacketBuffer packetBuffer = writer.TakeBuffer();
 		packetBuffer.insert(packetBuffer.end(), packetView.payload.begin(), packetView.payload.end());
 
 		if (packetBuffer.size() != gamePacketSize)

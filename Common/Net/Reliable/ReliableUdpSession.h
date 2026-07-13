@@ -5,19 +5,20 @@
 #include <cstdint>
 #include <utility>
 
-#include <Common/Net/ReliableUdpPacketHeader.h>
-#include <Common/Net/ReliableUdpProtocol.h>
-#include <Common/Net/ReliableUdpSendWindow.h>
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpProtocol.h>
+#include <Common/Net/Reliable/ReliableUdpSendWindow.h>
 #include <Common/Packet/PacketBuffer.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace common::net
 {
 	class ReliableUdpSession
 	{
 	public:
-		using Clock = ReliableUdpSendWindow::Clock;
-		using TimePoint = ReliableUdpSendWindow::TimePoint;
-		using Duration = ReliableUdpSendWindow::Duration;
+		using Clock = common::time::Clock;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 		using ResendPacketList = ReliableUdpSendWindow::ResendPacketList;
 		using ResendResult = ReliableUdpSendWindow::ResendResult;
 

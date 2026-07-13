@@ -5,7 +5,7 @@
 
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Packet/ReliableUdpPacketBuilder.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -31,7 +31,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		reliableHeader.ackBitfield = 0b101;
 
 		const std::optional<common::packet::PacketBuffer> reliablePacket =
-			common::packet::BuildReliableUdpPacket(
+			common::net::BuildReliableUdpPacket(
 				reliableHeader,
 				std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
 			);
@@ -96,8 +96,8 @@ namespace tests::net::reliableUdpPacketBuilderTest
 			);
 		}
 
-		const std::optional<common::packet::ReliableUdpPacketView> packetView =
-			common::packet::ParseReliableUdpPacket(
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
 				reliablePacket->data(),
 				static_cast<int>(reliablePacket->size())
 			);
@@ -114,7 +114,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		tests::Expect(result, packetView->reliableHeader.ackBitfield == reliableHeader.ackBitfield, "ReliableUdpPacketBuilder: ack bitfield");
 
 		const std::optional<common::packet::PacketBuffer> rebuiltGamePacket =
-			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+			common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
 
 		tests::Expect(result, rebuiltGamePacket.has_value(), "ReliableUdpPacketBuilder: rebuild game packet");
 
@@ -142,22 +142,22 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		common::net::ReliableUdpPacketHeader reliableHeader{};
 
 		const std::optional<common::packet::PacketBuffer> emptyPacket =
-			common::packet::BuildReliableUdpPacket(reliableHeader, std::span<const char>{});
+			common::net::BuildReliableUdpPacket(reliableHeader, std::span<const char>{});
 
 		tests::Expect(result, !emptyPacket.has_value(), "ReliableUdpPacketBuilder: reject empty game packet");
 	}
 
 	void RunRejectInvalidParseBufferTest(tests::DebugTestResult& result)
 	{
-		const std::optional<common::packet::ReliableUdpPacketView> nullPacket =
-			common::packet::ParseReliableUdpPacket(nullptr, 0);
+		const std::optional<common::net::ReliableUdpPacketView> nullPacket =
+			common::net::ParseReliableUdpPacket(nullptr, 0);
 
 		tests::Expect(result, !nullPacket.has_value(), "ReliableUdpPacketBuilder: reject null packet");
 
-		char headerOnlyPacket[common::packet::reliableUdpPayloadOffset]{};
+		char headerOnlyPacket[common::net::reliableUdpPayloadOffset]{};
 
-		const std::optional<common::packet::ReliableUdpPacketView> headerOnlyPacketView =
-			common::packet::ParseReliableUdpPacket(
+		const std::optional<common::net::ReliableUdpPacketView> headerOnlyPacketView =
+			common::net::ParseReliableUdpPacket(
 				headerOnlyPacket,
 				static_cast<int>(sizeof(headerOnlyPacket))
 			);
@@ -172,7 +172,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		reliableHeader.ackBitfield = 0b101;
 
 		const std::optional<common::packet::PacketBuffer> ackPacket =
-			common::packet::BuildReliableUdpAckPacket(reliableHeader);
+			common::net::BuildReliableUdpAckPacket(reliableHeader);
 
 		tests::Expect(result, ackPacket.has_value(), "ReliableUdpPacketBuilder: build ack-only packet");
 
@@ -181,8 +181,8 @@ namespace tests::net::reliableUdpPacketBuilderTest
 			return;
 		}
 
-		const std::optional<common::packet::ReliableUdpPacketView> packetView =
-			common::packet::ParseReliableUdpPacket(
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
 				ackPacket->data(),
 				static_cast<int>(ackPacket->size())
 			);
@@ -211,7 +211,7 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		tests::Expect(result, packetView->reliableHeader.ackBitfield == reliableHeader.ackBitfield, "ReliableUdpPacketBuilder: ack bitfield");
 
 		const std::optional<common::packet::PacketBuffer> gamePacketBuffer =
-			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+			common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
 
 		tests::Expect(
 			result,

@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <Common/Net/UdpFaultSimulator.h>
+#include <Common/Net/Fault/UdpFaultSimulator.h>
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Tests/DebugTestResult.h>

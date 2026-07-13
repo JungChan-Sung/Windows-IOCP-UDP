@@ -17,10 +17,10 @@
 #include <variant>
 
 #include <Common/Log/ILogger.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
 
 #include <Server/Config/ServerConfigValidator.h>
@@ -424,7 +424,7 @@ namespace server::net
 		using DispatchResult = UdpPacketDispatcher::DispatchResult;
 		using DispatchStatus = UdpPacketDispatcher::DispatchStatus;
 
-		const std::optional<common::packet::ReliableUdpPacketView> packetView = common::packet::ParseReliableUdpPacket(packetData, packetSize);
+		const std::optional<common::net::ReliableUdpPacketView> packetView = common::net::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
 		{
 			serverMetricsCollector_.IncrementInvalidReliablePacketCount();
@@ -499,7 +499,7 @@ namespace server::net
 		}
 
 		const std::optional<common::packet::PacketBuffer> gamePacketBuffer =
-			common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+			common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
 		if (!gamePacketBuffer.has_value())
 		{
 			return DispatchResult{ DispatchStatus::InvalidPacketPayload, packetView->packetHeader.type, packetSize };
@@ -545,7 +545,7 @@ namespace server::net
 		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
 
 		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
-			common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+			common::net::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
 
 		if (!reliablePacketBuffer.has_value())
 		{
@@ -568,7 +568,7 @@ namespace server::net
 	{
 		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingAckHeader();
 
-		return common::packet::BuildReliableUdpAckPacket(reliableHeader);
+		return common::net::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
 	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(PeerState& peerState, RoomId roomId, float spawnX, float spawnY)

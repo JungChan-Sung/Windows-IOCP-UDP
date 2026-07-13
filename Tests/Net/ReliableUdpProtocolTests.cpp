@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <limits>
 
-#include <Common/Net/ReliableUdpProtocol.h>
+#include <Common/Net/Reliable/ReliableUdpProtocol.h>
 
 #include <Tests/DebugTestResult.h>
 

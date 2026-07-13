@@ -3,7 +3,7 @@
 #include <chrono>
 #include <vector>
 
-#include <Common/Net/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Tests/DebugTestResult.h>

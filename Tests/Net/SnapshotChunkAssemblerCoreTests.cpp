@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-#include <Common/Net/SnapshotChunkAssemblerCore.h>
+#include <Common/Net/Snapshot/SnapshotChunkAssemblerCore.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace

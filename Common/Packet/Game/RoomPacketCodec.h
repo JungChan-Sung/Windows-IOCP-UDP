@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include <Common/Packet/Game/RoomPacket.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/Serialization/PacketCodec.h>

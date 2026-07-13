@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include <Common/Net/ReliableUdpProtocol.h>
+#include <Common/Net/Reliable/ReliableUdpProtocol.h>
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Time/TimeTypes.h>
 

@@ -2,38 +2,34 @@
 
 #include <optional>
 
-#include <Common/Net/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Packet/PacketSerialization.h>
 
-namespace common::packet
+namespace common::net
 {
-	inline void WriteReliableUdpPacketHeader(PacketWriter& writer, const net::ReliableUdpPacketHeader& reliableHeader)
+	inline void WriteReliableUdpPacketHeader(packet::PacketWriter& writer, const net::ReliableUdpPacketHeader& reliableHeader)
 	{
 		writer.WriteUInt32(reliableHeader.sequence);
 		writer.WriteUInt32(reliableHeader.ackSequence);
 		writer.WriteUInt32(reliableHeader.ackBitfield);
 	}
 
-	[[nodiscard]] inline bool ReadReliableUdpPacketHeader(PacketReader& reader, net::ReliableUdpPacketHeader& reliableHeader) noexcept
+	[[nodiscard]] inline bool ReadReliableUdpPacketHeader(packet::PacketReader& reader, ReliableUdpPacketHeader& reliableHeader) noexcept
 	{
 		return reader.ReadUInt32(reliableHeader.sequence)
 			&& reader.ReadUInt32(reliableHeader.ackSequence)
 			&& reader.ReadUInt32(reliableHeader.ackBitfield);
 	}
 
-	[[nodiscard]] inline std::optional<net::ReliableUdpPacketHeader> DeserializeReliableUdpPacketHeader(
-		const char* packetData,
-		int packetSize
-	)
+	[[nodiscard]] inline std::optional<ReliableUdpPacketHeader> DeserializeReliableUdpPacketHeader(const char* packetData, int packetSize)
 	{
-		if (packetData == nullptr || packetSize < static_cast<int>(net::reliableUdpPacketHeaderWireSize))
+		if (packetData == nullptr || packetSize < static_cast<int>(reliableUdpPacketHeaderWireSize))
 		{
 			return std::nullopt;
 		}
 
-		PacketReader reader(packetData, packetSize);
-		net::ReliableUdpPacketHeader reliableHeader{};
-
+		packet::PacketReader reader(packetData, packetSize);
+		ReliableUdpPacketHeader reliableHeader{};
 		if (!ReadReliableUdpPacketHeader(reader, reliableHeader))
 		{
 			return std::nullopt;

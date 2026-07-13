@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include <Common/Net/Endpoint.h>
-#include <Common/Net/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Time/TimeTypes.h>
 

@@ -6,7 +6,7 @@
 #include <span>
 
 #include <Common/Game/GameTypes.h>
-#include <Common/Net/UdpFaultSimulator.h>
+#include <Common/Net/Fault/UdpFaultSimulator.h>
 
 #include <Server/Net/SnapshotBroadcastTask.h>
 

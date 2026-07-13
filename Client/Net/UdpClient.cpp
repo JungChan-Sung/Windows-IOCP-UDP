@@ -7,13 +7,13 @@
 #include <type_traits>
 #include <variant>
 
-#include <Common/Net/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogMessageBuilder.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/PacketReliability.h>
-#include <Common/Packet/ReliableUdpPacketBuilder.h>
 #include <Common/String/StringFormat.h>
 
 #include <Client/Game/ClientWorld.h>
@@ -378,7 +378,7 @@ namespace client::net
 			const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
 			const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
 
-			reliablePacketBuffer = common::packet::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+			reliablePacketBuffer = common::net::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
 			if (!reliablePacketBuffer.has_value())
 			{
 				return false;
@@ -404,7 +404,7 @@ namespace client::net
 			reliableHeader = reliableSession_.BuildOutgoingAckHeader();
 		}
 
-		const std::optional<common::packet::PacketBuffer> ackPacketBuffer = common::packet::BuildReliableUdpAckPacket(reliableHeader);
+		const std::optional<common::packet::PacketBuffer> ackPacketBuffer = common::net::BuildReliableUdpAckPacket(reliableHeader);
 		if (!ackPacketBuffer.has_value())
 		{
 			return false;
@@ -482,7 +482,7 @@ namespace client::net
 
 	void UdpClient::HandleReliablePacket(const char* packetData, int packetSize)
 	{
-		const std::optional<common::packet::ReliableUdpPacketView> packetView = common::packet::ParseReliableUdpPacket(packetData, packetSize);
+		const std::optional<common::net::ReliableUdpPacketView> packetView = common::net::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
 		{
 			return;
@@ -511,7 +511,7 @@ namespace client::net
 			return;
 		}
 
-		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::packet::BuildGamePacketFromReliableUdpPacketView(*packetView);
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
 		if (!gamePacketBuffer.has_value())
 		{
 			return;

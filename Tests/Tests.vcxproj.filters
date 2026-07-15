@@ -235,7 +235,7 @@
       <Filter>소스 파일\Log</Filter>
     </ClCompile>
     <ClCompile Include="Persistence\AccountRepositoryIntegrationTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Persistence</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -360,7 +360,7 @@
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
     <ClInclude Include="Persistence\AccountRepositoryIntegrationTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Persistence</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

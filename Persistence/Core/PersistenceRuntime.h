@@ -1,6 +1,7 @@
 #pragma once
 
 #include <expected>
+#include <mutex>
 #include <string_view>
 
 #include <Persistence/Account/AccountRepository.h>
@@ -30,6 +31,9 @@ namespace persistence
 	private:
 		odbc::OdbcEnvironment environment_;
 		odbc::OdbcConnection connection_;
+
+		mutable std::mutex databaseMutex_;
+
 		bool enabled_ = false;
 
 	public:
@@ -42,6 +46,9 @@ namespace persistence
 		PersistenceRuntime(PersistenceRuntime&&) = delete;
 		PersistenceRuntime& operator=(PersistenceRuntime&&) = delete;
 
+	private:
+		[[nodiscard]] static core::DatabaseError MakeNotStartedError();
+
 	public:
 		[[nodiscard]] StartResult Start(const PersistenceRuntimeStartConfig& startConfig);
 		void Stop() noexcept;
@@ -50,13 +57,15 @@ namespace persistence
 		[[nodiscard]] FindAccountResult FindAccountByLoginName(std::string_view loginName);
 		[[nodiscard]] ExistsAccountResult ExistsByLoginName(std::string_view loginName);
 
-	public:
-		[[nodiscard]] bool IsEnabled() const noexcept
-		{
-			return enabled_;
-		}
+	private:
+		void StopUnlocked() noexcept;
 
-		[[nodiscard]] bool IsStarted() const noexcept
+	public:
+		[[nodiscard]] bool IsEnabled() const;
+		[[nodiscard]] bool IsStarted() const;
+
+	private:
+		[[nodiscard]] bool IsStartedUnlocked() const noexcept
 		{
 			return connection_.IsOpen();
 		}

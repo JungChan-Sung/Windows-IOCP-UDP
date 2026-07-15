@@ -3,7 +3,8 @@
 #include <optional>
 
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
-#include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/Serialization/PacketReader.h>
+#include <Common/Packet/Serialization/PacketWriter.h>
 
 namespace common::net
 {

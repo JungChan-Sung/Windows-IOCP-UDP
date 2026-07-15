@@ -61,6 +61,7 @@
     <ClInclude Include="Packet\Game\EffectPacketCodec.h" />
     <ClInclude Include="Packet\Game\GamePacket.h" />
     <ClInclude Include="Packet\Game\GamePacketCodec.h" />
+    <ClInclude Include="Packet\Game\GamePacketValidation.h" />
     <ClInclude Include="Packet\Game\RoomPacket.h" />
     <ClInclude Include="Packet\Game\RoomPacketCodec.h" />
     <ClInclude Include="Packet\Game\SessionPacket.h" />
@@ -77,6 +78,7 @@
     <ClInclude Include="Packet\Serialization\PacketCodec.h" />
     <ClInclude Include="Packet\Serialization\PacketReader.h" />
     <ClInclude Include="Packet\Serialization\PacketSerializationCore.h" />
+    <ClInclude Include="Packet\Serialization\PacketWireValidation.h" />
     <ClInclude Include="Packet\Serialization\PacketWriter.h" />
     <ClInclude Include="String\StringFormat.h" />
     <ClInclude Include="Threading\ThreadPool.h" />

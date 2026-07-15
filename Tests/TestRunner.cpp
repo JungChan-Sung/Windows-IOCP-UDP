@@ -21,6 +21,7 @@
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
 #include "Persistence/AccountRepositoryIntegrationTests.h"
+#include "Persistence/PersistenceRuntimeTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
 #include "Log/LogFormatterTests.h"
@@ -77,6 +78,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
+		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';

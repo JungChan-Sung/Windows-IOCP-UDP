@@ -237,6 +237,9 @@
     <ClCompile Include="Persistence\AccountRepositoryIntegrationTests.cpp">
       <Filter>소스 파일\Persistence</Filter>
     </ClCompile>
+    <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp">
+      <Filter>소스 파일\Persistence</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -360,6 +363,9 @@
       <Filter>헤더 파일\Log</Filter>
     </ClInclude>
     <ClInclude Include="Persistence\AccountRepositoryIntegrationTests.h">
+      <Filter>헤더 파일\Persistence</Filter>
+    </ClInclude>
+    <ClInclude Include="Persistence\PersistenceRuntimeTests.h">
       <Filter>헤더 파일\Persistence</Filter>
     </ClInclude>
   </ItemGroup>

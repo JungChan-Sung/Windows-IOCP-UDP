@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-#include <Common/Packet/PacketConstants.h>
+#include <Common/Packet/Game/GamePacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
 
 namespace common::packet

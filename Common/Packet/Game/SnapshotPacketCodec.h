@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 
+#include <Common/Packet/Game/GamePacketConstants.h>
 #include <Common/Packet/Game/SnapshotPacket.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/Serialization/PacketCodec.h>

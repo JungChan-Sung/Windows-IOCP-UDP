@@ -258,6 +258,9 @@
     <ClInclude Include="Packet\Game\GamePacketValidation.h">
       <Filter>헤더 파일\Packet\Game</Filter>
     </ClInclude>
+    <ClInclude Include="Packet\Game\GamePacketConstants.h">
+      <Filter>헤더 파일\Packet\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

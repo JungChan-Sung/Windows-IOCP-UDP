@@ -35,8 +35,7 @@ namespace client::net
 
 	void ClientPacketDispatcher::Dispatch(const char* packetData, int packetSize) const
 	{
-		const std::optional<common::packet::PacketHeader> packetHeader
-			= common::packet::DeserializePacketHeader(packetData, packetSize);
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
 
 		if (!packetHeader.has_value())
 		{

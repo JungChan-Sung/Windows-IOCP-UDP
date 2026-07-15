@@ -61,6 +61,7 @@
     <ClInclude Include="Packet\Game\EffectPacketCodec.h" />
     <ClInclude Include="Packet\Game\GamePacket.h" />
     <ClInclude Include="Packet\Game\GamePacketCodec.h" />
+    <ClInclude Include="Packet\Game\GamePacketConstants.h" />
     <ClInclude Include="Packet\Game\GamePacketValidation.h" />
     <ClInclude Include="Packet\Game\RoomPacket.h" />
     <ClInclude Include="Packet\Game\RoomPacketCodec.h" />

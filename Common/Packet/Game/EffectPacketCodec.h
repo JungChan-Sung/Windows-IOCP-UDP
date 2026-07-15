@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include <Common/Packet/Game/EffectPacket.h>
+#include <Common/Packet/Game/GamePacketConstants.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/Serialization/PacketCodec.h>
 #include <Common/Packet/Serialization/PacketReader.h>

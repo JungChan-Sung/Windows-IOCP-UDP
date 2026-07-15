@@ -27,6 +27,8 @@ namespace persistence
 
 		if (startConfig.connectionString.empty())
 		{
+			StopUnlocked();
+
 			return std::unexpected(core::DatabaseError{
 				.failure = core::DatabaseFailure::ConnectionOpenFailed,
 				.message = "Database connection string is empty.",

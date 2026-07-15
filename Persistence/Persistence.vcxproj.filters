@@ -60,11 +60,11 @@
     <ClInclude Include="Odbc\OdbcStatement.h">
       <Filter>헤더 파일\Odbc</Filter>
     </ClInclude>
-    <ClInclude Include="Schema\DatabaseSchema.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Account\AccountRepository.h">
       <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
+    <ClInclude Include="Schema\DatabaseSchema.h">
+      <Filter>헤더 파일\Schema</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -86,11 +86,11 @@
     <ClCompile Include="Odbc\OdbcConnection.cpp">
       <Filter>소스 파일\Odbc</Filter>
     </ClCompile>
-    <ClCompile Include="Schema\DatabaseSchema.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Account\AccountRepository.cpp">
       <Filter>소스 파일\Account</Filter>
+    </ClCompile>
+    <ClCompile Include="Schema\DatabaseSchema.cpp">
+      <Filter>소스 파일\Schema</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

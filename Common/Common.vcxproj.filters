@@ -64,6 +64,9 @@
     <Filter Include="소스 파일\Net\Fault">
       <UniqueIdentifier>{a8c0ed73-1bc1-4acb-a49e-a09e8a2f5f98}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\String">
+      <UniqueIdentifier>{13bf52cd-c946-497e-a008-56a70f419f78}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -261,6 +264,9 @@
     <ClInclude Include="Packet\Game\GamePacketConstants.h">
       <Filter>헤더 파일\Packet\Game</Filter>
     </ClInclude>
+    <ClInclude Include="String\UtfConversion.h">
+      <Filter>헤더 파일\String</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -295,6 +301,9 @@
     </ClCompile>
     <ClCompile Include="Net\Fault\UdpFaultSimulator.cpp">
       <Filter>소스 파일\Net\Fault</Filter>
+    </ClCompile>
+    <ClCompile Include="String\UtfConversion.cpp">
+      <Filter>소스 파일\String</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

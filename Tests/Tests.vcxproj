@@ -107,6 +107,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -182,6 +183,7 @@
     <ClCompile Include="Server\ServerMetricsCollectorTests.cpp" />
     <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp" />
     <ClCompile Include="Server\UdpPacketDispatcherTests.cpp" />
+    <ClCompile Include="String\UtfConversionTests.cpp" />
     <ClCompile Include="TestRunner.cpp" />
     <ClCompile Include="Tests.cpp" />
     <ClCompile Include="Threading\ThreadPoolTests.cpp" />
@@ -234,6 +236,7 @@
     <ClInclude Include="Server\ServerMetricsCollectorTests.h" />
     <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h" />
     <ClInclude Include="Server\UdpPacketDispatcherTests.h" />
+    <ClInclude Include="String\UtfConversionTests.h" />
     <ClInclude Include="TestHelpers.h" />
     <ClInclude Include="TestRunner.h" />
     <ClInclude Include="Threading\ThreadPoolTests.h" />

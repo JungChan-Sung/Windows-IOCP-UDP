@@ -37,6 +37,7 @@
 #include "Server/SnapshotBroadcastBuilderTests.h"
 #include "Server/IntegrationSmokeTests.h"
 #include "Server/InvalidPacketLogLimiterTests.h"
+#include "String/UtfConversionTests.h"
 #include "Game/WorldCollisionTests.h"
 
 namespace tests
@@ -45,6 +46,7 @@ namespace tests
 	{
 		tests::DebugTestResult totalResult{};
 
+		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());

@@ -175,6 +175,11 @@
     <ClCompile Include="Odbc\OdbcStatement.cpp" />
     <ClCompile Include="Schema\DatabaseSchema.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{efd8fd17-79e1-488b-8a94-01c6f3a33e40}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

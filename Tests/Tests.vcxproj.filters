@@ -73,6 +73,12 @@
     <Filter Include="헤더 파일\Persistence">
       <UniqueIdentifier>{8d442364-e3af-43c4-a1a7-bccf4a858ccf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\String">
+      <UniqueIdentifier>{ab1e44d7-e381-4633-a1fa-b2a4f36cbccc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\String">
+      <UniqueIdentifier>{09140ecc-b4c5-43bc-abb1-f38841059807}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tests.cpp">
@@ -240,6 +246,9 @@
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp">
       <Filter>소스 파일\Persistence</Filter>
     </ClCompile>
+    <ClCompile Include="String\UtfConversionTests.cpp">
+      <Filter>소스 파일\String</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -367,6 +376,9 @@
     </ClInclude>
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h">
       <Filter>헤더 파일\Persistence</Filter>
+    </ClInclude>
+    <ClInclude Include="String\UtfConversionTests.h">
+      <Filter>헤더 파일\String</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

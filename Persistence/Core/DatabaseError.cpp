@@ -41,6 +41,9 @@ namespace persistence::core
 		case DatabaseFailure::HealthCheckFailed:
 			return "HealthCheckFailed";
 
+		case DatabaseFailure::TextConversionFailed:
+			return "TextConversionFailed";
+
 		default:
 			return "Unknown";
 		}

@@ -18,6 +18,8 @@ namespace persistence::core
 		StatementFetchFailed,
 		StatementDataReadFailed,
 		HealthCheckFailed,
+
+		TextConversionFailed,
 	};
 
 	struct DatabaseError

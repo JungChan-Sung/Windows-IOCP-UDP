@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <string>
 
+#include <Common/String/UtfConversion.h>
+
 #include <Persistence/Odbc/OdbcDiagnostic.h>
 #include <Persistence/Odbc/OdbcStatement.h>
 
@@ -19,8 +21,19 @@ namespace persistence::odbc
 	{
 		Close();
 
-		SQLHDBC connectionHandle = SQL_NULL_HDBC;
+		common::string::Utf16ConversionResult connectionStringResult = common::string::ConvertUtf8ToUtf16(openConfig.connectionString);
+		if (!connectionStringResult.has_value())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::TextConversionFailed,
+					.message = "Failed to convert ODBC connection string from UTF-8 to UTF-16. NativeError="
+						+ std::to_string(connectionStringResult.error().nativeError),
+				});
+		}
 
+		std::wstring& connectionString = *connectionStringResult;
+
+		SQLHDBC connectionHandle = SQL_NULL_HDBC;
 		const SQLRETURN allocationResult = ::SQLAllocHandle(
 			SQL_HANDLE_DBC,
 			environment.GetHandle(),
@@ -36,19 +49,18 @@ namespace persistence::odbc
 
 		if (openConfig.connectionTimeoutSeconds > 0)
 		{
-			const SQLRETURN timeoutResult = ::SQLSetConnectAttrA(
+			const SQLRETURN timeoutResult = ::SQLSetConnectAttrW(
 				connectionHandle,
 				SQL_LOGIN_TIMEOUT,
 				reinterpret_cast<SQLPOINTER>(static_cast<std::intptr_t>(openConfig.connectionTimeoutSeconds)),
 				0
 			);
-
 			if (!SQL_SUCCEEDED(timeoutResult))
 			{
 				const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
 					.failure = core::DatabaseFailure::ConnectionOpenFailed,
 					.handleType = SQL_HANDLE_DBC,
-					.handle = connectionHandle,
+					.handle = connectionHandle_,
 					.message = "Failed to set ODBC login timeout.",
 					});
 
@@ -57,12 +69,10 @@ namespace persistence::odbc
 			}
 		}
 
-		std::string connectionString(openConfig.connectionString);
-
-		const SQLRETURN connectResult = ::SQLDriverConnectA(
+		const SQLRETURN connectResult = ::SQLDriverConnectW(
 			connectionHandle,
 			nullptr,
-			reinterpret_cast<SQLCHAR*>(connectionString.data()),
+			reinterpret_cast<SQLWCHAR*>(connectionString.data()),
 			SQL_NTS,
 			nullptr,
 			0,
@@ -71,11 +81,12 @@ namespace persistence::odbc
 		);
 		if (!SQL_SUCCEEDED(connectResult))
 		{
-			const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::ConnectionOpenFailed,
-				.handleType = SQL_HANDLE_DBC,
-				.handle = connectionHandle,
-				.message = "Failed to open ODBC connection.",
+			const core::DatabaseError error = MakeOdbcError(
+				OdbcDiagnosticContext{
+					.failure = core::DatabaseFailure::ConnectionOpenFailed,
+					.handleType = SQL_HANDLE_DBC,
+					.handle = connectionHandle,
+					.message = "Failed to open ODBC connection.",
 				});
 
 			::SQLFreeHandle(SQL_HANDLE_DBC, connectionHandle);
@@ -83,6 +94,7 @@ namespace persistence::odbc
 		}
 
 		connectionHandle_ = connectionHandle;
+
 		return {};
 	}
 

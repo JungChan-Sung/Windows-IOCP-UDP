@@ -27,8 +27,7 @@ namespace common::string
 		{
 			return std::unexpected(UtfConversionError{
 					.failure = UtfConversionFailure::InputTooLarge,
-				}
-				);
+				});
 		}
 
 		const int sourceLength = static_cast<int>(text.size());
@@ -66,8 +65,7 @@ namespace common::string
 		{
 			return std::unexpected(UtfConversionError{
 					.failure = UtfConversionFailure::InputTooLarge,
-				}
-				);
+				});
 		}
 
 		const int sourceLength = static_cast<int>(text.size());

@@ -46,7 +46,6 @@ namespace tests
 	{
 		tests::DebugTestResult totalResult{};
 
-		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
@@ -80,6 +79,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
+		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 

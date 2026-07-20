@@ -12,7 +12,7 @@
 
 namespace
 {
-	static std::string ConvertDiagnosticText(std::wstring_view text)
+	std::string ConvertDiagnosticText(std::wstring_view text)
 	{
 		const common::string::Utf8ConversionResult conversionResult = common::string::ConvertUtf16ToUtf8(text);
 		if (conversionResult.has_value())

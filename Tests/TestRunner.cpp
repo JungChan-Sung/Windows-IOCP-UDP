@@ -82,9 +82,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
 		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
-		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
-		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';

@@ -11,7 +11,7 @@
 
 namespace
 {
-	static persistence::core::DatabaseError MakeTextConversionError(std::string_view message, std::uint32_t nativeError)
+	persistence::core::DatabaseError MakeTextConversionError(std::string_view message, std::uint32_t nativeError)
 	{
 		std::string errorMessage(message);
 		errorMessage += " NativeError=";

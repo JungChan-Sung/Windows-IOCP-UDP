@@ -21,6 +21,7 @@
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
 #include "Persistence/AccountRepositoryIntegrationTests.h"
+#include "Persistence/AccountValidationTests.h"
 #include "Persistence/OdbcStatementTests.h"
 #include "Persistence/PersistenceRuntimeTests.h"
 #include "Persistence/PersistenceRuntimeIntegrationTests.h"
@@ -86,6 +87,7 @@ namespace tests
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
+		MergeAndPrint(totalResult, "AccountValidation", persistence::RunAccountValidationTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';
 

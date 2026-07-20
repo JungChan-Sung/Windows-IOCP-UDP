@@ -66,6 +66,12 @@
     <ClInclude Include="Schema\DatabaseSchema.h">
       <Filter>헤더 파일\Schema</Filter>
     </ClInclude>
+    <ClInclude Include="Account\AccountConstraints.h">
+      <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountValidation.h">
+      <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -91,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="Schema\DatabaseSchema.cpp">
       <Filter>소스 파일\Schema</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\AccountValidation.cpp">
+      <Filter>소스 파일\Account</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

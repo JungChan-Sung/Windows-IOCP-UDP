@@ -255,6 +255,9 @@
     <ClCompile Include="Persistence\OdbcStatementTests.cpp">
       <Filter>소스 파일\Persistence</Filter>
     </ClCompile>
+    <ClCompile Include="Persistence\AccountValidationTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -391,6 +394,9 @@
     </ClInclude>
     <ClInclude Include="Persistence\OdbcStatementTests.h">
       <Filter>헤더 파일\Persistence</Filter>
+    </ClInclude>
+    <ClInclude Include="Persistence\AccountValidationTests.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

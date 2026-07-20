@@ -2,8 +2,27 @@
 
 #include <array>
 #include <string>
+#include <string_view>
+#include <utility>
+
+#include <Common/String/UtfConversion.h>
 
 #include <Persistence/Odbc/OdbcDiagnostic.h>
+
+namespace
+{
+	static persistence::core::DatabaseError MakeTextConversionError(std::string_view message, std::uint32_t nativeError)
+	{
+		std::string errorMessage(message);
+		errorMessage += " NativeError=";
+		errorMessage += std::to_string(nativeError);
+
+		return persistence::core::DatabaseError{
+			.failure = persistence::core::DatabaseFailure::TextConversionFailed,
+			.message = std::move(errorMessage),
+		};
+	}
+}
 
 namespace persistence::odbc
 {
@@ -15,6 +34,17 @@ namespace persistence::odbc
 	OdbcStatement::ExecuteResult OdbcStatement::ExecuteDirect(const OdbcConnection& connection, std::string_view query)
 	{
 		Close();
+
+		common::string::Utf16ConversionResult queryTextResult = common::string::ConvertUtf8ToUtf16(query);
+		if (!queryTextResult.has_value())
+		{
+			return std::unexpected(MakeTextConversionError(
+				"Failed to convert direct ODBC query from UTF-8 to UTF-16.",
+				queryTextResult.error().nativeError
+			));
+		}
+
+		std::wstring& queryText = *queryTextResult;
 
 		SQLHSTMT statementHandle = SQL_NULL_HSTMT;
 
@@ -33,14 +63,11 @@ namespace persistence::odbc
 				}));
 		}
 
-		std::string queryText(query);
-
-		const SQLRETURN executeResult = ::SQLExecDirectA(
+		const SQLRETURN executeResult = ::SQLExecDirectW(
 			statementHandle,
-			reinterpret_cast<SQLCHAR*>(queryText.data()),
+			reinterpret_cast<SQLWCHAR*>(queryText.data()),
 			SQL_NTS
 		);
-
 		if (executeResult == SQL_NO_DATA)
 		{
 			statementHandle_ = statementHandle;
@@ -61,12 +88,24 @@ namespace persistence::odbc
 		}
 
 		statementHandle_ = statementHandle;
+
 		return {};
 	}
 
 	OdbcStatement::ExecuteResult OdbcStatement::Prepare(const OdbcConnection& connection, std::string_view query)
 	{
 		Close();
+
+		common::string::Utf16ConversionResult queryTextResult = common::string::ConvertUtf8ToUtf16(query);
+		if (!queryTextResult.has_value())
+		{
+			return std::unexpected(MakeTextConversionError(
+				"Failed to convert prepared ODBC query from UTF-8 to UTF-16.",
+				queryTextResult.error().nativeError
+			));
+		}
+
+		std::wstring& queryText = *queryTextResult;
 
 		SQLHSTMT statementHandle = SQL_NULL_HSTMT;
 
@@ -85,11 +124,9 @@ namespace persistence::odbc
 				}));
 		}
 
-		std::string queryText(query);
-
-		const SQLRETURN prepareResult = ::SQLPrepareA(
+		const SQLRETURN prepareResult = ::SQLPrepareW(
 			statementHandle,
-			reinterpret_cast<SQLCHAR*>(queryText.data()),
+			reinterpret_cast<SQLWCHAR*>(queryText.data()),
 			SQL_NTS
 		);
 		if (!SQL_SUCCEEDED(prepareResult))
@@ -106,6 +143,7 @@ namespace persistence::odbc
 		}
 
 		statementHandle_ = statementHandle;
+
 		return {};
 	}
 
@@ -119,24 +157,33 @@ namespace persistence::odbc
 				});
 		}
 
+		common::string::Utf16ConversionResult valueResult = common::string::ConvertUtf8ToUtf16(value);
+		if (!valueResult.has_value())
+		{
+			return std::unexpected(MakeTextConversionError(
+				"Failed to convert ODBC string parameter from UTF-8 to UTF-16.",
+				valueResult.error().nativeError
+			));
+		}
+
 		boundStringParameters_.push_back(BoundStringParameter{
-			.value = std::string(value),
+			.value = std::move(*valueResult),
 			});
 
 		BoundStringParameter& parameter = boundStringParameters_.back();
-
 		const SQLULEN columnSize = static_cast<SQLULEN>(parameter.value.empty() ? 1 : parameter.value.size());
+		const SQLLEN bufferLength = static_cast<SQLLEN>((parameter.value.size() + 1) * sizeof(wchar_t));
 
 		const SQLRETURN bindResult = ::SQLBindParameter(
 			statementHandle_,
 			parameterNumber,
 			SQL_PARAM_INPUT,
 			SQL_C_CHAR,
-			SQL_VARCHAR,
+			SQL_WVARCHAR,
 			columnSize,
 			0,
 			static_cast<SQLPOINTER>(parameter.value.data()),
-			static_cast<SQLLEN>(parameter.value.size() + 1),
+			bufferLength,
 			&parameter.indicator
 		);
 		if (!SQL_SUCCEEDED(bindResult))
@@ -298,15 +345,15 @@ namespace persistence::odbc
 
 	OdbcStatement::ReadStringResult OdbcStatement::ReadString(SQLUSMALLINT columnNumber)
 	{
-		std::array<char, 1024> buffer{};
+		std::array<wchar_t, 1024> buffer{};
 		SQLLEN indicator = 0;
 
 		const SQLRETURN getDataResult = ::SQLGetData(
 			statementHandle_,
 			columnNumber,
-			SQL_C_CHAR,
+			SQL_C_WCHAR,
 			static_cast<SQLPOINTER>(buffer.data()),
-			static_cast<SQLLEN>(buffer.size()),
+			static_cast<SQLLEN>(sizeof(buffer)),
 			&indicator
 		);
 		if (!SQL_SUCCEEDED(getDataResult) || indicator == SQL_NULL_DATA)
@@ -319,7 +366,16 @@ namespace persistence::odbc
 				}));
 		}
 
-		return std::string(buffer.data());
+		const common::string::Utf8ConversionResult valueResult = common::string::ConvertUtf16ToUtf8(std::wstring_view{ buffer.data(), });
+		if (!valueResult.has_value())
+		{
+			return std::unexpected( MakeTextConversionError(
+				"Failed to convert ODBC string column from UTF-16 to UTF-8.",
+				valueResult.error().nativeError
+			));
+		}
+
+		return *valueResult;
 	}
 
 	void OdbcStatement::Close() noexcept

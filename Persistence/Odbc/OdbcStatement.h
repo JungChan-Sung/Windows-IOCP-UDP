@@ -21,7 +21,7 @@ namespace persistence::odbc
 		struct BoundStringParameter
 		{
 		public:
-			std::string value;
+			std::wstring value;
 			SQLLEN indicator = SQL_NTS;
 		};
 

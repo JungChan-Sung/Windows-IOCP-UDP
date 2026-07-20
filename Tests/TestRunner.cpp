@@ -22,6 +22,7 @@
 #include "Packet/PacketReliabilityTests.h"
 #include "Persistence/AccountRepositoryIntegrationTests.h"
 #include "Persistence/PersistenceRuntimeTests.h"
+#include "Persistence/PersistenceRuntimeIntegrationTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
 #include "Log/LogFormatterTests.h"
@@ -81,6 +82,9 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
 		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
+		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
+		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
+		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';

@@ -249,6 +249,9 @@
     <ClCompile Include="String\UtfConversionTests.cpp">
       <Filter>소스 파일\String</Filter>
     </ClCompile>
+    <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp">
+      <Filter>소스 파일\Persistence</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -379,6 +382,9 @@
     </ClInclude>
     <ClInclude Include="String\UtfConversionTests.h">
       <Filter>헤더 파일\String</Filter>
+    </ClInclude>
+    <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h">
+      <Filter>헤더 파일\Persistence</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

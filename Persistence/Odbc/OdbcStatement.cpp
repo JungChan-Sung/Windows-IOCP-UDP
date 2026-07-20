@@ -35,6 +35,14 @@ namespace persistence::odbc
 	{
 		Close();
 
+		if (!connection.IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::ConnectionOpenFailed,
+					.message = "ODBC connection is not open.",
+				});
+		}
+
 		common::string::Utf16ConversionResult queryTextResult = common::string::ConvertUtf8ToUtf16(query);
 		if (!queryTextResult.has_value())
 		{
@@ -95,6 +103,14 @@ namespace persistence::odbc
 	OdbcStatement::ExecuteResult OdbcStatement::Prepare(const OdbcConnection& connection, std::string_view query)
 	{
 		Close();
+
+		if (!connection.IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::ConnectionOpenFailed,
+					.message = "ODBC connection is not open.",
+				});
+		}
 
 		common::string::Utf16ConversionResult queryTextResult = common::string::ConvertUtf8ToUtf16(query);
 		if (!queryTextResult.has_value())

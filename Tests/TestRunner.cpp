@@ -21,6 +21,7 @@
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
 #include "Persistence/AccountRepositoryIntegrationTests.h"
+#include "Persistence/OdbcStatementTests.h"
 #include "Persistence/PersistenceRuntimeTests.h"
 #include "Persistence/PersistenceRuntimeIntegrationTests.h"
 #include "Threading/ThreadPoolTests.h"
@@ -81,6 +82,7 @@ namespace tests
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
 		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
+		MergeAndPrint(totalResult, "OdbcStatement", persistence::RunOdbcStatementTests());
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());

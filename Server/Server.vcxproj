@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Account\AccountService.cpp" />
     <ClCompile Include="App\GameServerApp.cpp" />
     <ClCompile Include="Config\ServerConfigLoader.cpp" />
     <ClCompile Include="Config\ServerConfigValidator.cpp" />
@@ -165,6 +166,7 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Account\AccountService.h" />
     <ClInclude Include="App\GameServerApp.h" />
     <ClInclude Include="Config\ServerConfig.h" />
     <ClInclude Include="Config\ServerConfigLoader.h" />

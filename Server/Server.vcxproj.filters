@@ -43,6 +43,12 @@
     <Filter Include="소스 파일\Diagnostics">
       <UniqueIdentifier>{65b11475-7e95-40c1-863e-307844e1002f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Account">
+      <UniqueIdentifier>{975e68fb-c638-4072-ad97-990ed80dab10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Account">
+      <UniqueIdentifier>{97e201ab-5a65-4e38-903f-1f2e02ec4a69}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -104,6 +110,9 @@
     </ClCompile>
     <ClCompile Include="Net\UdpIocpTransportMetrics.cpp">
       <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\AccountService.cpp">
+      <Filter>소스 파일\Account</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -193,6 +202,9 @@
     </ClInclude>
     <ClInclude Include="Net\UdpIocpTransportMetrics.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\AccountService.h">
+      <Filter>헤더 파일\Account</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

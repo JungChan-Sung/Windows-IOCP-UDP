@@ -60,7 +60,7 @@ namespace persistence::odbc
 				const core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
 					.failure = core::DatabaseFailure::ConnectionOpenFailed,
 					.handleType = SQL_HANDLE_DBC,
-					.handle = connectionHandle_,
+					.handle = connectionHandle,
 					.message = "Failed to set ODBC login timeout.",
 					});
 

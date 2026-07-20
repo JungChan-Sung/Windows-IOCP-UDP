@@ -178,7 +178,7 @@ namespace persistence::odbc
 			statementHandle_,
 			parameterNumber,
 			SQL_PARAM_INPUT,
-			SQL_C_CHAR,
+			SQL_C_WCHAR,
 			SQL_WVARCHAR,
 			columnSize,
 			0,

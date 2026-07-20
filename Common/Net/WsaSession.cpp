@@ -24,7 +24,9 @@ namespace common::net
 		const int result = ::WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (result != 0)
 		{
-			return std::unexpected(InitializeError{ .errorCode = result });
+			return std::unexpected(InitializeError{ 
+				.errorCode = result 
+				});
 		}
 
 		isInitialized_ = true;

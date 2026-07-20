@@ -17,13 +17,13 @@ namespace server::account
 		);
 		if (!validationResult.has_value())
 		{
-			return std::unexpected(CreateAccountError{ validationResult.error(), });
+			return std::unexpected(CreateAccountError{ validationResult.error() });
 		}
 
 		persistence::PersistenceRuntime::CreateAccountResult createResult = persistenceRuntime_.CreateAccount(request);
 		if (!createResult.has_value())
 		{
-			return std::unexpected(CreateAccountError{ createResult.error(), });
+			return std::unexpected(CreateAccountError{ createResult.error() });
 		}
 
 		return std::move(*createResult);

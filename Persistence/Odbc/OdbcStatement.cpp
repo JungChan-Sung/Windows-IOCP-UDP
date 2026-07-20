@@ -345,31 +345,51 @@ namespace persistence::odbc
 
 	OdbcStatement::ReadStringResult OdbcStatement::ReadString(SQLUSMALLINT columnNumber)
 	{
-		std::array<wchar_t, 1024> buffer{};
-		SQLLEN indicator = 0;
+		constexpr std::size_t bufferCharacterCount = 256;
 
-		const SQLRETURN getDataResult = ::SQLGetData(
-			statementHandle_,
-			columnNumber,
-			SQL_C_WCHAR,
-			static_cast<SQLPOINTER>(buffer.data()),
-			static_cast<SQLLEN>(sizeof(buffer)),
-			&indicator
-		);
-		if (!SQL_SUCCEEDED(getDataResult) || indicator == SQL_NULL_DATA)
+		std::wstring value;
+
+		while (true)
 		{
-			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::StatementDataReadFailed,
-				.handleType = SQL_HANDLE_STMT,
-				.handle = statementHandle_,
-				.message = "Failed to read ODBC string column.",
-				}));
+			std::array<wchar_t, bufferCharacterCount> buffer{};
+			SQLLEN indicator = 0;
+
+			const SQLRETURN getDataResult = ::SQLGetData(
+				statementHandle_,
+				columnNumber,
+				SQL_C_WCHAR,
+				static_cast<SQLPOINTER>(buffer.data()),
+				static_cast<SQLLEN>(sizeof(buffer)),
+				&indicator
+			);
+			if (getDataResult == SQL_NO_DATA)
+			{
+				break;
+			}
+
+			if (!SQL_SUCCEEDED(getDataResult) || indicator == SQL_NULL_DATA)
+			{
+				return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+					.failure = core::DatabaseFailure::StatementDataReadFailed,
+					.handleType = SQL_HANDLE_STMT,
+					.handle = statementHandle_,
+					.message = "Failed to read ODBC string column.",
+					}));
+			}
+
+			const std::size_t chunkLength = std::char_traits<wchar_t>::length(buffer.data());
+			value.append(buffer.data(), chunkLength);
+
+			if (getDataResult == SQL_SUCCESS)
+			{
+				break;
+			}
 		}
 
-		const common::string::Utf8ConversionResult valueResult = common::string::ConvertUtf16ToUtf8(std::wstring_view{ buffer.data(), });
+		const common::string::Utf8ConversionResult valueResult = common::string::ConvertUtf16ToUtf8(value);
 		if (!valueResult.has_value())
 		{
-			return std::unexpected( MakeTextConversionError(
+			return std::unexpected(MakeTextConversionError(
 				"Failed to convert ODBC string column from UTF-16 to UTF-8.",
 				valueResult.error().nativeError
 			));

@@ -354,17 +354,6 @@ namespace tests::persistence
 			return result;
 		}
 
-		constexpr std::string_view loginName = "account_repository_integration_test";
-		constexpr std::string_view passwordHash = "integration_test_hash";
-		constexpr std::string_view nickname = "IntegrationTester";
-
-		const detail::DeleteAccountResult initialDeleteResult = detail::DeleteAccountByLoginName(connection, loginName);
-		if (!initialDeleteResult.has_value())
-		{
-			detail::AddDatabaseFailure(result, "Initial test account cleanup failed", initialDeleteResult.error());
-			return result;
-		}
-
 		::persistence::account::AccountRepository repository(connection);
 
 		detail::RunAccountRoundTripTest(

@@ -272,6 +272,14 @@ namespace persistence::odbc
 
 	OdbcStatement::FetchResult OdbcStatement::Fetch()
 	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::StatementFetchFailed,
+					.message = "ODBC statement is not open.",
+				});
+		}
+
 		const SQLRETURN fetchResult = ::SQLFetch(statementHandle_);
 		if (fetchResult == SQL_NO_DATA)
 		{
@@ -293,6 +301,14 @@ namespace persistence::odbc
 
 	OdbcStatement::ReadInt32Result OdbcStatement::ReadInt32(SQLUSMALLINT columnNumber)
 	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::StatementDataReadFailed,
+					.message = "ODBC statement is not open.",
+				});
+		}
+
 		SQLLEN indicator = 0;
 		SQLINTEGER value = 0;
 
@@ -319,6 +335,14 @@ namespace persistence::odbc
 
 	OdbcStatement::ReadInt64Result OdbcStatement::ReadInt64(SQLUSMALLINT columnNumber)
 	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::StatementDataReadFailed,
+					.message = "ODBC statement is not open.",
+				});
+		}
+
 		SQLLEN indicator = 0;
 		SQLBIGINT value = 0;
 
@@ -345,6 +369,14 @@ namespace persistence::odbc
 
 	OdbcStatement::ReadStringResult OdbcStatement::ReadString(SQLUSMALLINT columnNumber)
 	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+					.failure = core::DatabaseFailure::StatementDataReadFailed,
+					.message = "ODBC statement is not open.",
+				});
+		}
+
 		constexpr std::size_t bufferCharacterCount = 256;
 
 		std::wstring value;

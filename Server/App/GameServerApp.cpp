@@ -91,6 +91,8 @@ namespace server::app
 		if (!udpServerStartResult.has_value())
 		{
 			udpServer_.DetachLogger();
+			persistenceRuntime_.Stop();
+
 			return std::unexpected(RunError{ udpServerStartResult.error() });
 		}
 

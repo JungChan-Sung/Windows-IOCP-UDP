@@ -30,6 +30,7 @@
 #include "Log/LogFormatterTests.h"
 #include "Log/LogLevelTests.h"
 #include "Log/LogMessageBuilderTests.h"
+#include "Server/AccountServiceTests.h"
 #include "Server/AccountServiceIntegrationTests.h"
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
@@ -89,6 +90,7 @@ namespace tests
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountValidation", persistence::RunAccountValidationTests());
+		MergeAndPrint(totalResult, "AccountService", server::RunAccountServiceTests());
 		MergeAndPrint(totalResult, "AccountServiceIntegration", server::RunAccountServiceIntegrationTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';

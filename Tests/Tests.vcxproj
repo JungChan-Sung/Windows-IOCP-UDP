@@ -180,6 +180,7 @@
     <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp" />
     <ClCompile Include="Server\AccountServiceIntegrationTests.cpp" />
+    <ClCompile Include="Server\AccountServiceTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h" />
     <ClInclude Include="Server\AccountServiceIntegrationTests.h" />
+    <ClInclude Include="Server\AccountServiceTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
     <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />

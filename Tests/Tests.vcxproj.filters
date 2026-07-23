@@ -256,7 +256,13 @@
       <Filter>소스 파일\Persistence</Filter>
     </ClCompile>
     <ClCompile Include="Persistence\AccountValidationTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Persistence</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\AccountServiceIntegrationTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Account\AccountService.cpp">
+      <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -396,7 +402,10 @@
       <Filter>헤더 파일\Persistence</Filter>
     </ClInclude>
     <ClInclude Include="Persistence\AccountValidationTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Persistence</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\AccountServiceIntegrationTests.h">
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

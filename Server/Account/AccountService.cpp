@@ -31,7 +31,7 @@ namespace server::account
 		{
 			if (IsDuplicateLoginNameError(createResult.error()))
 			{
-				return std::unexpected(CreateAccountError{ CreateAccountFailure::DuplicateLoginName, });
+				return std::unexpected(CreateAccountError{ CreateAccountFailure::DuplicateLoginName });
 			}
 
 			return std::unexpected(CreateAccountError{ createResult.error() });

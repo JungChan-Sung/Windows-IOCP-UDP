@@ -71,8 +71,8 @@ namespace persistence::odbc
 			}
 
 			const std::size_t messageLength = (textLength > 0) ? std::min(static_cast<std::size_t>(textLength), messageText.size() - 1) : 0;
-			const std::string sqlStateText = ConvertDiagnosticText(std::wstring_view{ sqlState.data() });
-			const std::string message = ConvertDiagnosticText(std::wstring_view{ messageText.data(), messageLength });
+			std::string sqlStateText = ConvertDiagnosticText(std::wstring_view{ sqlState.data() });
+			std::string message = ConvertDiagnosticText(std::wstring_view{ messageText.data(), messageLength });
 			const std::int32_t convertedNativeError = static_cast<std::int32_t>(nativeError);
 			stream << (hasDiagnosticRecord ? " | " : " ")
 				<< "[SQLSTATE=" << sqlStateText

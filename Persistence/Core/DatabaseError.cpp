@@ -61,4 +61,17 @@ namespace persistence::core
 
 		return stream.str();
 	}
+
+	bool ContainsNativeError(const DatabaseError& databaseError, std::int32_t nativeError) noexcept
+	{
+		for (const DatabaseDiagnosticRecord& diagnosticRecord : databaseError.diagnosticRecordList)
+		{
+			if (diagnosticRecord.nativeError == nativeError)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

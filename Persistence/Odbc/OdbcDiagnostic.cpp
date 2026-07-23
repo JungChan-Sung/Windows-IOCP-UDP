@@ -4,9 +4,12 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <Common/String/UtfConversion.h>
 
@@ -33,6 +36,8 @@ namespace persistence::odbc
 	{
 		std::ostringstream stream;
 		stream << context.message;
+
+		std::vector<core::DatabaseDiagnosticRecord> diagnosticRecordList;
 
 		SQLSMALLINT recordNumber = 1;
 		bool hasDiagnosticRecord = false;
@@ -68,11 +73,18 @@ namespace persistence::odbc
 			const std::size_t messageLength = (textLength > 0) ? std::min(static_cast<std::size_t>(textLength), messageText.size() - 1) : 0;
 			const std::string sqlStateText = ConvertDiagnosticText(std::wstring_view{ sqlState.data() });
 			const std::string message = ConvertDiagnosticText(std::wstring_view{ messageText.data(), messageLength });
+			const std::int32_t convertedNativeError = static_cast<std::int32_t>(nativeError);
 			stream << (hasDiagnosticRecord ? " | " : " ")
 				<< "[SQLSTATE=" << sqlStateText
-				<< ", NativeError=" << nativeError
+				<< ", NativeError=" << convertedNativeError
 				<< ", Message=" << message
 				<< "]";
+
+			diagnosticRecordList.push_back(core::DatabaseDiagnosticRecord{
+				.sqlState = std::move(sqlStateText),
+				.nativeError = convertedNativeError,
+				.message = std::move(message),
+				});
 
 			hasDiagnosticRecord = true;
 			++recordNumber;
@@ -81,6 +93,7 @@ namespace persistence::odbc
 		return core::DatabaseError{
 			.failure = context.failure,
 			.message = stream.str(),
+			.diagnosticRecordList = std::move(diagnosticRecordList),
 		};
 	}
 }

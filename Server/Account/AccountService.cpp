@@ -8,6 +8,12 @@ namespace server::account
 		: persistenceRuntime_(persistenceRuntime)
 	{}
 
+	bool AccountService::IsDuplicateLoginNameError(const persistence::core::DatabaseError& databaseError) noexcept
+	{
+		return persistence::core::ContainsNativeError(databaseError, duplicateIndexNativeError)
+			|| persistence::core::ContainsNativeError(databaseError, uniqueConstraintNativeError);
+	}
+
 	CreateAccountResult AccountService::CreateAccount(const persistence::account::AccountCreateRequest& request)
 	{
 		const ::persistence::account::AccountValidationResult validationResult = persistence::account::ValidateAccountCreateFields(
@@ -23,6 +29,11 @@ namespace server::account
 		persistence::PersistenceRuntime::CreateAccountResult createResult = persistenceRuntime_.CreateAccount(request);
 		if (!createResult.has_value())
 		{
+			if (IsDuplicateLoginNameError(createResult.error()))
+			{
+				return std::unexpected(CreateAccountError{ CreateAccountFailure::DuplicateLoginName, });
+			}
+
 			return std::unexpected(CreateAccountError{ createResult.error() });
 		}
 

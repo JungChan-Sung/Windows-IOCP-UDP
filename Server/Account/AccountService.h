@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <expected>
 #include <variant>
 
@@ -10,12 +11,21 @@
 
 namespace server::account
 {
-	using CreateAccountError = std::variant<persistence::account::AccountValidationError, persistence::core::DatabaseError>;
+	enum class CreateAccountFailure
+	{
+		DuplicateLoginName,
+	};
+
+	using CreateAccountError = std::variant<persistence::account::AccountValidationError, CreateAccountFailure, persistence::core::DatabaseError>;
 
 	using CreateAccountResult = std::expected<persistence::account::AccountRecord, CreateAccountError>;
 
 	class AccountService final
 	{
+	private:
+		inline static constexpr std::int32_t duplicateIndexNativeError = 2601;
+		inline static constexpr std::int32_t uniqueConstraintNativeError = 2627;
+
 	private:
 		persistence::PersistenceRuntime& persistenceRuntime_;
 
@@ -28,6 +38,9 @@ namespace server::account
 
 		AccountService(AccountService&&) = delete;
 		AccountService& operator=(AccountService&&) = delete;
+
+	private:
+		[[nodiscard]] static bool IsDuplicateLoginNameError(const persistence::core::DatabaseError& databaseError) noexcept;
 
 	public:
 		[[nodiscard]] CreateAccountResult CreateAccount(const persistence::account::AccountCreateRequest& request);

@@ -253,9 +253,86 @@ namespace tests::server
 				result,
 				createAccountFailure != nullptr
 				&& *createAccountFailure
-				== ::server::account::CreateAccountFailure
-				::DuplicateLoginName,
+				== ::server::account::CreateAccountFailure::DuplicateLoginName,
 				"AccountServiceIntegration: duplicate login name is classified"
+			);
+
+			const ::server::account::LoginAccountResult loginResult = accountService.LoginAccount(
+				::server::account::AccountLoginRequest{
+					.loginName = loginName,
+					.passwordHash = "integration_password_hash",
+				}
+				);
+
+			tests::Expect(
+				result,
+				loginResult.has_value(),
+				"AccountServiceIntegration: account login succeeds"
+			);
+
+			tests::Expect(
+				result,
+				loginResult.has_value()
+				&& loginResult->accountId == firstCreateResult->accountId,
+				"AccountServiceIntegration: login account id matches"
+			);
+
+			tests::Expect(
+				result,
+				loginResult.has_value()
+				&& loginResult->loginName == loginName,
+				"AccountServiceIntegration: login name matches"
+			);
+
+			tests::Expect(
+				result,
+				loginResult.has_value()
+				&& loginResult->nickname == "IntegrationAccount",
+				"AccountServiceIntegration: login nickname matches"
+			);
+
+			const ::server::account::LoginAccountResult wrongPasswordResult = accountService.LoginAccount(
+				::server::account::AccountLoginRequest{
+					.loginName = loginName,
+					.passwordHash = "wrong_password_hash",
+				}
+				);
+
+			const auto* wrongPasswordFailure
+				= !wrongPasswordResult.has_value()
+				? std::get_if<::server::account::LoginAccountFailure>(
+					&wrongPasswordResult.error()
+				)
+				: nullptr;
+
+			tests::Expect(
+				result,
+				wrongPasswordFailure != nullptr
+				&& *wrongPasswordFailure
+				== ::server::account::LoginAccountFailure::InvalidCredentials,
+				"AccountServiceIntegration: reject incorrect password hash"
+			);
+
+			const ::server::account::LoginAccountResult missingAccountResult = accountService.LoginAccount(
+				::server::account::AccountLoginRequest{
+					.loginName = "missing_account_login_test",
+					.passwordHash = "integration_password_hash",
+				}
+				);
+
+			const auto* missingAccountFailure
+				= !missingAccountResult.has_value()
+				? std::get_if<::server::account::LoginAccountFailure>(
+					&missingAccountResult.error()
+				)
+				: nullptr;
+
+			tests::Expect(
+				result,
+				missingAccountFailure != nullptr
+				&& *missingAccountFailure
+				== ::server::account::LoginAccountFailure::InvalidCredentials,
+				"AccountServiceIntegration: hide missing account as invalid credentials"
 			);
 		}
 

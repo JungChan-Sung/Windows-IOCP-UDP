@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <expected>
+#include <string>
+#include <string_view>
 #include <variant>
 
 #include <Persistence/Account/AccountRepository.h>
@@ -16,9 +18,31 @@ namespace server::account
 		DuplicateLoginName,
 	};
 
-	using CreateAccountError = std::variant<persistence::account::AccountValidationError, CreateAccountFailure, persistence::core::DatabaseError>;
+	enum class LoginAccountFailure
+	{
+		InvalidCredentials,
+	};
 
+	struct AccountLoginRequest
+	{
+	public:
+		std::string_view loginName;
+		std::string_view passwordHash;
+	};
+
+	struct AccountLoginRecord
+	{
+	public:
+		std::int64_t accountId = 0;
+		std::string loginName;
+		std::string nickname;
+	};
+
+	using CreateAccountError = std::variant<persistence::account::AccountValidationError, CreateAccountFailure, persistence::core::DatabaseError>;
 	using CreateAccountResult = std::expected<persistence::account::AccountRecord, CreateAccountError>;
+
+	using LoginAccountError = std::variant<persistence::account::AccountValidationError, LoginAccountFailure, persistence::core::DatabaseError>;
+	using LoginAccountResult = std::expected<AccountLoginRecord, LoginAccountError>;
 
 	class AccountService final
 	{
@@ -44,5 +68,6 @@ namespace server::account
 
 	public:
 		[[nodiscard]] CreateAccountResult CreateAccount(const persistence::account::AccountCreateRequest& request);
+		[[nodiscard]] LoginAccountResult LoginAccount(const AccountLoginRequest& request);
 	};
 }

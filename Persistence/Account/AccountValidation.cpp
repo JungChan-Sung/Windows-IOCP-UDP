@@ -84,4 +84,19 @@ namespace persistence::account
 
 		return {};
 	}
+
+	AccountValidationResult ValidateAccountLoginFields(std::string_view loginName, std::string_view passwordHash)
+	{
+		if (const auto error = ValidateField(loginName, AccountField::LoginName, maxLoginNameUtf16CodeUnitCount))
+		{
+			return std::unexpected(*error);
+		}
+
+		if (const auto error = ValidateField(passwordHash, AccountField::PasswordHash, maxPasswordHashUtf16CodeUnitCount))
+		{
+			return std::unexpected(*error);
+		}
+
+		return {};
+	}
 }

@@ -42,4 +42,5 @@ namespace persistence::account
 		std::string_view passwordHash,
 		std::string_view nickname
 	);
+	[[nodiscard]] AccountValidationResult ValidateAccountLoginFields(std::string_view loginName, std::string_view passwordHash);
 }

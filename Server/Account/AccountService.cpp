@@ -39,4 +39,40 @@ namespace server::account
 
 		return std::move(*createResult);
 	}
+
+	LoginAccountResult AccountService::LoginAccount(const AccountLoginRequest& request)
+	{
+		const ::persistence::account::AccountValidationResult validationResult = persistence::account::ValidateAccountLoginFields(
+			request.loginName,
+			request.passwordHash
+		);
+		if (!validationResult.has_value())
+		{
+			return std::unexpected(LoginAccountError{ validationResult.error() });
+		}
+
+		persistence::PersistenceRuntime::FindAccountResult findResult = persistenceRuntime_.FindAccountByLoginName(request.loginName);
+		if (!findResult.has_value())
+		{
+			return std::unexpected(LoginAccountError{ findResult.error() });
+		}
+
+		if (!findResult->has_value())
+		{
+			return std::unexpected(LoginAccountError{ LoginAccountFailure::InvalidCredentials });
+		}
+
+		persistence::account::AccountRecord account = std::move(**findResult);
+
+		if (account.passwordHash != request.passwordHash)
+		{
+			return std::unexpected(LoginAccountError{ LoginAccountFailure::InvalidCredentials });
+		}
+
+		return AccountLoginRecord{
+			.accountId = account.accountId,
+			.loginName = std::move(account.loginName),
+			.nickname = std::move(account.nickname),
+		};
+	}
 }

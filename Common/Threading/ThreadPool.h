@@ -26,7 +26,6 @@ namespace common::threading
 
 	public:
 		using StartResult = std::expected<void, StartError>;
-
 		using Task = std::function<void()>;
 
 	private:

@@ -145,6 +145,7 @@
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp" />
     <ClCompile Include="..\Server\Game\GameSimulation.cpp" />
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
+    <ClCompile Include="..\Server\Net\AccountLoginRequestProcessor.cpp" />
     <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="..\Server\Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
@@ -181,6 +182,7 @@
     <ClCompile Include="Persistence\OdbcStatementTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp" />
+    <ClCompile Include="Server\AccountLoginRequestProcessorTests.cpp" />
     <ClCompile Include="Server\AccountPacketMapperTests.cpp" />
     <ClCompile Include="Server\AccountServiceIntegrationTests.cpp" />
     <ClCompile Include="Server\AccountServiceTests.cpp" />
@@ -241,6 +243,7 @@
     <ClInclude Include="Persistence\OdbcStatementTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h" />
+    <ClInclude Include="Server\AccountLoginRequestProcessorTests.h" />
     <ClInclude Include="Server\AccountPacketMapperTests.h" />
     <ClInclude Include="Server\AccountServiceIntegrationTests.h" />
     <ClInclude Include="Server\AccountServiceTests.h" />

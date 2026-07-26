@@ -114,10 +114,13 @@
     <ClCompile Include="Account\AccountService.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
-    <ClCompile Include="Account\PasswordHashVerifier.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Account\AccountPacketMapper.cpp">
+      <Filter>소스 파일\Account</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\AccountLoginRequestProcessor.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Account\PasswordHashVerifier.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
   </ItemGroup>
@@ -212,10 +215,13 @@
     <ClInclude Include="Account\AccountService.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
-    <ClInclude Include="Account\PasswordHashVerifier.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Account\AccountPacketMapper.h">
+      <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\AccountLoginRequestProcessor.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\PasswordHashVerifier.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
   </ItemGroup>

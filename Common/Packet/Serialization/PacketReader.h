@@ -2,6 +2,7 @@
 
 #include <bit>
 #include <cstdint>
+#include <string>
 
 #include <Common/Packet/PacketConstants.h>
 
@@ -98,6 +99,25 @@ namespace common::packet
 			}
 
 			value = std::bit_cast<float>(rawValue);
+
+			return true;
+		}
+
+		[[nodiscard]] bool ReadString(std::string& value)
+		{
+			std::uint16_t stringSize = 0;
+			if (!ReadUInt16(stringSize))
+			{
+				return false;
+			}
+
+			if (RemainingSize() < static_cast<int>(stringSize))
+			{
+				return false;
+			}
+
+			value.assign(data_ + offset_, static_cast<std::size_t>(stringSize));
+			offset_ += static_cast<int>(stringSize);
 
 			return true;
 		}

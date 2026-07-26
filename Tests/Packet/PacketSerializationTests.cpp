@@ -8,6 +8,8 @@
 #include <string_view>
 
 #include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/Serialization/PacketReader.h>
+#include <Common/Packet/Serialization/PacketWriter.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -22,6 +24,162 @@ namespace
 
 		buffer[offset] = static_cast<char>(value & 0x00FF);
 		buffer[offset + 1] = static_cast<char>((value >> 8) & 0x00FF);
+	}
+
+	void RunStringReaderWriterTests(tests::DebugTestResult& result)
+	{
+		{
+			constexpr std::string_view value = "account";
+
+			common::packet::PacketWriter writer;
+			writer.WriteString(value);;
+
+			tests::Expect(
+				result,
+				writer.IsValid(),
+				"PacketString: ASCII writer remains valid"
+			);
+
+			common::packet::PacketBuffer buffer = writer.TakeBuffer();
+
+			tests::Expect(
+				result,
+				buffer.size() == common::packet::GetSerializedStringSize(value),
+				"PacketString: ASCII serialized size"
+			);
+
+			common::packet::PacketReader reader(
+				buffer.data(),
+				static_cast<int>(buffer.size())
+			);
+
+			std::string readValue;
+			const bool readResult = reader.ReadString(readValue);
+
+			tests::Expect(
+				result,
+				readResult,
+				"PacketString: ASCII read succeeds"
+			);
+
+			tests::Expect(
+				result,
+				readValue == value,
+				"PacketString: ASCII roundtrip"
+			);
+
+			tests::Expect(
+				result,
+				reader.IsComplete(),
+				"PacketString: ASCII reader completes"
+			);
+		}
+
+		{
+			constexpr std::string_view value = "한글계정";
+
+			common::packet::PacketWriter writer;
+			writer.WriteString(value);
+
+			common::packet::PacketBuffer buffer = writer.TakeBuffer();
+
+			common::packet::PacketReader reader(
+				buffer.data(),
+				static_cast<int>(buffer.size())
+			);
+
+			std::string readValue;
+			const bool readResult = reader.ReadString(readValue);
+
+			tests::Expect(
+				result,
+				readResult,
+				"PacketString: Unicode read succeeds"
+			);
+
+			tests::Expect(
+				result,
+				readValue == value,
+				"PacketString: Unicode roundtrip"
+			);
+		}
+
+		{
+			constexpr std::string_view value;
+
+			common::packet::PacketWriter writer;
+			writer.WriteString(value);
+
+			common::packet::PacketBuffer buffer = writer.TakeBuffer();
+
+			tests::Expect(
+				result,
+				buffer.size() == common::packet::stringLengthWireSize,
+				"PacketString: empty string contains length field"
+			);
+
+			common::packet::PacketReader reader(
+				buffer.data(),
+				static_cast<int>(buffer.size())
+			);
+
+			std::string readValue = "previous";
+			const bool readResult = reader.ReadString(readValue);
+
+			tests::Expect(
+				result,
+				readResult,
+				"PacketString: empty string read succeeds"
+			);
+
+			tests::Expect(
+				result,
+				readValue.empty(),
+				"PacketString: empty string roundtrip"
+			);
+		}
+
+		{
+			const common::packet::PacketBuffer buffer{
+				static_cast<char>(0x04),
+				static_cast<char>(0x00),
+				'a',
+				'b',
+			};
+
+			common::packet::PacketReader reader(
+				buffer.data(),
+				static_cast<int>(buffer.size())
+			);
+
+			std::string readValue;
+			const bool readResult = reader.ReadString(readValue);
+
+			tests::Expect(
+				result,
+				!readResult,
+				"PacketString: truncated string rejected"
+			);
+		}
+
+		{
+			const common::packet::PacketBuffer expectedBuffer{
+				static_cast<char>(0x03),
+				static_cast<char>(0x00),
+				'a',
+				'b',
+				'c',
+			};
+
+			common::packet::PacketWriter writer;
+			writer.WriteString("abc");
+
+			tests::Expect(
+				result,
+				writer.GetBuffer() == expectedBuffer,
+				"PacketString: exact wire format"
+			);
+		}
 	}
 
 	template <typename TPacket>
@@ -441,6 +599,7 @@ namespace tests::packet
 	{
 		tests::DebugTestResult result{};
 
+		RunStringReaderWriterTests(result);
 		RunFixedPacketRoundTripTests(result);
 		RunPlayerSnapshotRoundTripTest(result);
 		RunBulletSnapshotRoundTripTest(result);

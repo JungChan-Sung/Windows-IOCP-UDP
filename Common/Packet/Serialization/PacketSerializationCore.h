@@ -83,6 +83,11 @@ namespace common::packet
 
 	[[nodiscard]] inline std::optional<PacketBuffer> FinishSerializedPacket(PacketWriter& writer, std::size_t expectedSize)
 	{
+		if (!writer.IsValid())
+		{
+			return std::nullopt;
+		}
+
 		if (writer.GetBuffer().size() != expectedSize)
 		{
 			return std::nullopt;

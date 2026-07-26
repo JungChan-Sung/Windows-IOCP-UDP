@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 namespace common::packet
 {
@@ -10,6 +11,8 @@ namespace common::packet
 	inline constexpr std::uint8_t uint32WireSize = 4;
 	inline constexpr std::uint8_t int32WireSize = 4;
 	inline constexpr std::uint8_t floatWireSize = 4;
+
+	inline constexpr std::size_t stringLengthWireSize = uint16WireSize;
 
 	inline constexpr std::uint16_t protocolVersion = 2;
 	inline constexpr std::uint16_t packetHeaderReliableFlag = 0x8000;
@@ -22,4 +25,9 @@ namespace common::packet
 		+ packetTypeWireSize
 		+ uint16WireSize;
 	inline constexpr std::size_t maxSerializedPacketSize = 1200;
+
+	[[nodiscard]] inline constexpr std::size_t GetSerializedStringSize(std::string_view value) noexcept
+	{
+		return stringLengthWireSize + value.size();
+	}
 }

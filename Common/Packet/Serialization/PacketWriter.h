@@ -3,6 +3,8 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
+#include <string_view>
 #include <utility>
 
 #include <Common/Packet/PacketBuffer.h>
@@ -13,6 +15,7 @@ namespace common::packet
 	{
 	private:
 		PacketBuffer buffer_;
+		bool isValid_ = true;
 
 	public:
 		PacketWriter() = default;
@@ -59,7 +62,24 @@ namespace common::packet
 			WriteUInt32(std::bit_cast<std::uint32_t>(value));
 		}
 
+		void WriteString(std::string_view value)
+		{
+			if (value.size() > static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max()))
+			{
+				isValid_ = false;
+				return;
+			}
+
+			WriteUInt16(static_cast<std::uint16_t>(value.size()));
+			buffer_.insert(buffer_.end(), value.begin(), value.end());
+		}
+
 	public:
+		[[nodiscard]] bool IsValid() const noexcept
+		{
+			return isValid_;
+		}
+
 		[[nodiscard]] const PacketBuffer& GetBuffer() const noexcept
 		{
 			return buffer_;

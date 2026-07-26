@@ -52,9 +52,20 @@ namespace common::packet
 			WriteUInt8(static_cast<std::uint8_t>((value >> 24) & 0x000000FF));
 		}
 
+		void WriteUInt64(std::uint64_t value)
+		{
+			WriteUInt32(static_cast<std::uint32_t>(value & 0xFFFFFFFFULL));
+			WriteUInt32(static_cast<std::uint32_t>((value >> 32) & 0xFFFFFFFFULL));
+		}
+
 		void WriteInt32(std::int32_t value)
 		{
 			WriteUInt32(std::bit_cast<std::uint32_t>(value));
+		}
+
+		void WriteInt64(std::int64_t value)
+		{
+			WriteUInt64(std::bit_cast<std::uint64_t>(value));
 		}
 
 		void WriteFloat(float value)

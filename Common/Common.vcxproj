@@ -55,6 +55,8 @@
     <ClInclude Include="Net\Socket.h" />
     <ClInclude Include="Net\UdpTypes.h" />
     <ClInclude Include="Net\WsaSession.h" />
+    <ClInclude Include="Packet\Account\AccountPacket.h" />
+    <ClInclude Include="Packet\Account\AccountPacketCodec.h" />
     <ClInclude Include="Packet\Game\CommandPacket.h" />
     <ClInclude Include="Packet\Game\CommandPacketCodec.h" />
     <ClInclude Include="Packet\Game\EffectPacket.h" />

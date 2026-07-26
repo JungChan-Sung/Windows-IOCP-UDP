@@ -9,7 +9,9 @@ namespace common::packet
 	inline constexpr std::uint8_t uint8WireSize = 1;
 	inline constexpr std::uint8_t uint16WireSize = 2;
 	inline constexpr std::uint8_t uint32WireSize = 4;
+	inline constexpr std::uint8_t uint64WireSize = 8;
 	inline constexpr std::uint8_t int32WireSize = 4;
+	inline constexpr std::uint8_t int64WireSize = 8;
 	inline constexpr std::uint8_t floatWireSize = 4;
 
 	inline constexpr std::size_t stringLengthWireSize = uint16WireSize;

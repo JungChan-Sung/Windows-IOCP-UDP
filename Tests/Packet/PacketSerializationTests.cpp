@@ -32,7 +32,7 @@ namespace
 			constexpr std::string_view value = "account";
 
 			common::packet::PacketWriter writer;
-			writer.WriteString(value);;
+			writer.WriteString(value);
 
 			tests::Expect(
 				result,
@@ -219,6 +219,141 @@ namespace
 			std::string(testName) + ": header version");
 
 		return deserializedPacket;
+	}
+
+	void RunAccountPacketRoundTripTests(tests::DebugTestResult& result)
+	{
+		{
+			common::packet::AccountLoginRequestPacket packet{};
+			packet.loginName = "한글계정";
+			packet.passwordHash = "password_hash";
+
+			const std::optional<common::packet::AccountLoginRequestPacket> roundTripPacket
+				= RoundTrip(result, packet, "AccountLoginRequest");
+
+			if (roundTripPacket.has_value())
+			{
+				tests::Expect(
+					result,
+					roundTripPacket->loginName == packet.loginName,
+					"AccountLoginRequest: loginName"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->passwordHash == packet.passwordHash,
+					"AccountLoginRequest: passwordHash"
+				);
+			}
+		}
+
+		{
+			common::packet::AccountLoginResponsePacket packet{};
+			packet.status
+				= common::packet::AccountLoginResponseStatus::Succeeded;
+			packet.accountId = 1234567890123;
+			packet.nickname = "한글별명";
+
+			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket
+				= RoundTrip(result, packet, "AccountLoginResponse");
+
+			if (roundTripPacket.has_value())
+			{
+				tests::Expect(
+					result,
+					roundTripPacket->status == packet.status,
+					"AccountLoginResponse: status"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->accountId == packet.accountId,
+					"AccountLoginResponse: accountId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->nickname == packet.nickname,
+					"AccountLoginResponse: nickname"
+				);
+			}
+		}
+
+		{
+			common::packet::AccountLoginResponsePacket packet{};
+			packet.status
+				= common::packet::AccountLoginResponseStatus
+				::InvalidCredentials;
+
+			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket
+				= RoundTrip(
+					result,
+					packet,
+					"AccountLoginInvalidCredentialsResponse"
+				);
+
+			if (roundTripPacket.has_value())
+			{
+				tests::Expect(
+					result,
+					roundTripPacket->status
+					== common::packet::AccountLoginResponseStatus
+					::InvalidCredentials,
+					"AccountLoginResponse: invalid credentials status"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->accountId == 0,
+					"AccountLoginResponse: failed accountId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->nickname.empty(),
+					"AccountLoginResponse: failed nickname"
+				);
+			}
+		}
+
+		{
+			common::packet::AccountLoginResponsePacket packet{};
+			packet.status
+				= common::packet::AccountLoginResponseStatus::Succeeded;
+			packet.accountId = 1;
+			packet.nickname = "nickname";
+
+			const std::optional<common::packet::PacketBuffer> serializedPacket
+				= common::packet::SerializePacket(packet);
+
+			tests::Expect(
+				result,
+				serializedPacket.has_value(),
+				"AccountLoginResponseInvalidStatus: base serialize"
+			);
+
+			if (serializedPacket.has_value())
+			{
+				common::packet::PacketBuffer invalidPacket = *serializedPacket;
+
+				invalidPacket[common::packet::serializedPacketHeaderSize]
+					= static_cast<char>(0xFF);
+
+				const std::optional<common::packet::AccountLoginResponsePacket> deserializedPacket
+					= common::packet::DeserializePacket<
+					common::packet::AccountLoginResponsePacket
+					>(
+						invalidPacket.data(),
+						static_cast<int>(invalidPacket.size())
+					);
+
+				tests::Expect(
+					result,
+					!deserializedPacket.has_value(),
+					"AccountLoginResponseInvalidStatus: rejected"
+				);
+			}
+		}
 	}
 
 	void RunFixedPacketRoundTripTests(tests::DebugTestResult& result)
@@ -600,6 +735,7 @@ namespace tests::packet
 		tests::DebugTestResult result{};
 
 		RunStringReaderWriterTests(result);
+		RunAccountPacketRoundTripTests(result);
 		RunFixedPacketRoundTripTests(result);
 		RunPlayerSnapshotRoundTripTest(result);
 		RunBulletSnapshotRoundTripTest(result);
@@ -607,6 +743,7 @@ namespace tests::packet
 		RunInvalidPacketTests(result);
 		RunInvalidVariablePacketTests(result);
 		RunInputCommandWireFormatRegressionTest(result);
+
 
 		return result;
 	}

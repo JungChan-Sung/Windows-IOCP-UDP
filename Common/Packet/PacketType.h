@@ -25,5 +25,8 @@ namespace common::packet
 		PlayerSnapshot = 10,
 		BulletSnapshot = 11,
 		ImpactEffect = 12,
+
+		AccountLoginRequest = 13,
+		AccountLoginResponse = 14,
 	};
 }

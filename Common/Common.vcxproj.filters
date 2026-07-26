@@ -67,6 +67,9 @@
     <Filter Include="소스 파일\String">
       <UniqueIdentifier>{13bf52cd-c946-497e-a008-56a70f419f78}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Packet\Account">
+      <UniqueIdentifier>{1250ec11-d599-4a18-abfb-b4d505c2864d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -266,6 +269,12 @@
     </ClInclude>
     <ClInclude Include="String\UtfConversion.h">
       <Filter>헤더 파일\String</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Account\AccountPacket.h">
+      <Filter>헤더 파일\Packet\Account</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Account\AccountPacketCodec.h">
+      <Filter>헤더 파일\Packet\Account</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

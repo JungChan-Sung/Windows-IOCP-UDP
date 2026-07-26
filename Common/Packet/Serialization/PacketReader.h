@@ -77,6 +77,21 @@ namespace common::packet
 			return true;
 		}
 
+		[[nodiscard]] bool ReadUInt64(std::uint64_t& value) noexcept
+		{
+			std::uint32_t lowerValue = 0;
+			std::uint32_t upperValue = 0;
+
+			if (!ReadUInt32(lowerValue) || !ReadUInt32(upperValue))
+			{
+				return false;
+			}
+
+			value = static_cast<std::uint64_t>(lowerValue) | (static_cast<std::uint64_t>(upperValue) << 32);
+
+			return true;
+		}
+
 		[[nodiscard]] bool ReadInt32(std::int32_t& value) noexcept
 		{
 			std::uint32_t rawValue = 0;
@@ -86,6 +101,19 @@ namespace common::packet
 			}
 
 			value = std::bit_cast<std::int32_t>(rawValue);
+
+			return true;
+		}
+
+		[[nodiscard]] bool ReadInt64(std::int64_t& value) noexcept
+		{
+			std::uint64_t rawValue = 0;
+			if (!ReadUInt64(rawValue))
+			{
+				return false;
+			}
+
+			value = std::bit_cast<std::int64_t>(rawValue);
 
 			return true;
 		}

@@ -18,6 +18,12 @@
 
 namespace server::app
 {
+	GameServerApp::GameServerApp()
+		: accountService_(persistenceRuntime_),
+		accountLoginTaskProcessor_(accountService_),
+		accountLoginPacketHandler_(accountLoginTaskProcessor_)
+	{}
+
 	std::string GameServerApp::ToString(const RunError& runError)
 	{
 		return std::visit(
@@ -28,6 +34,10 @@ namespace server::app
 				if constexpr (std::is_same_v<ErrorType, common::log::AsyncLogWriter::StartError>)
 				{
 					return common::string::FormatScopedName("Logger", common::log::AsyncLogWriter::ToString(error));
+				}
+				else if constexpr (std::is_same_v<ErrorType, common::threading::ThreadPool::StartError>)
+				{
+					return common::string::FormatScopedName("AccountLoginTaskProcessor", common::threading::ThreadPool::ToString(error));
 				}
 				else if constexpr (std::is_same_v<ErrorType, net::UdpServer::StartError>)
 				{
@@ -85,12 +95,31 @@ namespace server::app
 			logger_.Info("Database connection is disabled.");
 		}
 
+		const account::AccountLoginTaskProcessor::StartResult accountLoginProcessorStartResult = accountLoginTaskProcessor_.Start();
+		if (!accountLoginProcessorStartResult.has_value())
+		{
+			logger_.Error(common::string::FormatScopedName(
+					"AccountLoginTaskProcessor",
+					common::threading::ThreadPool::ToString(accountLoginProcessorStartResult.error())
+				));
+
+			persistenceRuntime_.Stop();
+
+			return std::unexpected(RunError{ accountLoginProcessorStartResult.error() });
+		}
+
 		udpServer_.AttachLogger(logger_);
+		udpServer_.AttachAccountLoginPacketHandler(accountLoginPacketHandler_);
 
 		const net::UdpServer::StartResult udpServerStartResult = udpServer_.Start(loadResult.config);
 		if (!udpServerStartResult.has_value())
 		{
+			udpServer_.DetachAccountLoginPacketHandler();
 			udpServer_.DetachLogger();
+
+			accountLoginTaskProcessor_.Stop();
+			accountLoginPacketHandler_.ClearPendingRequests();
+
 			persistenceRuntime_.Stop();
 
 			return std::unexpected(RunError{ udpServerStartResult.error() });
@@ -101,7 +130,11 @@ namespace server::app
 		MainLoop();
 
 		udpServer_.Stop();
+		udpServer_.DetachAccountLoginPacketHandler();
 		udpServer_.DetachLogger();
+
+		accountLoginTaskProcessor_.Stop();
+		accountLoginPacketHandler_.ClearPendingRequests();
 
 		persistenceRuntime_.Stop();
 

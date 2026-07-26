@@ -38,12 +38,15 @@ namespace common::log
 
 namespace common::packet
 {
+	struct AccountLoginRequestPacket;
 	struct InputCommandPacket;
 	struct JoinRoomRequestPacket;
 }
 
 namespace server::net
 {
+	class AccountLoginPacketHandler;
+
 	class UdpServer
 	{
 	public:
@@ -82,6 +85,7 @@ namespace server::net
 		PlayerCommandService playerCommandService_;
 
 		common::log::ILogger* logger_ = nullptr;
+		AccountLoginPacketHandler* accountLoginPacketHandler_ = nullptr;
 
 		server::config::ServerConfig config_{};
 
@@ -109,6 +113,9 @@ namespace server::net
 		void AttachLogger(common::log::ILogger& logger) noexcept;
 		void DetachLogger() noexcept;
 
+		void AttachAccountLoginPacketHandler(AccountLoginPacketHandler& accountLoginPacketHandler) noexcept;
+		void DetachAccountLoginPacketHandler() noexcept;
+
 	private:
 		void UpdateGameTick();
 
@@ -133,6 +140,7 @@ namespace server::net
 		void HandleFireRequest(const sockaddr_in& remoteAddress);
 		void HandleLeaveRequest(const sockaddr_in& remoteAddress);
 		void HandleJoinRoomRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRoomRequestPacket& packet);
+		void HandleAccountLoginRequest(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet);
 
 		void ProcessReliableResends();
 		void ProcessJoinRequest(const sockaddr_in& remoteAddress);
@@ -140,6 +148,7 @@ namespace server::net
 		void ProcessFireRequest(const EndpointKey& endpointKey);
 		void ProcessLeaveRequest(const EndpointKey& endpointKey);
 		void ProcessJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet);
+		void ProcessAccountLoginResponses();
 
 		void BroadcastPlayerSnapshots();
 		void BroadcastBulletSnapshots();

@@ -10,6 +10,11 @@
 
 #include <Server/Net/SnapshotBroadcastTask.h>
 
+namespace common::packet
+{
+	struct AccountLoginResponsePacket;
+}
+
 namespace server::net
 {
 	class UdpIocpTransport;
@@ -41,6 +46,7 @@ namespace server::net
 		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize);
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize);
 
+		[[nodiscard]] bool SendAccountLoginResponse(const sockaddr_in& remoteAddress, const common::packet::AccountLoginResponsePacket& packet);
 		[[nodiscard]] bool SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY);
 		[[nodiscard]] bool SendJoinRoomResponse(const sockaddr_in& remoteAddress, RoomId roomId, float spawnX, float spawnY);
 		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId, float x, float y);

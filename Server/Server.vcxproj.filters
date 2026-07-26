@@ -117,14 +117,14 @@
     <ClCompile Include="Account\PasswordHashVerifier.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
-    <ClCompile Include="Account\AccountLoginTaskProcessor.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Net\AccountPacketMapper.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Account\AccountLoginTaskProcessor.cpp">
+      <Filter>소스 파일\Account</Filter>
+    </ClCompile>
     <ClCompile Include="Net\AccountLoginPacketHandler.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,14 +221,14 @@
     <ClInclude Include="Account\PasswordHashVerifier.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
-    <ClInclude Include="Account\AccountLoginTaskProcessor.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Net\AccountPacketMapper.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Account\AccountLoginTaskProcessor.h">
+      <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
     <ClInclude Include="Net\AccountLoginPacketHandler.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

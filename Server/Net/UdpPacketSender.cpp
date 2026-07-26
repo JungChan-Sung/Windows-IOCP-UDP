@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
@@ -121,6 +122,11 @@ namespace server::net
 		}
 
 		return sentCount;
+	}
+
+	bool UdpPacketSender::SendAccountLoginResponse(const sockaddr_in& remoteAddress, const common::packet::AccountLoginResponsePacket& packet)
+	{
+		return SendSerializedPacket(*this, remoteAddress, packet);
 	}
 
 	bool UdpPacketSender::SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY)

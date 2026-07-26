@@ -6,10 +6,14 @@
 #include <variant>
 
 #include <Common/Log/AsyncLogWriter.h>
+#include <Common/Threading/ThreadPool.h>
 
 #include <Persistence/Core/PersistenceRuntime.h>
 
+#include <Server/Account/AccountLoginTaskProcessor.h>
+#include <Server/Account/AccountService.h>
 #include <Server/Config/ServerConfigLoader.h>
+#include <Server/Net/AccountLoginPacketHandler.h>
 #include <Server/Net/UdpServer.h>
 
 namespace server::app
@@ -19,6 +23,7 @@ namespace server::app
 	public:
 		using RunError = std::variant<
 			common::log::AsyncLogWriter::StartError,
+			common::threading::ThreadPool::StartError,
 			net::UdpServer::StartError,
 			persistence::core::DatabaseError
 		>;
@@ -26,11 +31,17 @@ namespace server::app
 
 	private:
 		common::log::AsyncLogWriter logger_;
+
 		persistence::PersistenceRuntime persistenceRuntime_;
+
+		account::AccountService accountService_;
+		account::AccountLoginTaskProcessor accountLoginTaskProcessor_;
+
+		net::AccountLoginPacketHandler accountLoginPacketHandler_;
 		net::UdpServer udpServer_;
 
 	public:
-		GameServerApp() = default;
+		GameServerApp();
 		~GameServerApp() noexcept = default;
 
 		GameServerApp(const GameServerApp&) = delete;

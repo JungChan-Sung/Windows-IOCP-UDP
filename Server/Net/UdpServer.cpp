@@ -18,12 +18,14 @@
 
 #include <Common/Log/ILogger.h>
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/String/StringFormat.h>
 
 #include <Server/Config/ServerConfigValidator.h>
+#include <Server/Net/AccountLoginPacketHandler.h>
 #include <Server/Net/PacketPayloadValidator.h>
 
 namespace
@@ -52,6 +54,36 @@ namespace
 			[&object, handler](const sockaddr_in& remoteAddress, const char*, int)
 			{
 				std::invoke(handler, object, remoteAddress);
+				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
+			}
+		);
+	}
+
+	template <typename TObject, typename TPacket>
+	void RegisterTypedPacketHandler(
+		server::net::UdpPacketDispatcher& packetDispatcher,
+		common::packet::PacketType packetType,
+		TObject& object,
+		AddressTypedPacketHandler<TObject, TPacket> handler
+	)
+	{
+		using Packet = std::remove_cvref_t<TPacket>;
+		using DispatchStatus = server::net::UdpPacketDispatcher::DispatchStatus;
+		using PacketProcessResult = server::net::UdpPacketDispatcher::PacketProcessResult;
+
+		packetDispatcher.RegisterHandler(
+			packetType,
+			common::packet::packetExpectedSize<Packet>,
+			[&object, handler](const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+			{
+				std::optional<Packet> packet = common::packet::DeserializePacket<Packet>(packetData, packetSize);
+				if (!packet.has_value())
+				{
+					return PacketProcessResult{ DispatchStatus::InvalidPacketPayload, 0 };
+				}
+
+				std::invoke(handler, object, remoteAddress, *packet);
+
 				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
 			}
 		);
@@ -315,12 +347,24 @@ namespace server::net
 		logger_ = nullptr;
 	}
 
+	void UdpServer::AttachAccountLoginPacketHandler(AccountLoginPacketHandler& accountLoginPacketHandler) noexcept
+	{
+		accountLoginPacketHandler_ = &accountLoginPacketHandler;
+	}
+
+	void UdpServer::DetachAccountLoginPacketHandler() noexcept
+	{
+		accountLoginPacketHandler_ = nullptr;
+	}
+
 	void UdpServer::UpdateGameTick()
 	{
 		if (!isRunning_.load())
 		{
 			return;
 		}
+
+		ProcessAccountLoginResponses();
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -366,6 +410,16 @@ namespace server::net
 	void UdpServer::RegisterPacketHandlers()
 	{
 		packetDispatcher_.Clear();
+
+		if (accountLoginPacketHandler_ != nullptr)
+		{
+			RegisterTypedPacketHandler(
+				packetDispatcher_,
+				common::packet::PacketType::AccountLoginRequest,
+				*this,
+				&UdpServer::HandleAccountLoginRequest
+			);
+		}
 
 		RegisterAddressOnlyPacketHandler(
 			packetDispatcher_,
@@ -623,6 +677,26 @@ namespace server::net
 
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessJoinRoomRequest(endpointKey, packet);
+	}
+
+	void UdpServer::HandleAccountLoginRequest(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet)
+	{
+		if (accountLoginPacketHandler_ == nullptr)
+		{
+			return;
+		}
+
+		if (accountLoginPacketHandler_->Enqueue(remoteAddress, packet))
+		{
+			return;
+		}
+
+		common::packet::AccountLoginResponsePacket responsePacket{};
+		responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
+		if (!packetSender_.SendAccountLoginResponse(remoteAddress, responsePacket))
+		{
+			LogWarning("Failed to send account login server error response.");
+		}
 	}
 
 	void UdpServer::ProcessReliableResends()
@@ -893,6 +967,25 @@ namespace server::net
 			roomChangeResult.spawnPosition.x,
 			roomChangeResult.spawnPosition.y
 		);
+	}
+
+	void UdpServer::ProcessAccountLoginResponses()
+	{
+		if (accountLoginPacketHandler_ == nullptr)
+		{
+			return;
+		}
+
+		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList();
+		for (const AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
+		{
+			if (packetSender_.SendAccountLoginResponse(responseTask.remoteAddress, responseTask.responsePacket))
+			{
+				continue;
+			}
+
+			LogWarning("Failed to send account login response.");
+		}
 	}
 
 	void UdpServer::BroadcastPlayerSnapshots()

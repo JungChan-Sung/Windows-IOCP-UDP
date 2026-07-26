@@ -30,6 +30,7 @@
 #include "Log/LogFormatterTests.h"
 #include "Log/LogLevelTests.h"
 #include "Log/LogMessageBuilderTests.h"
+#include "Server/PasswordHashVerifierTests.h"
 #include "Server/AccountServiceTests.h"
 #include "Server/AccountServiceIntegrationTests.h"
 #include "Server/ServerConfigTests.h"
@@ -90,6 +91,7 @@ namespace tests
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountValidation", persistence::RunAccountValidationTests());
+		MergeAndPrint(totalResult, "PasswordHashVerifier", server::RunPasswordHashVerifierTests());
 		MergeAndPrint(totalResult, "AccountService", server::RunAccountServiceTests());
 		MergeAndPrint(totalResult, "AccountServiceIntegration", server::RunAccountServiceIntegrationTests());
 

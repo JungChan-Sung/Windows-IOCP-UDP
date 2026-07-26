@@ -114,6 +114,9 @@
     <ClCompile Include="Account\AccountService.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
+    <ClCompile Include="Account\PasswordHashVerifier.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -205,6 +208,9 @@
     </ClInclude>
     <ClInclude Include="Account\AccountService.h">
       <Filter>헤더 파일\Account</Filter>
+    </ClInclude>
+    <ClInclude Include="Account\PasswordHashVerifier.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

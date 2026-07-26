@@ -11,6 +11,8 @@
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Core/PersistenceRuntime.h>
 
+#include <Server/Account/PasswordHashVerifier.h>
+
 namespace server::account
 {
 	enum class CreateAccountFailure
@@ -51,6 +53,7 @@ namespace server::account
 		inline static constexpr std::int32_t uniqueConstraintNativeError = 2627;
 
 	private:
+		PasswordHashVerifier passwordHashVerifier_;
 		persistence::PersistenceRuntime& persistenceRuntime_;
 
 	public:

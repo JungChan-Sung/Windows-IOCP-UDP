@@ -64,7 +64,8 @@ namespace server::account
 
 		persistence::account::AccountRecord account = std::move(**findResult);
 
-		if (account.passwordHash != request.passwordHash)
+		const bool passwordHashVerified = passwordHashVerifier_.Verify(request.passwordHash, account.passwordHash);
+		if (!passwordHashVerified)
 		{
 			return std::unexpected(LoginAccountError{ LoginAccountFailure::InvalidCredentials });
 		}

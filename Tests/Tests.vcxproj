@@ -138,6 +138,7 @@
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
     <ClCompile Include="..\Server\Account\AccountService.cpp" />
+    <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigValidator.cpp" />
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
     <ClCompile Include="Server\PacketPayloadValidatorTests.cpp" />
+    <ClCompile Include="Server\PasswordHashVerifierTests.cpp" />
     <ClCompile Include="Server\PeerSessionServiceTests.cpp" />
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp" />
     <ClCompile Include="Server\ServerConfigTests.cpp" />
@@ -243,6 +245,7 @@
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
     <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />
     <ClInclude Include="Server\PacketPayloadValidatorTests.h" />
+    <ClInclude Include="Server\PasswordHashVerifierTests.h" />
     <ClInclude Include="Server\PeerSessionServiceTests.h" />
     <ClInclude Include="Server\PlayerCommandServiceTests.h" />
     <ClInclude Include="Server\ServerConfigTests.h" />

@@ -9,8 +9,8 @@
 #include <Persistence/Account/AccountValidation.h>
 #include <Persistence/Core/DatabaseError.h>
 
-#include <Server/Account/AccountPacketMapper.h>
 #include <Server/Account/AccountService.h>
+#include <Server/Net/AccountPacketMapper.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -52,7 +52,7 @@ namespace tests::server
 			};
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::account::BuildAccountLoginResponse(
+				= ::server::net::BuildAccountLoginResponse(
 					std::move(loginResult)
 				);
 
@@ -87,7 +87,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::account::BuildAccountLoginResponse(
+				= ::server::net::BuildAccountLoginResponse(
 					std::move(loginResult)
 				);
 
@@ -107,7 +107,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::account::BuildAccountLoginResponse(
+				= ::server::net::BuildAccountLoginResponse(
 					std::move(loginResult)
 				);
 
@@ -130,7 +130,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::account::BuildAccountLoginResponse(
+				= ::server::net::BuildAccountLoginResponse(
 					std::move(loginResult)
 				);
 

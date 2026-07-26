@@ -143,7 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Account\AccountPacketMapper.cpp" />
+    <ClCompile Include="Account\AccountLoginTaskProcessor.cpp" />
     <ClCompile Include="Account\AccountService.cpp" />
     <ClCompile Include="Account\PasswordHashVerifier.cpp" />
     <ClCompile Include="App\GameServerApp.cpp" />
@@ -154,7 +154,8 @@
     <ClCompile Include="Game\GameSimulation.cpp" />
     <ClCompile Include="Game\GameTickRunner.cpp" />
     <ClCompile Include="Game\GameWorld.cpp" />
-    <ClCompile Include="Net\AccountLoginRequestProcessor.cpp" />
+    <ClCompile Include="Net\AccountLoginPacketHandler.cpp" />
+    <ClCompile Include="Net\AccountPacketMapper.cpp" />
     <ClCompile Include="Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="Net\PeerRoomManager.cpp" />
@@ -169,7 +170,7 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Account\AccountPacketMapper.h" />
+    <ClInclude Include="Account\AccountLoginTaskProcessor.h" />
     <ClInclude Include="Account\AccountService.h" />
     <ClInclude Include="Account\PasswordHashVerifier.h" />
     <ClInclude Include="App\GameServerApp.h" />
@@ -188,7 +189,8 @@
     <ClInclude Include="Game\ImpactEffectState.h" />
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
-    <ClInclude Include="Net\AccountLoginRequestProcessor.h" />
+    <ClInclude Include="Net\AccountLoginPacketHandler.h" />
+    <ClInclude Include="Net\AccountPacketMapper.h" />
     <ClInclude Include="Net\InvalidPacketLogLimiter.h" />
     <ClInclude Include="Net\PacketPayloadValidator.h" />
     <ClInclude Include="Net\PeerRoomManager.h" />

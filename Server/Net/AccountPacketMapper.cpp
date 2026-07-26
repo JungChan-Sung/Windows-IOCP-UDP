@@ -3,13 +3,13 @@
 #include <utility>
 #include <variant>
 
-namespace server::account
+namespace server::net
 {
-	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(LoginAccountResult loginResult)
+	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(account::LoginAccountResult loginResult)
 	{
 		if (loginResult.has_value())
 		{
-			AccountLoginRecord accountLoginRecord = std::move(*loginResult);
+			account::AccountLoginRecord accountLoginRecord = std::move(*loginResult);
 
 			return common::packet::AccountLoginResponsePacket{
 				.status = common::packet::AccountLoginResponseStatus::Succeeded,
@@ -18,7 +18,7 @@ namespace server::account
 			};
 		}
 
-		const LoginAccountError& loginError = loginResult.error();
+		const account::LoginAccountError& loginError = loginResult.error();
 
 		common::packet::AccountLoginResponsePacket response{};
 
@@ -28,7 +28,7 @@ namespace server::account
 			return response;
 		}
 
-		if (std::holds_alternative<LoginAccountFailure>(loginError))
+		if (std::holds_alternative<account::LoginAccountFailure>(loginError))
 		{
 			response.status = common::packet::AccountLoginResponseStatus::InvalidCredentials;
 			return response;

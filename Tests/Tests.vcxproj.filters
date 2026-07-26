@@ -264,26 +264,32 @@
     <ClCompile Include="..\Server\Account\AccountService.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
-    <ClCompile Include="Server\AccountServiceTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Server\PasswordHashVerifierTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
+    <ClCompile Include="Server\PasswordHashVerifierTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
     <ClCompile Include="Server\AccountPacketMapperTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Account\AccountPacketMapper.cpp">
+    <ClCompile Include="Server\AccountServiceTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Net\AccountLoginPacketHandler.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
-    <ClCompile Include="Server\AccountLoginRequestProcessorTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Server\Net\AccountLoginRequestProcessor.cpp">
+    <ClCompile Include="..\Server\Net\AccountPacketMapper.cpp">
       <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Account\AccountLoginTaskProcessor.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\AccountLoginTaskProcessorTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\AccountLoginPacketHandlerTests.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -428,16 +434,19 @@
     <ClInclude Include="Server\AccountServiceIntegrationTests.h">
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Server\AccountServiceTests.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Server\PasswordHashVerifierTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\AccountServiceTests.h">
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\AccountPacketMapperTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Server\AccountLoginRequestProcessorTests.h">
+    <ClInclude Include="Server\AccountLoginTaskProcessorTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\AccountLoginPacketHandlerTests.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

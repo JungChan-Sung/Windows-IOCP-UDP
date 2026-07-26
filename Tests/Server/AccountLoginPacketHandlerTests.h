@@ -4,5 +4,5 @@
 
 namespace tests::server
 {
-	[[nodiscard]] DebugTestResult RunAccountLoginRequestProcessorTests();
+	[[nodiscard]] DebugTestResult RunAccountLoginPacketHandlerTests();
 }

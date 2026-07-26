@@ -34,7 +34,8 @@
 #include "Server/AccountPacketMapperTests.h"
 #include "Server/AccountServiceTests.h"
 #include "Server/AccountServiceIntegrationTests.h"
-#include "Server/AccountLoginRequestProcessorTests.h"
+#include "Server/AccountLoginTaskProcessorTests.h"
+#include "Server/AccountLoginPacketHandlerTests.h"
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
 #include "Server/GameSimulationTests.h"
@@ -97,7 +98,8 @@ namespace tests
 		MergeAndPrint(totalResult, "AccountPacketMapper", server::RunAccountPacketMapperTests());
 		MergeAndPrint(totalResult, "AccountService", server::RunAccountServiceTests());
 		MergeAndPrint(totalResult, "AccountServiceIntegration", server::RunAccountServiceIntegrationTests());
-		MergeAndPrint(totalResult, "AccountLoginRequestProcessor", server::RunAccountLoginRequestProcessorTests());
+		MergeAndPrint(totalResult, "AccountLoginTaskProcessor", server::RunAccountLoginTaskProcessorTests());
+		MergeAndPrint(totalResult, "AccountLoginPacketHandler", server::RunAccountLoginPacketHandlerTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';
 

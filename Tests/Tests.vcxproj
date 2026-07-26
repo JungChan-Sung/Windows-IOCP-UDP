@@ -137,6 +137,7 @@
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
+    <ClCompile Include="..\Server\Account\AccountPacketMapper.cpp" />
     <ClCompile Include="..\Server\Account\AccountService.cpp" />
     <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp" />
@@ -180,6 +181,7 @@
     <ClCompile Include="Persistence\OdbcStatementTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp" />
+    <ClCompile Include="Server\AccountPacketMapperTests.cpp" />
     <ClCompile Include="Server\AccountServiceIntegrationTests.cpp" />
     <ClCompile Include="Server\AccountServiceTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
@@ -239,6 +241,7 @@
     <ClInclude Include="Persistence\OdbcStatementTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h" />
+    <ClInclude Include="Server\AccountPacketMapperTests.h" />
     <ClInclude Include="Server\AccountServiceIntegrationTests.h" />
     <ClInclude Include="Server\AccountServiceTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />

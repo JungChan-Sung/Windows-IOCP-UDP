@@ -273,6 +273,12 @@
     <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
+    <ClCompile Include="Server\AccountPacketMapperTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Account\AccountPacketMapper.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -420,6 +426,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Server\PasswordHashVerifierTests.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\AccountPacketMapperTests.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Account\AccountPacketMapper.cpp" />
     <ClCompile Include="Account\AccountService.cpp" />
     <ClCompile Include="Account\PasswordHashVerifier.cpp" />
     <ClCompile Include="App\GameServerApp.cpp" />
@@ -167,6 +168,7 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Account\AccountPacketMapper.h" />
     <ClInclude Include="Account\AccountService.h" />
     <ClInclude Include="Account\PasswordHashVerifier.h" />
     <ClInclude Include="App\GameServerApp.h" />

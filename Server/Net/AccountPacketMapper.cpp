@@ -5,13 +5,14 @@
 
 namespace server::net
 {
-	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(account::LoginAccountResult loginResult)
+	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(common::packet::AccountLoginRequestId requestId, account::LoginAccountResult loginResult)
 	{
 		if (loginResult.has_value())
 		{
 			account::AccountLoginRecord accountLoginRecord = std::move(*loginResult);
 
 			return common::packet::AccountLoginResponsePacket{
+				.requestId = requestId,
 				.status = common::packet::AccountLoginResponseStatus::Succeeded,
 				.accountId = accountLoginRecord.accountId,
 				.nickname = std::move(accountLoginRecord.nickname),
@@ -21,6 +22,7 @@ namespace server::net
 		const account::LoginAccountError& loginError = loginResult.error();
 
 		common::packet::AccountLoginResponsePacket response{};
+		response.requestId = requestId;
 
 		if (std::holds_alternative<persistence::account::AccountValidationError>(loginError))
 		{

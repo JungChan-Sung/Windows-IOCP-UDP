@@ -289,7 +289,7 @@
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
     <ClCompile Include="Server\AccountLoginPacketHandlerTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -447,7 +447,7 @@
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\AccountLoginPacketHandlerTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

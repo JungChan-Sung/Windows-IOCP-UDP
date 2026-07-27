@@ -7,6 +7,10 @@
 
 namespace common::packet
 {
+	using AccountLoginRequestId = std::uint64_t;
+
+	inline constexpr AccountLoginRequestId invalidAccountLoginRequestId = 0;
+
 	enum class AccountLoginResponseStatus : std::uint8_t
 	{
 		Succeeded,
@@ -20,6 +24,7 @@ namespace common::packet
 	public:
 		PacketHeader header{ 0, PacketType::AccountLoginRequest };
 
+		AccountLoginRequestId requestId = invalidAccountLoginRequestId;
 		std::string loginName;
 		std::string passwordHash;
 	};
@@ -29,7 +34,9 @@ namespace common::packet
 	public:
 		PacketHeader header{ 0, PacketType::AccountLoginResponse };
 
+		AccountLoginRequestId requestId = invalidAccountLoginRequestId;
 		AccountLoginResponseStatus status = AccountLoginResponseStatus::ServerError;
+
 		std::int64_t accountId = 0;
 		std::string nickname;
 	};

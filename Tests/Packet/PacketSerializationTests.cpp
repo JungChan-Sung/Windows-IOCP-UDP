@@ -225,6 +225,7 @@ namespace
 	{
 		{
 			common::packet::AccountLoginRequestPacket packet{};
+			packet.requestId = 1001;
 			packet.loginName = "한글계정";
 			packet.passwordHash = "password_hash";
 
@@ -233,6 +234,12 @@ namespace
 
 			if (roundTripPacket.has_value())
 			{
+				tests::Expect(
+					result,
+					roundTripPacket->requestId == packet.requestId,
+					"AccountLoginRequest: requestId"
+				);
+
 				tests::Expect(
 					result,
 					roundTripPacket->loginName == packet.loginName,
@@ -249,6 +256,7 @@ namespace
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
+			packet.requestId = 1002;
 			packet.status
 				= common::packet::AccountLoginResponseStatus::Succeeded;
 			packet.accountId = 1234567890123;
@@ -259,6 +267,12 @@ namespace
 
 			if (roundTripPacket.has_value())
 			{
+				tests::Expect(
+					result,
+					roundTripPacket->requestId == packet.requestId,
+					"AccountLoginResponse: requestId"
+				);
+
 				tests::Expect(
 					result,
 					roundTripPacket->status == packet.status,
@@ -281,6 +295,7 @@ namespace
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
+			packet.requestId = 1003;
 			packet.status
 				= common::packet::AccountLoginResponseStatus
 				::InvalidCredentials;
@@ -294,6 +309,12 @@ namespace
 
 			if (roundTripPacket.has_value())
 			{
+				tests::Expect(
+					result,
+					roundTripPacket->requestId == packet.requestId,
+					"AccountLoginResponse: invalid credentials requestId"
+				);
+
 				tests::Expect(
 					result,
 					roundTripPacket->status
@@ -318,6 +339,7 @@ namespace
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
+			packet.requestId = 1004;
 			packet.status
 				= common::packet::AccountLoginResponseStatus::Succeeded;
 			packet.accountId = 1;
@@ -336,7 +358,11 @@ namespace
 			{
 				common::packet::PacketBuffer invalidPacket = *serializedPacket;
 
-				invalidPacket[common::packet::serializedPacketHeaderSize]
+				const std::size_t statusOffset
+					= common::packet::serializedPacketHeaderSize
+					+ common::packet::uint64WireSize;
+
+				invalidPacket[statusOffset]
 					= static_cast<char>(0xFF);
 
 				const std::optional<common::packet::AccountLoginResponsePacket> deserializedPacket

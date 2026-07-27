@@ -19,10 +19,17 @@ namespace
 	void ExpectFailureResponse(
 		tests::DebugTestResult& result,
 		const common::packet::AccountLoginResponsePacket& response,
+		common::packet::AccountLoginRequestId expectedRequestId,
 		common::packet::AccountLoginResponseStatus expectedStatus,
 		std::string_view testName
 	)
 	{
+		tests::Expect(
+			result,
+			response.requestId == expectedRequestId,
+			std::string(testName) + ": requestId"
+		);
+
 		tests::Expect(
 			result,
 			response.status == expectedStatus,
@@ -43,6 +50,8 @@ namespace tests::server
 	{
 		DebugTestResult result{};
 
+		constexpr common::packet::AccountLoginRequestId requestId = 1001;
+
 		{
 			::server::account::LoginAccountResult loginResult
 				= ::server::account::AccountLoginRecord{
@@ -53,8 +62,15 @@ namespace tests::server
 
 			const common::packet::AccountLoginResponsePacket response
 				= ::server::net::BuildAccountLoginResponse(
+					requestId,
 					std::move(loginResult)
 				);
+
+			tests::Expect(
+				result,
+				response.requestId == requestId,
+				"AccountPacketMapper: success requestId"
+			);
 
 			tests::Expect(
 				result,
@@ -88,12 +104,14 @@ namespace tests::server
 
 			const common::packet::AccountLoginResponsePacket response
 				= ::server::net::BuildAccountLoginResponse(
+					requestId,
 					std::move(loginResult)
 				);
 
 			ExpectFailureResponse(
 				result,
 				response,
+				requestId,
 				common::packet::AccountLoginResponseStatus::InvalidRequest,
 				"AccountPacketMapper: validation failure"
 			);
@@ -108,12 +126,14 @@ namespace tests::server
 
 			const common::packet::AccountLoginResponsePacket response
 				= ::server::net::BuildAccountLoginResponse(
+					requestId,
 					std::move(loginResult)
 				);
 
 			ExpectFailureResponse(
 				result,
 				response,
+				requestId,
 				common::packet::AccountLoginResponseStatus::InvalidCredentials,
 				"AccountPacketMapper: invalid credentials"
 			);
@@ -131,12 +151,14 @@ namespace tests::server
 
 			const common::packet::AccountLoginResponsePacket response
 				= ::server::net::BuildAccountLoginResponse(
+					requestId,
 					std::move(loginResult)
 				);
 
 			ExpectFailureResponse(
 				result,
 				response,
+				requestId,
 				common::packet::AccountLoginResponseStatus::ServerError,
 				"AccountPacketMapper: database failure"
 			);

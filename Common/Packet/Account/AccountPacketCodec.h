@@ -36,13 +36,15 @@ namespace common::packet
 	public:
 		static void WritePayload(PacketWriter& writer, const AccountLoginRequestPacket& packet)
 		{
+			writer.WriteUInt64(packet.requestId);
 			writer.WriteString(packet.loginName);
 			writer.WriteString(packet.passwordHash);
 		}
 
 		[[nodiscard]] static bool ReadPayload(PacketReader& reader, AccountLoginRequestPacket& packet)
 		{
-			return reader.ReadString(packet.loginName)
+			return reader.ReadUInt64(packet.requestId)
+				&& reader.ReadString(packet.loginName)
 				&& reader.ReadString(packet.passwordHash);
 		}
 
@@ -50,6 +52,7 @@ namespace common::packet
 		[[nodiscard]] static std::size_t GetSerializedSize(const AccountLoginRequestPacket& packet) noexcept
 		{
 			return serializedPacketHeaderSize
+				+ uint64WireSize
 				+ GetSerializedStringSize(packet.loginName)
 				+ GetSerializedStringSize(packet.passwordHash);
 		}
@@ -65,6 +68,7 @@ namespace common::packet
 	public:
 		static void WritePayload(PacketWriter& writer, const AccountLoginResponsePacket& packet)
 		{
+			writer.WriteUInt64(packet.requestId);
 			writer.WriteUInt8(static_cast<std::uint8_t>(packet.status));
 			writer.WriteInt64(packet.accountId);
 			writer.WriteString(packet.nickname);
@@ -72,6 +76,11 @@ namespace common::packet
 
 		[[nodiscard]] static bool ReadPayload(PacketReader& reader, AccountLoginResponsePacket& packet)
 		{
+			if (!reader.ReadUInt64(packet.requestId))
+			{
+				return false;
+			}
+
 			std::uint8_t rawStatus = 0;
 			if (!reader.ReadUInt8(rawStatus))
 			{
@@ -92,6 +101,7 @@ namespace common::packet
 		[[nodiscard]] static std::size_t GetSerializedSize(const AccountLoginResponsePacket& packet) noexcept
 		{
 			return serializedPacketHeaderSize
+				+ uint64WireSize
 				+ uint8WireSize
 				+ int64WireSize
 				+ GetSerializedStringSize(packet.nickname);

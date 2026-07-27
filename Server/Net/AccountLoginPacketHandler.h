@@ -24,21 +24,29 @@ namespace server::net
 			sockaddr_in remoteAddress{};
 			common::packet::AccountLoginResponsePacket responsePacket;
 		};
+		 
+	private:
+		struct PendingRequest
+		{
+		public:
+			sockaddr_in remoteAddress{};
+			common::packet::AccountLoginRequestId requestId = common::packet::invalidAccountLoginRequestId;
+		};
 
 	public:
 		using ResponseTaskList = std::vector<ResponseTask>;
 
 	private:
 		using TaskId = server::account::AccountLoginTaskId;
-		using PendingEndpointTable = std::unordered_map<TaskId, sockaddr_in>;
+		using PendingRequestTable = std::unordered_map<TaskId, PendingRequest>;
 
 	private:
 		account::AccountLoginTaskProcessor& taskProcessor_;
 
 		std::atomic<TaskId> nextTaskId_ = 1;
 
-		mutable std::mutex pendingEndpointMutex_;
-		PendingEndpointTable pendingEndpointTable_;
+		mutable std::mutex pendingRequestMutex_;
+		PendingRequestTable pendingRequestTable_;
 
 	public:
 		explicit AccountLoginPacketHandler(account::AccountLoginTaskProcessor& taskProcessor) noexcept;
@@ -58,7 +66,7 @@ namespace server::net
 		void ClearPendingRequests() noexcept;
 
 	private:
-		[[nodiscard]] std::optional<sockaddr_in> TakeRemoteAddress(TaskId taskId);
+		[[nodiscard]] std::optional<PendingRequest> TakePendingRequest(TaskId taskId);
 
 	public:
 		[[nodiscard]] std::size_t GetPendingRequestCount() const;

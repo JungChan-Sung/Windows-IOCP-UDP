@@ -65,6 +65,12 @@ namespace
 
 		tests::Expect(
 			result,
+			responseTask->responsePacket.requestId == 1001,
+			"AccountLoginPacketHandler: invalid request id preserved"
+		);
+
+		tests::Expect(
+			result,
 			responseTask->remoteAddress.sin_family == AF_INET,
 			"AccountLoginPacketHandler: invalid request address family preserved"
 		);
@@ -112,6 +118,12 @@ namespace
 
 		tests::Expect(
 			result,
+			responseTask->responsePacket.requestId == 1002,
+			"AccountLoginPacketHandler: database request id preserved"
+		);
+
+		tests::Expect(
+			result,
 			responseTask->responsePacket.status
 			== common::packet::AccountLoginResponseStatus::ServerError,
 			"AccountLoginPacketHandler: database failure mapped"
@@ -154,6 +166,7 @@ namespace tests::server
 		const sockaddr_in invalidRequestAddress = MakeRemoteAddress(40000);
 
 		common::packet::AccountLoginRequestPacket invalidRequestPacket{};
+		invalidRequestPacket.requestId = 1001;
 		invalidRequestPacket.loginName = "";
 		invalidRequestPacket.passwordHash = "password_hash";
 
@@ -171,6 +184,7 @@ namespace tests::server
 		const sockaddr_in databaseFailureAddress = MakeRemoteAddress(40001);
 
 		common::packet::AccountLoginRequestPacket databaseFailurePacket{};
+		databaseFailurePacket.requestId = 1002;
 		databaseFailurePacket.loginName = "account";
 		databaseFailurePacket.passwordHash = "password_hash";
 
@@ -214,6 +228,7 @@ namespace tests::server
 		const sockaddr_in stoppedProcessorAddress = MakeRemoteAddress(40002);
 
 		common::packet::AccountLoginRequestPacket stoppedProcessorPacket{};
+		stoppedProcessorPacket.requestId = 1003;
 		stoppedProcessorPacket.loginName = "account";
 		stoppedProcessorPacket.passwordHash = "password_hash";
 

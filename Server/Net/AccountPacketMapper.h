@@ -6,5 +6,8 @@
 
 namespace server::net
 {
-	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(account::LoginAccountResult loginResult);
+	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(
+		common::packet::AccountLoginRequestId requestId, 
+		account::LoginAccountResult loginResult
+	);
 }

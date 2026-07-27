@@ -692,6 +692,7 @@ namespace server::net
 		}
 
 		common::packet::AccountLoginResponsePacket responsePacket{};
+		responsePacket.requestId = packet.requestId;
 		responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
 		if (!packetSender_.SendAccountLoginResponse(remoteAddress, responsePacket))
 		{

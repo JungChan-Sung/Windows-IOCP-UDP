@@ -15,9 +15,14 @@ namespace server::net
 		const TaskId taskId = nextTaskId_.fetch_add(1, std::memory_order_relaxed);
 
 		{
-			std::scoped_lock lock(pendingEndpointMutex_);
+			std::scoped_lock lock(pendingRequestMutex_);
 
-			const bool inserted = pendingEndpointTable_.emplace(taskId, remoteAddress).second;
+			const bool inserted = pendingRequestTable_.emplace(
+				taskId,
+				PendingRequest{ 
+					.remoteAddress = remoteAddress,
+					.requestId = packet.requestId,
+				}).second;
 			if (!inserted)
 			{
 				return false;
@@ -29,15 +34,14 @@ namespace server::net
 			.loginName = packet.loginName,
 			.passwordHash = packet.passwordHash,
 		};
-
 		if (taskProcessor_.Enqueue(std::move(task)))
 		{
 			return true;
 		}
 
 		{
-			std::scoped_lock lock(pendingEndpointMutex_);
-			pendingEndpointTable_.erase(taskId);
+			std::scoped_lock lock(pendingRequestMutex_);
+			pendingRequestTable_.erase(taskId);
 		}
 
 		return false;
@@ -52,16 +56,18 @@ namespace server::net
 
 		for (server::account::AccountLoginCompletion& completion : completionList)
 		{
-			const std::optional<sockaddr_in> remoteAddress = TakeRemoteAddress(completion.taskId);
-			if (!remoteAddress.has_value())
+			const std::optional<PendingRequest> pendingRequest = TakePendingRequest(completion.taskId);
+			if (!pendingRequest.has_value())
 			{
 				continue;
 			}
 
-			responseTaskList.push_back(ResponseTask{
-					.remoteAddress = *remoteAddress,
-					.responsePacket = BuildAccountLoginResponse(std::move(completion.loginResult)),
-				});
+			responseTaskList.push_back(
+				ResponseTask{
+					.remoteAddress = pendingRequest->remoteAddress,
+					.responsePacket = BuildAccountLoginResponse(pendingRequest->requestId, std::move(completion.loginResult)),
+				}
+			);
 		}
 
 		return responseTaskList;
@@ -69,29 +75,29 @@ namespace server::net
 
 	void AccountLoginPacketHandler::ClearPendingRequests() noexcept
 	{
-		std::scoped_lock lock(pendingEndpointMutex_);
-		pendingEndpointTable_.clear();
+		std::scoped_lock lock(pendingRequestMutex_);
+		pendingRequestTable_.clear();
 	}
 
-	std::optional<sockaddr_in> AccountLoginPacketHandler::TakeRemoteAddress(TaskId taskId)
+	std::optional<AccountLoginPacketHandler::PendingRequest> AccountLoginPacketHandler::TakePendingRequest(TaskId taskId)
 	{
-		std::scoped_lock lock(pendingEndpointMutex_);
+		std::scoped_lock lock(pendingRequestMutex_);
 
-		const auto iterator = pendingEndpointTable_.find(taskId);
-		if (iterator == pendingEndpointTable_.end())
+		const auto iterator = pendingRequestTable_.find(taskId);
+		if (iterator == pendingRequestTable_.end())
 		{
 			return std::nullopt;
 		}
 
-		const sockaddr_in remoteAddress = iterator->second;
-		pendingEndpointTable_.erase(iterator);
+		PendingRequest pendingRequest = iterator->second;
+		pendingRequestTable_.erase(iterator);
 
-		return remoteAddress;
+		return pendingRequest;
 	}
 
 	std::size_t AccountLoginPacketHandler::GetPendingRequestCount() const
 	{
-		std::scoped_lock lock(pendingEndpointMutex_);
-		return pendingEndpointTable_.size();
+		std::scoped_lock lock(pendingRequestMutex_);
+		return pendingRequestTable_.size();
 	}
 }

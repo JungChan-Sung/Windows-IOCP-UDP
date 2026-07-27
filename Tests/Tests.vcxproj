@@ -136,6 +136,7 @@
     <ClCompile Include="..\Client\Config\ClientConfigLoader.cpp" />
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
+    <ClCompile Include="..\Client\Net\AccountLoginState.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
     <ClCompile Include="..\Server\Account\AccountLoginTaskProcessor.cpp" />
     <ClCompile Include="..\Server\Account\AccountService.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="..\Server\Net\PlayerCommandService.cpp" />
     <ClCompile Include="..\Server\Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp" />
+    <ClCompile Include="Client\AccountLoginStateTests.cpp" />
     <ClCompile Include="Client\ClientConfigTests.cpp" />
     <ClCompile Include="Client\ClientWorldTests.cpp" />
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
@@ -214,6 +216,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Net\Endpoint.h" />
+    <ClInclude Include="Client\AccountLoginStateTests.h" />
     <ClInclude Include="Client\ClientConfigTests.h" />
     <ClInclude Include="Client\ClientWorldTests.h" />
     <ClInclude Include="Client\JoinHandshakeStateTests.h" />

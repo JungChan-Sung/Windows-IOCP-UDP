@@ -93,6 +93,9 @@
     <ClCompile Include="Net\UdpIocpTransport.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\AccountLoginState.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\ClientWorld.h">
@@ -159,6 +162,9 @@
       <Filter>헤더 파일\Config</Filter>
     </ClInclude>
     <ClInclude Include="Net\JoinHandshakeState.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\AccountLoginState.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>

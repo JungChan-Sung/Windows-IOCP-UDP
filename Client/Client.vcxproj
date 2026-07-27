@@ -149,6 +149,7 @@
     <ClCompile Include="Config\ClientConfigValidator.cpp" />
     <ClCompile Include="Game\ClientWorld.cpp" />
     <ClCompile Include="Game\InputState.cpp" />
+    <ClCompile Include="Net\AccountLoginState.cpp" />
     <ClCompile Include="Net\ClientPacketDispatcher.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssembler.cpp" />
     <ClCompile Include="Net\UdpClient.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="Game\ClientWorld.h" />
     <ClInclude Include="Game\EffectConfig.h" />
     <ClInclude Include="Game\InputState.h" />
+    <ClInclude Include="Net\AccountLoginState.h" />
     <ClInclude Include="Net\ClientPacketDispatcher.h" />
     <ClInclude Include="Net\JoinHandshakeState.h" />
     <ClInclude Include="Net\SnapshotChunkAssembler.h" />

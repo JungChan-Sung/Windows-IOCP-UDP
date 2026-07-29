@@ -3,7 +3,6 @@
 #include <WS2tcpip.h>
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -23,6 +22,7 @@
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/String/StringFormat.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfigValidator.h>
 #include <Server/Net/AccountLoginPacketHandler.h>
@@ -606,7 +606,7 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 		if (!peerState.reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
 		{
 			serverMetricsCollector_.IncrementReliableSendWindowFullCount();
@@ -715,7 +715,7 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 
 			peerRoomManager_.ForEachJoinedPeer(
 				[&resendTaskList, &giveUpPacketCount, currentTime](PeerState& peerState)
@@ -774,7 +774,7 @@ namespace server::net
 				gameSimulation_,
 				config_.gameRule,
 				config_.reliableUdp,
-				std::chrono::steady_clock::now()
+				common::time::Clock::now()
 			);
 		}
 
@@ -840,7 +840,7 @@ namespace server::net
 			packet,
 			peerRoomManager_,
 			gameWorld_,
-			std::chrono::steady_clock::now()))
+			common::time::Clock::now()))
 		{
 			return;
 		}
@@ -856,7 +856,7 @@ namespace server::net
 			gameWorld_,
 			gameSimulation_,
 			config_.weaponRule,
-			std::chrono::steady_clock::now()))
+			common::time::Clock::now()))
 		{
 			return;
 		}
@@ -906,7 +906,7 @@ namespace server::net
 				peerRoomManager_,
 				gameWorld_,
 				gameSimulation_,
-				std::chrono::steady_clock::now()
+				common::time::Clock::now()
 			);
 
 			if (roomChangeResult.changed)
@@ -1087,7 +1087,7 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			const std::vector<PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
-				std::chrono::steady_clock::now(),
+				common::time::Clock::now(),
 				config_.session.peerTimeout
 			);
 
@@ -1163,7 +1163,7 @@ namespace server::net
 	{
 		const InvalidPacketLogLimiter::LogDecision logDecision = invalidPacketLogLimiter_.Record(
 			dispatchResult.status,
-			InvalidPacketLogLimiter::Clock::now()
+			common::time::Clock::now()
 		);
 
 		if (!logDecision.shouldLog)
@@ -1217,7 +1217,7 @@ namespace server::net
 
 	void UdpServer::LogServerStatusIfDue()
 	{
-		if (!serverStatusReporter_.ShouldReport(diagnostics::ServerStatusReporter::Clock::now()))
+		if (!serverStatusReporter_.ShouldReport(common::time::Clock::now()))
 		{
 			return;
 		}

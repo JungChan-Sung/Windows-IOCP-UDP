@@ -5,12 +5,14 @@
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogMessageBuilder.h>
+#include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/PacketReliability.h>
@@ -106,6 +108,8 @@ namespace client::net
 		world_ = &world;
 		inputSequence_ = 0;
 
+		accountLoginState_.Reset();
+
 		{
 			std::scoped_lock lock(reliableSessionMutex_);
 			reliableSession_.Reset();
@@ -146,6 +150,7 @@ namespace client::net
 	{
 		if (!isRunning_.exchange(false))
 		{
+			accountLoginState_.Reset();
 			return;
 		}
 
@@ -158,6 +163,8 @@ namespace client::net
 			std::scoped_lock lock(reliableSessionMutex_);
 			reliableSession_.Reset();
 		}
+
+		accountLoginState_.Reset();
 
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
@@ -173,6 +180,42 @@ namespace client::net
 	void UdpClient::DetachLogger() noexcept
 	{
 		logger_ = nullptr;
+	}
+
+	UdpClient::AccountLoginRequestId UdpClient::BeginAccountLogin(std::string loginName, std::string passwordHash, common::time::Milliseconds retryInterval)
+	{
+		if (!isRunning_.load())
+		{
+			return common::packet::invalidAccountLoginRequestId;
+		}
+
+		return accountLoginState_.Begin(std::move(loginName), std::move(passwordHash), common::time::Clock::now(), retryInterval);
+	}
+
+	void UdpClient::ProcessAccountLogin()
+	{
+		if (!isRunning_.load())
+		{
+			return;
+		}
+
+		const std::optional<common::packet::AccountLoginRequestPacket> packet = accountLoginState_.TryBuildRequest(common::time::Clock::now());
+		if (!packet.has_value())
+		{
+			return;
+		}
+
+		if (SendAccountLoginRequest(*packet))
+		{
+			return;
+		}
+
+		LogWarning("Account login request send failed.");
+	}
+
+	void UdpClient::ResetAccountLogin()
+	{
+		accountLoginState_.Reset();
 	}
 
 	bool UdpClient::SendJoinRequest()
@@ -246,7 +289,7 @@ namespace client::net
 
 	void UdpClient::ProcessReliableResends()
 	{
-		const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+		const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 		common::net::ReliableUdpSession::ResendPacketList resendPacketList;
 
 		{
@@ -332,6 +375,17 @@ namespace client::net
 		}
 	}
 
+	bool UdpClient::SendAccountLoginRequest(const common::packet::AccountLoginRequestPacket& packet)
+	{
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		if (!packetBuffer.has_value())
+		{
+			return false;
+		}
+
+		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+	}
+
 	bool UdpClient::SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader =
@@ -384,7 +438,7 @@ namespace client::net
 				return false;
 			}
 
-			const common::net::ReliableUdpSession::TimePoint currentTime = common::net::ReliableUdpSession::Clock::now();
+			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 
 			if (!reliableSession_.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
 			{
@@ -416,6 +470,13 @@ namespace client::net
 	void UdpClient::RegisterPacketHandlers()
 	{
 		packetDispatcher_.Clear();
+
+		RegisterTypedPacketHandler(
+			packetDispatcher_,
+			common::packet::PacketType::AccountLoginResponse,
+			*this,
+			&UdpClient::HandleAccountLoginResponse
+		);
 
 		RegisterTypedPacketHandler(
 			packetDispatcher_,
@@ -518,6 +579,38 @@ namespace client::net
 		}
 
 		packetDispatcher_.Dispatch(gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
+	}
+
+	void UdpClient::HandleAccountLoginResponse(const common::packet::AccountLoginResponsePacket& packet)
+	{
+		if (!accountLoginState_.ApplyResponse(packet))
+		{
+			LogDebug("Ignored account login response that does not match the active request.");
+			return;
+		}
+
+		switch (packet.status)
+		{
+		case common::packet::AccountLoginResponseStatus::Succeeded:
+			LogInfo("Account login succeeded.");
+			break;
+
+		case common::packet::AccountLoginResponseStatus::InvalidRequest:
+			LogWarning("Account login failed because the request was invalid.");
+			break;
+
+		case common::packet::AccountLoginResponseStatus::InvalidCredentials:
+			LogWarning("Account login failed because the credentials were invalid.");
+			break;
+
+		case common::packet::AccountLoginResponseStatus::ServerError:
+			LogError("Account login failed because of a server error.");
+			break;
+
+		default:
+			LogWarning("Account login response contained an unknown status.");
+			break;
+		}
 	}
 
 	void UdpClient::HandleJoinResponse(const common::packet::JoinResponsePacket& packet)
@@ -718,14 +811,19 @@ namespace client::net
 		}
 	}
 
-	void UdpClient::SetSnapshotAssemblyTimeout(std::chrono::milliseconds snapshotAssemblyTimeout) noexcept
+	void UdpClient::SetSnapshotAssemblyTimeout(common::time::Milliseconds snapshotAssemblyTimeout) noexcept
 	{
-		if (snapshotAssemblyTimeout <= std::chrono::milliseconds(0))
+		if (snapshotAssemblyTimeout <= common::time::Milliseconds(0))
 		{
 			snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
 			return;
 		}
 
 		snapshotAssemblyTimeout_ = snapshotAssemblyTimeout;
+	}
+
+	UdpClient::AccountLoginSnapshot UdpClient::GetAccountLoginSnapshot() const
+	{
+		return accountLoginState_.GetSnapshot();
 	}
 }

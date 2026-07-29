@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 
 #include <Common/Time/TimeTypes.h>
@@ -18,7 +17,7 @@ namespace common::net
 
 		time::Milliseconds minDelay{};
 		time::Milliseconds maxDelay{};
-		time::Milliseconds reorderDelay = std::chrono::milliseconds(100);
+		time::Milliseconds reorderDelay = time::Milliseconds(100);
 
 		std::uint32_t randomSeed = 5489;
 	};

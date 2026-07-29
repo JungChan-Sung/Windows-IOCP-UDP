@@ -2,7 +2,6 @@
 
 #include <WinSock2.h>
 
-#include <chrono>
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -23,7 +22,7 @@ namespace common::net
 		{
 		public:
 			sockaddr_in remoteAddress{};
-			common::packet::PacketBuffer packetBuffer;
+			packet::PacketBuffer packetBuffer;
 		};
 
 	public:
@@ -61,7 +60,7 @@ namespace common::net
 	public:
 		[[nodiscard]] SubmitResult Submit(
 			const sockaddr_in& remoteAddress,
-			common::packet::ConstPacketSpan packetData,
+			packet::ConstPacketSpan packetData,
 			const Decision& decision,
 			time::TimePoint currentTime
 		);
@@ -71,7 +70,7 @@ namespace common::net
 		void Reset() noexcept;
 
 	private:
-		[[nodiscard]] static Packet CreatePacket(const sockaddr_in& remoteAddress, common::packet::ConstPacketSpan packetData);
+		[[nodiscard]] static Packet CreatePacket(const sockaddr_in& remoteAddress, packet::ConstPacketSpan packetData);
 
 	public:
 		[[nodiscard]] std::size_t GetPendingPacketCount() const noexcept;

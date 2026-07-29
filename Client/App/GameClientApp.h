@@ -4,7 +4,6 @@
 #include <Windows.h>
 
 #include <atomic>
-#include <chrono>
 #include <expected>
 #include <span>
 #include <string>

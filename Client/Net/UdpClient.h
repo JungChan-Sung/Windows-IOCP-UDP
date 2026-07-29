@@ -1,10 +1,10 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 #include <expected>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -13,9 +13,11 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Packet/PacketBuffer.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientTransportType.h>
 #include <Client/Config/ClientConfigDefaults.h>
+#include <Client/Net/AccountLoginState.h>
 #include <Client/Net/ClientPacketDispatcher.h>
 #include <Client/Net/SnapshotChunkAssembler.h>
 #include <Client/Net/UdpIocpTransport.h>
@@ -33,6 +35,7 @@ namespace common::log
 
 namespace common::packet
 {
+	struct AccountLoginResponsePacket;
 	struct JoinResponsePacket;
 	struct JoinRoomResponsePacket;
 	struct PlayerJoinedPacket;
@@ -60,6 +63,9 @@ namespace client::net
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
 
+		using AccountLoginRequestId = AccountLoginState::RequestId;
+		using AccountLoginSnapshot = AccountLoginState::Snapshot;
+
 	private:
 		using ClientWorldType = game::ClientWorld;
 
@@ -76,8 +82,10 @@ namespace client::net
 		std::atomic<bool> isRunning_ = false;
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
-		std::chrono::milliseconds snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
+		common::time::Milliseconds snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
 		bool enableChunkAssemblerDebugTests_ = config::defaultEnableChunkAssemblerDebugTests;
+
+		AccountLoginState accountLoginState_;
 		ClientPacketDispatcher packetDispatcher_;
 		SnapshotChunkAssembler snapshotChunkAssembler_;
 
@@ -104,6 +112,14 @@ namespace client::net
 		void AttachLogger(common::log::ILogger& logger) noexcept;
 		void DetachLogger() noexcept;
 
+		[[nodiscard]] AccountLoginRequestId BeginAccountLogin(
+			std::string loginName,
+			std::string passwordHash,
+			std::chrono::milliseconds retryInterval
+		);
+		void ProcessAccountLogin();
+		void ResetAccountLogin();
+
 		[[nodiscard]] bool SendJoinRequest();
 		[[nodiscard]] bool SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence);
 		[[nodiscard]] bool SendFireRequest();
@@ -115,7 +131,9 @@ namespace client::net
 	private:
 		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
+
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
+		[[nodiscard]] bool SendAccountLoginRequest(const common::packet::AccountLoginRequestPacket& packet);
 		[[nodiscard]] bool SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket);
 		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket);
 		[[nodiscard]] bool SendReliableAckPacket();
@@ -124,6 +142,7 @@ namespace client::net
 
 		void HandlePacket(const char* packetData, int packetSize);
 		void HandleReliablePacket(const char* packetData, int packetSize);
+		void HandleAccountLoginResponse(const common::packet::AccountLoginResponsePacket& packet);
 		void HandleJoinResponse(const common::packet::JoinResponsePacket& packet);
 		void HandleJoinRoomResponse(const common::packet::JoinRoomResponsePacket& packet);
 		void HandlePlayerJoined(const common::packet::PlayerJoinedPacket& packet);
@@ -144,12 +163,14 @@ namespace client::net
 			std::size_t iocpRecvContextCount
 		) noexcept;
 
-		void SetSnapshotAssemblyTimeout(std::chrono::milliseconds snapshotAssemblyTimeout) noexcept;
+		void SetSnapshotAssemblyTimeout(common::time::Milliseconds snapshotAssemblyTimeout) noexcept;
 
 		void SetEnableChunkAssemblerDebugTests(bool enableChunkAssemblerDebugTests) noexcept
 		{
 			enableChunkAssemblerDebugTests_ = enableChunkAssemblerDebugTests;
 		}
+
+		[[nodiscard]] AccountLoginSnapshot GetAccountLoginSnapshot() const;
 	};
 }
 

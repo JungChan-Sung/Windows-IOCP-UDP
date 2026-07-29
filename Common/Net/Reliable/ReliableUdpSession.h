@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -16,9 +15,9 @@ namespace common::net
 	class ReliableUdpSession
 	{
 	public:
-		using Clock = common::time::Clock;
-		using TimePoint = common::time::TimePoint;
-		using Duration = common::time::Duration;
+		using Clock = time::Clock;
+		using TimePoint = time::TimePoint;
+		using Duration = time::Duration;
 		using ResendPacketList = ReliableUdpSendWindow::ResendPacketList;
 		using ResendResult = ReliableUdpSendWindow::ResendResult;
 
@@ -62,7 +61,7 @@ namespace common::net
 			return reliableHeader;
 		}
 
-		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
+		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 		}

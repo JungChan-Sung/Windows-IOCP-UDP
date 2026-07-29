@@ -1,6 +1,7 @@
 #include "UdpFaultDecisionGenerator.h"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 namespace
@@ -11,9 +12,9 @@ namespace
 		config.duplicateRate = std::clamp(config.duplicateRate, 0.0F, 1.0F);
 		config.reorderRate = std::clamp(config.reorderRate, 0.0F, 1.0F);
 
-		config.minDelay = std::max(config.minDelay, std::chrono::milliseconds::zero());
-		config.maxDelay = std::max(config.maxDelay, std::chrono::milliseconds::zero());
-		config.reorderDelay = std::max(config.reorderDelay, std::chrono::milliseconds::zero());
+		config.minDelay = std::max(config.minDelay, common::time::Milliseconds::zero());
+		config.maxDelay = std::max(config.maxDelay, common::time::Milliseconds::zero());
+		config.reorderDelay = std::max(config.reorderDelay, common::time::Milliseconds::zero());
 
 		if (config.minDelay > config.maxDelay)
 		{

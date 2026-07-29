@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <string>
 
@@ -26,7 +25,7 @@ namespace server::config
 	{
 	public:
 		common::game::RoomId initialRoomId = 1;
-		common::time::Seconds peerTimeout = std::chrono::seconds(10);
+		common::time::Seconds peerTimeout = common::time::Seconds(10);
 	};
 
 	struct ReliableUdpConfig
@@ -40,7 +39,7 @@ namespace server::config
 	struct TickConfig
 	{
 	public:
-		std::chrono::steady_clock::duration tickInterval = common::game::defaultFixedTickInterval;
+		common::time::Duration tickInterval = common::game::defaultFixedTickInterval;
 		float fixedDeltaSeconds = common::game::defaultFixedDeltaSeconds;
 	};
 
@@ -71,7 +70,7 @@ namespace server::config
 	{
 	public:
 		bool enableStatusLog = true;
-		std::chrono::seconds statusLogInterval = std::chrono::seconds(10);
+		common::time::Seconds statusLogInterval = common::time::Seconds(10);
 		common::log::LogLevel logLevel = common::log::LogLevel::Info;
 		std::size_t asyncLogWorkerThreadCount = 1;
 	};

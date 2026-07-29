@@ -1,10 +1,10 @@
 #pragma once
 
-#include <chrono>
+#include <Common/Time/TimeTypes.h>
 
 namespace common::game
 {
-	inline constexpr std::chrono::milliseconds defaultFixedTickInterval = std::chrono::milliseconds(50);
+	inline constexpr time::Milliseconds defaultFixedTickInterval = time::Milliseconds(50);
 	inline constexpr float defaultFixedDeltaSeconds = 0.05F;
 
 	inline constexpr float defaultMoveSpeed = 220.0F;

@@ -1,10 +1,11 @@
 #pragma once
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Net/UdpPacketDispatcher.h>
 
@@ -14,9 +15,9 @@ namespace server::net
 	{
 	public:
 		using DispatchStatus = UdpPacketDispatcher::DispatchStatus;
-		using Clock = std::chrono::steady_clock;
-		using TimePoint = Clock::time_point;
-		using Duration = Clock::duration;
+		using Clock = common::time::Clock;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 
 	public:
 		struct LogDecision
@@ -38,7 +39,7 @@ namespace server::net
 
 	private:
 		static inline constexpr std::uint64_t immediateLogCount = 3;
-		static inline constexpr Duration logInterval = std::chrono::seconds(5);
+		static inline constexpr Duration logInterval = common::time::Seconds(5);
 		static inline constexpr std::size_t statusCount = static_cast<std::size_t>(DispatchStatus::Count);
 
 	private:

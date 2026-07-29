@@ -178,7 +178,7 @@ namespace client::net
 
 	std::optional<SnapshotChunkAssembler::AssembledBulletSnapshot> SnapshotChunkAssembler::PushBulletSnapshotChunk(const common::packet::BulletSnapshotPacket& packet)
 	{
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 
 		bulletAssemblerCore_.CleanupExpiredAssemblies(
 			currentTime,
@@ -203,7 +203,7 @@ namespace client::net
 
 	std::optional<SnapshotChunkAssembler::AssembledImpactEffectPacket> SnapshotChunkAssembler::PushImpactEffectChunk(const common::packet::ImpactEffectPacket& packet)
 	{
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 
 		impactEffectAssemblerCore_.CleanupExpiredAssemblies(
 			currentTime,

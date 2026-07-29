@@ -2,7 +2,6 @@
 
 #include <WinSock2.h>
 
-#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <unordered_map>

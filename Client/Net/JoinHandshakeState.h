@@ -1,7 +1,8 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
+
+#include <Common/Time/TimeTypes.h>
 
 namespace client::net
 {
@@ -16,9 +17,9 @@ namespace client::net
 		};
 
 	public:
-		using Clock = std::chrono::steady_clock;
-		using TimePoint = Clock::time_point;
-		using Duration = std::chrono::milliseconds;
+		using Clock = common::time::Clock;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Milliseconds;
 
 	private:
 		State state_ = State::Idle;

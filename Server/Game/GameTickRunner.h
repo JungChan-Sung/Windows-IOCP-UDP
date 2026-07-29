@@ -1,12 +1,13 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
 #include <expected>
 #include <functional>
 #include <stop_token>
 #include <string_view>
 #include <thread>
+
+#include <Common/Time/TimeTypes.h>
 
 namespace server::game
 {
@@ -24,8 +25,8 @@ namespace server::game
 	public:
 		using StartResult = std::expected<void, StartError>;
 
-		using Clock = std::chrono::steady_clock;
-		using Duration = Clock::duration;
+		using Clock = common::time::Clock;
+		using Duration = common::time::Duration;
 		using TickHandler = std::function<void()>;
 
 	private:

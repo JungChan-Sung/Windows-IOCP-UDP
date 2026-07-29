@@ -1,7 +1,8 @@
 #include "GameWindow.h"
 
-#include <chrono>
 #include <utility>
+
+#include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientWorld.h>
 #include <Client/Render/GdiRenderer.h>
@@ -186,7 +187,7 @@ namespace client::ui
 		const std::uint32_t lastServerTick = world_->GetLastServerTick();
 		const int interpolationDelayMs = static_cast<int>(world_->GetInterpolationDelay().count());
 		const game::ClientWorld::RenderPlayerStateList renderPlayerStateList
-			= world_->GetRenderPlayerStatesSnapshot(std::chrono::steady_clock::now());
+			= world_->GetRenderPlayerStatesSnapshotcommon::time::Clock::now());
 		const game::ClientWorld::RenderBulletStateList renderBulletStateList = world_->GetRenderBulletStatesSnapshot();
 		const game::ClientWorld::RenderImpactEffectStateList renderImpactEffectStateList
 			= world_->GetRenderImpactEffectStatesSnapshot();

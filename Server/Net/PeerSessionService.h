@@ -2,11 +2,11 @@
 
 #include <WinSock2.h>
 
-#include <chrono>
 #include <cstdint>
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
@@ -21,7 +21,7 @@ namespace server::net
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
-		using TimePoint = std::chrono::steady_clock::time_point;
+		using TimePoint = common::time::TimePoint;
 
 	public:
 		struct JoinResult

@@ -1,6 +1,5 @@
 #include "ServerConfigLoader.h"
 
-#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
@@ -14,6 +13,7 @@
 
 #include <Common/Config/ConfigText.h>
 #include <Common/Log/LogLevel.h>
+#include <Common/Time/TimeTypes.h>
 
 #include "ServerConfigValidator.h"
 
@@ -143,7 +143,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				serverConfig.session.peerTimeout = std::chrono::seconds(*parsedValue);
+				serverConfig.session.peerTimeout = common::time::Seconds(*parsedValue);
 			}
 			else
 			{
@@ -645,7 +645,7 @@ namespace
 			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
-				serverConfig.diagnostics.statusLogInterval = std::chrono::seconds(*parsedValue);
+				serverConfig.diagnostics.statusLogInterval = common::time::Seconds(*parsedValue);
 			}
 			else
 			{

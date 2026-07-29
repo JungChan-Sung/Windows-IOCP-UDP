@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstddef>
-#include <chrono>
 #include <string>
 
 #include <Client/Config/ClientTransportType.h>
 #include <Client/Config/ClientConfigDefaults.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace client::config
 {
@@ -22,30 +22,30 @@ namespace client::config
 	struct TimingConfig
 	{
 	public:
-		std::chrono::milliseconds updateSleepInterval = defaultUpdateSleepInterval;
-		std::chrono::milliseconds joinRetryInterval = defaultJoinRetryInterval;
-		std::chrono::milliseconds roomJoinInterval = defaultRoomJoinInterval;
-		std::chrono::milliseconds interpolationAdjustStep = defaultInterpolationAdjustStep;
+		common::time::Milliseconds updateSleepInterval = defaultUpdateSleepInterval;
+		common::time::Milliseconds joinRetryInterval = defaultJoinRetryInterval;
+		common::time::Milliseconds roomJoinInterval = defaultRoomJoinInterval;
+		common::time::Milliseconds interpolationAdjustStep = defaultInterpolationAdjustStep;
 	};
 
 	struct InterpolationConfig
 	{
 	public:
-		std::chrono::milliseconds defaultDelay = defaultInterpolationDelay;
-		std::chrono::milliseconds minDelay = minInterpolationDelay;
-		std::chrono::milliseconds maxDelay = maxInterpolationDelay;
+		common::time::Milliseconds defaultDelay = defaultInterpolationDelay;
+		common::time::Milliseconds minDelay = minInterpolationDelay;
+		common::time::Milliseconds maxDelay = maxInterpolationDelay;
 	};
 
 	struct SnapshotConfig
 	{
 	public:
-		std::chrono::milliseconds assemblyTimeout = defaultSnapshotAssemblyTimeout;
+		common::time::Milliseconds assemblyTimeout = defaultSnapshotAssemblyTimeout;
 	};
 
 	struct SimulationConfig
 	{
 	public:
-		std::chrono::milliseconds tickInterval = defaultSimulationTickInterval;
+		common::time::Milliseconds tickInterval = defaultSimulationTickInterval;
 		float deltaSeconds = defaultSimulationDeltaSeconds;
 	};
 

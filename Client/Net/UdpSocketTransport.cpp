@@ -9,6 +9,7 @@
 #include <utility>
 
 #include <Common/Net/UdpContext.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace client::net
 {
@@ -258,8 +259,6 @@ namespace client::net
 
 	void UdpSocketTransport::RecvLoop(std::stop_token stopToken)
 	{
-		using namespace std::chrono_literals;
-
 		common::net::UdpBuffer receiveBuffer{};
 
 		while (!stopToken.stop_requested())
@@ -286,7 +285,7 @@ namespace client::net
 				const int errorCode = ::WSAGetLastError();
 				if (errorCode == WSAEWOULDBLOCK)
 				{
-					std::this_thread::sleep_for(1ms);
+					std::this_thread::sleep_for(common::time::Milliseconds(1));
 					continue;
 				}
 
@@ -300,7 +299,7 @@ namespace client::net
 
 			if (receiveBytes <= 0)
 			{
-				std::this_thread::sleep_for(1ms);
+				std::this_thread::sleep_for(common::time::Milliseconds(1));
 				continue;
 			}
 

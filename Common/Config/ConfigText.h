@@ -3,12 +3,13 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
-#include <chrono>
 #include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
+
+#include <Common/Time/TimeTypes.h>
 
 namespace common::config
 {
@@ -101,7 +102,7 @@ namespace common::config
 		return value;
 	}
 
-	[[nodiscard]] inline std::optional<std::chrono::milliseconds> TryParseMilliseconds(std::string_view text) noexcept
+	[[nodiscard]] inline std::optional<time::Milliseconds> TryParseMilliseconds(std::string_view text) noexcept
 	{
 		const std::optional<unsigned long long> parsedValue = TryParseUnsigned(text);
 		if (!parsedValue.has_value())
@@ -109,14 +110,13 @@ namespace common::config
 			return std::nullopt;
 		}
 
-		using MillisecondsRep = std::chrono::milliseconds::rep;
-
+		using MillisecondsRep = time::Milliseconds::rep;
 		if (*parsedValue > static_cast<unsigned long long>(std::numeric_limits<MillisecondsRep>::max()))
 		{
 			return std::nullopt;
 		}
 
-		return std::chrono::milliseconds(static_cast<MillisecondsRep>(*parsedValue));
+		return time::Milliseconds(static_cast<MillisecondsRep>(*parsedValue));
 	}
 
 	[[nodiscard]] inline std::optional<float> TryParseFloat(std::string_view text)

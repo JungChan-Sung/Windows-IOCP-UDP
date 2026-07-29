@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <mutex>
@@ -26,7 +25,7 @@ namespace client::game
 		public:
 			float x = 0.0F;
 			float y = 0.0F;
-			std::chrono::steady_clock::time_point time{};
+			common::time::TimePoint time{};
 		};
 
 		struct RemotePlayerState
@@ -185,12 +184,10 @@ namespace client::game
 		[[nodiscard]] PlayerId GetLocalPlayerId() const noexcept;
 		[[nodiscard]] std::uint32_t GetLastServerTick() const noexcept;
 		[[nodiscard]] RoomId GetCurrentRoomId() const noexcept;
-		[[nodiscard]] RenderPlayerStateList GetRenderPlayerStatesSnapshot(
-			std::chrono::steady_clock::time_point renderTime
-		) const;
+		[[nodiscard]] RenderPlayerStateList GetRenderPlayerStatesSnapshot(common::time::TimePoint renderTime) const;
 		[[nodiscard]] RenderBulletStateList GetRenderBulletStatesSnapshot() const;
 		[[nodiscard]] RenderImpactEffectStateList GetRenderImpactEffectStatesSnapshot() const;
-		[[nodiscard]] std::chrono::milliseconds GetInterpolationDelay() const noexcept;
+		[[nodiscard]] common::time::Milliseconds GetInterpolationDelay() const noexcept;
 		[[nodiscard]] bool IsLocalPlayerDead() const noexcept;
 	};
 }

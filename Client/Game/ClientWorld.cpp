@@ -7,8 +7,8 @@
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/RoomLayout.h>
-#include <Common/Time/TimeTypes.h>
 #include <Common/Game/WorldCollision.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientTuning.h>
 
@@ -58,7 +58,7 @@ namespace
 		std::uint32_t playerId,
 		float x,
 		float y,
-		std::chrono::steady_clock::time_point sampleTime
+		common::time::TimePoint sampleTime
 	) noexcept
 	{
 		playerState.playerId = playerId;
@@ -83,7 +83,7 @@ namespace
 		RemotePlayerState& playerState,
 		float x,
 		float y,
-		std::chrono::steady_clock::time_point sampleTime
+		common::time::TimePoint sampleTime
 	) noexcept
 	{
 		playerState.previousSample = playerState.targetSample;
@@ -133,7 +133,7 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 
 		RemotePlayerState& playerState = playerTable_[playerJoinedEvent.playerId];
 
@@ -180,7 +180,7 @@ namespace client::game
 		lastServerTick_ = packet.serverTick;
 		currentRoomId_ = packet.roomId;
 
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 		const std::size_t playerCount = std::min(
 			static_cast<std::size_t>(packet.playerCount),
 			packet.players.size()
@@ -444,7 +444,7 @@ namespace client::game
 		auto playerIterator = playerTable_.find(localPlayerId_);
 		if (playerIterator != playerTable_.end())
 		{
-			const auto currentTime = std::chrono::steady_clock::now();
+			const auto currentTime = common::time::Clock::now();
 
 			playerIterator->second.previousSample.x = x;
 			playerIterator->second.previousSample.y = y;
@@ -541,7 +541,7 @@ namespace client::game
 		return currentRoomId_;
 	}
 
-	ClientWorld::RenderPlayerStateList ClientWorld::GetRenderPlayerStatesSnapshot(std::chrono::steady_clock::time_point renderTime) const
+	ClientWorld::RenderPlayerStateList ClientWorld::GetRenderPlayerStatesSnapshot(common::time::TimePoint renderTime) const
 	{
 		std::scoped_lock lock(worldMutex_);
 
@@ -598,8 +598,8 @@ namespace client::game
 				continue;
 			}
 
-			const float totalSeconds = std::chrono::duration<float>(targetSample.time - previousSample.time).count();
-			const float elapsedSeconds = std::chrono::duration<float>(interpolationTargetTime - previousSample.time).count();
+			const float totalSeconds = common::time::FloatSeconds(targetSample.time - previousSample.time).count();
+			const float elapsedSeconds = common::time::FloatSeconds(interpolationTargetTime - previousSample.time).count();
 			const float alpha = std::clamp(elapsedSeconds / totalSeconds, 0.0F, 1.0F);
 
 			renderPlayerState.x = Lerp(previousSample.x, targetSample.x, alpha);

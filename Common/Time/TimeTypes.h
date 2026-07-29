@@ -15,4 +15,5 @@ namespace common::time
 
 	using Milliseconds = std::chrono::milliseconds;
 	using Seconds = std::chrono::seconds;
+	using FloatSeconds = std::chrono::duration<float>;
 }

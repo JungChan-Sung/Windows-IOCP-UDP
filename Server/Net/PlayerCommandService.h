@@ -1,9 +1,8 @@
 #pragma once
 
-#include <chrono>
-
 #include <Common/Net/Endpoint.h>
 #include <Common/Packet/Game/GamePacket.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
@@ -25,7 +24,7 @@ namespace server::net
 
 	public:
 		using EndpointKey = common::net::EndpointKey;
-		using TimePoint = std::chrono::steady_clock::time_point;
+		using TimePoint = common::time::time_point;
 
 	public:
 		PlayerCommandService() = default;

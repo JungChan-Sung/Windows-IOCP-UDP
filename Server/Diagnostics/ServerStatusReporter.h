@@ -1,7 +1,8 @@
 #pragma once
 
-#include <chrono>
 #include <string>
+
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Diagnostics/ServerStatusSnapshot.h>
 
@@ -10,12 +11,12 @@ namespace server::diagnostics
 	class ServerStatusReporter
 	{
 	public:
-		using Clock = std::chrono::steady_clock;
-		using Duration = Clock::duration;
-		using TimePoint = Clock::time_point;
+		using Clock = common::time::Clock;
+		using Duration = common::time::Duration;
+		using TimePoint = common::time::TimePoint;
 
 	private:
-		static inline constexpr Duration defaultReportInterval = std::chrono::seconds(10);
+		static inline constexpr Duration defaultReportInterval = common::time::Seconds(10);
 
 	private:
 		Duration reportInterval_ = defaultReportInterval;

@@ -1,11 +1,12 @@
 #include "ServerConfigValidator.h"
 
 #include <cmath>
-#include <chrono>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <thread>
+
+#include <Common/Time/TimeTypes.h>
 
 namespace
 {
@@ -18,9 +19,9 @@ namespace
 		warningList.push_back(std::move(warning));
 	}
 
-	[[nodiscard]] float GetDurationSeconds(std::chrono::steady_clock::duration duration) noexcept
+	[[nodiscard]] float GetDurationSeconds(common::time::Duration duration) noexcept
 	{
-		return std::chrono::duration<float>(duration).count();
+		return common::time::FloatSeconds(duration).count();
 	}
 
 	[[nodiscard]] std::size_t ResolveWorkerThreadCount(std::size_t requestedWorkerThreadCount) noexcept
@@ -76,7 +77,7 @@ namespace server::config
 			serverConfig.session.initialRoomId = defaultConfig.session.initialRoomId;
 		}
 
-		if (serverConfig.session.peerTimeout <= std::chrono::seconds(0))
+		if (serverConfig.session.peerTimeout <= common::time::Seconds(0))
 		{
 			AddWarning(warningList, "Session.PeerTimeoutSeconds must be greater than 0. Default timeout will be used.");
 			serverConfig.session.peerTimeout = defaultConfig.session.peerTimeout;
@@ -188,7 +189,7 @@ namespace server::config
 			);
 		}
 
-		if (serverConfig.tick.tickInterval <= std::chrono::steady_clock::duration::zero())
+		if (serverConfig.tick.tickInterval <= common::time::Duration::zero())
 		{
 			AddWarning(warningList, "Tick.TickIntervalMs must be greater than 0. Default tick interval will be used.");
 			serverConfig.tick.tickInterval = defaultConfig.tick.tickInterval;
@@ -271,7 +272,7 @@ namespace server::config
 				= defaultConfig.weaponRule.basicWeaponRule.fireCooldownSeconds;
 		}
 
-		if (serverConfig.diagnostics.statusLogInterval <= std::chrono::seconds(0))
+		if (serverConfig.diagnostics.statusLogInterval <= common::time::Seconds(0))
 		{
 			AddWarning(warningList, "Diagnostics.StatusLogIntervalSeconds must be greater than 0. Default status log interval will be used.");
 			serverConfig.diagnostics.statusLogInterval = defaultConfig.diagnostics.statusLogInterval;

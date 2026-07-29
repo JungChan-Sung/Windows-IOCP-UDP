@@ -11,6 +11,7 @@
 #include <Common/String/StringFormat.h>
 #include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/LogMessageBuilder.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Persistence/Core/DatabaseError.h>
 
@@ -221,8 +222,6 @@ namespace server::app
 
 	void GameServerApp::MainLoop() noexcept
 	{
-		using namespace std::chrono_literals;
-
 		while (true)
 		{
 			if ((::GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0)
@@ -230,7 +229,7 @@ namespace server::app
 				break;
 			}
 
-			std::this_thread::sleep_for(10ms);
+			std::this_thread::sleep_for(common::time::Milliseconds(10));
 		}
 	}
 }

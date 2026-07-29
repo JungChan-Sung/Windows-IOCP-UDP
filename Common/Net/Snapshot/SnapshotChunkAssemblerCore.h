@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <concepts>
@@ -8,6 +7,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <Common/Time/TimeTypes.h>
 
 namespace common::net
 {
@@ -40,7 +41,7 @@ namespace common::net
 		std::uint16_t receivedChunkCount = 0;
 		std::vector<std::uint8_t> receivedChunkFlagList;
 		std::vector<std::vector<TData>> chunkDataList;
-		std::chrono::steady_clock::time_point lastUpdatedTime;
+		time::TimePoint lastUpdatedTime;
 	};
 
 	template <typename TData, typename TRoomId>
@@ -97,7 +98,7 @@ namespace common::net
 					std::uint32_t,
 					std::size_t
 			>
-		void CleanupExpiredAssemblies(std::chrono::steady_clock::time_point currentTime, std::chrono::milliseconds assemblyTimeout, TLogFunc logFunc) noexcept
+		void CleanupExpiredAssemblies(time::TimePoint currentTime, time::Milliseconds assemblyTimeout, TLogFunc logFunc) noexcept
 		{
 			for (auto assemblyIterator = assemblyTable_.begin(); assemblyIterator != assemblyTable_.end();)
 			{
@@ -143,7 +144,7 @@ namespace common::net
 			>
 		[[nodiscard]] std::optional<AssembledChunk> PushChunk(
 			const ChunkView& chunkView,
-			std::chrono::steady_clock::time_point currentTime,
+			time::TimePoint currentTime,
 			TLogFunc logFunc
 		)
 		{

@@ -3,7 +3,6 @@
 #include <WinSock2.h>
 
 #include <atomic>
-#include <chrono>
 #include <cstddef>
 
 #include <Common/Packet/PacketBuffer.h>

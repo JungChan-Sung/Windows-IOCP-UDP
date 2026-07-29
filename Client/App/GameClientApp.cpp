@@ -11,6 +11,7 @@
 #include <Common/String/StringFormat.h>
 #include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/LogMessageBuilder.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientTransportType.h>
@@ -119,7 +120,7 @@ namespace client::app
 
 		isRunning_.store(true);
 
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 
 		joinHandshakeState_.Begin(
 			currentTime,
@@ -272,11 +273,11 @@ namespace client::app
 	{
 		TryAdjustInterpolationDelay();
 
-		const auto currentTime = std::chrono::steady_clock::now();
+		const auto currentTime = common::time::Clock::now();
 
 		udpClient_.ProcessReliableResends();
 
-		const float effectDeltaSeconds = std::chrono::duration<float>(currentTime - lastEffectUpdateTime_).count();
+		const float effectDeltaSeconds = common::time::FloatSeconds(currentTime - lastEffectUpdateTime_).count();
 		lastEffectUpdateTime_ = currentTime;
 
 		world_.UpdateLocalEffects(effectDeltaSeconds);

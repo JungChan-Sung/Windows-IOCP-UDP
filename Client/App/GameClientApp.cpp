@@ -227,7 +227,6 @@ namespace client::app
 			.AppendCommaNamedValue("SnapshotAssemblyTimeoutMs", config_.snapshot.assemblyTimeout.count())
 			.AppendCommaNamedValue("SimulationTickIntervalMs", config_.simulation.tickInterval.count())
 			.AppendCommaNamedValue("SimulationDeltaSeconds", config_.simulation.deltaSeconds)
-			.AppendCommaNamedValue("EnableChunkAssemblerDebugTests", config_.diagnostics.enableChunkAssemblerDebugTests)
 			.AppendCommaNamedValue("LogLevel", common::log::ToString(config_.diagnostics.logLevel))
 			.AppendCommaNamedValue("AsyncLogWorkerThreadCount", config_.diagnostics.asyncLogWorkerThreadCount)
 			.Build();

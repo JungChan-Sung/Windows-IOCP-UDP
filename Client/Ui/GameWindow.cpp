@@ -186,11 +186,9 @@ namespace client::ui
 		const RoomId currentRoomId = world_->GetCurrentRoomId();
 		const std::uint32_t lastServerTick = world_->GetLastServerTick();
 		const int interpolationDelayMs = static_cast<int>(world_->GetInterpolationDelay().count());
-		const game::ClientWorld::RenderPlayerStateList renderPlayerStateList
-			= world_->GetRenderPlayerStatesSnapshotcommon::time::Clock::now());
+		const game::ClientWorld::RenderPlayerStateList renderPlayerStateList = world_->GetRenderPlayerStatesSnapshot(common::time::Clock::now());
 		const game::ClientWorld::RenderBulletStateList renderBulletStateList = world_->GetRenderBulletStatesSnapshot();
-		const game::ClientWorld::RenderImpactEffectStateList renderImpactEffectStateList
-			= world_->GetRenderImpactEffectStatesSnapshot();
+		const game::ClientWorld::RenderImpactEffectStateList renderImpactEffectStateList = world_->GetRenderImpactEffectStatesSnapshot();
 
 		renderer_->Render(
 			backBufferDeviceContext_.Get(),

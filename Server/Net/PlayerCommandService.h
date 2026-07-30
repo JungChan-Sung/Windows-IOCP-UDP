@@ -24,7 +24,7 @@ namespace server::net
 
 	public:
 		using EndpointKey = common::net::EndpointKey;
-		using TimePoint = common::time::time_point;
+		using TimePoint = common::time::TimePoint;
 
 	public:
 		PlayerCommandService() = default;

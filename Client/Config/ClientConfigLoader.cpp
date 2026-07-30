@@ -374,21 +374,6 @@ namespace
 	{
 		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
-		if (normalizedKey == "enablechunkassemblerdebugtests")
-		{
-			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
-			if (parsedValue.has_value())
-			{
-				clientConfig.diagnostics.enableChunkAssemblerDebugTests = *parsedValue;
-			}
-			else
-			{
-				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
-			}
-
-			return;
-		}
-
 		if (normalizedKey == "loglevel")
 		{
 			const std::optional<common::log::LogLevel> parsedValue =

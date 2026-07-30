@@ -82,7 +82,6 @@ namespace
 		tests::Expect(result, config.snapshot.assemblyTimeout == common::time::Milliseconds(700), "ClientConfig: assemblyTimeout");
 		tests::Expect(result, config.simulation.tickInterval == common::time::Milliseconds(40), "ClientConfig: simulation tick");
 		tests::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
-		tests::Expect(result, !config.diagnostics.enableChunkAssemblerDebugTests, "ClientConfig: debug test flag");
 		tests::Expect(
 			result,
 			config.diagnostics.logLevel == common::log::LogLevel::Debug,

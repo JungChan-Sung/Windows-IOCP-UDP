@@ -156,6 +156,7 @@
     <ClCompile Include="Game\GameWorld.cpp" />
     <ClCompile Include="Net\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="Net\AccountPacketMapper.cpp" />
+    <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp" />
     <ClCompile Include="Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="Net\PeerRoomManager.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Net\AccountLoginPacketHandler.h" />
     <ClInclude Include="Net\AccountPacketMapper.h" />
+    <ClInclude Include="Net\AuthenticatedAccountRegistry.h" />
     <ClInclude Include="Net\InvalidPacketLogLimiter.h" />
     <ClInclude Include="Net\PacketPayloadValidator.h" />
     <ClInclude Include="Net\PeerRoomManager.h" />

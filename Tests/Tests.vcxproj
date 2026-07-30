@@ -148,6 +148,7 @@
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
     <ClCompile Include="..\Server\Net\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="..\Server\Net\AccountPacketMapper.cpp" />
+    <ClCompile Include="..\Server\Net\AuthenticatedAccountRegistry.cpp" />
     <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="..\Server\Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
@@ -190,6 +191,7 @@
     <ClCompile Include="Server\AccountPacketMapperTests.cpp" />
     <ClCompile Include="Server\AccountServiceIntegrationTests.cpp" />
     <ClCompile Include="Server\AccountServiceTests.cpp" />
+    <ClCompile Include="Server\AuthenticatedAccountRegistryTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
@@ -253,6 +255,7 @@
     <ClInclude Include="Server\AccountPacketMapperTests.h" />
     <ClInclude Include="Server\AccountServiceIntegrationTests.h" />
     <ClInclude Include="Server\AccountServiceTests.h" />
+    <ClInclude Include="Server\AuthenticatedAccountRegistryTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
     <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />

@@ -8,13 +8,15 @@
 #include <type_traits>
 #include <variant>
 
-#include <Common/String/StringFormat.h>
 #include <Common/Log/AsyncLogWriterGuard.h>
 #include <Common/Log/LogMessageBuilder.h>
+#include <Common/Packet/Account/AccountPacket.h>
+#include <Common/String/StringFormat.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientTransportType.h>
+#include <Client/Net/AccountLoginState.h>
 
 namespace client::app
 {
@@ -31,6 +33,9 @@ namespace client::app
 					{
 					case RunFailure::AlreadyRunning:
 						return "AlreadyRunning";
+
+					case RunFailure::AccountLoginStartFailed:
+						return "AccountLoginStartFailed";
 
 					case RunFailure::GameWindowCreateFailed:
 						return "GameWindowCreateFailed";
@@ -108,6 +113,20 @@ namespace client::app
 			return std::unexpected(RunError{ udpClientStartResult.error() });
 		}
 
+		const net::UdpClient::AccountLoginRequestId accountLoginRequestId = udpClient_.BeginAccountLogin(
+			config_.account.loginName,
+			config_.account.passwordHash,
+			config_.timing.accountLoginRetryInterval
+		);
+		if (accountLoginRequestId == common::packet::invalidAccountLoginRequestId)
+		{
+			udpClient_.Stop();
+			udpClient_.DetachLogger();
+			world_.Clear();
+
+			return std::unexpected(RunError{ RunFailure::AccountLoginStartFailed });
+		}
+
 		if (!gameWindow_.Create(instanceHandle, world_, gdiRenderer_, L"UDP Game Client"))
 		{
 			udpClient_.Stop();
@@ -121,10 +140,7 @@ namespace client::app
 
 		const auto currentTime = common::time::Clock::now();
 
-		joinHandshakeState_.Begin(
-			currentTime,
-			config_.timing.joinRetryInterval
-		);
+		joinHandshakeState_.Reset();
 
 		nextSimulationTickTime_ = currentTime;
 		nextRoomJoinTime_ = currentTime;
@@ -209,11 +225,14 @@ namespace client::app
 
 	void GameClientApp::OutputStartupConfig() const
 	{
-		const std::string message =
-			common::log::LogMessageBuilder{}
+		const bool isAccountLoginConfigured = !config_.account.loginName.empty() && !config_.account.passwordHash.empty();
+
+		const std::string message = common::log::LogMessageBuilder{}
 			.Append("Client config. ")
 			.AppendNamedValue("ServerIp", config_.network.serverIp)
 			.AppendCommaNamedValue("ServerPort", config_.network.serverPort)
+			.AppendCommaNamedValue("AccountLoginConfigured", isAccountLoginConfigured)
+			.AppendCommaNamedValue("AccountLoginRetryMs", config_.timing.accountLoginRetryInterval.count())
 			.AppendCommaNamedValue("TransportType", config::ToString(config_.network.transportType))
 			.AppendCommaNamedValue("IocpWorkerThreadCount", config_.network.iocpWorkerThreadCount)
 			.AppendCommaNamedValue("IocpRecvContextCount", config_.network.iocpRecvContextCount)
@@ -267,11 +286,37 @@ namespace client::app
 		}
 	}
 
+	bool GameClientApp::ProcessAccountLogin(common::time::TimePoint currentTime)
+	{
+		if (joinHandshakeState_.GetState() != net::JoinHandshakeState::State::Idle)
+		{
+			return true;
+		}
+
+		udpClient_.ProcessAccountLogin();
+
+		const net::UdpClient::AccountLoginSnapshot loginSnapshot = udpClient_.GetAccountLoginSnapshot();
+		if (loginSnapshot.state != net::AccountLoginState::State::Succeeded)
+		{
+			return false;
+		}
+
+		joinHandshakeState_.Begin(currentTime, config_.timing.joinRetryInterval);
+		logger_.Info("Account login completed. Starting join handshake.");
+
+		return true;
+	}
+
 	void GameClientApp::Update()
 	{
 		TryAdjustInterpolationDelay();
 
 		const auto currentTime = common::time::Clock::now();
+
+		if (!ProcessAccountLogin(currentTime))
+		{
+			return;
+		}
 
 		udpClient_.ProcessReliableResends();
 

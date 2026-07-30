@@ -36,6 +36,16 @@ namespace client::config
 			clientConfig.network.serverPort = defaultConfig.network.serverPort;
 		}
 
+		if (clientConfig.account.loginName.empty())
+		{
+			AddWarning(warningList, "Account.LoginName cannot be empty. Account login will fail until it is configured.");
+		}
+
+		if (clientConfig.account.passwordHash.empty())
+		{
+			AddWarning(warningList, "Account.PasswordHash cannot be empty. Account login will fail until it is configured.");
+		}
+
 		if (clientConfig.network.iocpWorkerThreadCount == 0)
 		{
 			AddWarning(
@@ -56,25 +66,31 @@ namespace client::config
 			clientConfig.network.iocpRecvContextCount = defaultConfig.network.iocpRecvContextCount;
 		}
 
-		if (clientConfig.timing.updateSleepInterval <= common::time::Milliseconds(0))
+		if (clientConfig.timing.updateSleepInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Timing.UpdateSleepMs must be greater than 0. Default update sleep will be used.");
 			clientConfig.timing.updateSleepInterval = defaultConfig.timing.updateSleepInterval;
 		}
 
-		if (clientConfig.timing.joinRetryInterval <= common::time::Milliseconds(0))
+		if (clientConfig.timing.accountLoginRetryInterval <= common::time::Milliseconds::zero())
+		{
+			AddWarning(warningList, "Timing.AccountLoginRetryMs must be greater than 0. Default account login retry interval will be used.");
+			clientConfig.timing.accountLoginRetryInterval = defaultConfig.timing.accountLoginRetryInterval;
+		}
+
+		if (clientConfig.timing.joinRetryInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Timing.JoinRetryMs must be greater than 0. Default join retry interval will be used.");
 			clientConfig.timing.joinRetryInterval = defaultConfig.timing.joinRetryInterval;
 		}
 
-		if (clientConfig.timing.roomJoinInterval <= common::time::Milliseconds(0))
+		if (clientConfig.timing.roomJoinInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Timing.RoomJoinMs must be greater than 0. Default room join interval will be used.");
 			clientConfig.timing.roomJoinInterval = defaultConfig.timing.roomJoinInterval;
 		}
 
-		if (clientConfig.timing.interpolationAdjustStep <= common::time::Milliseconds(0))
+		if (clientConfig.timing.interpolationAdjustStep <= common::time::Milliseconds::zero())
 		{
 			AddWarning(
 				warningList,
@@ -106,13 +122,13 @@ namespace client::config
 			clientConfig.interpolation.defaultDelay = clientConfig.interpolation.maxDelay;
 		}
 
-		if (clientConfig.snapshot.assemblyTimeout <= common::time::Milliseconds(0))
+		if (clientConfig.snapshot.assemblyTimeout <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Snapshot.AssemblyTimeoutMs must be greater than 0. Default timeout will be used.");
 			clientConfig.snapshot.assemblyTimeout = defaultConfig.snapshot.assemblyTimeout;
 		}
 
-		if (clientConfig.simulation.tickInterval <= common::time::Milliseconds(0))
+		if (clientConfig.simulation.tickInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used.");
 			clientConfig.simulation.tickInterval = defaultConfig.simulation.tickInterval;

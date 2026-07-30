@@ -30,6 +30,7 @@ namespace client::app
 		enum class RunFailure
 		{
 			AlreadyRunning,
+			AccountLoginStartFailed,
 			GameWindowCreateFailed,
 			MessageLoopFailed,
 		};
@@ -84,6 +85,9 @@ namespace client::app
 
 		int MessageLoop();
 		void UpdateLoop(std::stop_token stopToken);
+
+		[[nodiscard]] bool ProcessAccountLogin(common::time::TimePoint currentTime);
+
 		void Update();
 		void TryJoinRoom() noexcept;
 		void TryAdjustInterpolationDelay() noexcept;

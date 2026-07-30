@@ -31,8 +31,13 @@ namespace
 			"IocpWorkerThreadCount=2\n"
 			"IocpRecvContextCount=8\n"
 			"\n"
+			"[Account]\n"
+			"LoginName=test_account\n"
+			"PasswordHash=test_password_hash\n"
+			"\n"
 			"[Timing]\n"
 			"UpdateSleepMs=2\n"
+			"AccountLoginRetryMs=750\n"
 			"JoinRetryMs=1500\n"
 			"RoomJoinMs=300\n"
 			"InterpolationAdjustStepMs=15\n"
@@ -50,18 +55,17 @@ namespace
 			"DeltaSeconds=0.04\n"
 			"\n"
 			"[Diagnostics]\n"
-			"EnableChunkAssemblerDebugTests=false\n"
 			"LogLevel=Debug\n"
 			"AsyncLogWorkerThreadCount=2\n"
 		);
 
-		const client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
+		client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::Load(filePath);
 		std::filesystem::remove(filePath);
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: valid file loaded");
 		tests::Expect(result, loadResult.warningList.empty(), "ClientConfig: valid file has no loader warning");
 
-		const client::config::ClientConfig& config = loadResult.config;
+		client::config::ClientConfig& config = loadResult.config;
 
 		tests::Expect(result, config.network.serverIp == "192.168.0.10", "ClientConfig: serverIp");
 		tests::Expect(result, config.network.serverPort == 9100, "ClientConfig: serverPort");
@@ -72,7 +76,24 @@ namespace
 		);
 		tests::Expect(result, config.network.iocpWorkerThreadCount == 2, "ClientConfig: iocpWorkerThreadCount");
 		tests::Expect(result, config.network.iocpRecvContextCount == 8, "ClientConfig: iocpRecvContextCount");
+		tests::Expect(
+			result,
+			config.account.loginName == "test_account",
+			"ClientConfig: account login name"
+		);
+
+		tests::Expect(
+			result,
+			config.account.passwordHash == "test_password_hash",
+			"ClientConfig: account password hash"
+		);
 		tests::Expect(result, config.timing.updateSleepInterval == common::time::Milliseconds(2), "ClientConfig: updateSleep");
+		tests::Expect(
+			result,
+			config.timing.accountLoginRetryInterval
+			== common::time::Milliseconds(750),
+			"ClientConfig: account login retry"
+		);
 		tests::Expect(result, config.timing.joinRetryInterval == common::time::Milliseconds(1500), "ClientConfig: joinRetry");
 		tests::Expect(result, config.timing.roomJoinInterval == common::time::Milliseconds(300), "ClientConfig: roomJoin");
 		tests::Expect(result, config.timing.interpolationAdjustStep == common::time::Milliseconds(15), "ClientConfig: adjustStep");
@@ -115,9 +136,9 @@ namespace
 			"\n"
 			"[Timing]\n"
 			"UpdateSleepMs=0\n"
+			"AccountLoginRetryMs=0\n"
 			"\n"
 			"[Diagnostics]\n"
-			"EnableChunkAssemblerDebugTests=maybe\n"
 			"LogLevel=Verbose\n"
 			"AsyncLogWorkerThreadCount=0\n"
 		);
@@ -127,6 +148,12 @@ namespace
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
 		tests::Expect(result, loadResult.warningList.size() >= 11, "ClientConfig: invalid file warning count");
+		tests::Expect(
+			result,
+			loadResult.config.timing.accountLoginRetryInterval
+			== client::config::defaultAccountLoginRetryInterval,
+			"ClientConfig: invalid account login retry keeps default"
+		);
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.logLevel == client::config::defaultLogLevel,
@@ -159,7 +186,11 @@ namespace
 		config.network.serverPort = 0;
 		config.network.iocpWorkerThreadCount = 0;
 		config.network.iocpRecvContextCount = 0;
+		config.account.loginName.clear();
+		config.account.passwordHash.clear();
 		config.timing.updateSleepInterval = common::time::Milliseconds(0);
+		config.timing.accountLoginRetryInterval
+			= common::time::Milliseconds::zero();
 		config.timing.joinRetryInterval = common::time::Milliseconds(0);
 		config.timing.roomJoinInterval = common::time::Milliseconds(0);
 		config.timing.interpolationAdjustStep = common::time::Milliseconds(0);
@@ -191,6 +222,23 @@ namespace
 			result,
 			config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfigValidator: update sleep normalized"
+		);
+		tests::Expect(
+			result,
+			config.account.loginName.empty(),
+			"ClientConfigValidator: empty account login name preserved"
+		);
+
+		tests::Expect(
+			result,
+			config.account.passwordHash.empty(),
+			"ClientConfigValidator: empty account password hash preserved"
+		);
+		tests::Expect(
+			result,
+			config.timing.accountLoginRetryInterval
+			== defaultConfig.timing.accountLoginRetryInterval,
+			"ClientConfigValidator: account login retry normalized"
 		);
 		tests::Expect(
 			result,
@@ -262,6 +310,31 @@ namespace
 			result,
 			tests::ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount must be greater than 0. Default async log worker thread count will be used."),
 			"ClientConfigValidator: async log worker warning message"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"Account.LoginName cannot be empty. Account login will fail until it is configured."
+			),
+			"ClientConfigValidator: account login name warning"
+		);
+
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"Account.PasswordHash cannot be empty. Account login will fail until it is configured."
+			),
+			"ClientConfigValidator: account password hash warning"
+		);
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"Timing.AccountLoginRetryMs must be greater than 0. Default account login retry interval will be used."
+			),
+			"ClientConfigValidator: account login retry warning"
 		);
 	}
 
@@ -354,6 +427,7 @@ namespace
 			"\n"
 			"[Timing]\n"
 			"UpdateSleepMs=0\n"
+			"AccountLoginRetryMs=0\n"
 			"\n"
 			"[Diagnostics]\n"
 			"AsyncLogWorkerThreadCount=0\n"
@@ -385,6 +459,12 @@ namespace
 			result,
 			loadResult.config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfig: LoadValidated normalizes update sleep"
+		);
+		tests::Expect(
+			result,
+			loadResult.config.timing.accountLoginRetryInterval
+			== defaultConfig.timing.accountLoginRetryInterval,
+			"ClientConfig: LoadValidated normalizes account login retry"
 		);
 		tests::Expect(
 			result,

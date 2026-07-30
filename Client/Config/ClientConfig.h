@@ -19,10 +19,18 @@ namespace client::config
 		std::size_t iocpRecvContextCount = defaultIocpRecvContextCount;
 	};
 
+	struct AccountConfig
+	{
+	public:
+		std::string loginName = std::string(defaultAccountLoginName);
+		std::string passwordHash = std::string(defaultAccountPasswordHash);
+	};
+
 	struct TimingConfig
 	{
 	public:
 		common::time::Milliseconds updateSleepInterval = defaultUpdateSleepInterval;
+		common::time::Milliseconds accountLoginRetryInterval = defaultAccountLoginRetryInterval;
 		common::time::Milliseconds joinRetryInterval = defaultJoinRetryInterval;
 		common::time::Milliseconds roomJoinInterval = defaultRoomJoinInterval;
 		common::time::Milliseconds interpolationAdjustStep = defaultInterpolationAdjustStep;
@@ -60,6 +68,7 @@ namespace client::config
 	{
 	public:
 		NetworkConfig network;
+		AccountConfig account;
 		TimingConfig timing;
 		InterpolationConfig interpolation;
 		SnapshotConfig snapshot;

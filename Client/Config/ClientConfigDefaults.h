@@ -12,7 +12,11 @@ namespace client::config
 	inline constexpr std::string_view defaultServerIp = "127.0.0.1";
 	inline constexpr unsigned short defaultServerPort = 9000;
 
+	inline constexpr std::string_view defaultAccountLoginName = "";
+	inline constexpr std::string_view defaultAccountPasswordHash = "";
+
 	inline constexpr common::time::Milliseconds defaultUpdateSleepInterval = common::time::Milliseconds(1);
+	inline constexpr common::time::Milliseconds defaultAccountLoginRetryInterval = common::time::Milliseconds(1000);
 	inline constexpr common::time::Milliseconds defaultJoinRetryInterval = common::time::Milliseconds(1000);
 	inline constexpr common::time::Milliseconds defaultRoomJoinInterval = common::time::Milliseconds(200);
 	inline constexpr common::time::Milliseconds defaultInterpolationAdjustStep = common::time::Milliseconds(10);

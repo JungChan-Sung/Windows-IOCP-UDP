@@ -157,6 +157,36 @@ namespace
 		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
 	}
 
+	void ApplyAccountValue(
+		client::config::ClientConfig& clientConfig,
+		std::string_view section,
+		std::string_view key,
+		std::string_view value,
+		std::size_t lineNumber,
+		WarningList& warningList
+	)
+	{
+		const std::string normalizedKey = common::config::ToLowerCopy(key);
+
+		if (normalizedKey == "loginname")
+		{
+			clientConfig.account.loginName
+				= std::string(common::config::Trim(value));
+
+			return;
+		}
+
+		if (normalizedKey == "passwordhash")
+		{
+			clientConfig.account.passwordHash
+				= std::string(common::config::Trim(value));
+
+			return;
+		}
+
+		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
+	}
+
 	void ApplyTimingValue(
 		client::config::ClientConfig& clientConfig,
 		std::string_view section,
@@ -174,6 +204,22 @@ namespace
 			if (parsedValue.has_value() && *parsedValue > 0)
 			{
 				clientConfig.timing.updateSleepInterval = common::time::Milliseconds(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
+		if (normalizedKey == "accountloginretryms")
+		{
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
+
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				clientConfig.timing.accountLoginRetryInterval = common::time::Milliseconds(*parsedValue);
 			}
 			else
 			{
@@ -424,6 +470,12 @@ namespace
 		if (normalizedSection == "network")
 		{
 			ApplyNetworkValue(clientConfig, section, key, value, lineNumber, warningList);
+			return;
+		}
+
+		if (normalizedSection == "account")
+		{
+			ApplyAccountValue(clientConfig, section, key, value, lineNumber, warningList);
 			return;
 		}
 

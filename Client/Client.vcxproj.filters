@@ -43,9 +43,6 @@
     <Filter Include="헤더 파일\Render">
       <UniqueIdentifier>{5d2b8bef-1e0b-4916-98cb-0fcb1040ede4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Diagnostics">
-      <UniqueIdentifier>{3043a378-4369-48d5-86d0-58d1e7d7ab41}</UniqueIdentifier>
-    </Filter>
     <Filter Include="헤더 파일\Config">
       <UniqueIdentifier>{39267e92-b802-4af0-90e9-bbd5b85b0816}</UniqueIdentifier>
     </Filter>
@@ -133,9 +130,6 @@
     </ClInclude>
     <ClInclude Include="Render\GdiRenderer.h">
       <Filter>헤더 파일\Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Diagnostics\DebugTestConstants.h">
-      <Filter>헤더 파일\Diagnostics</Filter>
     </ClInclude>
     <ClInclude Include="Config\ClientConfig.h">
       <Filter>헤더 파일\Config</Filter>

@@ -43,7 +43,7 @@ namespace common::net
 
 		[[nodiscard]] SubmitResult Submit(
 			const sockaddr_in& remoteAddress,
-			common::packet::ConstPacketSpan packetData,
+			packet::ConstPacketSpan packetData,
 			time::TimePoint currentTime
 		);
 

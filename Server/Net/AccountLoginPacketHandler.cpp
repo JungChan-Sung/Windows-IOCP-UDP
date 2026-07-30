@@ -6,7 +6,7 @@
 
 namespace server::net
 {
-	AccountLoginPacketHandler::AccountLoginPacketHandler(server::account::AccountLoginTaskProcessor& taskProcessor) noexcept
+	AccountLoginPacketHandler::AccountLoginPacketHandler(account::AccountLoginTaskProcessor& taskProcessor) noexcept
 		: taskProcessor_(taskProcessor)
 	{}
 
@@ -29,7 +29,7 @@ namespace server::net
 			}
 		}
 
-		server::account::AccountLoginTask task{
+		account::AccountLoginTask task{
 			.taskId = taskId,
 			.loginName = packet.loginName,
 			.passwordHash = packet.passwordHash,
@@ -49,12 +49,12 @@ namespace server::net
 
 	AccountLoginPacketHandler::ResponseTaskList AccountLoginPacketHandler::ExtractResponseTaskList()
 	{
-		server::account::AccountLoginTaskProcessor::CompletionList completionList = taskProcessor_.ExtractCompletionList();
+		account::AccountLoginTaskProcessor::CompletionList completionList = taskProcessor_.ExtractCompletionList();
 
 		ResponseTaskList responseTaskList;
 		responseTaskList.reserve(completionList.size());
 
-		for (server::account::AccountLoginCompletion& completion : completionList)
+		for (account::AccountLoginCompletion& completion : completionList)
 		{
 			const std::optional<PendingRequest> pendingRequest = TakePendingRequest(completion.taskId);
 			if (!pendingRequest.has_value())

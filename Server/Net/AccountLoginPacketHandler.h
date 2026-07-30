@@ -37,7 +37,7 @@ namespace server::net
 		using ResponseTaskList = std::vector<ResponseTask>;
 
 	private:
-		using TaskId = server::account::AccountLoginTaskId;
+		using TaskId = account::AccountLoginTaskId;
 		using PendingRequestTable = std::unordered_map<TaskId, PendingRequest>;
 
 	private:

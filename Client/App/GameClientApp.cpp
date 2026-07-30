@@ -94,7 +94,6 @@ namespace client::app
 		);
 
 		udpClient_.SetSnapshotAssemblyTimeout(config_.snapshot.assemblyTimeout);
-		udpClient_.SetEnableChunkAssemblerDebugTests(config_.diagnostics.enableChunkAssemblerDebugTests);
 		udpClient_.SetTransportConfig(
 			config_.network.transportType,
 			config_.network.iocpWorkerThreadCount,
@@ -215,7 +214,7 @@ namespace client::app
 			.Append("Client config. ")
 			.AppendNamedValue("ServerIp", config_.network.serverIp)
 			.AppendCommaNamedValue("ServerPort", config_.network.serverPort)
-			.AppendCommaNamedValue("TransportType", client::config::ToString(config_.network.transportType))
+			.AppendCommaNamedValue("TransportType", config::ToString(config_.network.transportType))
 			.AppendCommaNamedValue("IocpWorkerThreadCount", config_.network.iocpWorkerThreadCount)
 			.AppendCommaNamedValue("IocpRecvContextCount", config_.network.iocpRecvContextCount)
 			.AppendCommaNamedValue("UpdateSleepMs", config_.timing.updateSleepInterval.count())

@@ -37,7 +37,7 @@ namespace common::log
 				}
 				else if constexpr (std::is_same_v<ErrorType, threading::ThreadPool::StartError>)
 				{
-					return common::string::FormatScopedName("ThreadPool", threading::ThreadPool::ToString(error));
+					return string::FormatScopedName("ThreadPool", threading::ThreadPool::ToString(error));
 				}
 				else
 				{

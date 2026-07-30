@@ -33,7 +33,7 @@ namespace server::game
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
 
-		using PeerTable = std::unordered_map<EndpointKey, server::net::PeerState, common::net::EndpointKeyHasher>;
+		using PeerTable = std::unordered_map<EndpointKey, net::PeerState, common::net::EndpointKeyHasher>;
 
 	public:
 		GameSimulation() = default;

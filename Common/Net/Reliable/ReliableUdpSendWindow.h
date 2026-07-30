@@ -16,8 +16,8 @@ namespace common::net
 	{
 	public:
 		ReliableSequence sequence = 0;
-		common::packet::PacketBuffer packetBuffer;
-		common::time::TimePoint lastSentTime;
+		packet::PacketBuffer packetBuffer;
+		time::TimePoint lastSentTime;
 		int resendCount = 0;
 	};
 
@@ -31,9 +31,9 @@ namespace common::net
 	class ReliableUdpSendWindow
 	{
 	public:
-		using Clock = common::time::Clock;
-		using TimePoint = common::time::TimePoint;
-		using Duration = common::time::Duration;
+		using Clock = time::Clock;
+		using TimePoint = time::TimePoint;
+		using Duration = time::Duration;
 		using PendingPacketList = std::deque<ReliablePendingPacket>;
 		using ResendPacketList = std::vector<ReliablePendingPacket>;
 		using ResendResult = ReliableResendResult;
@@ -47,7 +47,7 @@ namespace common::net
 
 	public:
 		ReliableUdpSendWindow()
-			: resendInterval_(common::time::Milliseconds(100))
+			: resendInterval_(time::Milliseconds(100))
 		{}
 		~ReliableUdpSendWindow() noexcept = default;
 
@@ -64,7 +64,7 @@ namespace common::net
 			pendingPacketList_.clear();
 		}
 
-		[[nodiscard]] bool CanRegisterSentPacket(const common::packet::PacketBuffer& packetBuffer) const noexcept
+		[[nodiscard]] bool CanRegisterSentPacket(const packet::PacketBuffer& packetBuffer) const noexcept
 		{
 			return !packetBuffer.empty() && pendingPacketList_.size() < maxPendingPacketCount_;
 		}
@@ -77,7 +77,7 @@ namespace common::net
 			return sequence;
 		}
 
-		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
+		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			if (!CanRegisterSentPacket(packetBuffer))
 			{
@@ -94,7 +94,7 @@ namespace common::net
 			return true;
 		}
 
-		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(common::packet::PacketBuffer packetBuffer, TimePoint sentTime)
+		[[nodiscard]] std::optional<ReliableSequence> RegisterSentPacket(packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			if (!CanRegisterSentPacket(packetBuffer))
 			{

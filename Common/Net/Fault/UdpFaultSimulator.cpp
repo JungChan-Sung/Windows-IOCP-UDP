@@ -15,7 +15,7 @@ namespace common::net
 		packetScheduler_.Reset();
 	}
 
-	UdpFaultSimulator::SubmitResult UdpFaultSimulator::Submit(const sockaddr_in& remoteAddress, common::packet::ConstPacketSpan packetData, time::TimePoint currentTime)
+	UdpFaultSimulator::SubmitResult UdpFaultSimulator::Submit(const sockaddr_in& remoteAddress, packet::ConstPacketSpan packetData, time::TimePoint currentTime)
 	{
 		UdpFaultDecisionGenerator::Decision decision{};
 

@@ -11,7 +11,7 @@ namespace common::net
 {
 	inline constexpr std::size_t udpBufferSize = 1200;
 
-	using UdpBuffer = std::array<char, common::net::udpBufferSize>;
+	using UdpBuffer = std::array<char, udpBufferSize>;
 
 	struct UdpContext
 	{

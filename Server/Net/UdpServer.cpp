@@ -191,7 +191,7 @@ namespace server::net
 		);
 	}
 
-	UdpServer::StartResult UdpServer::Start(const server::config::ServerConfig& config)
+	UdpServer::StartResult UdpServer::Start(const config::ServerConfig& config)
 	{
 		if (isRunning_.load())
 		{
@@ -201,10 +201,10 @@ namespace server::net
 
 		config_ = config;
 
-		const std::vector<server::config::ServerConfigWarning> warningList
-			= server::config::ServerConfigValidator::ValidateAndNormalize(config_);
+		const std::vector<config::ServerConfigWarning> warningList
+			= config::ServerConfigValidator::ValidateAndNormalize(config_);
 
-		for (const server::config::ServerConfigWarning& warning : warningList)
+		for (const config::ServerConfigWarning& warning : warningList)
 		{
 			LogWarning(warning.message);
 		}
@@ -294,7 +294,7 @@ namespace server::net
 
 	UdpServer::StartResult UdpServer::Start(unsigned short port, std::size_t workerThreadCount)
 	{
-		server::config::ServerConfig config{};
+		config::ServerConfig config{};
 		config.network.port = port;
 		config.network.workerThreadCount = workerThreadCount;
 

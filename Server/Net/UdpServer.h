@@ -87,7 +87,7 @@ namespace server::net
 		common::log::ILogger* logger_ = nullptr;
 		AccountLoginPacketHandler* accountLoginPacketHandler_ = nullptr;
 
-		server::config::ServerConfig config_{};
+		config::ServerConfig config_{};
 
 		unsigned short port_ = 0;
 		std::size_t workerThreadCount_ = 0;
@@ -106,7 +106,7 @@ namespace server::net
 		[[nodiscard]] static std::string ToString(const StartError& startError);
 
 	public:
-		[[nodiscard]] StartResult Start(const server::config::ServerConfig& config);
+		[[nodiscard]] StartResult Start(const config::ServerConfig& config);
 		[[nodiscard]] StartResult Start(unsigned short port, std::size_t workerThreadCount = 0);
 		void Stop() noexcept;
 

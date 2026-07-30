@@ -23,8 +23,6 @@ namespace client::config
 
 	inline constexpr common::time::Milliseconds defaultSnapshotAssemblyTimeout = common::time::Milliseconds(500);
 
-	inline constexpr bool defaultEnableChunkAssemblerDebugTests = true;
-
 	inline constexpr common::log::LogLevel defaultLogLevel = common::log::LogLevel::Info;
 	inline constexpr std::size_t defaultAsyncLogWorkerThreadCount = 1;
 

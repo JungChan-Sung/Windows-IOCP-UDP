@@ -138,7 +138,7 @@ namespace client::net
 			.Append("UdpClient started. ")
 			.AppendNamedValue("ServerIp", serverIp)
 			.AppendCommaNamedValue("ServerPort", serverPort)
-			.AppendCommaNamedValue("TransportType", client::config::ToString(transportType_))
+			.AppendCommaNamedValue("TransportType", config::ToString(transportType_))
 			.Build();
 
 		LogInfo(message);

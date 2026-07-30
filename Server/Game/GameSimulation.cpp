@@ -64,7 +64,7 @@ namespace server::game
 		}
 	}
 
-	void server::game::GameSimulation::UpdateBullets(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::UpdateBullets(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
 		GameWorld::BulletStateList& bulletStateList = gameWorld.GetBulletStateList();
 
@@ -240,7 +240,7 @@ namespace server::game
 		}
 	}
 
-	void server::game::GameSimulation::UpdateRespawns(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::UpdateRespawns(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
 		GameWorld::PlayerTable& playerTable = gameWorld.GetPlayerTable();
 
@@ -290,7 +290,7 @@ namespace server::game
 		}
 	}
 
-	BulletState server::game::GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const config::WeaponRuleConfig& weaponRuleConfig) const
+	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const config::WeaponRuleConfig& weaponRuleConfig) const
 	{
 		const common::game::WeaponRule& weaponRule = GetWeaponRule(playerState.weaponType, weaponRuleConfig);
 
@@ -349,7 +349,7 @@ namespace server::game
 		return fallbackSpawnPosition;
 	}
 
-	void server::game::GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
 		PlayerState* playerState = gameWorld.FindPlayer(playerId);
 		if (playerState == nullptr)

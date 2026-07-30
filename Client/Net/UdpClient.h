@@ -83,7 +83,6 @@ namespace client::net
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
 		common::time::Milliseconds snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
-		bool enableChunkAssemblerDebugTests_ = config::defaultEnableChunkAssemblerDebugTests;
 
 		AccountLoginState accountLoginState_;
 		ClientPacketDispatcher packetDispatcher_;
@@ -115,7 +114,7 @@ namespace client::net
 		[[nodiscard]] AccountLoginRequestId BeginAccountLogin(
 			std::string loginName,
 			std::string passwordHash,
-			std::chrono::milliseconds retryInterval
+			common::time::Milliseconds retryInterval
 		);
 		void ProcessAccountLogin();
 		void ResetAccountLogin();
@@ -164,11 +163,6 @@ namespace client::net
 		) noexcept;
 
 		void SetSnapshotAssemblyTimeout(common::time::Milliseconds snapshotAssemblyTimeout) noexcept;
-
-		void SetEnableChunkAssemblerDebugTests(bool enableChunkAssemblerDebugTests) noexcept
-		{
-			enableChunkAssemblerDebugTests_ = enableChunkAssemblerDebugTests;
-		}
 
 		[[nodiscard]] AccountLoginSnapshot GetAccountLoginSnapshot() const;
 	};

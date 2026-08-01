@@ -3,6 +3,7 @@
 #include <WinSock2.h>
 
 #include <cstdint>
+#include <string_view>
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
@@ -24,6 +25,13 @@ namespace server::net
 		using TimePoint = common::time::TimePoint;
 
 	public:
+		struct AuthenticatedIdentity
+		{
+		public:
+			std::int64_t accountId = 0;
+			std::string_view nickname;
+		};
+
 		struct JoinResult
 		{
 		public:
@@ -68,8 +76,10 @@ namespace server::net
 		PeerSessionService& operator=(PeerSessionService&&) = delete;
 
 	public:
-		[[nodiscard]] JoinResult JoinPeer(const sockaddr_in& remoteAddress,
+		[[nodiscard]] JoinResult JoinPeer(
+			const sockaddr_in& remoteAddress,
 			const EndpointKey& endpointKey,
+			const AuthenticatedIdentity& authenticatedIdentity,
 			RoomId initialRoomId,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,

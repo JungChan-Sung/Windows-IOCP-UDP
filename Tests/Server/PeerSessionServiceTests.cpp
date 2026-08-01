@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <string_view>
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
@@ -50,9 +51,16 @@ namespace
 		TimePoint currentTime
 	)
 	{
+		const server::net::PeerSessionService::AuthenticatedIdentity
+			authenticatedIdentity{
+				.accountId = 1001,
+				.nickname = "nickname",
+		};
+
 		return service.JoinPeer(
 			remoteAddress,
 			endpointKey,
+			authenticatedIdentity,
 			initialRoomId,
 			peerRoomManager,
 			gameWorld,
@@ -112,6 +120,17 @@ namespace
 
 		if (peerState != nullptr)
 		{
+			tests::Expect(
+				result,
+				peerState->accountId == 1001,
+				"PeerSessionService: join account id"
+			);
+
+			tests::Expect(
+				result,
+				peerState->nickname == "nickname",
+				"PeerSessionService: join nickname"
+			);
 			tests::Expect(result, peerState->playerId == joinResult.playerId, "PeerSessionService: join peer player id");
 			tests::Expect(result, peerState->roomId == initialRoomId, "PeerSessionService: join peer room id");
 			tests::Expect(result, peerState->lastRecvTime == now, "PeerSessionService: join lastRecvTime");
@@ -669,6 +688,67 @@ namespace
 		tests::Expect(result, secondTimeoutResult.giveUpPacketList.size() == 3, "PeerSessionService: reliable max resend count applied");
 		tests::Expect(result, peerState->reliableSession.GetPendingPacketCount() == 0, "PeerSessionService: reliable give-up clears pending packets");
 	}
+
+	void RunJoinPeerRejectsInvalidIdentityTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::net::PeerSessionService service;
+		server::net::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		server::game::GameSimulation gameSimulation;
+
+		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpConfig{};
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(12);
+		const common::net::EndpointKey endpointKey
+			= MakeEndpointKey(remoteAddress);
+
+		const server::net::PeerSessionService::AuthenticatedIdentity
+			invalidIdentity{
+				.accountId = 0,
+				.nickname = "nickname",
+		};
+
+		const server::net::PeerSessionService::JoinResult joinResult
+			= service.JoinPeer(
+				remoteAddress,
+				endpointKey,
+				invalidIdentity,
+				1,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				gameRuleConfig,
+				reliableUdpConfig,
+				Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			!joinResult.shouldSendResponse,
+			"PeerSessionService: invalid identity no response"
+		);
+
+		tests::Expect(
+			result,
+			!joinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: invalid identity no broadcast"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetPeerCount() == 0,
+			"PeerSessionService: invalid identity no peer"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 0,
+			"PeerSessionService: invalid identity no player"
+		);
+	}
 }
 
 namespace tests::server
@@ -678,6 +758,7 @@ namespace tests::server
 		tests::DebugTestResult result{};
 
 		RunJoinPeerCreatesPeerAndPlayerTest(result);
+		RunJoinPeerRejectsInvalidIdentityTest(result);
 		RunJoinPeerAppliesReliableUdpConfigTest(result);
 		RunJoinExistingPeerReturnsExistingPlayerTest(result);
 		RunJoinExistingPeerReturnsCurrentStateTest(result);

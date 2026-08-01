@@ -3,6 +3,7 @@
 #include <WinSock2.h>
 
 #include <cstdint>
+#include <string>
 
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
@@ -16,6 +17,10 @@ namespace server::net
 	public:
 		sockaddr_in remoteAddress{};
 		common::net::EndpointKey endpointKey{};
+
+		std::int64_t accountId = 0;
+		std::string nickname;
+
 		common::game::PlayerId playerId = 0;
 		std::uint32_t lastInputSequence = 0;
 		common::game::RoomId roomId = 0;

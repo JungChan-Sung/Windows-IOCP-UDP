@@ -134,6 +134,25 @@ namespace
 			registry.GetCount() == 0,
 			"AuthenticatedAccountRegistry: invalid insert does not change count"
 		);
+
+		const bool emptyNicknameInserted = registry.Upsert(
+			MakeEndpointKey(2, 2000),
+			1001,
+			"",
+			common::time::TimePoint{}
+		);
+
+		tests::Expect(
+			result,
+			!emptyNicknameInserted,
+			"AuthenticatedAccountRegistry: empty nickname rejected"
+		);
+
+		tests::Expect(
+			result,
+			registry.GetCount() == 0,
+			"AuthenticatedAccountRegistry: invalid accounts do not change count"
+		);
 	}
 
 	void RunReplaceTest(

@@ -9,7 +9,7 @@
 
 namespace server::net
 {
-	PeerSessionService::JoinResult server::net::PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -32,6 +32,11 @@ namespace server::net
 				return joinResult;
 			}
 
+			if (authenticatedIdentity.accountId <= 0 || authenticatedIdentity.nickname.empty())
+			{
+				return joinResult;
+			}
+
 			PlayerId removedPlayerId = 0;
 			RoomId removedRoomId = 0;
 			peerRoomManager.RemovePeer(endpointKey, removedPlayerId, removedRoomId);
@@ -49,6 +54,8 @@ namespace server::net
 			initialRoomId,
 			currentTime
 		);
+		peerState.accountId = authenticatedIdentity.accountId;
+		peerState.nickname = authenticatedIdentity.nickname;
 		peerState.lastInputSequence = 0;
 
 		peerState.reliableSession.SetMaxPendingPacketCount(reliableUdpConfig.maxPendingPacketCount);
@@ -148,7 +155,7 @@ namespace server::net
 		return changeResult;
 	}
 
-	game::PlayerState server::net::PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const game::GameSimulation::SpawnPosition& spawnPosition, const config::GameRuleConfig& gameRuleConfig) const noexcept
+	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const game::GameSimulation::SpawnPosition& spawnPosition, const config::GameRuleConfig& gameRuleConfig) const noexcept
 	{
 		game::PlayerState playerState{};
 		playerState.playerId = playerId;

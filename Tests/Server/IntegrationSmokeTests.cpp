@@ -104,10 +104,16 @@ namespace
 	)
 	{
 		const common::net::EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
+		const server::net::PeerSessionService::AuthenticatedIdentity
+			authenticatedIdentity{
+				.accountId = 1001,
+				.nickname = "nickname",
+		};
 
 		return peerSessionService.JoinPeer(
 			remoteAddress,
 			endpointKey,
+			authenticatedIdentity,
 			roomId,
 			peerRoomManager,
 			gameWorld,

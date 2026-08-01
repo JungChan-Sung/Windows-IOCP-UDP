@@ -22,6 +22,7 @@
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameTickRunner.h>
 #include <Server/Game/GameWorld.h>
+#include <Server/Net/AuthenticatedAccountRegistry.h>
 #include <Server/Net/InvalidPacketLogLimiter.h>
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/PeerSessionService.h>
@@ -80,6 +81,8 @@ namespace server::net
 
 		game::GameSimulation gameSimulation_;
 		game::GameWorld gameWorld_;
+
+		AuthenticatedAccountRegistry authenticatedAccountRegistry_;
 		PeerRoomManager peerRoomManager_;
 		PeerSessionService peerSessionService_;
 		PlayerCommandService playerCommandService_;

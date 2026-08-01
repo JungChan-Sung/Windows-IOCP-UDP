@@ -320,6 +320,7 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
+			authenticatedAccountRegistry_.Clear();
 			peerRoomManager_.Clear();
 			gameWorld_.Clear();
 		}
@@ -761,21 +762,66 @@ namespace server::net
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 
 		PeerSessionService::JoinResult joinResult{};
+		bool hasAuthenticatedIdentity = false;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			joinResult = peerSessionService_.JoinPeer(
-				remoteAddress,
-				endpointKey,
-				config_.session.initialRoomId,
-				peerRoomManager_,
-				gameWorld_,
-				gameSimulation_,
-				config_.gameRule,
-				config_.reliableUdp,
-				common::time::Clock::now()
-			);
+			PeerSessionService::AuthenticatedIdentity authenticatedIdentity{};
+
+			const PeerState* existingPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+			if (existingPeerState != nullptr)
+			{
+				// JoinResponse 유실로 인한 기존 참가자의 재요청.
+				authenticatedIdentity.accountId = existingPeerState->accountId;
+				authenticatedIdentity.nickname = existingPeerState->nickname;
+
+				hasAuthenticatedIdentity = true;
+			}
+			else
+			{
+				const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey);
+				if (authenticatedAccount != nullptr)
+				{
+					authenticatedIdentity.accountId = authenticatedAccount->accountId;
+					authenticatedIdentity.nickname = authenticatedAccount->nickname;
+
+					hasAuthenticatedIdentity = true;
+				}
+			}
+
+			if (hasAuthenticatedIdentity)
+			{
+				joinResult = peerSessionService_.JoinPeer(
+					remoteAddress,
+					endpointKey,
+					authenticatedIdentity,
+					config_.session.initialRoomId,
+					peerRoomManager_,
+					gameWorld_,
+					gameSimulation_,
+					config_.gameRule,
+					config_.reliableUdp,
+					common::time::Clock::now()
+				);
+
+				if (joinResult.shouldBroadcastPlayerJoined)
+				{
+					// 계정 정보는 이제 PeerState가 소유한다.
+					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
+				}
+			}
+		}
+
+		if (!hasAuthenticatedIdentity)
+		{
+			std::ostringstream stream;
+			stream
+				<< "Unauthenticated join request ignored. Endpoint="
+				<< FormatEndpoint(remoteAddress);
+
+			LogWarning(stream.str());
+			return;
 		}
 
 		if (!joinResult.shouldSendResponse)
@@ -791,7 +837,6 @@ namespace server::net
 			joinResult.spawnPosition.x,
 			joinResult.spawnPosition.y
 		);
-
 		if (!responseSent)
 		{
 			std::ostringstream stream;
@@ -978,8 +1023,51 @@ namespace server::net
 		}
 
 		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList();
-		for (const AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
+		for (AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
 		{
+			const EndpointKey endpointKey = common::net::MakeEndpointKey(responseTask.remoteAddress);
+			bool authenticationRegistrationFailed = false;
+
+			{
+				std::scoped_lock lock(stateMutex_);
+
+				const PeerState* joinedPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+				if (joinedPeerState != nullptr)
+				{
+					// 이미 게임에 참가한 endpoint는 새 임시 인증을 만들지 않는다.
+					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
+				}
+				else if (responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded)
+				{
+					const bool registered = authenticatedAccountRegistry_.Upsert(
+						endpointKey,
+						responseTask.responsePacket.accountId,
+						responseTask.responsePacket.nickname,
+						common::time::Clock::now()
+					);
+					if (!registered)
+					{
+						static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
+
+						responseTask.responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
+						responseTask.responsePacket.accountId = 0;
+						responseTask.responsePacket.nickname.clear();
+
+						authenticationRegistrationFailed = true;
+					}
+				}
+				else
+				{
+					// 이전에 만들어진 임시 인증이 있다면 실패 응답으로 무효화한다.
+					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
+				}
+			}
+
+			if (authenticationRegistrationFailed)
+			{
+				LogError("Failed to register authenticated account.");
+			}
+
 			if (packetSender_.SendAccountLoginResponse(responseTask.remoteAddress, responseTask.responsePacket))
 			{
 				continue;
@@ -1082,14 +1170,19 @@ namespace server::net
 		};
 
 		std::vector<TimedOutBroadcast> timedOutBroadcastList;
+		std::size_t expiredAuthenticatedAccountCount = 0;
 
 		{
 			std::scoped_lock lock(stateMutex_);
+
+			const common::time::TimePoint currentTime = common::time::Clock::now();
 
 			const std::vector<PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
 				common::time::Clock::now(),
 				config_.session.peerTimeout
 			);
+
+			expiredAuthenticatedAccountCount = authenticatedAccountRegistry_.RemoveExpired(currentTime, config_.session.peerTimeout);
 
 			serverMetricsCollector_.AddTimedOutPeerCount(timedOutPeerList.size());
 
@@ -1099,11 +1192,20 @@ namespace server::net
 			{
 				gameWorld_.RemovePlayer(timedOutPeer.playerId);
 
-				TimedOutBroadcast timedOutBroadcast{};
-				timedOutBroadcast.playerId = timedOutPeer.playerId;
-				timedOutBroadcast.roomId = timedOutPeer.roomId;
-				timedOutBroadcastList.push_back(timedOutBroadcast);
+				timedOutBroadcastList.push_back(TimedOutBroadcast{
+						.playerId = timedOutPeer.playerId,
+						.roomId = timedOutPeer.roomId,
+					});
 			}
+		}
+
+		if (expiredAuthenticatedAccountCount > 0)
+		{
+			std::ostringstream stream;
+			stream << "Expired authenticated accounts removed. Count="
+				<< expiredAuthenticatedAccountCount;
+
+			LogDebug(stream.str());
 		}
 
 		for (const TimedOutBroadcast& timedOutBroadcast : timedOutBroadcastList)

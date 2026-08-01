@@ -6,7 +6,7 @@ namespace server::net
 {
 	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, std::int64_t accountId, std::string nickname, TimePoint authenticatedTime)
 	{
-		if (accountId <= 0)
+		if (accountId <= 0 || nickname.empty())
 		{
 			return false;
 		}

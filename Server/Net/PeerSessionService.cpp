@@ -35,11 +35,11 @@ namespace server::net
 			PlayerId removedPlayerId = 0;
 			RoomId removedRoomId = 0;
 			peerRoomManager.RemovePeer(endpointKey, removedPlayerId, removedRoomId);
+		}
 
-			if (authenticatedIdentity.accountId <= 0 || authenticatedIdentity.nickname.empty())
-			{
-				return joinResult;
-			}
+		if (authenticatedIdentity.accountId <= 0 || authenticatedIdentity.nickname.empty())
+		{
+			return joinResult;
 		}
 
 		const std::size_t spawnIndex = peerRoomManager.GetRoomMemberCount(initialRoomId);

@@ -32,14 +32,14 @@ namespace server::net
 				return joinResult;
 			}
 
+			PlayerId removedPlayerId = 0;
+			RoomId removedRoomId = 0;
+			peerRoomManager.RemovePeer(endpointKey, removedPlayerId, removedRoomId);
+
 			if (authenticatedIdentity.accountId <= 0 || authenticatedIdentity.nickname.empty())
 			{
 				return joinResult;
 			}
-
-			PlayerId removedPlayerId = 0;
-			RoomId removedRoomId = 0;
-			peerRoomManager.RemovePeer(endpointKey, removedPlayerId, removedRoomId);
 		}
 
 		const std::size_t spawnIndex = peerRoomManager.GetRoomMemberCount(initialRoomId);

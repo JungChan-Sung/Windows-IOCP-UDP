@@ -4,12 +4,15 @@
 
 #include <atomic>
 #include <cstddef>
+#include <functional>
 #include <mutex>
-#include <optional>
+#include <queue>
 #include <unordered_map>
 #include <vector>
 
+#include <Common/Net/Endpoint.h>
 #include <Common/Packet/Account/AccountPacket.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Server/Account/AccountLoginTaskProcessor.h>
 
@@ -18,6 +21,14 @@ namespace server::net
 	class AccountLoginPacketHandler final
 	{
 	public:
+		enum class EnqueueStatus
+		{
+			Enqueued,
+			DuplicatePending,
+			CachedResponseQueued,
+			TaskEnqueueFailed,
+		};
+
 		struct ResponseTask
 		{
 		public:
@@ -26,27 +37,67 @@ namespace server::net
 		};
 		 
 	private:
+		struct RequestKey
+		{
+		public:
+			common::net::EndpointKey endpointKey{};
+			common::packet::AccountLoginRequestId requestId = common::packet::invalidAccountLoginRequestId;
+
+		public:
+			bool operator==(const RequestKey& other) const = default;
+		};
+
+		struct RequestKeyHasher
+		{
+			[[nodiscard]] std::size_t operator()(const RequestKey& key) const noexcept
+			{
+				const std::size_t endpointHash = common::net::EndpointKeyHasher{}(key.endpointKey);
+				const std::size_t requestIdHash = std::hash<common::packet::AccountLoginRequestId>{}(key.requestId);
+
+				return endpointHash ^ (requestIdHash + (endpointHash << 6) + (endpointHash >> 2));
+			}
+		};
+
 		struct PendingRequest
 		{
 		public:
 			sockaddr_in remoteAddress{};
-			common::packet::AccountLoginRequestId requestId = common::packet::invalidAccountLoginRequestId;
+			RequestKey requestKey{};
+		};
+
+		struct CachedResponse
+		{
+		public:
+			common::packet::AccountLoginResponsePacket responsePacket{};
+			common::time::TimePoint cachedTime{};
 		};
 
 	public:
 		using ResponseTaskList = std::vector<ResponseTask>;
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 
 	private:
 		using TaskId = account::AccountLoginTaskId;
 		using PendingRequestTable = std::unordered_map<TaskId, PendingRequest>;
+		using PendingTaskTable = std::unordered_map<RequestKey, TaskId, RequestKeyHasher>;
+		using ResponseCache = std::unordered_map< RequestKey, CachedResponse, RequestKeyHasher>;
+
+	private:
+		static inline constexpr Duration responseCacheLifetime = common::time::Seconds(10);
 
 	private:
 		account::AccountLoginTaskProcessor& taskProcessor_;
 
 		std::atomic<TaskId> nextTaskId_ = 1;
 
-		mutable std::mutex pendingRequestMutex_;
+		mutable std::mutex stateMutex_;
+
 		PendingRequestTable pendingRequestTable_;
+		PendingTaskTable pendingTaskTable_;
+		ResponseCache responseCache_;
+
+		std::queue<ResponseTask> readyResponseQueue_;
 
 	public:
 		explicit AccountLoginPacketHandler(account::AccountLoginTaskProcessor& taskProcessor) noexcept;
@@ -59,14 +110,14 @@ namespace server::net
 		AccountLoginPacketHandler& operator=(AccountLoginPacketHandler&&) = delete;
 
 	public:
-		[[nodiscard]] bool Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet);
+		[[nodiscard]] EnqueueStatus Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime);
 
-		[[nodiscard]] ResponseTaskList ExtractResponseTaskList();
+		[[nodiscard]] ResponseTaskList ExtractResponseTaskList(TimePoint currentTime);
 
-		void ClearPendingRequests() noexcept;
+		void Clear();
 
 	private:
-		[[nodiscard]] std::optional<PendingRequest> TakePendingRequest(TaskId taskId);
+		void RemoveExpiredCachedResponsesLocked(TimePoint currentTime) noexcept;
 
 	public:
 		[[nodiscard]] std::size_t GetPendingRequestCount() const;

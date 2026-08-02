@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include <Common/Packet/Account/AccountPacket.h>
+#include <Common/Time/TimeTypes.h>
 
 #include <Persistence/Core/PersistenceRuntime.h>
 
@@ -16,26 +17,37 @@
 
 namespace
 {
-	[[nodiscard]] sockaddr_in MakeRemoteAddress(std::uint16_t port) noexcept
+	using AccountLoginPacketHandler
+		= ::server::net::AccountLoginPacketHandler;
+
+	[[nodiscard]] sockaddr_in MakeRemoteAddress(
+		std::uint16_t port
+	) noexcept
 	{
 		sockaddr_in remoteAddress{};
 		remoteAddress.sin_family = AF_INET;
 		remoteAddress.sin_port = ::htons(port);
-		remoteAddress.sin_addr.S_un.S_addr = ::htonl(0x7F000001);
+		remoteAddress.sin_addr.S_un.S_addr
+			= ::htonl(0x7F000001);
 
 		return remoteAddress;
 	}
 
-	[[nodiscard]] const ::server::net::AccountLoginPacketHandler::ResponseTask* FindResponseTaskByPort(
-		const ::server::net::AccountLoginPacketHandler::ResponseTaskList& responseTaskList,
-		std::uint16_t port
-	)
+	[[nodiscard]]
+	const AccountLoginPacketHandler::ResponseTask*
+		FindResponseTaskByPort(
+			const AccountLoginPacketHandler::ResponseTaskList&
+			responseTaskList,
+			std::uint16_t port
+		)
 	{
 		const std::uint16_t networkPort = ::htons(port);
 
-		for (const ::server::net::AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
+		for (const AccountLoginPacketHandler::ResponseTask&
+			responseTask : responseTaskList)
 		{
-			if (responseTask.remoteAddress.sin_port == networkPort)
+			if (responseTask.remoteAddress.sin_port
+				== networkPort)
 			{
 				return &responseTask;
 			}
@@ -46,11 +58,16 @@ namespace
 
 	void RunInvalidRequestResponseTest(
 		tests::DebugTestResult& result,
-		const ::server::net::AccountLoginPacketHandler::ResponseTaskList& responseTaskList
+		const AccountLoginPacketHandler::ResponseTaskList&
+		responseTaskList
 	)
 	{
-		const ::server::net::AccountLoginPacketHandler::ResponseTask* responseTask
-			= FindResponseTaskByPort(responseTaskList, 40000);
+		const AccountLoginPacketHandler::ResponseTask*
+			responseTask
+			= FindResponseTaskByPort(
+				responseTaskList,
+				40000
+			);
 
 		tests::Expect(
 			result,
@@ -85,25 +102,34 @@ namespace
 		tests::Expect(
 			result,
 			responseTask->responsePacket.status
-			== common::packet::AccountLoginResponseStatus::InvalidRequest,
+			== common::packet::AccountLoginResponseStatus
+			::InvalidRequest,
 			"AccountLoginPacketHandler: validation failure mapped"
 		);
 
 		tests::Expect(
 			result,
 			responseTask->responsePacket.accountId == 0
-			&& responseTask->responsePacket.nickname.empty(),
+			&& responseTask
+			->responsePacket
+			.nickname
+			.empty(),
 			"AccountLoginPacketHandler: invalid request account data cleared"
 		);
 	}
 
 	void RunDatabaseFailureResponseTest(
 		tests::DebugTestResult& result,
-		const ::server::net::AccountLoginPacketHandler::ResponseTaskList& responseTaskList
+		const AccountLoginPacketHandler::ResponseTaskList&
+		responseTaskList
 	)
 	{
-		const ::server::net::AccountLoginPacketHandler::ResponseTask* responseTask
-			= FindResponseTaskByPort(responseTaskList, 40001);
+		const AccountLoginPacketHandler::ResponseTask*
+			responseTask
+			= FindResponseTaskByPort(
+				responseTaskList,
+				40001
+			);
 
 		tests::Expect(
 			result,
@@ -125,14 +151,18 @@ namespace
 		tests::Expect(
 			result,
 			responseTask->responsePacket.status
-			== common::packet::AccountLoginResponseStatus::ServerError,
+			== common::packet::AccountLoginResponseStatus
+			::ServerError,
 			"AccountLoginPacketHandler: database failure mapped"
 		);
 
 		tests::Expect(
 			result,
 			responseTask->responsePacket.accountId == 0
-			&& responseTask->responsePacket.nickname.empty(),
+			&& responseTask
+			->responsePacket
+			.nickname
+			.empty(),
 			"AccountLoginPacketHandler: database failure account data cleared"
 		);
 	}
@@ -145,11 +175,20 @@ namespace tests::server
 		DebugTestResult result{};
 
 		persistence::PersistenceRuntime persistenceRuntime;
-		::server::account::AccountService accountService(persistenceRuntime);
-		::server::account::AccountLoginTaskProcessor taskProcessor(accountService);
-		::server::net::AccountLoginPacketHandler packetHandler(taskProcessor);
 
-		const ::server::account::AccountLoginTaskProcessor::StartResult startResult
+		::server::account::AccountService accountService(
+			persistenceRuntime
+		);
+
+		::server::account::AccountLoginTaskProcessor
+			taskProcessor(accountService);
+
+		AccountLoginPacketHandler packetHandler(
+			taskProcessor
+		);
+
+		const ::server::account::AccountLoginTaskProcessor
+			::StartResult startResult
 			= taskProcessor.Start(1);
 
 		tests::Expect(
@@ -163,52 +202,90 @@ namespace tests::server
 			return result;
 		}
 
-		const sockaddr_in invalidRequestAddress = MakeRemoteAddress(40000);
+		const common::time::TimePoint requestTime{};
 
-		common::packet::AccountLoginRequestPacket invalidRequestPacket{};
+		const sockaddr_in invalidRequestAddress
+			= MakeRemoteAddress(40000);
+
+		common::packet::AccountLoginRequestPacket
+			invalidRequestPacket{};
+
 		invalidRequestPacket.requestId = 1001;
 		invalidRequestPacket.loginName = "";
 		invalidRequestPacket.passwordHash = "password_hash";
 
-		const bool invalidRequestEnqueued = packetHandler.Enqueue(
-			invalidRequestAddress,
-			invalidRequestPacket
-		);
+		const AccountLoginPacketHandler::EnqueueStatus
+			invalidRequestStatus
+			= packetHandler.Enqueue(
+				invalidRequestAddress,
+				invalidRequestPacket,
+				requestTime
+			);
 
 		tests::Expect(
 			result,
-			invalidRequestEnqueued,
+			invalidRequestStatus
+			== AccountLoginPacketHandler::EnqueueStatus
+			::Enqueued,
 			"AccountLoginPacketHandler: invalid request enqueued"
 		);
 
-		const sockaddr_in databaseFailureAddress = MakeRemoteAddress(40001);
+		const AccountLoginPacketHandler::EnqueueStatus
+			duplicatePendingStatus
+			= packetHandler.Enqueue(
+				invalidRequestAddress,
+				invalidRequestPacket,
+				requestTime
+			);
 
-		common::packet::AccountLoginRequestPacket databaseFailurePacket{};
+		tests::Expect(
+			result,
+			duplicatePendingStatus
+			== AccountLoginPacketHandler::EnqueueStatus
+			::DuplicatePending,
+			"AccountLoginPacketHandler: pending duplicate detected"
+		);
+
+		const sockaddr_in databaseFailureAddress
+			= MakeRemoteAddress(40001);
+
+		common::packet::AccountLoginRequestPacket
+			databaseFailurePacket{};
+
 		databaseFailurePacket.requestId = 1002;
 		databaseFailurePacket.loginName = "account";
 		databaseFailurePacket.passwordHash = "password_hash";
 
-		const bool databaseRequestEnqueued = packetHandler.Enqueue(
-			databaseFailureAddress,
-			databaseFailurePacket
-		);
+		const AccountLoginPacketHandler::EnqueueStatus
+			databaseRequestStatus
+			= packetHandler.Enqueue(
+				databaseFailureAddress,
+				databaseFailurePacket,
+				requestTime
+			);
 
 		tests::Expect(
 			result,
-			databaseRequestEnqueued,
+			databaseRequestStatus
+			== AccountLoginPacketHandler::EnqueueStatus
+			::Enqueued,
 			"AccountLoginPacketHandler: database request enqueued"
 		);
 
 		tests::Expect(
 			result,
 			packetHandler.GetPendingRequestCount() == 2,
-			"AccountLoginPacketHandler: pending requests recorded"
+			"AccountLoginPacketHandler: duplicate does not add pending request"
 		);
 
 		taskProcessor.StopAfterDrain();
 
-		::server::net::AccountLoginPacketHandler::ResponseTaskList responseTaskList
-			= packetHandler.ExtractResponseTaskList();
+		AccountLoginPacketHandler::ResponseTaskList
+			responseTaskList
+			= packetHandler.ExtractResponseTaskList(
+				requestTime
+				+ common::time::Seconds(1)
+			);
 
 		tests::Expect(
 			result,
@@ -216,8 +293,15 @@ namespace tests::server
 			"AccountLoginPacketHandler: two responses extracted"
 		);
 
-		RunInvalidRequestResponseTest(result, responseTaskList);
-		RunDatabaseFailureResponseTest(result, responseTaskList);
+		RunInvalidRequestResponseTest(
+			result,
+			responseTaskList
+		);
+
+		RunDatabaseFailureResponseTest(
+			result,
+			responseTaskList
+		);
 
 		tests::Expect(
 			result,
@@ -225,37 +309,99 @@ namespace tests::server
 			"AccountLoginPacketHandler: completed requests removed"
 		);
 
-		const sockaddr_in stoppedProcessorAddress = MakeRemoteAddress(40002);
+		const AccountLoginPacketHandler::EnqueueStatus
+			cachedResponseStatus
+			= packetHandler.Enqueue(
+				invalidRequestAddress,
+				invalidRequestPacket,
+				requestTime
+				+ common::time::Seconds(2)
+			);
 
-		common::packet::AccountLoginRequestPacket stoppedProcessorPacket{};
-		stoppedProcessorPacket.requestId = 1003;
-		stoppedProcessorPacket.loginName = "account";
-		stoppedProcessorPacket.passwordHash = "password_hash";
-
-		const bool enqueueAfterStopResult = packetHandler.Enqueue(
-			stoppedProcessorAddress,
-			stoppedProcessorPacket
+		tests::Expect(
+			result,
+			cachedResponseStatus
+			== AccountLoginPacketHandler::EnqueueStatus
+			::CachedResponseQueued,
+			"AccountLoginPacketHandler: completed duplicate uses cache"
 		);
 
 		tests::Expect(
 			result,
-			!enqueueAfterStopResult,
+			packetHandler.GetPendingRequestCount() == 0,
+			"AccountLoginPacketHandler: cached duplicate creates no task"
+		);
+
+		AccountLoginPacketHandler::ResponseTaskList
+			cachedResponseTaskList
+			= packetHandler.ExtractResponseTaskList(
+				requestTime
+				+ common::time::Seconds(2)
+			);
+
+		tests::Expect(
+			result,
+			cachedResponseTaskList.size() == 1,
+			"AccountLoginPacketHandler: cached response extracted"
+		);
+
+		RunInvalidRequestResponseTest(
+			result,
+			cachedResponseTaskList
+		);
+
+		const sockaddr_in stoppedProcessorAddress
+			= MakeRemoteAddress(40002);
+
+		common::packet::AccountLoginRequestPacket
+			stoppedProcessorPacket{};
+
+		stoppedProcessorPacket.requestId = 1003;
+		stoppedProcessorPacket.loginName = "account";
+		stoppedProcessorPacket.passwordHash = "password_hash";
+
+		const AccountLoginPacketHandler::EnqueueStatus
+			enqueueAfterStopStatus
+			= packetHandler.Enqueue(
+				stoppedProcessorAddress,
+				stoppedProcessorPacket,
+				requestTime
+				+ common::time::Seconds(3)
+			);
+
+		tests::Expect(
+			result,
+			enqueueAfterStopStatus
+			== AccountLoginPacketHandler::EnqueueStatus
+			::TaskEnqueueFailed,
 			"AccountLoginPacketHandler: enqueue rejected after processor stop"
 		);
 
 		tests::Expect(
 			result,
 			packetHandler.GetPendingRequestCount() == 0,
-			"AccountLoginPacketHandler: failed enqueue rolls back endpoint"
+			"AccountLoginPacketHandler: failed enqueue rolls back request"
 		);
 
-		const ::server::net::AccountLoginPacketHandler::ResponseTaskList emptyResponseTaskList
-			= packetHandler.ExtractResponseTaskList();
+		const AccountLoginPacketHandler::ResponseTaskList
+			emptyResponseTaskList
+			= packetHandler.ExtractResponseTaskList(
+				requestTime
+				+ common::time::Seconds(3)
+			);
 
 		tests::Expect(
 			result,
 			emptyResponseTaskList.empty(),
 			"AccountLoginPacketHandler: response queue drained"
+		);
+
+		packetHandler.Clear();
+
+		tests::Expect(
+			result,
+			packetHandler.GetPendingRequestCount() == 0,
+			"AccountLoginPacketHandler: clear removes pending requests"
 		);
 
 		return result;

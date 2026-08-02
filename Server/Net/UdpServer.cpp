@@ -687,9 +687,22 @@ namespace server::net
 			return;
 		}
 
-		if (accountLoginPacketHandler_->Enqueue(remoteAddress, packet))
+		const AccountLoginPacketHandler::EnqueueStatus enqueueStatus = accountLoginPacketHandler_->Enqueue(
+			remoteAddress,
+			packet,
+			common::time::Clock::now()
+		);
+
+		switch (enqueueStatus)
 		{
+		case AccountLoginPacketHandler::EnqueueStatus::Enqueued:
+		case AccountLoginPacketHandler::EnqueueStatus::DuplicatePending:
+		case AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued:
 			return;
+
+		case AccountLoginPacketHandler::EnqueueStatus::TaskEnqueueFailed:
+		default:
+			break;
 		}
 
 		common::packet::AccountLoginResponsePacket responsePacket{};
@@ -1022,7 +1035,8 @@ namespace server::net
 			return;
 		}
 
-		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList();
+		const common::time::TimePoint currentTime = common::time::Clock::now();
+		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList(currentTime);
 		for (AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
 		{
 			const EndpointKey endpointKey = common::net::MakeEndpointKey(responseTask.remoteAddress);
@@ -1176,9 +1190,8 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			const common::time::TimePoint currentTime = common::time::Clock::now();
-
 			const std::vector<PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
-				common::time::Clock::now(),
+				currentTime,
 				config_.session.peerTimeout
 			);
 

@@ -119,7 +119,7 @@ namespace server::app
 			udpServer_.DetachLogger();
 
 			accountLoginTaskProcessor_.Stop();
-			accountLoginPacketHandler_.ClearPendingRequests();
+			accountLoginPacketHandler_.Clear();
 
 			persistenceRuntime_.Stop();
 
@@ -135,7 +135,7 @@ namespace server::app
 		udpServer_.DetachLogger();
 
 		accountLoginTaskProcessor_.Stop();
-		accountLoginPacketHandler_.ClearPendingRequests();
+		accountLoginPacketHandler_.Clear();
 
 		persistenceRuntime_.Stop();
 

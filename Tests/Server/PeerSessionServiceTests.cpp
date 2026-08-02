@@ -134,6 +134,39 @@ namespace
 			tests::Expect(result, peerState->playerId == joinResult.playerId, "PeerSessionService: join peer player id");
 			tests::Expect(result, peerState->roomId == initialRoomId, "PeerSessionService: join peer room id");
 			tests::Expect(result, peerState->lastRecvTime == now, "PeerSessionService: join lastRecvTime");
+
+			const server::net::PeerState* accountPeerState
+				= peerRoomManager.FindJoinedPeerByAccountId(
+					1001
+				);
+
+			tests::Expect(
+				result,
+				accountPeerState != nullptr,
+				"PeerRoomManager: joined peer found by account id"
+			);
+
+			tests::Expect(
+				result,
+				accountPeerState == peerState,
+				"PeerRoomManager: account id returns joined peer"
+			);
+
+			tests::Expect(
+				result,
+				peerRoomManager.FindJoinedPeerByAccountId(
+					9999
+				) == nullptr,
+				"PeerRoomManager: unknown account id missing"
+			);
+
+			tests::Expect(
+				result,
+				peerRoomManager.FindJoinedPeerByAccountId(
+					0
+				) == nullptr,
+				"PeerRoomManager: invalid account id missing"
+			);
 		}
 
 		const server::game::PlayerState* playerState = gameWorld.FindPlayer(joinResult.playerId);

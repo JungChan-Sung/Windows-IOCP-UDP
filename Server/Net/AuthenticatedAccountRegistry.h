@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
@@ -46,6 +47,7 @@ namespace server::net
 
 		[[nodiscard]] AuthenticatedAccount* Find(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey) const noexcept;
+		[[nodiscard]] std::optional<EndpointKey> FindEndpointByAccountId(std::int64_t accountId) const noexcept;
 
 		[[nodiscard]] bool Remove(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] std::size_t RemoveExpired(TimePoint currentTime, Duration timeout) noexcept;

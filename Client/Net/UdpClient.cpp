@@ -607,6 +607,10 @@ namespace client::net
 			LogError("Account login failed because of a server error.");
 			break;
 
+		case common::packet::AccountLoginResponseStatus::AlreadyLoggedIn:
+			LogWarning("Account login failed because the account is already logged in.");
+			break;
+
 		default:
 			LogWarning("Account login response contained an unknown status.");
 			break;

@@ -1,6 +1,7 @@
 #include "AuthenticatedAccountRegistryTests.h"
 
 #include <chrono>
+#include <optional>
 #include <string>
 
 #include <Common/Net/Endpoint.h>
@@ -336,6 +337,81 @@ namespace
 			"AuthenticatedAccountRegistry: clear"
 		);
 	}
+
+	void RunFindEndpointByAccountIdTest(
+		tests::DebugTestResult& result
+	)
+	{
+		AuthenticatedAccountRegistry registry;
+
+		const common::net::EndpointKey firstEndpointKey
+			= MakeEndpointKey(1, 1000);
+
+		const common::net::EndpointKey secondEndpointKey
+			= MakeEndpointKey(2, 2000);
+
+		static_cast<void>(
+			registry.Upsert(
+				firstEndpointKey,
+				1001,
+				"first",
+				common::time::TimePoint{}
+			)
+			);
+
+		static_cast<void>(
+			registry.Upsert(
+				secondEndpointKey,
+				1002,
+				"second",
+				common::time::TimePoint{}
+			)
+			);
+
+		const std::optional<common::net::EndpointKey>
+			firstFoundEndpointKey
+			= registry.FindEndpointByAccountId(1001);
+
+		tests::Expect(
+			result,
+			firstFoundEndpointKey.has_value(),
+			"AuthenticatedAccountRegistry: account endpoint found"
+		);
+
+		tests::Expect(
+			result,
+			firstFoundEndpointKey.has_value()
+			&& *firstFoundEndpointKey
+			== firstEndpointKey,
+			"AuthenticatedAccountRegistry: correct account endpoint"
+		);
+
+		const std::optional<common::net::EndpointKey>
+			secondFoundEndpointKey
+			= registry.FindEndpointByAccountId(1002);
+
+		tests::Expect(
+			result,
+			secondFoundEndpointKey.has_value()
+			&& *secondFoundEndpointKey
+			== secondEndpointKey,
+			"AuthenticatedAccountRegistry: second account endpoint"
+		);
+
+		tests::Expect(
+			result,
+			!registry.FindEndpointByAccountId(9999)
+			.has_value(),
+			"AuthenticatedAccountRegistry: unknown account endpoint missing"
+		);
+
+		tests::Expect(
+			result,
+			!registry.FindEndpointByAccountId(0)
+			.has_value(),
+			"AuthenticatedAccountRegistry: invalid account endpoint missing"
+		);
+	}
 }
 
 namespace tests::server
@@ -346,6 +422,7 @@ namespace tests::server
 
 		RunInitialStateTest(result);
 		RunInsertAndFindTest(result);
+		RunFindEndpointByAccountIdTest(result);
 		RunInvalidAccountIdTest(result);
 		RunReplaceTest(result);
 		RunRemoveTest(result);

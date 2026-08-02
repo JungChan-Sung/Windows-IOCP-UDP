@@ -17,6 +17,7 @@ namespace common::packet
 		InvalidRequest,
 		InvalidCredentials,
 		ServerError,
+		AlreadyLoggedIn,
 	};
 
 	struct AccountLoginRequestPacket

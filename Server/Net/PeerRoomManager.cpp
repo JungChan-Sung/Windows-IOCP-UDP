@@ -46,6 +46,52 @@ namespace server::net
 		return peerState;
 	}
 
+	PeerState* PeerRoomManager::FindJoinedPeerByAccountId(std::int64_t accountId) noexcept
+	{
+		if (accountId <= 0)
+		{
+			return nullptr;
+		}
+
+		for (auto& [_, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			if (peerState.accountId == accountId)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const PeerState* PeerRoomManager::FindJoinedPeerByAccountId(std::int64_t accountId) const noexcept
+	{
+		if (accountId <= 0)
+		{
+			return nullptr;
+		}
+
+		for (const auto& [_, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			if (peerState.accountId == accountId)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
 	const PeerRoomManager::RoomMemberSet* PeerRoomManager::FindRoomMemberSet(RoomId roomId) const noexcept
 	{
 		const auto roomIterator = roomTable_.find(roomId);

@@ -44,6 +44,24 @@ namespace server::net
 		return &iterator->second;
 	}
 
+	std::optional<AuthenticatedAccountRegistry::EndpointKey> AuthenticatedAccountRegistry::FindEndpointByAccountId(std::int64_t accountId) const noexcept
+	{
+		if (accountId <= 0)
+		{
+			return std::nullopt;
+		}
+
+		for (const auto& [endpointKey, account] : accountTable_)
+		{
+			if (account.accountId == accountId)
+			{
+				return endpointKey;
+			}
+		}
+
+		return std::nullopt;
+	}
+
 	bool AuthenticatedAccountRegistry::Remove(const EndpointKey& endpointKey) noexcept
 	{
 		return accountTable_.erase(endpointKey) > 0;

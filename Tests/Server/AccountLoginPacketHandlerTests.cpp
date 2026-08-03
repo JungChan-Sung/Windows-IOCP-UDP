@@ -20,6 +20,9 @@ namespace
 	using AccountLoginPacketHandler
 		= ::server::net::AccountLoginPacketHandler;
 
+	using ResponseStatus
+		= common::packet::AccountLoginResponseStatus;
+
 	[[nodiscard]] sockaddr_in MakeRemoteAddress(
 		std::uint16_t port
 	) noexcept
@@ -41,7 +44,8 @@ namespace
 			std::uint16_t port
 		)
 	{
-		const std::uint16_t networkPort = ::htons(port);
+		const std::uint16_t networkPort
+			= ::htons(port);
 
 		for (const AccountLoginPacketHandler::ResponseTask&
 			responseTask : responseTaskList)
@@ -102,8 +106,7 @@ namespace
 		tests::Expect(
 			result,
 			responseTask->responsePacket.status
-			== common::packet::AccountLoginResponseStatus
-			::InvalidRequest,
+			== ResponseStatus::InvalidRequest,
 			"AccountLoginPacketHandler: validation failure mapped"
 		);
 
@@ -151,8 +154,7 @@ namespace
 		tests::Expect(
 			result,
 			responseTask->responsePacket.status
-			== common::packet::AccountLoginResponseStatus
-			::ServerError,
+			== ResponseStatus::ServerError,
 			"AccountLoginPacketHandler: database failure mapped"
 		);
 
@@ -164,6 +166,115 @@ namespace
 			.nickname
 			.empty(),
 			"AccountLoginPacketHandler: database failure account data cleared"
+		);
+	}
+
+	void FinalizeResponseTaskList(
+		tests::DebugTestResult& result,
+		AccountLoginPacketHandler& packetHandler,
+		const AccountLoginPacketHandler::ResponseTaskList&
+		responseTaskList,
+		common::time::TimePoint currentTime
+	)
+	{
+		for (const AccountLoginPacketHandler::ResponseTask&
+			responseTask : responseTaskList)
+		{
+			tests::Expect(
+				result,
+				responseTask.taskId
+				!= AccountLoginPacketHandler::invalidTaskId,
+				"AccountLoginPacketHandler: new response has task id"
+			);
+
+			common::packet::AccountLoginResponsePacket
+				finalResponsePacket
+				= responseTask.responsePacket;
+
+			/*
+			 * 서버의 입장 정책이 최종 응답을 변경하는 상황을 재현한다.
+			 * 이 변경된 응답이 캐시에 저장되어야 한다.
+			 */
+			if (responseTask.remoteAddress.sin_port
+				== ::htons(40000))
+			{
+				finalResponsePacket.status
+					= ResponseStatus::AlreadyLoggedIn;
+
+				finalResponsePacket.accountId = 0;
+				finalResponsePacket.nickname.clear();
+			}
+
+			const bool finalized
+				= packetHandler.FinalizeResponse(
+					responseTask.taskId,
+					finalResponsePacket,
+					currentTime
+				);
+
+			tests::Expect(
+				result,
+				finalized,
+				"AccountLoginPacketHandler: response finalized"
+			);
+		}
+	}
+
+	void RunCachedFinalResponseTest(
+		tests::DebugTestResult& result,
+		const AccountLoginPacketHandler::ResponseTaskList&
+		responseTaskList
+	)
+	{
+		tests::Expect(
+			result,
+			responseTaskList.size() == 1,
+			"AccountLoginPacketHandler: cached response extracted"
+		);
+
+		if (responseTaskList.size() != 1)
+		{
+			return;
+		}
+
+		const AccountLoginPacketHandler::ResponseTask&
+			responseTask = responseTaskList.front();
+
+		tests::Expect(
+			result,
+			responseTask.taskId
+			== AccountLoginPacketHandler::invalidTaskId,
+			"AccountLoginPacketHandler: cached response has no task id"
+		);
+
+		tests::Expect(
+			result,
+			responseTask.remoteAddress.sin_port
+			== ::htons(40000),
+			"AccountLoginPacketHandler: cached response address preserved"
+		);
+
+		tests::Expect(
+			result,
+			responseTask.responsePacket.requestId == 1001,
+			"AccountLoginPacketHandler: cached request id preserved"
+		);
+
+		tests::Expect(
+			result,
+			responseTask.responsePacket.status
+			== ResponseStatus::AlreadyLoggedIn,
+			"AccountLoginPacketHandler: finalized status cached"
+		);
+
+		tests::Expect(
+			result,
+			responseTask.responsePacket.accountId == 0
+			&& responseTask
+			.responsePacket
+			.nickname
+			.empty(),
+			"AccountLoginPacketHandler: cached failure account data cleared"
 		);
 	}
 }
@@ -212,7 +323,8 @@ namespace tests::server
 
 		invalidRequestPacket.requestId = 1001;
 		invalidRequestPacket.loginName = "";
-		invalidRequestPacket.passwordHash = "password_hash";
+		invalidRequestPacket.passwordHash
+			= "password_hash";
 
 		const AccountLoginPacketHandler::EnqueueStatus
 			invalidRequestStatus
@@ -254,7 +366,8 @@ namespace tests::server
 
 		databaseFailurePacket.requestId = 1002;
 		databaseFailurePacket.loginName = "account";
-		databaseFailurePacket.passwordHash = "password_hash";
+		databaseFailurePacket.passwordHash
+			= "password_hash";
 
 		const AccountLoginPacketHandler::EnqueueStatus
 			databaseRequestStatus
@@ -280,11 +393,14 @@ namespace tests::server
 
 		taskProcessor.StopAfterDrain();
 
+		const common::time::TimePoint completionTime
+			= requestTime
+			+ common::time::Seconds(1);
+
 		AccountLoginPacketHandler::ResponseTaskList
 			responseTaskList
 			= packetHandler.ExtractResponseTaskList(
-				requestTime
-				+ common::time::Seconds(1)
+				completionTime
 			);
 
 		tests::Expect(
@@ -305,8 +421,21 @@ namespace tests::server
 
 		tests::Expect(
 			result,
+			packetHandler.GetPendingRequestCount() == 2,
+			"AccountLoginPacketHandler: extracted responses await finalization"
+		);
+
+		FinalizeResponseTaskList(
+			result,
+			packetHandler,
+			responseTaskList,
+			completionTime
+		);
+
+		tests::Expect(
+			result,
 			packetHandler.GetPendingRequestCount() == 0,
-			"AccountLoginPacketHandler: completed requests removed"
+			"AccountLoginPacketHandler: finalized requests removed"
 		);
 
 		const AccountLoginPacketHandler::EnqueueStatus
@@ -339,13 +468,7 @@ namespace tests::server
 				+ common::time::Seconds(2)
 			);
 
-		tests::Expect(
-			result,
-			cachedResponseTaskList.size() == 1,
-			"AccountLoginPacketHandler: cached response extracted"
-		);
-
-		RunInvalidRequestResponseTest(
+		RunCachedFinalResponseTest(
 			result,
 			cachedResponseTaskList
 		);
@@ -358,7 +481,8 @@ namespace tests::server
 
 		stoppedProcessorPacket.requestId = 1003;
 		stoppedProcessorPacket.loginName = "account";
-		stoppedProcessorPacket.passwordHash = "password_hash";
+		stoppedProcessorPacket.passwordHash
+			= "password_hash";
 
 		const AccountLoginPacketHandler::EnqueueStatus
 			enqueueAfterStopStatus

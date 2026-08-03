@@ -1039,47 +1039,40 @@ namespace server::net
 		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList(currentTime);
 		for (AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
 		{
-			const EndpointKey endpointKey = common::net::MakeEndpointKey(responseTask.remoteAddress);
-			bool authenticationRegistrationFailed = false;
-
+			if (responseTask.taskId != AccountLoginPacketHandler::invalidTaskId)
 			{
-				std::scoped_lock lock(stateMutex_);
+				AccountLoginAdmissionService::Status admissionStatus{};
 
-				const PeerState* joinedPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
-				if (joinedPeerState != nullptr)
 				{
-					// 이미 게임에 참가한 endpoint는 새 임시 인증을 만들지 않는다.
-					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
-				}
-				else if (responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded)
-				{
-					const bool registered = authenticatedAccountRegistry_.Upsert(
-						endpointKey,
-						responseTask.responsePacket.accountId,
-						responseTask.responsePacket.nickname,
-						common::time::Clock::now()
+					std::scoped_lock lock(stateMutex_);
+
+					admissionStatus = accountLoginAdmissionService_.Apply(
+						common::net::MakeEndpointKey(responseTask.remoteAddress),
+						responseTask.responsePacket,
+						currentTime,
+						authenticatedAccountRegistry_,
+						peerRoomManager_
 					);
-					if (!registered)
-					{
-						static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
-
-						responseTask.responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
-						responseTask.responsePacket.accountId = 0;
-						responseTask.responsePacket.nickname.clear();
-
-						authenticationRegistrationFailed = true;
-					}
 				}
-				else
+
+				if (admissionStatus == AccountLoginAdmissionService::Status::AlreadyLoggedIn)
 				{
-					// 이전에 만들어진 임시 인증이 있다면 실패 응답으로 무효화한다.
-					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
+					LogWarning("Account login rejected because the account is already logged in.");
 				}
-			}
+				else if (admissionStatus == AccountLoginAdmissionService::Status::RegistrationFailed)
+				{
+					LogError("Failed to register authenticated account.");
+				}
 
-			if (authenticationRegistrationFailed)
-			{
-				LogError("Failed to register authenticated account.");
+				const bool finalized = accountLoginPacketHandler_->FinalizeResponse(responseTask.taskId, responseTask.responsePacket, currentTime);
+				if (!finalized)
+				{
+					LogError("Failed to finalize account login response.");
+
+					responseTask.responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
+					responseTask.responsePacket.accountId = 0;
+					responseTask.responsePacket.nickname.clear();
+				}
 			}
 
 			if (packetSender_.SendAccountLoginResponse(responseTask.remoteAddress, responseTask.responsePacket))

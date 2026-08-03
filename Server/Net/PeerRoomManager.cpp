@@ -46,6 +46,22 @@ namespace server::net
 		return peerState;
 	}
 
+	const PeerState* PeerRoomManager::FindJoinedPeer(const EndpointKey& endpointKey) const noexcept
+	{
+		const PeerState* peerState = FindPeer(endpointKey);
+		if (peerState == nullptr)
+		{
+			return nullptr;
+		}
+
+		if (!peerState->isJoined)
+		{
+			return nullptr;
+		}
+
+		return peerState;
+	}
+
 	PeerState* PeerRoomManager::FindJoinedPeerByAccountId(std::int64_t accountId) noexcept
 	{
 		if (accountId <= 0)

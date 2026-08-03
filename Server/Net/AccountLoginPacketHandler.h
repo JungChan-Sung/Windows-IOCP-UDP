@@ -21,6 +21,12 @@ namespace server::net
 	class AccountLoginPacketHandler final
 	{
 	public:
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
+
+		using TaskId = account::AccountLoginTaskId;
+
+	public:
 		enum class EnqueueStatus
 		{
 			Enqueued,
@@ -34,6 +40,7 @@ namespace server::net
 		public:
 			sockaddr_in remoteAddress{};
 			common::packet::AccountLoginResponsePacket responsePacket;
+			TaskId taskId = invalidTaskId;
 		};
 		 
 	private:
@@ -69,19 +76,19 @@ namespace server::net
 		{
 		public:
 			common::packet::AccountLoginResponsePacket responsePacket{};
-			common::time::TimePoint cachedTime{};
+			TimePoint cachedTime{};
 		};
 
 	public:
 		using ResponseTaskList = std::vector<ResponseTask>;
-		using TimePoint = common::time::TimePoint;
-		using Duration = common::time::Duration;
 
 	private:
-		using TaskId = account::AccountLoginTaskId;
 		using PendingRequestTable = std::unordered_map<TaskId, PendingRequest>;
 		using PendingTaskTable = std::unordered_map<RequestKey, TaskId, RequestKeyHasher>;
 		using ResponseCache = std::unordered_map< RequestKey, CachedResponse, RequestKeyHasher>;
+
+	public:
+		static inline constexpr TaskId invalidTaskId = 0;
 
 	private:
 		static inline constexpr Duration responseCacheLifetime = common::time::Seconds(10);
@@ -113,6 +120,8 @@ namespace server::net
 		[[nodiscard]] EnqueueStatus Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime);
 
 		[[nodiscard]] ResponseTaskList ExtractResponseTaskList(TimePoint currentTime);
+
+		[[nodiscard]] bool FinalizeResponse(TaskId taskId, const common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime);
 
 		void Clear();
 

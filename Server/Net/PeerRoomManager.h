@@ -72,6 +72,7 @@ namespace server::net
 		[[nodiscard]] PeerState* FindPeer(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] const PeerState* FindPeer(const EndpointKey& endpointKey) const noexcept;
 		[[nodiscard]] PeerState* FindJoinedPeer(const EndpointKey& endpointKey) noexcept;
+		[[nodiscard]] const PeerState* FindJoinedPeer(const EndpointKey& endpointKey) const noexcept;
 		[[nodiscard]] PeerState* FindJoinedPeerByAccountId(std::int64_t accountId) noexcept;
 		[[nodiscard]] const PeerState* FindJoinedPeerByAccountId(std::int64_t accountId) const noexcept;
 		[[nodiscard]] const RoomMemberSet* FindRoomMemberSet(RoomId roomId) const noexcept;

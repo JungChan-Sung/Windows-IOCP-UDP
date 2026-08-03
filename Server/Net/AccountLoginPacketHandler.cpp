@@ -30,6 +30,7 @@ namespace server::net
 				readyResponseQueue_.push(ResponseTask{
 						.remoteAddress = remoteAddress,
 						.responsePacket = cachedResponseIterator->second.responsePacket,
+						.taskId = invalidTaskId,
 					});
 
 				return EnqueueStatus::CachedResponseQueued;
@@ -106,26 +107,52 @@ namespace server::net
 				}
 
 				PendingRequest pendingRequest = std::move(pendingRequestIterator->second);
-				pendingRequestTable_.erase(pendingRequestIterator);
-				pendingTaskTable_.erase(pendingRequest.requestKey);
 
-				ResponseTask responseTask{
-					.remoteAddress = pendingRequest.remoteAddress,
-					.responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, std::move(completion.loginResult)),
-				};
-
-				responseCache_.insert_or_assign(
-					pendingRequest.requestKey,
-					CachedResponse{
-						.responsePacket = responseTask.responsePacket,
-						.cachedTime = currentTime,
+				responseTaskList.push_back(ResponseTask{
+						.remoteAddress = pendingRequest.remoteAddress,
+						.responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, std::move(completion.loginResult)),
+						.taskId = completion.taskId,
 					});
-
-				responseTaskList.push_back(std::move(responseTask));
 			}
 		}
 
 		return responseTaskList;
+	}
+
+	bool AccountLoginPacketHandler::FinalizeResponse(TaskId taskId, const common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime)
+	{
+		if (taskId == invalidTaskId)
+		{
+			return false;
+		}
+
+		std::scoped_lock lock(stateMutex_);
+
+		RemoveExpiredCachedResponsesLocked(currentTime);
+
+		const auto pendingRequestIterator = pendingRequestTable_.find(taskId);
+		if (pendingRequestIterator == pendingRequestTable_.end())
+		{
+			return false;
+		}
+
+		const PendingRequest& pendingRequest = pendingRequestIterator->second;
+		if (responsePacket.requestId != pendingRequest.requestKey.requestId)
+		{
+			return false;
+		}
+
+		responseCache_.insert_or_assign(
+			pendingRequest.requestKey,
+			CachedResponse{
+				.responsePacket = responsePacket,
+				.cachedTime = currentTime,
+			});
+
+		pendingTaskTable_.erase(pendingRequest.requestKey);
+		pendingRequestTable_.erase(pendingRequestIterator);
+
+		return true;
 	}
 
 	void AccountLoginPacketHandler::Clear()

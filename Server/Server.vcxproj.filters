@@ -129,6 +129,9 @@
     <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\AccountLoginAdmissionService.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -234,6 +237,9 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\AuthenticatedAccountRegistry.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\AccountLoginAdmissionService.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
   </ItemGroup>

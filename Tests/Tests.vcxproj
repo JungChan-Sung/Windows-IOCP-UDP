@@ -146,6 +146,7 @@
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp" />
     <ClCompile Include="..\Server\Game\GameSimulation.cpp" />
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
+    <ClCompile Include="..\Server\Net\AccountLoginAdmissionService.cpp" />
     <ClCompile Include="..\Server\Net\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="..\Server\Net\AccountPacketMapper.cpp" />
     <ClCompile Include="..\Server\Net\AuthenticatedAccountRegistry.cpp" />

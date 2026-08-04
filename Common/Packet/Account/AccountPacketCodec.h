@@ -19,6 +19,7 @@ namespace common::packet
 		case AccountLoginResponseStatus::InvalidRequest:
 		case AccountLoginResponseStatus::InvalidCredentials:
 		case AccountLoginResponseStatus::ServerError:
+		case AccountLoginResponseStatus::AlreadyLoggedIn:
 			return true;
 
 		default:

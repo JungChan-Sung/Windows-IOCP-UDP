@@ -380,6 +380,60 @@ namespace
 				);
 			}
 		}
+
+		{
+			common::packet::AccountLoginResponsePacket packet{};
+			packet.requestId = 1004;
+			packet.status
+				= common::packet::AccountLoginResponseStatus
+				::AlreadyLoggedIn;
+
+			const std::optional<
+				common::packet::AccountLoginResponsePacket
+			> roundTripPacket
+				= RoundTrip(
+					result,
+					packet,
+					"AccountLoginAlreadyLoggedInResponse"
+				);
+
+			tests::Expect(
+				result,
+				roundTripPacket.has_value(),
+				"AccountLoginResponse: already logged in deserialize"
+			);
+
+			if (roundTripPacket.has_value())
+			{
+				tests::Expect(
+					result,
+					roundTripPacket->requestId
+					== packet.requestId,
+					"AccountLoginResponse: already logged in requestId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->status
+					== common::packet::
+					AccountLoginResponseStatus
+					::AlreadyLoggedIn,
+					"AccountLoginResponse: already logged in status"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->accountId == 0,
+					"AccountLoginResponse: already logged in accountId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->nickname.empty(),
+					"AccountLoginResponse: already logged in nickname"
+				);
+			}
+		}
 	}
 
 	void RunFixedPacketRoundTripTests(tests::DebugTestResult& result)

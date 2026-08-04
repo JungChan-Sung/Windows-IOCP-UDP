@@ -37,6 +37,9 @@ namespace client::app
 					case RunFailure::AccountLoginStartFailed:
 						return "AccountLoginStartFailed";
 
+					case RunFailure::AccountLoginFailed:
+						return "AccountLoginFailed";
+
 					case RunFailure::GameWindowCreateFailed:
 						return "GameWindowCreateFailed";
 
@@ -70,6 +73,8 @@ namespace client::app
 		{
 			return std::unexpected(RunError{ RunFailure::AlreadyRunning });
 		}
+
+		accountLoginFailed_.store(false);
 
 		const config::ClientConfigLoadResult loadResult = BuildClientConfig(serverIp, serverPort);
 		config_ = loadResult.config;
@@ -179,6 +184,11 @@ namespace client::app
 		if (exitCode != 0)
 		{
 			return std::unexpected(RunError{ RunFailure::MessageLoopFailed });
+		}
+
+		if (accountLoginFailed_.load())
+		{
+			return std::unexpected(RunError{ RunFailure::AccountLoginFailed });
 		}
 
 		return {};
@@ -296,15 +306,30 @@ namespace client::app
 		udpClient_.ProcessAccountLogin();
 
 		const net::UdpClient::AccountLoginSnapshot loginSnapshot = udpClient_.GetAccountLoginSnapshot();
-		if (loginSnapshot.state != net::AccountLoginState::State::Succeeded)
+		switch (loginSnapshot.state)
 		{
+		case net::AccountLoginState::State::Idle:
+		case net::AccountLoginState::State::WaitingResponse:
+			return false;
+
+		case net::AccountLoginState::State::Succeeded:
+			joinHandshakeState_.Begin(currentTime, config_.timing.joinRetryInterval);
+			logger_.Info("Account login completed. Starting join handshake.");
+			return true;
+
+		case net::AccountLoginState::State::Failed:
+			if (!accountLoginFailed_.exchange(true))
+			{
+				logger_.Error("Account login failed. Closing client.");
+				isRunning_.store(false);
+				gameWindow_.RequestClose();
+			}
+
+			return false;
+
+		default:
 			return false;
 		}
-
-		joinHandshakeState_.Begin(currentTime, config_.timing.joinRetryInterval);
-		logger_.Info("Account login completed. Starting join handshake.");
-
-		return true;
 	}
 
 	void GameClientApp::Update()

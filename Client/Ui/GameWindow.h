@@ -64,6 +64,8 @@ namespace client::ui
 		);
 		void Destroy() noexcept;
 
+		void RequestClose() const noexcept;
+
 	private:
 		LRESULT HandleMessage(UINT message, WPARAM wParam, LPARAM lParam);
 		void OnPaint();

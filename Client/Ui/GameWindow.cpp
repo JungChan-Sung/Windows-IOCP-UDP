@@ -99,6 +99,16 @@ namespace client::ui
 		inputState_.Clear();
 	}
 
+	void GameWindow::RequestClose() const noexcept
+	{
+		if (windowHandle_ == nullptr)
+		{
+			return;
+		}
+
+		::PostMessageW(windowHandle_, WM_CLOSE, 0, 0);
+	}
+
 	LRESULT GameWindow::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)

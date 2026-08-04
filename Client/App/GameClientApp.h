@@ -31,6 +31,7 @@ namespace client::app
 		{
 			AlreadyRunning,
 			AccountLoginStartFailed,
+			AccountLoginFailed,
 			GameWindowCreateFailed,
 			MessageLoopFailed,
 		};
@@ -55,6 +56,8 @@ namespace client::app
 		render::GdiRenderer gdiRenderer_;
 
 		std::atomic<bool> isRunning_ = false;
+		std::atomic<bool> accountLoginFailed_ = false;
+
 		std::jthread updateThread_;
 
 		common::time::TimePoint nextSimulationTickTime_;

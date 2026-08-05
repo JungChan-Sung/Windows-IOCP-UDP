@@ -1041,27 +1041,34 @@ namespace server::net
 		{
 			if (responseTask.taskId != AccountLoginPacketHandler::invalidTaskId)
 			{
-				AccountLoginAdmissionService::Status admissionStatus{};
-
+				if (responseTask.isLatestRequest)
 				{
-					std::scoped_lock lock(stateMutex_);
+					AccountLoginAdmissionService::Status admissionStatus{};
 
-					admissionStatus = accountLoginAdmissionService_.Apply(
-						common::net::MakeEndpointKey(responseTask.remoteAddress),
-						responseTask.responsePacket,
-						currentTime,
-						authenticatedAccountRegistry_,
-						peerRoomManager_
-					);
+					{
+						std::scoped_lock lock(stateMutex_);
+
+						admissionStatus = accountLoginAdmissionService_.Apply(
+							common::net::MakeEndpointKey(responseTask.remoteAddress),
+							responseTask.responsePacket,
+							currentTime,
+							authenticatedAccountRegistry_,
+							peerRoomManager_
+						);
+					}
+
+					if (admissionStatus == AccountLoginAdmissionService::Status::AlreadyLoggedIn)
+					{
+						LogWarning("Account login rejected because the account is already logged in.");
+					}
+					else if (admissionStatus == AccountLoginAdmissionService::Status::RegistrationFailed)
+					{
+						LogError("Failed to register authenticated account.");
+					}
 				}
-
-				if (admissionStatus == AccountLoginAdmissionService::Status::AlreadyLoggedIn)
+				else
 				{
-					LogWarning("Account login rejected because the account is already logged in.");
-				}
-				else if (admissionStatus == AccountLoginAdmissionService::Status::RegistrationFailed)
-				{
-					LogError("Failed to register authenticated account.");
+					LogDebug("Stale account login response did not modify authentication state.");
 				}
 
 				const bool finalized = accountLoginPacketHandler_->FinalizeResponse(responseTask.taskId, responseTask.responsePacket, currentTime);

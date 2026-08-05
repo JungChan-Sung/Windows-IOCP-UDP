@@ -41,6 +41,7 @@ namespace server::net
 			sockaddr_in remoteAddress{};
 			common::packet::AccountLoginResponsePacket responsePacket;
 			TaskId taskId = invalidTaskId;
+			bool isLatestRequest = false;
 		};
 		 
 	private:
@@ -72,6 +73,13 @@ namespace server::net
 			RequestKey requestKey{};
 		};
 
+		struct LatestRequest
+		{
+		public:
+			TaskId taskId = invalidTaskId;
+			TimePoint updatedTime{};
+		};
+
 		struct CachedResponse
 		{
 		public:
@@ -85,7 +93,8 @@ namespace server::net
 	private:
 		using PendingRequestTable = std::unordered_map<TaskId, PendingRequest>;
 		using PendingTaskTable = std::unordered_map<RequestKey, TaskId, RequestKeyHasher>;
-		using ResponseCache = std::unordered_map< RequestKey, CachedResponse, RequestKeyHasher>;
+		using ResponseCache = std::unordered_map<RequestKey, CachedResponse, RequestKeyHasher>;
+		using LatestRequestTable = std::unordered_map<common::net::EndpointKey, LatestRequest, common::net::EndpointKeyHasher>;
 
 	public:
 		static inline constexpr TaskId invalidTaskId = 0;
@@ -103,6 +112,7 @@ namespace server::net
 		PendingRequestTable pendingRequestTable_;
 		PendingTaskTable pendingTaskTable_;
 		ResponseCache responseCache_;
+		LatestRequestTable latestRequestTable_;
 
 		std::queue<ResponseTask> readyResponseQueue_;
 
@@ -123,10 +133,11 @@ namespace server::net
 
 		[[nodiscard]] bool FinalizeResponse(TaskId taskId, const common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime);
 
-		void Clear();
+		void Clear() noexcept;
 
 	private:
 		void RemoveExpiredCachedResponsesLocked(TimePoint currentTime) noexcept;
+		void RemoveExpiredLatestRequestsLocked(TimePoint currentTime) noexcept;
 
 	public:
 		[[nodiscard]] std::size_t GetPendingRequestCount() const;

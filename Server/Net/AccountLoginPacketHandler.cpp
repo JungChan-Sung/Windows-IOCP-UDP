@@ -1,5 +1,6 @@
 #include "AccountLoginPacketHandler.h"
 
+#include <optional>
 #include <utility>
 
 #include <Server/Net/AccountPacketMapper.h>
@@ -12,17 +13,21 @@ namespace server::net
 
 	AccountLoginPacketHandler::EnqueueStatus AccountLoginPacketHandler::Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime)
 	{
+		const common::net::EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
+
 		const RequestKey requestKey{
-			.endpointKey = common::net::MakeEndpointKey(remoteAddress),
+			.endpointKey = endpointKey,
 			.requestId = packet.requestId,
 		};
 
-		TaskId taskId = 0;
+		TaskId taskId = invalidTaskId;
+		std::optional<LatestRequest> previousLatestRequest;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
 			RemoveExpiredCachedResponsesLocked(currentTime);
+			RemoveExpiredLatestRequestsLocked(currentTime);
 
 			const auto cachedResponseIterator = responseCache_.find(requestKey);
 			if (cachedResponseIterator != responseCache_.end())
@@ -31,6 +36,7 @@ namespace server::net
 						.remoteAddress = remoteAddress,
 						.responsePacket = cachedResponseIterator->second.responsePacket,
 						.taskId = invalidTaskId,
+						.isLatestRequest = false,
 					});
 
 				return EnqueueStatus::CachedResponseQueued;
@@ -42,13 +48,13 @@ namespace server::net
 			}
 
 			taskId = nextTaskId_.fetch_add(1, std::memory_order_relaxed);
+
 			const bool pendingRequestInserted = pendingRequestTable_.emplace(
 				taskId,
 				PendingRequest{
 					.remoteAddress = remoteAddress,
 					.requestKey = requestKey,
 				}).second;
-
 			const bool pendingTaskInserted = pendingTaskTable_.emplace(requestKey, taskId).second;
 			if (!pendingRequestInserted || !pendingTaskInserted)
 			{
@@ -57,6 +63,17 @@ namespace server::net
 
 				return EnqueueStatus::TaskEnqueueFailed;
 			}
+
+			const auto latestRequestIterator = latestRequestTable_.find(endpointKey);
+			if (latestRequestIterator != latestRequestTable_.end())
+			{
+				previousLatestRequest = latestRequestIterator->second;
+			}
+
+			latestRequestTable_.insert_or_assign(endpointKey, LatestRequest{
+				.taskId = taskId,
+				.updatedTime = currentTime,
+				});
 		}
 
 		account::AccountLoginTask task{
@@ -74,6 +91,19 @@ namespace server::net
 
 			pendingRequestTable_.erase(taskId);
 			pendingTaskTable_.erase(requestKey);
+
+			const auto latestRequestIterator = latestRequestTable_.find(endpointKey);
+			if (latestRequestIterator != latestRequestTable_.end() && latestRequestIterator->second.taskId == taskId)
+			{
+				if (previousLatestRequest.has_value())
+				{
+					latestRequestIterator->second = *previousLatestRequest;
+				}
+				else
+				{
+					latestRequestTable_.erase(latestRequestIterator);
+				}
+			}
 		}
 
 		return EnqueueStatus::TaskEnqueueFailed;
@@ -89,6 +119,7 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			RemoveExpiredCachedResponsesLocked(currentTime);
+			RemoveExpiredLatestRequestsLocked(currentTime);
 
 			responseTaskList.reserve(readyResponseQueue_.size() + completionList.size());
 
@@ -107,11 +138,14 @@ namespace server::net
 				}
 
 				PendingRequest pendingRequest = std::move(pendingRequestIterator->second);
+				const auto latestRequestIterator = latestRequestTable_.find(pendingRequest.requestKey.endpointKey);
+				const bool isLatestRequest = (latestRequestIterator != latestRequestTable_.end()) && (latestRequestIterator->second.taskId == completion.taskId);
 
 				responseTaskList.push_back(ResponseTask{
 						.remoteAddress = pendingRequest.remoteAddress,
 						.responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, std::move(completion.loginResult)),
 						.taskId = completion.taskId,
+						.isLatestRequest = isLatestRequest,
 					});
 			}
 		}
@@ -129,6 +163,7 @@ namespace server::net
 		std::scoped_lock lock(stateMutex_);
 
 		RemoveExpiredCachedResponsesLocked(currentTime);
+		RemoveExpiredLatestRequestsLocked(currentTime);
 
 		const auto pendingRequestIterator = pendingRequestTable_.find(taskId);
 		if (pendingRequestIterator == pendingRequestTable_.end())
@@ -149,19 +184,26 @@ namespace server::net
 				.cachedTime = currentTime,
 			});
 
+		const auto latestRequestIterator = latestRequestTable_.find(pendingRequest.requestKey.endpointKey);
+		if ((latestRequestIterator != latestRequestTable_.end()) && (latestRequestIterator->second.taskId == taskId))
+		{
+			latestRequestIterator->second.updatedTime = currentTime;
+		}
+
 		pendingTaskTable_.erase(pendingRequest.requestKey);
 		pendingRequestTable_.erase(pendingRequestIterator);
 
 		return true;
 	}
 
-	void AccountLoginPacketHandler::Clear()
+	void AccountLoginPacketHandler::Clear() noexcept
 	{
 		std::scoped_lock lock(stateMutex_);
 
 		pendingRequestTable_.clear();
 		pendingTaskTable_.clear();
 		responseCache_.clear();
+		latestRequestTable_.clear();
 
 		while (!readyResponseQueue_.empty())
 		{
@@ -181,6 +223,27 @@ namespace server::net
 			}
 
 			iterator = responseCache_.erase(iterator);
+		}
+	}
+
+	void AccountLoginPacketHandler::RemoveExpiredLatestRequestsLocked(TimePoint currentTime) noexcept
+	{
+		for (auto iterator = latestRequestTable_.begin(); iterator != latestRequestTable_.end();)
+		{
+			const LatestRequest& latestRequest = iterator->second;
+			if (pendingRequestTable_.contains(latestRequest.taskId))
+			{
+				++iterator;
+				continue;
+			}
+
+			if (currentTime - latestRequest.updatedTime < responseCacheLifetime)
+			{
+				++iterator;
+				continue;
+			}
+
+			iterator = latestRequestTable_.erase(iterator);
 		}
 	}
 

@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <string>
 
-#include <Common/Packet/PacketHeader.h>
 #include <Common/Net/SessionToken.h>
+#include <Common/Packet/PacketHeader.h>
 
 namespace common::packet
 {

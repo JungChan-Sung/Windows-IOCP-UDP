@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/Serialization/PacketReader.h>
 #include <Common/Packet/Serialization/PacketWriter.h>
@@ -260,6 +261,10 @@ namespace
 			packet.status
 				= common::packet::AccountLoginResponseStatus::Succeeded;
 			packet.accountId = 1234567890123;
+			packet.sessionToken = {
+				.high = 0x1122334455667788ULL,
+				.low = 0x8877665544332211ULL,
+			};
 			packet.nickname = "한글별명";
 
 			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket
@@ -283,6 +288,12 @@ namespace
 					result,
 					roundTripPacket->accountId == packet.accountId,
 					"AccountLoginResponse: accountId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->sessionToken == packet.sessionToken,
+					"AccountLoginResponse: sessionToken"
 				);
 
 				tests::Expect(
@@ -327,6 +338,13 @@ namespace
 					result,
 					roundTripPacket->accountId == 0,
 					"AccountLoginResponse: failed accountId"
+				);
+
+				tests::Expect(
+					result,
+					roundTripPacket->sessionToken
+					== common::net::invalidSessionToken,
+					"AccountLoginResponse: invalid credentials session token"
 				);
 
 				tests::Expect(
@@ -383,7 +401,7 @@ namespace
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
-			packet.requestId = 1004;
+			packet.requestId = 1005;
 			packet.status
 				= common::packet::AccountLoginResponseStatus
 				::AlreadyLoggedIn;
@@ -429,6 +447,13 @@ namespace
 
 				tests::Expect(
 					result,
+					roundTripPacket->sessionToken
+					== common::net::invalidSessionToken,
+					"AccountLoginResponse: already logged in session token"
+				);
+
+				tests::Expect(
+					result,
 					roundTripPacket->nickname.empty(),
 					"AccountLoginResponse: already logged in nickname"
 				);
@@ -440,8 +465,21 @@ namespace
 	{
 		{
 			common::packet::JoinRequestPacket packet{};
+			packet.sessionToken = {
+				.high = 0x1234567890ABCDEFULL,
+				.low = 0xFEDCBA0987654321ULL,
+			};
 			const std::optional<common::packet::JoinRequestPacket> roundTripPacket = RoundTrip(result, packet, "JoinRequest");
 			tests::Expect(result, roundTripPacket.has_value(), "JoinRequest: roundtrip");
+
+			if (roundTripPacket.has_value())
+			{
+				tests::Expect(
+					result,
+					roundTripPacket->sessionToken == packet.sessionToken,
+					"JoinRequest: sessionToken"
+				);
+			}
 		}
 
 		{

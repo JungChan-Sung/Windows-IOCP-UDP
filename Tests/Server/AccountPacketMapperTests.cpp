@@ -4,6 +4,7 @@
 #include <string_view>
 #include <utility>
 
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/Account/AccountPacket.h>
 
 #include <Persistence/Account/AccountValidation.h>
@@ -38,7 +39,10 @@ namespace
 
 		tests::Expect(
 			result,
-			response.accountId == 0 && response.nickname.empty(),
+			response.accountId == 0
+			&& response.sessionToken
+			== common::net::invalidSessionToken
+			&& response.nickname.empty(),
 			std::string(testName) + ": clear account data"
 		);
 	}
@@ -83,6 +87,12 @@ namespace tests::server
 				result,
 				response.accountId == 1001,
 				"AccountPacketMapper: success account id"
+			);
+
+			tests::Expect(
+				result,
+				response.sessionToken == common::net::invalidSessionToken,
+				"AccountPacketMapper: success token not issued yet"
 			);
 
 			tests::Expect(

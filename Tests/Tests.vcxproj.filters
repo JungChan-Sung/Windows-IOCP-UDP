@@ -307,7 +307,7 @@
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="Server\AccountLoginAdmissionServiceTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -474,7 +474,7 @@
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\AccountLoginAdmissionServiceTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

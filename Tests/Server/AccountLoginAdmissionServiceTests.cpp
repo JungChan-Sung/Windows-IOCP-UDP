@@ -6,6 +6,7 @@
 #include <string>
 
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -73,6 +74,30 @@ namespace
 		responsePacket.nickname = std::move(nickname);
 
 		return responsePacket;
+	}
+
+	void SetTestSessionToken(ResponsePacket& responsePacket) noexcept
+	{
+		responsePacket.sessionToken = {
+			.high = 0x1122334455667788ULL,
+			.low = 0x8877665544332211ULL,
+		};
+	}
+
+	void ExpectFailureDataCleared(
+		tests::DebugTestResult& result,
+		const ResponsePacket& responsePacket,
+		std::string_view message
+	)
+	{
+		tests::Expect(
+			result,
+			responsePacket.accountId == 0
+			&& responsePacket.sessionToken
+			== common::net::invalidSessionToken
+			&& responsePacket.nickname.empty(),
+			std::string(message)
+		);
 	}
 
 	server::net::PeerState& AddJoinedPeer(
@@ -157,6 +182,13 @@ namespace
 			registry.Contains(endpointKey),
 			"AccountLoginAdmissionService: failed response preserves authentication"
 		);
+
+		tests::Expect(
+			result,
+			responsePacket.sessionToken
+			== common::net::invalidSessionToken,
+			"AccountLoginAdmissionService: failed response has invalid token"
+		);
 	}
 
 	void RunInvalidSucceededResponseTest(
@@ -178,6 +210,8 @@ namespace
 				0,
 				"nickname"
 			);
+
+		SetTestSessionToken(responsePacket);
 
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
@@ -203,10 +237,9 @@ namespace
 			"AccountLoginAdmissionService: invalid success becomes server error"
 		);
 
-		tests::Expect(
+		ExpectFailureDataCleared(
 			result,
-			responsePacket.accountId == 0
-			&& responsePacket.nickname.empty(),
+			responsePacket,
 			"AccountLoginAdmissionService: invalid success data cleared"
 		);
 
@@ -406,6 +439,8 @@ namespace
 				"second"
 			);
 
+		SetTestSessionToken(responsePacket);
+
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
 				secondEndpointKey,
@@ -430,10 +465,9 @@ namespace
 			"AccountLoginAdmissionService: pending duplicate response status"
 		);
 
-		tests::Expect(
+		ExpectFailureDataCleared(
 			result,
-			responsePacket.accountId == 0
-			&& responsePacket.nickname.empty(),
+			responsePacket,
 			"AccountLoginAdmissionService: pending duplicate data cleared"
 		);
 
@@ -479,6 +513,8 @@ namespace
 				"second"
 			);
 
+		SetTestSessionToken(responsePacket);
+
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
 				endpointKey,
@@ -494,6 +530,12 @@ namespace
 			== AccountLoginAdmissionService::Status
 			::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: pending endpoint account switch rejected"
+		);
+
+		ExpectFailureDataCleared(
+			result,
+			responsePacket,
+			"AccountLoginAdmissionService: pending endpoint rejection data cleared"
 		);
 
 		const server::net::AuthenticatedAccount* account
@@ -603,6 +645,8 @@ namespace
 				"second"
 			);
 
+		SetTestSessionToken(responsePacket);
+
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
 				endpointKey,
@@ -625,6 +669,12 @@ namespace
 			responsePacket.status
 			== ResponseStatus::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: joined endpoint rejection status"
+		);
+
+		ExpectFailureDataCleared(
+			result,
+			responsePacket,
+			"AccountLoginAdmissionService: joined endpoint rejection data cleared"
 		);
 	}
 
@@ -658,6 +708,8 @@ namespace
 				"second"
 			);
 
+		SetTestSessionToken(responsePacket);
+
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
 				secondEndpointKey,
@@ -675,10 +727,9 @@ namespace
 			"AccountLoginAdmissionService: joined account duplicate rejected"
 		);
 
-		tests::Expect(
+		ExpectFailureDataCleared(
 			result,
-			responsePacket.accountId == 0
-			&& responsePacket.nickname.empty(),
+			responsePacket,
 			"AccountLoginAdmissionService: joined duplicate data cleared"
 		);
 

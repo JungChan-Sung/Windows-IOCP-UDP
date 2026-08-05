@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/PacketHeader.h>
 
 namespace common::packet
@@ -10,6 +11,7 @@ namespace common::packet
 	{
 	public:
 		PacketHeader header{ 0, PacketType::JoinRequest };
+		common::net::SessionToken sessionToken{};
 	};
 
 	struct JoinResponsePacket

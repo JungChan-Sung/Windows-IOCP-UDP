@@ -15,15 +15,23 @@ namespace common::packet
 	{
 	public:
 		static inline constexpr PacketType packetType = PacketType::JoinRequest;
-		static inline constexpr int fixedWireSize = static_cast<int>(serializedPacketHeaderSize);
+		static inline constexpr int fixedWireSize = static_cast<int>(
+			serializedPacketHeaderSize
+			+ uint64WireSize
+			+ uint64WireSize
+			);
 
 	public:
-		static void WritePayload(PacketWriter&, const JoinRequestPacket&)
-		{}
-
-		[[nodiscard]] static bool ReadPayload(PacketReader&, JoinRequestPacket&) noexcept
+		static void WritePayload(PacketWriter& writer, const JoinRequestPacket& packet)
 		{
-			return true;
+			writer.WriteUInt64(packet.sessionToken.high);
+			writer.WriteUInt64(packet.sessionToken.low);
+		}
+
+		[[nodiscard]] static bool ReadPayload(PacketReader& reader, JoinRequestPacket& packet) noexcept
+		{
+			return reader.ReadUInt64(packet.sessionToken.high)
+				&& reader.ReadUInt64(packet.sessionToken.low);
 		}
 
 	public:

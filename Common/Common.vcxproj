@@ -50,6 +50,7 @@
     <ClInclude Include="Net\Reliable\ReliableUdpProtocol.h" />
     <ClInclude Include="Net\Reliable\ReliableUdpSendWindow.h" />
     <ClInclude Include="Net\Reliable\ReliableUdpSession.h" />
+    <ClInclude Include="Net\SessionToken.h" />
     <ClInclude Include="Net\Snapshot\SnapshotChunkAssemblerCore.h" />
     <ClInclude Include="Net\UdpContext.h" />
     <ClInclude Include="Net\Socket.h" />

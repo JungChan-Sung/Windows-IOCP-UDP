@@ -7,6 +7,7 @@ namespace server::net
 	{
 		responsePacket.status = status;
 		responsePacket.accountId = 0;
+		responsePacket.sessionToken = common::net::invalidSessionToken;
 		responsePacket.nickname.clear();
 	}
 

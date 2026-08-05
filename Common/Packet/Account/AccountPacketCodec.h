@@ -72,6 +72,8 @@ namespace common::packet
 			writer.WriteUInt64(packet.requestId);
 			writer.WriteUInt8(static_cast<std::uint8_t>(packet.status));
 			writer.WriteInt64(packet.accountId);
+			writer.WriteUInt64(packet.sessionToken.high);
+			writer.WriteUInt64(packet.sessionToken.low);
 			writer.WriteString(packet.nickname);
 		}
 
@@ -95,6 +97,8 @@ namespace common::packet
 			}
 
 			return reader.ReadInt64(packet.accountId)
+				&& reader.ReadUInt64(packet.sessionToken.high)
+				&& reader.ReadUInt64(packet.sessionToken.low)
 				&& reader.ReadString(packet.nickname);
 		}
 
@@ -105,6 +109,8 @@ namespace common::packet
 				+ uint64WireSize
 				+ uint8WireSize
 				+ int64WireSize
+				+ uint64WireSize
+				+ uint64WireSize
 				+ GetSerializedStringSize(packet.nickname);
 		}
 	};

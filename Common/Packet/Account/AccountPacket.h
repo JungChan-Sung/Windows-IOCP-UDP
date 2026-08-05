@@ -4,6 +4,7 @@
 #include <string>
 
 #include <Common/Packet/PacketHeader.h>
+#include <Common/Net/SessionToken.h>
 
 namespace common::packet
 {
@@ -39,6 +40,7 @@ namespace common::packet
 		AccountLoginResponseStatus status = AccountLoginResponseStatus::ServerError;
 
 		std::int64_t accountId = 0;
+		common::net::SessionToken sessionToken{};
 		std::string nickname;
 	};
 }

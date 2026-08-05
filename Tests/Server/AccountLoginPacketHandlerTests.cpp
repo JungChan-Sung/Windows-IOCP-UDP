@@ -60,6 +60,25 @@ namespace
 		return nullptr;
 	}
 
+	[[nodiscard]]
+	const AccountLoginPacketHandler::ResponseTask*
+		FindResponseTaskByRequestId(
+			const AccountLoginPacketHandler::ResponseTaskList& responseTaskList,
+			common::packet::AccountLoginRequestId requestId
+		)
+	{
+		for (const AccountLoginPacketHandler::ResponseTask& responseTask
+			: responseTaskList)
+		{
+			if (responseTask.responsePacket.requestId == requestId)
+			{
+				return &responseTask;
+			}
+		}
+
+		return nullptr;
+	}
+
 	void RunInvalidRequestResponseTest(
 		tests::DebugTestResult& result,
 		const AccountLoginPacketHandler::ResponseTaskList&
@@ -275,6 +294,163 @@ namespace
 			.nickname
 			.empty(),
 			"AccountLoginPacketHandler: cached failure account data cleared"
+		);
+	}
+
+	void RunLatestRequestSelectionTest(
+		tests::DebugTestResult& result
+	)
+	{
+		persistence::PersistenceRuntime persistenceRuntime;
+
+		::server::account::AccountService accountService(
+			persistenceRuntime
+		);
+
+		::server::account::AccountLoginTaskProcessor taskProcessor(
+			accountService
+		);
+
+		AccountLoginPacketHandler packetHandler(
+			taskProcessor
+		);
+
+		const auto startResult = taskProcessor.Start(1);
+
+		tests::Expect(
+			result,
+			startResult.has_value(),
+			"AccountLoginPacketHandler: latest request processor starts"
+		);
+
+		if (!startResult.has_value())
+		{
+			return;
+		}
+
+		const common::time::TimePoint requestTime{};
+		const sockaddr_in remoteAddress = MakeRemoteAddress(41000);
+
+		common::packet::AccountLoginRequestPacket firstPacket{};
+		firstPacket.requestId = 2001;
+		firstPacket.loginName = "";
+		firstPacket.passwordHash = "password_hash";
+
+		common::packet::AccountLoginRequestPacket secondPacket{};
+		secondPacket.requestId = 2002;
+		secondPacket.loginName = "";
+		secondPacket.passwordHash = "password_hash";
+
+		const AccountLoginPacketHandler::EnqueueStatus firstStatus
+			= packetHandler.Enqueue(
+				remoteAddress,
+				firstPacket,
+				requestTime
+			);
+
+		tests::Expect(
+			result,
+			firstStatus
+			== AccountLoginPacketHandler::EnqueueStatus::Enqueued,
+			"AccountLoginPacketHandler: first overlapping request enqueued"
+		);
+
+		const AccountLoginPacketHandler::EnqueueStatus secondStatus
+			= packetHandler.Enqueue(
+				remoteAddress,
+				secondPacket,
+				requestTime
+			);
+
+		tests::Expect(
+			result,
+			secondStatus
+			== AccountLoginPacketHandler::EnqueueStatus::Enqueued,
+			"AccountLoginPacketHandler: second overlapping request enqueued"
+		);
+
+		tests::Expect(
+			result,
+			packetHandler.GetPendingRequestCount() == 2,
+			"AccountLoginPacketHandler: overlapping requests remain pending"
+		);
+
+		taskProcessor.StopAfterDrain();
+
+		const common::time::TimePoint completionTime
+			= requestTime + common::time::Seconds(1);
+
+		const AccountLoginPacketHandler::ResponseTaskList responseTaskList
+			= packetHandler.ExtractResponseTaskList(completionTime);
+
+		tests::Expect(
+			result,
+			responseTaskList.size() == 2,
+			"AccountLoginPacketHandler: overlapping responses extracted"
+		);
+
+		const AccountLoginPacketHandler::ResponseTask* firstResponseTask
+			= FindResponseTaskByRequestId(
+				responseTaskList,
+				firstPacket.requestId
+			);
+
+		const AccountLoginPacketHandler::ResponseTask* secondResponseTask
+			= FindResponseTaskByRequestId(
+				responseTaskList,
+				secondPacket.requestId
+			);
+
+		tests::Expect(
+			result,
+			firstResponseTask != nullptr,
+			"AccountLoginPacketHandler: first overlapping response exists"
+		);
+
+		tests::Expect(
+			result,
+			secondResponseTask != nullptr,
+			"AccountLoginPacketHandler: second overlapping response exists"
+		);
+
+		if (firstResponseTask != nullptr)
+		{
+			tests::Expect(
+				result,
+				!firstResponseTask->isLatestRequest,
+				"AccountLoginPacketHandler: older request marked stale"
+			);
+		}
+
+		if (secondResponseTask != nullptr)
+		{
+			tests::Expect(
+				result,
+				secondResponseTask->isLatestRequest,
+				"AccountLoginPacketHandler: newest request marked latest"
+			);
+		}
+
+		for (const AccountLoginPacketHandler::ResponseTask& responseTask
+			: responseTaskList)
+		{
+			const bool finalized = packetHandler.FinalizeResponse(
+				responseTask.taskId,
+				responseTask.responsePacket,
+				completionTime
+			);
+
+			tests::Expect(
+				result,
+				finalized,
+				"AccountLoginPacketHandler: overlapping response finalized"
+			);
+		}
+
+		tests::Expect(
+			result,
+			packetHandler.GetPendingRequestCount() == 0,
+			"AccountLoginPacketHandler: overlapping requests removed"
 		);
 	}
 }
@@ -527,6 +703,8 @@ namespace tests::server
 			packetHandler.GetPendingRequestCount() == 0,
 			"AccountLoginPacketHandler: clear removes pending requests"
 		);
+
+		RunLatestRequestSelectionTest(result);
 
 		return result;
 	}

@@ -137,7 +137,7 @@ namespace server::net
 					continue;
 				}
 
-				PendingRequest pendingRequest = std::move(pendingRequestIterator->second);
+				const PendingRequest& pendingRequest = pendingRequestIterator->second;
 				const auto latestRequestIterator = latestRequestTable_.find(pendingRequest.requestKey.endpointKey);
 				const bool isLatestRequest = (latestRequestIterator != latestRequestTable_.end()) && (latestRequestIterator->second.taskId == completion.taskId);
 

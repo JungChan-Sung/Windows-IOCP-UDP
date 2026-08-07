@@ -10,6 +10,7 @@
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 
@@ -103,10 +104,22 @@ namespace
 		TimePoint currentTime
 	)
 	{
-		const common::net::EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
+		const common::net::EndpointKey endpointKey
+			= common::net::MakeEndpointKey(remoteAddress);
+
+		const common::net::SessionToken sessionToken{
+			.high = static_cast<std::uint64_t>(
+				remoteAddress.sin_addr.S_un.S_addr
+			),
+			.low = static_cast<std::uint64_t>(
+				remoteAddress.sin_port
+			),
+		};
+
 		const server::net::PeerSessionService::AuthenticatedIdentity
 			authenticatedIdentity{
 				.accountId = 1001,
+				.sessionToken = sessionToken,
 				.nickname = "nickname",
 		};
 

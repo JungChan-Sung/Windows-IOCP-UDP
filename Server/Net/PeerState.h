@@ -7,6 +7,7 @@
 
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -19,6 +20,7 @@ namespace server::net
 		common::net::EndpointKey endpointKey{};
 
 		std::int64_t accountId = 0;
+		common::net::SessionToken sessionToken{};
 		std::string nickname;
 
 		common::game::PlayerId playerId = 0;

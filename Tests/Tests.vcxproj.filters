@@ -309,6 +309,9 @@
     <ClCompile Include="Server\AccountLoginAdmissionServiceTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
+    <ClCompile Include="..\Server\Net\SessionTokenGenerator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">

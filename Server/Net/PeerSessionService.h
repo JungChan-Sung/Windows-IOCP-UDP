@@ -7,6 +7,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfig.h>
@@ -29,6 +30,7 @@ namespace server::net
 		{
 		public:
 			std::int64_t accountId = 0;
+			common::net::SessionToken sessionToken{};
 			std::string_view nickname;
 		};
 

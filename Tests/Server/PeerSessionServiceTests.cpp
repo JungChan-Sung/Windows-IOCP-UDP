@@ -8,6 +8,7 @@
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
@@ -23,6 +24,16 @@ namespace
 {
 	using Clock = std::chrono::steady_clock;
 	using TimePoint = Clock::time_point;
+
+	inline constexpr common::net::SessionToken testSessionToken{
+	.high = 0x1122334455667788ULL,
+	.low = 0x8877665544332211ULL,
+	};
+
+	inline constexpr common::net::SessionToken otherSessionToken{
+		.high = 0x1234567890ABCDEFULL,
+		.low = 0xFEDCBA0987654321ULL,
+	};
 
 	[[nodiscard]] sockaddr_in MakeRemoteAddress(std::uint32_t index) noexcept
 	{
@@ -54,6 +65,7 @@ namespace
 		const server::net::PeerSessionService::AuthenticatedIdentity
 			authenticatedIdentity{
 				.accountId = 1001,
+				.sessionToken = testSessionToken,
 				.nickname = "nickname",
 		};
 
@@ -124,6 +136,12 @@ namespace
 				result,
 				peerState->accountId == 1001,
 				"PeerSessionService: join account id"
+			);
+
+			tests::Expect(
+				result,
+				peerState->sessionToken == testSessionToken,
+				"PeerSessionService: join session token"
 			);
 
 			tests::Expect(
@@ -741,6 +759,7 @@ namespace
 		const server::net::PeerSessionService::AuthenticatedIdentity
 			invalidIdentity{
 				.accountId = 0,
+				.sessionToken = testSessionToken,
 				.nickname = "nickname",
 		};
 
@@ -782,6 +801,169 @@ namespace
 			"PeerSessionService: invalid identity no player"
 		);
 	}
+
+	void RunJoinPeerRejectsInvalidSessionTokenTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::net::PeerSessionService service;
+		server::net::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		server::game::GameSimulation gameSimulation;
+
+		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpConfig{};
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(13);
+		const common::net::EndpointKey endpointKey
+			= MakeEndpointKey(remoteAddress);
+
+		const server::net::PeerSessionService::AuthenticatedIdentity
+			invalidIdentity{
+				.accountId = 1001,
+				.sessionToken = common::net::invalidSessionToken,
+				.nickname = "nickname",
+		};
+
+		const server::net::PeerSessionService::JoinResult joinResult
+			= service.JoinPeer(
+				remoteAddress,
+				endpointKey,
+				invalidIdentity,
+				1,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				gameRuleConfig,
+				reliableUdpConfig,
+				Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			!joinResult.shouldSendResponse,
+			"PeerSessionService: invalid token no response"
+		);
+
+		tests::Expect(
+			result,
+			!joinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: invalid token no broadcast"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetPeerCount() == 0,
+			"PeerSessionService: invalid token no peer"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 0,
+			"PeerSessionService: invalid token no player"
+		);
+	}
+
+	void RunJoinExistingPeerRejectsDifferentSessionTokenTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::net::PeerSessionService service;
+		server::net::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		server::game::GameSimulation gameSimulation;
+
+		server::config::GameRuleConfig gameRuleConfig{};
+		server::config::ReliableUdpConfig reliableUdpConfig{};
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(14);
+		const common::net::EndpointKey endpointKey
+			= MakeEndpointKey(remoteAddress);
+
+		const TimePoint firstJoinTime = Clock::now();
+
+		const server::net::PeerSessionService::JoinResult firstJoinResult
+			= JoinPeerForTest(
+				service,
+				remoteAddress,
+				endpointKey,
+				1,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				gameRuleConfig,
+				reliableUdpConfig,
+				firstJoinTime
+			);
+
+		tests::Expect(
+			result,
+			firstJoinResult.shouldSendResponse,
+			"PeerSessionService: token mismatch setup joined"
+		);
+
+		const server::net::PeerSessionService::AuthenticatedIdentity
+			differentIdentity{
+				.accountId = 1001,
+				.sessionToken = otherSessionToken,
+				.nickname = "nickname",
+		};
+
+		const server::net::PeerSessionService::JoinResult retryJoinResult
+			= service.JoinPeer(
+				remoteAddress,
+				endpointKey,
+				differentIdentity,
+				1,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				gameRuleConfig,
+				reliableUdpConfig,
+				firstJoinTime + std::chrono::seconds(1)
+			);
+
+		tests::Expect(
+			result,
+			!retryJoinResult.shouldSendResponse,
+			"PeerSessionService: different existing token rejected"
+		);
+
+		tests::Expect(
+			result,
+			!retryJoinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: different token no broadcast"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetPeerCount() == 1,
+			"PeerSessionService: different token preserves existing peer"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 1,
+			"PeerSessionService: different token preserves existing player"
+		);
+
+		const server::net::PeerState* peerState
+			= peerRoomManager.FindJoinedPeer(endpointKey);
+
+		tests::Expect(
+			result,
+			peerState != nullptr
+			&& peerState->sessionToken == testSessionToken,
+			"PeerSessionService: different token does not replace session"
+		);
+
+		tests::Expect(
+			result,
+			peerState != nullptr
+			&& peerState->lastRecvTime == firstJoinTime,
+			"PeerSessionService: rejected token does not refresh receive time"
+		);
+	}
 }
 
 namespace tests::server
@@ -792,6 +974,8 @@ namespace tests::server
 
 		RunJoinPeerCreatesPeerAndPlayerTest(result);
 		RunJoinPeerRejectsInvalidIdentityTest(result);
+		RunJoinPeerRejectsInvalidSessionTokenTest(result);
+		RunJoinExistingPeerRejectsDifferentSessionTokenTest(result);
 		RunJoinPeerAppliesReliableUdpConfigTest(result);
 		RunJoinExistingPeerReturnsExistingPlayerTest(result);
 		RunJoinExistingPeerReturnsCurrentStateTest(result);
@@ -802,6 +986,7 @@ namespace tests::server
 		RunChangePeerRoomSameRoomFailsTest(result);
 		RunChangePeerRoomUnknownPeerFailsTest(result);
 		RunChangePeerRoomDeadPlayerFailsTest(result);
+
 
 		return result;
 	}

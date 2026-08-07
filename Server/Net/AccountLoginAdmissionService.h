@@ -18,6 +18,7 @@ namespace server::net
 			Authenticated,
 			ExistingSession,
 			AlreadyLoggedIn,
+			TokenGenerationFailed,
 			RegistrationFailed,
 		};
 

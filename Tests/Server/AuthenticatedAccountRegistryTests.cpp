@@ -1,10 +1,11 @@
 #include "AuthenticatedAccountRegistryTests.h"
 
-#include <chrono>
+#include <cstdint>
 #include <optional>
 #include <string>
 
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Net/AuthenticatedAccountRegistry.h>
@@ -15,6 +16,16 @@ namespace
 {
 	using AuthenticatedAccountRegistry
 		= server::net::AuthenticatedAccountRegistry;
+
+	[[nodiscard]] constexpr common::net::SessionToken MakeSessionToken(
+		std::uint64_t value
+	) noexcept
+	{
+		return common::net::SessionToken{
+			.high = value,
+			.low = value ^ 0xA5A5A5A5A5A5A5A5ULL,
+		};
+	}
 
 	[[nodiscard]] common::net::EndpointKey MakeEndpointKey(
 		std::uint32_t address,
@@ -55,6 +66,9 @@ namespace
 		const common::net::EndpointKey endpointKey
 			= MakeEndpointKey(1, 1000);
 
+		const common::net::SessionToken sessionToken
+			= MakeSessionToken(1001);
+
 		const common::time::TimePoint authenticatedTime
 			= common::time::TimePoint{}
 		+ common::time::Seconds(10);
@@ -62,6 +76,7 @@ namespace
 		const bool inserted = registry.Upsert(
 			endpointKey,
 			1001,
+			sessionToken,
 			"nickname",
 			authenticatedTime
 		);
@@ -100,6 +115,12 @@ namespace
 
 		tests::Expect(
 			result,
+			account->sessionToken == sessionToken,
+			"AuthenticatedAccountRegistry: session token preserved"
+		);
+
+		tests::Expect(
+			result,
 			account->nickname == "nickname",
 			"AuthenticatedAccountRegistry: nickname preserved"
 		);
@@ -111,34 +132,44 @@ namespace
 		);
 	}
 
-	void RunInvalidAccountIdTest(
+	void RunInvalidAccountDataTest(
 		tests::DebugTestResult& result
 	)
 	{
 		AuthenticatedAccountRegistry registry;
 
-		const bool inserted = registry.Upsert(
+		const bool invalidAccountIdInserted = registry.Upsert(
 			MakeEndpointKey(1, 1000),
 			0,
+			MakeSessionToken(1001),
 			"nickname",
 			common::time::TimePoint{}
 		);
 
 		tests::Expect(
 			result,
-			!inserted,
+			!invalidAccountIdInserted,
 			"AuthenticatedAccountRegistry: invalid account id rejected"
+		);
+
+		const bool invalidSessionTokenInserted = registry.Upsert(
+			MakeEndpointKey(2, 2000),
+			1001,
+			common::net::invalidSessionToken,
+			"nickname",
+			common::time::TimePoint{}
 		);
 
 		tests::Expect(
 			result,
-			registry.GetCount() == 0,
-			"AuthenticatedAccountRegistry: invalid insert does not change count"
+			!invalidSessionTokenInserted,
+			"AuthenticatedAccountRegistry: invalid session token rejected"
 		);
 
 		const bool emptyNicknameInserted = registry.Upsert(
-			MakeEndpointKey(2, 2000),
+			MakeEndpointKey(3, 3000),
 			1001,
+			MakeSessionToken(1002),
 			"",
 			common::time::TimePoint{}
 		);
@@ -165,10 +196,17 @@ namespace
 		const common::net::EndpointKey endpointKey
 			= MakeEndpointKey(1, 1000);
 
+		const common::net::SessionToken firstSessionToken
+			= MakeSessionToken(1001);
+
+		const common::net::SessionToken secondSessionToken
+			= MakeSessionToken(1002);
+
 		static_cast<void>(
 			registry.Upsert(
 				endpointKey,
 				1001,
+				firstSessionToken,
 				"first",
 				common::time::TimePoint{}
 			)
@@ -178,6 +216,7 @@ namespace
 			registry.Upsert(
 				endpointKey,
 				1002,
+				secondSessionToken,
 				"second",
 				common::time::TimePoint{}
 				+ common::time::Seconds(1)
@@ -212,6 +251,12 @@ namespace
 
 		tests::Expect(
 			result,
+			account->sessionToken == secondSessionToken,
+			"AuthenticatedAccountRegistry: session token replaced"
+		);
+
+		tests::Expect(
+			result,
 			account->nickname == "second",
 			"AuthenticatedAccountRegistry: nickname replaced"
 		);
@@ -230,6 +275,7 @@ namespace
 			registry.Upsert(
 				endpointKey,
 				1001,
+				MakeSessionToken(1001),
 				"nickname",
 				common::time::TimePoint{}
 			)
@@ -266,6 +312,7 @@ namespace
 			registry.Upsert(
 				MakeEndpointKey(1, 1000),
 				1001,
+				MakeSessionToken(1001),
 				"expired",
 				baseTime
 			)
@@ -275,16 +322,16 @@ namespace
 			registry.Upsert(
 				MakeEndpointKey(2, 2000),
 				1002,
+				MakeSessionToken(1002),
 				"active",
 				baseTime + common::time::Seconds(8)
 			)
 			);
 
-		const std::size_t removedCount
-			= registry.RemoveExpired(
-				baseTime + common::time::Seconds(10),
-				common::time::Seconds(5)
-			);
+		const std::size_t removedCount = registry.RemoveExpired(
+			baseTime + common::time::Seconds(10),
+			common::time::Seconds(5)
+		);
 
 		tests::Expect(
 			result,
@@ -315,6 +362,7 @@ namespace
 			registry.Upsert(
 				MakeEndpointKey(1, 1000),
 				1001,
+				MakeSessionToken(1001),
 				"first",
 				common::time::TimePoint{}
 			)
@@ -324,6 +372,7 @@ namespace
 			registry.Upsert(
 				MakeEndpointKey(2, 2000),
 				1002,
+				MakeSessionToken(1002),
 				"second",
 				common::time::TimePoint{}
 			)
@@ -354,6 +403,7 @@ namespace
 			registry.Upsert(
 				firstEndpointKey,
 				1001,
+				MakeSessionToken(1001),
 				"first",
 				common::time::TimePoint{}
 			)
@@ -363,6 +413,7 @@ namespace
 			registry.Upsert(
 				secondEndpointKey,
 				1002,
+				MakeSessionToken(1002),
 				"second",
 				common::time::TimePoint{}
 			)
@@ -381,8 +432,7 @@ namespace
 		tests::Expect(
 			result,
 			firstFoundEndpointKey.has_value()
-			&& *firstFoundEndpointKey
-			== firstEndpointKey,
+			&& *firstFoundEndpointKey == firstEndpointKey,
 			"AuthenticatedAccountRegistry: correct account endpoint"
 		);
 
@@ -393,22 +443,19 @@ namespace
 		tests::Expect(
 			result,
 			secondFoundEndpointKey.has_value()
-			&& *secondFoundEndpointKey
-			== secondEndpointKey,
+			&& *secondFoundEndpointKey == secondEndpointKey,
 			"AuthenticatedAccountRegistry: second account endpoint"
 		);
 
 		tests::Expect(
 			result,
-			!registry.FindEndpointByAccountId(9999)
-			.has_value(),
+			!registry.FindEndpointByAccountId(9999).has_value(),
 			"AuthenticatedAccountRegistry: unknown account endpoint missing"
 		);
 
 		tests::Expect(
 			result,
-			!registry.FindEndpointByAccountId(0)
-			.has_value(),
+			!registry.FindEndpointByAccountId(0).has_value(),
 			"AuthenticatedAccountRegistry: invalid account endpoint missing"
 		);
 	}
@@ -423,7 +470,7 @@ namespace tests::server
 		RunInitialStateTest(result);
 		RunInsertAndFindTest(result);
 		RunFindEndpointByAccountIdTest(result);
-		RunInvalidAccountIdTest(result);
+		RunInvalidAccountDataTest(result);
 		RunReplaceTest(result);
 		RunRemoveTest(result);
 		RunRemoveExpiredTest(result);

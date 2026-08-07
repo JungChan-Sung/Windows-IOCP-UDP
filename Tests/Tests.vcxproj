@@ -112,7 +112,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;Odbc32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;Odbc32.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,6 +130,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Ws2_32.lib;Odbc32.lib;Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
     <ClCompile Include="..\Server\Net\PeerSessionService.cpp" />
     <ClCompile Include="..\Server\Net\PlayerCommandService.cpp" />
+    <ClCompile Include="..\Server\Net\SessionTokenGenerator.cpp" />
     <ClCompile Include="..\Server\Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Client\AccountLoginStateTests.cpp" />

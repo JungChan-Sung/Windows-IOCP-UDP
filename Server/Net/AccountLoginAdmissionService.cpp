@@ -1,5 +1,9 @@
 #include "AccountLoginAdmissionService.h"
 
+#include <optional>
+
+#include <Server/Net/SessionTokenGenerator.h>
+
 namespace server::net
 {
 
@@ -35,6 +39,14 @@ namespace server::net
 				return Status::AlreadyLoggedIn;
 			}
 
+			if (!common::net::IsValidSessionToken(endpointPeerState->sessionToken))
+			{
+				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
+				return Status::RegistrationFailed;
+			}
+
+			responsePacket.sessionToken = endpointPeerState->sessionToken;
+
 			static_cast<void>(authenticatedAccountRegistry.Remove(endpointKey));
 
 			return Status::ExistingSession;
@@ -61,9 +73,17 @@ namespace server::net
 			return Status::AlreadyLoggedIn;
 		}
 
+		const std::optional<common::net::SessionToken> sessionToken = GenerateSessionToken();
+		if (!sessionToken.has_value())
+		{
+			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
+			return Status::TokenGenerationFailed;
+		}
+
 		const bool registered = authenticatedAccountRegistry.Upsert(
 				endpointKey,
 				responsePacket.accountId,
+				*sessionToken,
 				responsePacket.nickname,
 				currentTime
 			);
@@ -72,6 +92,8 @@ namespace server::net
 			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
 			return Status::RegistrationFailed;
 		}
+
+		responsePacket.sessionToken = *sessionToken;
 
 		return Status::Authenticated;
 	}

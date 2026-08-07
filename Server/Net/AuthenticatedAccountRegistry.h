@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::net
@@ -15,6 +16,7 @@ namespace server::net
 	{
 	public:
 		std::int64_t accountId = 0;
+		common::net::SessionToken sessionToken{};
 		std::string nickname;
 		common::time::TimePoint authenticatedTime{};
 	};
@@ -43,7 +45,13 @@ namespace server::net
 		AuthenticatedAccountRegistry& operator=(AuthenticatedAccountRegistry&&) = delete;
 
 	public:
-		[[nodiscard]] bool Upsert(const EndpointKey& endpointKey, std::int64_t accountId, std::string nickname, TimePoint authenticatedTime);
+		[[nodiscard]] bool Upsert(
+			const EndpointKey& endpointKey,
+			std::int64_t accountId,
+			common::net::SessionToken sessionToken,
+			std::string nickname,
+			TimePoint authenticatedTime
+		);
 
 		[[nodiscard]] AuthenticatedAccount* Find(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey) const noexcept;
@@ -60,3 +68,6 @@ namespace server::net
 		[[nodiscard]] std::size_t GetCount() const noexcept;
 	};
 }
+
+class AuthenticatedAccountRegistry
+{};

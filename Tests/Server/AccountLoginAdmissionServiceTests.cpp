@@ -4,6 +4,8 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/SessionToken.h>
@@ -34,6 +36,16 @@ namespace
 	using ResponseStatus
 		= common::packet::AccountLoginResponseStatus;
 
+	[[nodiscard]] constexpr common::net::SessionToken MakeSessionToken(
+		std::uint64_t value
+	) noexcept
+	{
+		return common::net::SessionToken{
+			.high = value,
+			.low = value ^ 0x5A5A5A5A5A5A5A5AULL,
+		};
+	}
+
 	[[nodiscard]] sockaddr_in MakeRemoteAddress(
 		std::uint32_t index
 	) noexcept
@@ -42,30 +54,25 @@ namespace
 		remoteAddress.sin_family = AF_INET;
 		remoteAddress.sin_addr.S_un.S_addr
 			= ::htonl(0x7F000001 + index);
-		remoteAddress.sin_port
-			= ::htons(
-				static_cast<u_short>(30000 + index)
-			);
+		remoteAddress.sin_port = ::htons(
+			static_cast<u_short>(30000 + index)
+		);
 
 		return remoteAddress;
 	}
 
-	[[nodiscard]] common::net::EndpointKey
-		MakeEndpointKey(
-			const sockaddr_in& remoteAddress
-		) noexcept
+	[[nodiscard]] common::net::EndpointKey MakeEndpointKey(
+		const sockaddr_in& remoteAddress
+	) noexcept
 	{
-		return common::net::MakeEndpointKey(
-			remoteAddress
-		);
+		return common::net::MakeEndpointKey(remoteAddress);
 	}
 
-	[[nodiscard]] ResponsePacket
-		MakeSucceededResponse(
-			common::packet::AccountLoginRequestId requestId,
-			std::int64_t accountId,
-			std::string nickname
-		)
+	[[nodiscard]] ResponsePacket MakeSucceededResponse(
+		common::packet::AccountLoginRequestId requestId,
+		std::int64_t accountId,
+		std::string nickname
+	)
 	{
 		ResponsePacket responsePacket{};
 		responsePacket.requestId = requestId;
@@ -76,12 +83,11 @@ namespace
 		return responsePacket;
 	}
 
-	void SetTestSessionToken(ResponsePacket& responsePacket) noexcept
+	void SetTestSessionToken(
+		ResponsePacket& responsePacket
+	) noexcept
 	{
-		responsePacket.sessionToken = {
-			.high = 0x1122334455667788ULL,
-			.low = 0x8877665544332211ULL,
-		};
+		responsePacket.sessionToken = MakeSessionToken(9999);
 	}
 
 	void ExpectFailureDataCleared(
@@ -120,6 +126,9 @@ namespace
 			);
 
 		peerState.accountId = accountId;
+		peerState.sessionToken = MakeSessionToken(
+			static_cast<std::uint64_t>(accountId)
+		);
 		peerState.nickname = std::move(nickname);
 
 		return peerState;
@@ -133,16 +142,18 @@ namespace
 		AuthenticatedAccountRegistry registry;
 		PeerRoomManager peerRoomManager;
 
-		const sockaddr_in remoteAddress
-			= MakeRemoteAddress(1);
-
+		const sockaddr_in remoteAddress = MakeRemoteAddress(1);
 		const common::net::EndpointKey endpointKey
 			= MakeEndpointKey(remoteAddress);
+
+		const common::net::SessionToken existingSessionToken
+			= MakeSessionToken(1001);
 
 		static_cast<void>(
 			registry.Upsert(
 				endpointKey,
 				1001,
+				existingSessionToken,
 				"existing",
 				common::time::TimePoint{}
 			)
@@ -150,8 +161,7 @@ namespace
 
 		ResponsePacket responsePacket{};
 		responsePacket.requestId = 1;
-		responsePacket.status
-			= ResponseStatus::InvalidCredentials;
+		responsePacket.status = ResponseStatus::InvalidCredentials;
 
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
@@ -164,23 +174,14 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::Unchanged,
+			status == AccountLoginAdmissionService::Status::Unchanged,
 			"AccountLoginAdmissionService: failed response unchanged"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::InvalidCredentials,
+			responsePacket.status == ResponseStatus::InvalidCredentials,
 			"AccountLoginAdmissionService: failed status preserved"
-		);
-
-		tests::Expect(
-			result,
-			registry.Contains(endpointKey),
-			"AccountLoginAdmissionService: failed response preserves authentication"
 		);
 
 		tests::Expect(
@@ -188,6 +189,22 @@ namespace
 			responsePacket.sessionToken
 			== common::net::invalidSessionToken,
 			"AccountLoginAdmissionService: failed response has invalid token"
+		);
+
+		const server::net::AuthenticatedAccount* account
+			= registry.Find(endpointKey);
+
+		tests::Expect(
+			result,
+			account != nullptr,
+			"AccountLoginAdmissionService: failed response preserves authentication"
+		);
+
+		tests::Expect(
+			result,
+			account != nullptr
+			&& account->sessionToken == existingSessionToken,
+			"AccountLoginAdmissionService: failed response preserves existing token"
 		);
 	}
 
@@ -200,16 +217,13 @@ namespace
 		PeerRoomManager peerRoomManager;
 
 		const common::net::EndpointKey endpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(2)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(2));
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				2,
-				0,
-				"nickname"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			2,
+			0,
+			"nickname"
+		);
 
 		SetTestSessionToken(responsePacket);
 
@@ -225,15 +239,13 @@ namespace
 		tests::Expect(
 			result,
 			status
-			== AccountLoginAdmissionService::Status
-			::RegistrationFailed,
+			== AccountLoginAdmissionService::Status::RegistrationFailed,
 			"AccountLoginAdmissionService: invalid success rejected"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::ServerError,
+			responsePacket.status == ResponseStatus::ServerError,
 			"AccountLoginAdmissionService: invalid success becomes server error"
 		);
 
@@ -259,20 +271,17 @@ namespace
 		PeerRoomManager peerRoomManager;
 
 		const common::net::EndpointKey endpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(3)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(3));
 
 		const common::time::TimePoint currentTime
 			= common::time::TimePoint{}
 		+ common::time::Seconds(10);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				3,
-				1001,
-				"nickname"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			3,
+			1001,
+			"nickname"
+		);
 
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
@@ -285,17 +294,22 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::Authenticated,
+			status == AccountLoginAdmissionService::Status::Authenticated,
 			"AccountLoginAdmissionService: new account authenticated"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::Succeeded,
+			responsePacket.status == ResponseStatus::Succeeded,
 			"AccountLoginAdmissionService: successful response preserved"
+		);
+
+		tests::Expect(
+			result,
+			common::net::IsValidSessionToken(
+				responsePacket.sessionToken
+			),
+			"AccountLoginAdmissionService: session token issued"
 		);
 
 		const server::net::AuthenticatedAccount* account
@@ -320,6 +334,12 @@ namespace
 
 		tests::Expect(
 			result,
+			account->sessionToken == responsePacket.sessionToken,
+			"AccountLoginAdmissionService: response token registered"
+		);
+
+		tests::Expect(
+			result,
 			account->nickname == "nickname",
 			"AccountLoginAdmissionService: registered nickname"
 		);
@@ -340,14 +360,13 @@ namespace
 		PeerRoomManager peerRoomManager;
 
 		const common::net::EndpointKey endpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(4)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(4));
 
 		static_cast<void>(
 			registry.Upsert(
 				endpointKey,
 				1001,
+				MakeSessionToken(1001),
 				"old_nickname",
 				common::time::TimePoint{}
 			)
@@ -357,12 +376,11 @@ namespace
 			= common::time::TimePoint{}
 		+ common::time::Seconds(5);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				4,
-				1001,
-				"new_nickname"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			4,
+			1001,
+			"new_nickname"
+		);
 
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
@@ -375,10 +393,16 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::Authenticated,
+			status == AccountLoginAdmissionService::Status::Authenticated,
 			"AccountLoginAdmissionService: same pending account refreshed"
+		);
+
+		tests::Expect(
+			result,
+			common::net::IsValidSessionToken(
+				responsePacket.sessionToken
+			),
+			"AccountLoginAdmissionService: refresh issues session token"
 		);
 
 		tests::Expect(
@@ -389,6 +413,13 @@ namespace
 
 		const server::net::AuthenticatedAccount* account
 			= registry.Find(endpointKey);
+
+		tests::Expect(
+			result,
+			account != nullptr
+			&& account->sessionToken == responsePacket.sessionToken,
+			"AccountLoginAdmissionService: refresh stores response token"
+		);
 
 		tests::Expect(
 			result,
@@ -414,30 +445,29 @@ namespace
 		PeerRoomManager peerRoomManager;
 
 		const common::net::EndpointKey firstEndpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(5)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(5));
 
 		const common::net::EndpointKey secondEndpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(6)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(6));
+
+		const common::net::SessionToken firstSessionToken
+			= MakeSessionToken(1001);
 
 		static_cast<void>(
 			registry.Upsert(
 				firstEndpointKey,
 				1001,
+				firstSessionToken,
 				"first",
 				common::time::TimePoint{}
 			)
 			);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				5,
-				1001,
-				"second"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			5,
+			1001,
+			"second"
+		);
 
 		SetTestSessionToken(responsePacket);
 
@@ -452,16 +482,13 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::AlreadyLoggedIn,
+			status == AccountLoginAdmissionService::Status::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: pending account duplicate rejected"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::AlreadyLoggedIn,
+			responsePacket.status == ResponseStatus::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: pending duplicate response status"
 		);
 
@@ -471,10 +498,14 @@ namespace
 			"AccountLoginAdmissionService: pending duplicate data cleared"
 		);
 
+		const server::net::AuthenticatedAccount* firstAccount
+			= registry.Find(firstEndpointKey);
+
 		tests::Expect(
 			result,
-			registry.Contains(firstEndpointKey),
-			"AccountLoginAdmissionService: original pending account retained"
+			firstAccount != nullptr
+			&& firstAccount->sessionToken == firstSessionToken,
+			"AccountLoginAdmissionService: original pending token retained"
 		);
 
 		tests::Expect(
@@ -493,25 +524,26 @@ namespace
 		PeerRoomManager peerRoomManager;
 
 		const common::net::EndpointKey endpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(7)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(7));
+
+		const common::net::SessionToken firstSessionToken
+			= MakeSessionToken(1001);
 
 		static_cast<void>(
 			registry.Upsert(
 				endpointKey,
 				1001,
+				firstSessionToken,
 				"first",
 				common::time::TimePoint{}
 			)
 			);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				6,
-				2002,
-				"second"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			6,
+			2002,
+			"second"
+		);
 
 		SetTestSessionToken(responsePacket);
 
@@ -526,10 +558,14 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::AlreadyLoggedIn,
+			status == AccountLoginAdmissionService::Status::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: pending endpoint account switch rejected"
+		);
+
+		tests::Expect(
+			result,
+			responsePacket.status == ResponseStatus::AlreadyLoggedIn,
+			"AccountLoginAdmissionService: pending endpoint rejection status"
 		);
 
 		ExpectFailureDataCleared(
@@ -544,7 +580,8 @@ namespace
 		tests::Expect(
 			result,
 			account != nullptr
-			&& account->accountId == 1001,
+			&& account->accountId == 1001
+			&& account->sessionToken == firstSessionToken,
 			"AccountLoginAdmissionService: original pending identity retained"
 		);
 	}
@@ -557,11 +594,12 @@ namespace
 		AuthenticatedAccountRegistry registry;
 		PeerRoomManager peerRoomManager;
 
-		const sockaddr_in remoteAddress
-			= MakeRemoteAddress(8);
-
+		const sockaddr_in remoteAddress = MakeRemoteAddress(8);
 		const common::net::EndpointKey endpointKey
 			= MakeEndpointKey(remoteAddress);
+
+		const common::net::SessionToken expectedSessionToken
+			= MakeSessionToken(1001);
 
 		AddJoinedPeer(
 			peerRoomManager,
@@ -574,17 +612,17 @@ namespace
 			registry.Upsert(
 				endpointKey,
 				1001,
+				MakeSessionToken(2001),
 				"pending",
 				common::time::TimePoint{}
 			)
 			);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				7,
-				1001,
-				"joined"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			7,
+			1001,
+			"joined"
+		);
 
 		const AccountLoginAdmissionService::Status status
 			= service.Apply(
@@ -597,17 +635,20 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::ExistingSession,
+			status == AccountLoginAdmissionService::Status::ExistingSession,
 			"AccountLoginAdmissionService: existing session accepted"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::Succeeded,
+			responsePacket.status == ResponseStatus::Succeeded,
 			"AccountLoginAdmissionService: existing session response succeeds"
+		);
+
+		tests::Expect(
+			result,
+			responsePacket.sessionToken == expectedSessionToken,
+			"AccountLoginAdmissionService: existing session token returned"
 		);
 
 		tests::Expect(
@@ -617,7 +658,7 @@ namespace
 		);
 	}
 
-	void RunDifferentAccountOnJoinedEndpointRejectedTest(
+	void RunExistingSessionWithInvalidTokenRejectedTest(
 		tests::DebugTestResult& result
 	)
 	{
@@ -625,25 +666,24 @@ namespace
 		AuthenticatedAccountRegistry registry;
 		PeerRoomManager peerRoomManager;
 
-		const sockaddr_in remoteAddress
-			= MakeRemoteAddress(9);
-
+		const sockaddr_in remoteAddress = MakeRemoteAddress(9);
 		const common::net::EndpointKey endpointKey
 			= MakeEndpointKey(remoteAddress);
 
-		AddJoinedPeer(
+		server::net::PeerState& peerState = AddJoinedPeer(
 			peerRoomManager,
 			remoteAddress,
 			1001,
-			"first"
+			"joined"
 		);
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				8,
-				2002,
-				"second"
-			);
+		peerState.sessionToken = common::net::invalidSessionToken;
+
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			8,
+			1001,
+			"joined"
+		);
 
 		SetTestSessionToken(responsePacket);
 
@@ -659,15 +699,68 @@ namespace
 		tests::Expect(
 			result,
 			status
-			== AccountLoginAdmissionService::Status
-			::AlreadyLoggedIn,
+			== AccountLoginAdmissionService::Status::RegistrationFailed,
+			"AccountLoginAdmissionService: invalid existing session token rejected"
+		);
+
+		tests::Expect(
+			result,
+			responsePacket.status == ResponseStatus::ServerError,
+			"AccountLoginAdmissionService: invalid existing token becomes server error"
+		);
+
+		ExpectFailureDataCleared(
+			result,
+			responsePacket,
+			"AccountLoginAdmissionService: invalid existing token data cleared"
+		);
+	}
+
+	void RunDifferentAccountOnJoinedEndpointRejectedTest(
+		tests::DebugTestResult& result
+	)
+	{
+		AccountLoginAdmissionService service;
+		AuthenticatedAccountRegistry registry;
+		PeerRoomManager peerRoomManager;
+
+		const sockaddr_in remoteAddress = MakeRemoteAddress(10);
+		const common::net::EndpointKey endpointKey
+			= MakeEndpointKey(remoteAddress);
+
+		AddJoinedPeer(
+			peerRoomManager,
+			remoteAddress,
+			1001,
+			"first"
+		);
+
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			9,
+			2002,
+			"second"
+		);
+
+		SetTestSessionToken(responsePacket);
+
+		const AccountLoginAdmissionService::Status status
+			= service.Apply(
+				endpointKey,
+				responsePacket,
+				common::time::TimePoint{},
+				registry,
+				peerRoomManager
+			);
+
+		tests::Expect(
+			result,
+			status == AccountLoginAdmissionService::Status::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: joined endpoint account switch rejected"
 		);
 
 		tests::Expect(
 			result,
-			responsePacket.status
-			== ResponseStatus::AlreadyLoggedIn,
+			responsePacket.status == ResponseStatus::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: joined endpoint rejection status"
 		);
 
@@ -686,8 +779,7 @@ namespace
 		AuthenticatedAccountRegistry registry;
 		PeerRoomManager peerRoomManager;
 
-		const sockaddr_in firstRemoteAddress
-			= MakeRemoteAddress(10);
+		const sockaddr_in firstRemoteAddress = MakeRemoteAddress(11);
 
 		AddJoinedPeer(
 			peerRoomManager,
@@ -697,16 +789,13 @@ namespace
 		);
 
 		const common::net::EndpointKey secondEndpointKey
-			= MakeEndpointKey(
-				MakeRemoteAddress(11)
-			);
+			= MakeEndpointKey(MakeRemoteAddress(12));
 
-		ResponsePacket responsePacket
-			= MakeSucceededResponse(
-				9,
-				1001,
-				"second"
-			);
+		ResponsePacket responsePacket = MakeSucceededResponse(
+			10,
+			1001,
+			"second"
+		);
 
 		SetTestSessionToken(responsePacket);
 
@@ -721,10 +810,14 @@ namespace
 
 		tests::Expect(
 			result,
-			status
-			== AccountLoginAdmissionService::Status
-			::AlreadyLoggedIn,
+			status == AccountLoginAdmissionService::Status::AlreadyLoggedIn,
 			"AccountLoginAdmissionService: joined account duplicate rejected"
+		);
+
+		tests::Expect(
+			result,
+			responsePacket.status == ResponseStatus::AlreadyLoggedIn,
+			"AccountLoginAdmissionService: joined account duplicate status"
 		);
 
 		ExpectFailureDataCleared(
@@ -743,8 +836,7 @@ namespace
 
 namespace tests::server
 {
-	DebugTestResult
-		RunAccountLoginAdmissionServiceTests()
+	DebugTestResult RunAccountLoginAdmissionServiceTests()
 	{
 		DebugTestResult result{};
 
@@ -755,6 +847,7 @@ namespace tests::server
 		RunPendingAccountOnOtherEndpointRejectedTest(result);
 		RunDifferentAccountOnSamePendingEndpointRejectedTest(result);
 		RunExistingSessionTest(result);
+		RunExistingSessionWithInvalidTokenRejectedTest(result);
 		RunDifferentAccountOnJoinedEndpointRejectedTest(result);
 		RunJoinedAccountOnOtherEndpointRejectedTest(result);
 

@@ -14,15 +14,24 @@ namespace server::net
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
 
+		if (authenticatedIdentity.accountId <= 0 || !common::net::IsValidSessionToken(authenticatedIdentity.sessionToken) || authenticatedIdentity.nickname.empty())
+		{
+			return joinResult;
+		}
+
 		PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (existingPeerState != nullptr)
 		{
+			if (existingPeerState->accountId != authenticatedIdentity.accountId || existingPeerState->sessionToken != authenticatedIdentity.sessionToken)
+			{
+				return joinResult;
+			}
+
 			existingPeerState->lastRecvTime = currentTime;
 
 			const game::PlayerState* existingPlayerState = gameWorld.FindPlayer(existingPeerState->playerId);
 			if (existingPlayerState != nullptr)
 			{
-
 				joinResult.shouldSendResponse = true;
 				joinResult.shouldBroadcastPlayerJoined = false;
 				joinResult.playerId = existingPeerState->playerId;
@@ -35,11 +44,6 @@ namespace server::net
 			PlayerId removedPlayerId = 0;
 			RoomId removedRoomId = 0;
 			peerRoomManager.RemovePeer(endpointKey, removedPlayerId, removedRoomId);
-		}
-
-		if (authenticatedIdentity.accountId <= 0 || authenticatedIdentity.nickname.empty())
-		{
-			return joinResult;
 		}
 
 		const std::size_t spawnIndex = peerRoomManager.GetRoomMemberCount(initialRoomId);
@@ -55,6 +59,7 @@ namespace server::net
 			currentTime
 		);
 		peerState.accountId = authenticatedIdentity.accountId;
+		peerState.sessionToken = authenticatedIdentity.sessionToken;
 		peerState.nickname = authenticatedIdentity.nickname;
 		peerState.lastInputSequence = 0;
 

@@ -120,7 +120,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;Mswsock.lib;Common.lib;Persistence.lib;odbc32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;Mswsock.lib;Bcrypt.lib;Common.lib;Persistence.lib;odbc32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,7 +139,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;Mswsock.lib;Common.lib;Persistence.lib;odbc32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;Mswsock.lib;Bcrypt.lib;Common.lib;Persistence.lib;odbc32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -163,6 +163,7 @@
     <ClCompile Include="Net\PeerRoomManager.cpp" />
     <ClCompile Include="Net\PeerSessionService.cpp" />
     <ClCompile Include="Net\PlayerCommandService.cpp" />
+    <ClCompile Include="Net\SessionTokenGenerator.cpp" />
     <ClCompile Include="Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
     <ClCompile Include="Net\UdpIocpTransportMetrics.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="Net\PeerSessionService.h" />
     <ClInclude Include="Net\PeerState.h" />
     <ClInclude Include="Net\PlayerCommandService.h" />
+    <ClInclude Include="Net\SessionTokenGenerator.h" />
     <ClInclude Include="Net\SnapshotBroadcastBuilder.h" />
     <ClInclude Include="Net\SnapshotBroadcastTask.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />

@@ -787,6 +787,7 @@ namespace server::net
 			{
 				// JoinResponse 유실로 인한 기존 참가자의 재요청.
 				authenticatedIdentity.accountId = existingPeerState->accountId;
+				authenticatedIdentity.sessionToken = existingPeerState->sessionToken;
 				authenticatedIdentity.nickname = existingPeerState->nickname;
 
 				hasAuthenticatedIdentity = true;
@@ -797,6 +798,7 @@ namespace server::net
 				if (authenticatedAccount != nullptr)
 				{
 					authenticatedIdentity.accountId = authenticatedAccount->accountId;
+					authenticatedIdentity.sessionToken = authenticatedAccount->sessionToken;
 					authenticatedIdentity.nickname = authenticatedAccount->nickname;
 
 					hasAuthenticatedIdentity = true;
@@ -1061,6 +1063,10 @@ namespace server::net
 					{
 						LogWarning("Account login rejected because the account is already logged in.");
 					}
+					else if (admissionStatus == AccountLoginAdmissionService::Status::TokenGenerationFailed)
+					{
+						LogError("Failed to generate account session token.");
+					}
 					else if (admissionStatus == AccountLoginAdmissionService::Status::RegistrationFailed)
 					{
 						LogError("Failed to register authenticated account.");
@@ -1078,6 +1084,7 @@ namespace server::net
 
 					responseTask.responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
 					responseTask.responsePacket.accountId = 0;
+					responseTask.responsePacket.sessionToken = common::net::invalidSessionToken;
 					responseTask.responsePacket.nickname.clear();
 				}
 			}

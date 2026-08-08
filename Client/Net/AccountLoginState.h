@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -36,6 +37,7 @@ namespace client::net
 			std::optional<ResponseStatus> responseStatus;
 
 			std::int64_t accountId = 0;
+			common::net::SessionToken sessionToken{};
 			std::string nickname;
 		};
 
@@ -61,6 +63,7 @@ namespace client::net
 		std::optional<ResponseStatus> responseStatus_;
 
 		std::int64_t accountId_ = 0;
+		common::net::SessionToken sessionToken_{};
 		std::string nickname_;
 
 	public:
@@ -84,6 +87,7 @@ namespace client::net
 
 	private:
 		[[nodiscard]] RequestId AllocateRequestIdUnlocked() noexcept;
+		void ClearAccountDataUnlocked();
 		void ClearResultUnlocked();
 
 	public:

@@ -67,21 +67,30 @@ namespace client::net
 		}
 
 		responseStatus_ = packet.status;
-
 		passwordHash_.clear();
 
 		if (packet.status == ResponseStatus::Succeeded)
 		{
+			const bool validResponse = packet.accountId > 0 && common::net::IsValidSessionToken(packet.sessionToken) && !packet.nickname.empty();
+			if (!validResponse)
+			{
+				state_ = State::Failed;
+				responseStatus_ = ResponseStatus::ServerError;
+				ClearAccountDataUnlocked();
+
+				return true;
+			}
+
 			state_ = State::Succeeded;
 			accountId_ = packet.accountId;
+			sessionToken_ = packet.sessionToken;
 			nickname_ = packet.nickname;
 
 			return true;
 		}
 
 		state_ = State::Failed;
-		accountId_ = 0;
-		nickname_.clear();
+		ClearAccountDataUnlocked();
 
 		return true;
 	}
@@ -115,12 +124,17 @@ namespace client::net
 		return requestId;
 	}
 
+	void AccountLoginState::ClearAccountDataUnlocked()
+	{
+		accountId_ = 0;
+		sessionToken_ = common::net::invalidSessionToken;
+		nickname_.clear();
+	}
+
 	void AccountLoginState::ClearResultUnlocked()
 	{
 		responseStatus_.reset();
-
-		accountId_ = 0;
-		nickname_.clear();
+		ClearAccountDataUnlocked();
 	}
 
 	AccountLoginState::Snapshot AccountLoginState::GetSnapshot() const
@@ -133,6 +147,7 @@ namespace client::net
 			.loginName = loginName_,
 			.responseStatus = responseStatus_,
 			.accountId = accountId_,
+			.sessionToken = sessionToken_,
 			.nickname = nickname_,
 		};
 	}

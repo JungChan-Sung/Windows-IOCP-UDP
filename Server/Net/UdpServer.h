@@ -42,6 +42,7 @@ namespace common::packet
 {
 	struct AccountLoginRequestPacket;
 	struct InputCommandPacket;
+	struct JoinRequestPacket;
 	struct JoinRoomRequestPacket;
 }
 
@@ -140,7 +141,7 @@ namespace server::net
 			float spawnY
 		);
 
-		void HandleJoinRequest(const sockaddr_in& remoteAddress);
+		void HandleJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet);
 		void HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet);
 		void HandleFireRequest(const sockaddr_in& remoteAddress);
 		void HandleLeaveRequest(const sockaddr_in& remoteAddress);
@@ -148,7 +149,7 @@ namespace server::net
 		void HandleAccountLoginRequest(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet);
 
 		void ProcessReliableResends();
-		void ProcessJoinRequest(const sockaddr_in& remoteAddress);
+		void ProcessJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet);
 		void ProcessInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
 		void ProcessFireRequest(const EndpointKey& endpointKey);
 		void ProcessLeaveRequest(const EndpointKey& endpointKey);

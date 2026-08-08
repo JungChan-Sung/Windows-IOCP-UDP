@@ -55,6 +55,8 @@ namespace server::net
 
 		[[nodiscard]] AuthenticatedAccount* Find(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey) const noexcept;
+		[[nodiscard]] AuthenticatedAccount* Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) noexcept;
+		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) const noexcept;
 		[[nodiscard]] std::optional<EndpointKey> FindEndpointByAccountId(std::int64_t accountId) const noexcept;
 
 		[[nodiscard]] bool Remove(const EndpointKey& endpointKey) noexcept;
@@ -68,6 +70,3 @@ namespace server::net
 		[[nodiscard]] std::size_t GetCount() const noexcept;
 	};
 }
-
-class AuthenticatedAccountRegistry
-{};

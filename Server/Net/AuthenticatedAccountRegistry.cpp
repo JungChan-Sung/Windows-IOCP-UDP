@@ -45,6 +45,28 @@ namespace server::net
 		return &iterator->second;
 	}
 
+	AuthenticatedAccount* AuthenticatedAccountRegistry::Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) noexcept
+	{
+		AuthenticatedAccount* account = Find(endpointKey);
+		if (account == nullptr || account->sessionToken != sessionToken)
+		{
+			return nullptr;
+		}
+
+		return account;
+	}
+
+	const AuthenticatedAccount* AuthenticatedAccountRegistry::Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) const noexcept
+	{
+		const AuthenticatedAccount* account = Find(endpointKey);
+		if (account == nullptr || account->sessionToken != sessionToken)
+		{
+			return nullptr;
+		}
+
+		return account;
+	}
+
 	std::optional<AuthenticatedAccountRegistry::EndpointKey> AuthenticatedAccountRegistry::FindEndpointByAccountId(std::int64_t accountId) const noexcept
 	{
 		if (accountId <= 0)

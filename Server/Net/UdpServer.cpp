@@ -422,11 +422,10 @@ namespace server::net
 			);
 		}
 
-		RegisterAddressOnlyPacketHandler(
+		RegisterTypedPacketHandler(
 			packetDispatcher_,
 			common::packet::PacketType::JoinRequest,
 			*this,
-			common::packet::packetExpectedSize<common::packet::JoinRequestPacket>,
 			&UdpServer::HandleJoinRequest
 		);
 
@@ -642,10 +641,10 @@ namespace server::net
 		return BuildReliableGamePacket(peerState, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
-	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress)
+	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet)
 	{
 		serverMetricsCollector_.IncrementJoinRequestCount();
-		ProcessJoinRequest(remoteAddress);
+		ProcessJoinRequest(remoteAddress, packet);
 	}
 
 	void UdpServer::HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet)
@@ -770,7 +769,7 @@ namespace server::net
 		}
 	}
 
-	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress)
+	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet)
 	{
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 
@@ -786,15 +785,16 @@ namespace server::net
 			if (existingPeerState != nullptr)
 			{
 				// JoinResponse 유실로 인한 기존 참가자의 재요청.
+				// 패킷 토큰은 JoinPeer()에서 PeerState 토큰과 비교한다.
 				authenticatedIdentity.accountId = existingPeerState->accountId;
-				authenticatedIdentity.sessionToken = existingPeerState->sessionToken;
+				authenticatedIdentity.sessionToken = packet.sessionToken;
 				authenticatedIdentity.nickname = existingPeerState->nickname;
 
 				hasAuthenticatedIdentity = true;
 			}
 			else
 			{
-				const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey);
+				const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey, packet.sessionToken);
 				if (authenticatedAccount != nullptr)
 				{
 					authenticatedIdentity.accountId = authenticatedAccount->accountId;
@@ -831,8 +831,7 @@ namespace server::net
 		if (!hasAuthenticatedIdentity)
 		{
 			std::ostringstream stream;
-			stream
-				<< "Unauthenticated join request ignored. Endpoint="
+			stream << "Unauthenticated join request ignored. Endpoint="
 				<< FormatEndpoint(remoteAddress);
 
 			LogWarning(stream.str());
@@ -841,7 +840,11 @@ namespace server::net
 
 		if (!joinResult.shouldSendResponse)
 		{
-			LogWarning("Join request ignored.");
+			std::ostringstream stream;
+			stream << "Join request rejected because the session identity did not match. Endpoint="
+				<< FormatEndpoint(remoteAddress);
+
+			LogWarning(stream.str());
 			return;
 		}
 
@@ -858,6 +861,7 @@ namespace server::net
 			stream << "Join response send failed. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
+
 			LogWarning(stream.str());
 		}
 
@@ -868,6 +872,7 @@ namespace server::net
 				stream << "Peer joined. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
 					<< ", PlayerId=" << joinResult.playerId
 					<< ", RoomId=" << joinResult.roomId;
+
 				LogInfo(stream.str());
 			}
 
@@ -884,9 +889,11 @@ namespace server::net
 		if (responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response sent to existing peer. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
+			stream << "Join response sent to existing peer. Endpoint="
+				<< FormatEndpoint(joinResult.remoteAddress)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
+
 			LogDebug(stream.str());
 		}
 	}

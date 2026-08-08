@@ -10,6 +10,7 @@
 
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogMessageBuilder.h>
 #include <Common/Packet/Account/AccountPacket.h>
@@ -220,7 +221,19 @@ namespace client::net
 
 	bool UdpClient::SendJoinRequest()
 	{
+		const AccountLoginSnapshot loginSnapshot = accountLoginState_.GetSnapshot();
+		if (loginSnapshot.state != AccountLoginState::State::Succeeded)
+		{
+			return false;
+		}
+
+		if (!common::net::IsValidSessionToken(loginSnapshot.sessionToken))
+		{
+			return false;
+		}
+
 		common::packet::JoinRequestPacket packet{};
+		packet.sessionToken = loginSnapshot.sessionToken;
 
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
 		if (!packetBuffer.has_value())
@@ -228,7 +241,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
+		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -589,7 +602,14 @@ namespace client::net
 			return;
 		}
 
-		switch (packet.status)
+		const AccountLoginSnapshot loginSnapshot = accountLoginState_.GetSnapshot();
+		if (!loginSnapshot.responseStatus.has_value())
+		{
+			LogError("Account login response status was not stored.");
+			return;
+		}
+
+		switch (*loginSnapshot.responseStatus)
 		{
 		case common::packet::AccountLoginResponseStatus::Succeeded:
 			LogInfo("Account login succeeded.");

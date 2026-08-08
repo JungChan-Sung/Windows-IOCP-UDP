@@ -2,6 +2,7 @@
 
 #include <format>
 #include <string>
+#include <string_view>
 
 #include <Persistence/Account/AccountConstraints.h>
 #include <Persistence/Odbc/OdbcStatement.h>
@@ -43,6 +44,38 @@ account::maxNicknameUtf16CodeUnitCount
 		if (!executeResult.has_value())
 		{
 			return std::unexpected(executeResult.error());
+		}
+
+		constexpr std::string_view createPlayersTableQuery = R"sql(
+IF OBJECT_ID(N'dbo.players', N'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.players
+	(
+		player_id BIGINT IDENTITY(1,1) NOT NULL,
+		account_id BIGINT NOT NULL,
+		created_at_utc DATETIME2(3) NOT NULL
+			CONSTRAINT DF_players_created_at_utc
+			DEFAULT SYSUTCDATETIME(),
+
+		CONSTRAINT PK_players
+			PRIMARY KEY (player_id),
+
+		CONSTRAINT UQ_players_account_id
+			UNIQUE (account_id),
+
+		CONSTRAINT FK_players_accounts
+			FOREIGN KEY (account_id)
+			REFERENCES dbo.accounts(account_id)
+			ON DELETE CASCADE
+	);
+END
+)sql";
+
+		odbc::OdbcStatement playerStatement;
+		const odbc::OdbcStatement::ExecuteResult createPlayersResult = playerStatement.ExecuteDirect(connection, createPlayersTableQuery);
+		if (!createPlayersResult.has_value())
+		{
+			return std::unexpected(createPlayersResult.error());
 		}
 
 		return {};

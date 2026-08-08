@@ -119,6 +119,32 @@ namespace persistence
 		return repository.ExistsByLoginName(loginName);
 	}
 
+	PersistenceRuntime::CreatePlayerResult PersistenceRuntime::CreatePlayer(std::int64_t accountId)
+	{
+		std::scoped_lock lock(databaseMutex_);
+
+		if (!enabled_ || !IsStartedUnlocked())
+		{
+			return std::unexpected(MakeNotStartedError());
+		}
+
+		player::PlayerRepository repository(connection_);
+		return repository.CreatePlayer(accountId);
+	}
+
+	PersistenceRuntime::FindPlayerResult PersistenceRuntime::FindPlayerByAccountId(std::int64_t accountId)
+	{
+		std::scoped_lock lock(databaseMutex_);
+
+		if (!enabled_ || !IsStartedUnlocked())
+		{
+			return std::unexpected(MakeNotStartedError());
+		}
+
+		player::PlayerRepository repository(connection_);
+		return repository.FindPlayerByAccountId(accountId);
+	}
+
 	void PersistenceRuntime::StopUnlocked() noexcept
 	{
 		connection_.Close();

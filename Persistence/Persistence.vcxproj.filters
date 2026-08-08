@@ -37,6 +37,12 @@
     <Filter Include="소스 파일\Account">
       <UniqueIdentifier>{6334921d-69c9-49de-9ad6-59b56db208b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Player">
+      <UniqueIdentifier>{3cefc36f-ebee-4adc-a0ea-1c12067e7c4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Player">
+      <UniqueIdentifier>{f7b2773d-95d2-40ca-ab37-0be1a2959a57}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h">
@@ -72,6 +78,9 @@
     <ClInclude Include="Account\AccountValidation.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
+    <ClInclude Include="Player\PlayerRepository.h">
+      <Filter>헤더 파일\Player</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -100,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="Account\AccountValidation.cpp">
       <Filter>소스 파일\Account</Filter>
+    </ClCompile>
+    <ClCompile Include="Player\PlayerRepository.cpp">
+      <Filter>소스 파일\Player</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <expected>
 #include <mutex>
 #include <string_view>
@@ -8,6 +9,7 @@
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 #include <Persistence/Odbc/OdbcEnvironment.h>
+#include <Persistence/Player/PlayerRepository.h>
 
 namespace persistence
 {
@@ -27,6 +29,9 @@ namespace persistence
 		using CreateAccountResult = account::AccountRepository::CreateAccountResult;
 		using FindAccountResult = account::AccountRepository::FindAccountResult;
 		using ExistsAccountResult = account::AccountRepository::ExistsResult;
+
+		using CreatePlayerResult = player::PlayerRepository::CreatePlayerResult;
+		using FindPlayerResult = player::PlayerRepository::FindPlayerResult;
 
 	private:
 		odbc::OdbcEnvironment environment_;
@@ -56,6 +61,9 @@ namespace persistence
 		[[nodiscard]] CreateAccountResult CreateAccount(const account::AccountCreateRequest& request);
 		[[nodiscard]] FindAccountResult FindAccountByLoginName(std::string_view loginName);
 		[[nodiscard]] ExistsAccountResult ExistsByLoginName(std::string_view loginName);
+
+		[[nodiscard]] CreatePlayerResult CreatePlayer(std::int64_t accountId);
+		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(std::int64_t accountId);
 
 	private:
 		void StopUnlocked() noexcept;

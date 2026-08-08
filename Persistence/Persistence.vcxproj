@@ -165,6 +165,7 @@
     <ClInclude Include="Odbc\OdbcDiagnosticContext.h" />
     <ClInclude Include="Odbc\OdbcEnvironment.h" />
     <ClInclude Include="Odbc\OdbcStatement.h" />
+    <ClInclude Include="Player\PlayerRepository.h" />
     <ClInclude Include="Schema\DatabaseSchema.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,7 @@
     <ClCompile Include="Odbc\OdbcDiagnostic.cpp" />
     <ClCompile Include="Odbc\OdbcEnvironment.cpp" />
     <ClCompile Include="Odbc\OdbcStatement.cpp" />
+    <ClCompile Include="Player\PlayerRepository.cpp" />
     <ClCompile Include="Schema\DatabaseSchema.cpp" />
   </ItemGroup>
   <ItemGroup>

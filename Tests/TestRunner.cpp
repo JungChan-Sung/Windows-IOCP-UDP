@@ -26,6 +26,7 @@
 #include "Persistence/OdbcStatementTests.h"
 #include "Persistence/PersistenceRuntimeTests.h"
 #include "Persistence/PersistenceRuntimeIntegrationTests.h"
+#include "Persistence/PlayerRepositoryIntegrationTests.h"
 #include "Threading/ThreadPoolTests.h"
 #include "Log/AsyncLogWriterTests.h"
 #include "Log/LogFormatterTests.h"
@@ -97,6 +98,7 @@ namespace tests
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
+		MergeAndPrint(totalResult, "PlayerRepositoryIntegration", persistence::RunPlayerRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountValidation", persistence::RunAccountValidationTests());
 		MergeAndPrint(totalResult, "PasswordHashVerifier", server::RunPasswordHashVerifierTests());
 		MergeAndPrint(totalResult, "AccountPacketMapper", server::RunAccountPacketMapperTests());

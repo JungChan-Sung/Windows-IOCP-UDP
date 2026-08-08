@@ -189,6 +189,7 @@
     <ClCompile Include="Persistence\OdbcStatementTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp" />
+    <ClCompile Include="Persistence\PlayerRepositoryIntegrationTests.cpp" />
     <ClCompile Include="Server\AccountLoginAdmissionServiceTests.cpp" />
     <ClCompile Include="Server\AccountLoginPacketHandlerTests.cpp" />
     <ClCompile Include="Server\AccountLoginTaskProcessorTests.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="Persistence\OdbcStatementTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h" />
+    <ClInclude Include="Persistence\PlayerRepositoryIntegrationTests.h" />
     <ClInclude Include="Server\AccountLoginAdmissionServiceTests.h" />
     <ClInclude Include="Server\AccountLoginPacketHandlerTests.h" />
     <ClInclude Include="Server\AccountLoginTaskProcessorTests.h" />

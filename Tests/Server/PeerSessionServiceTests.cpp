@@ -26,8 +26,8 @@ namespace
 	using TimePoint = Clock::time_point;
 
 	inline constexpr common::net::SessionToken testSessionToken{
-	.high = 0x1122334455667788ULL,
-	.low = 0x8877665544332211ULL,
+		.high = 0x1122334455667788ULL,
+		.low = 0x8877665544332211ULL,
 	};
 
 	inline constexpr common::net::SessionToken otherSessionToken{

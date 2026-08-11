@@ -1,5 +1,7 @@
 #include "PersistenceRuntime.h"
 
+#include <utility>
+
 #include <Persistence/Schema/DatabaseSchema.h>
 
 namespace persistence
@@ -10,6 +12,12 @@ namespace persistence
 			.failure = core::DatabaseFailure::ConnectionOpenFailed,
 			.message = "Persistence runtime is not started.",
 		};
+	}
+
+	bool PersistenceRuntime::IsDuplicateConstraintError(const core::DatabaseError& databaseError) noexcept
+	{
+		return core::ContainsNativeError(databaseError, duplicateIndexNativeError)
+			|| core::ContainsNativeError(databaseError, uniqueConstraintNativeError);
 	}
 
 	PersistenceRuntime::StartResult PersistenceRuntime::Start(const PersistenceRuntimeStartConfig& startConfig)

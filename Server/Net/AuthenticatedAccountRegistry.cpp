@@ -6,7 +6,7 @@ namespace server::net
 {
 	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, std::int64_t accountId, std::int64_t persistentPlayerId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
 	{
-		if (accountId <= 0 || !common::net::IsValidSessionToken(sessionToken) || nickname.empty())
+		if (accountId <= 0 || persistentPlayerId <= 0 || !common::net::IsValidSessionToken(sessionToken) || nickname.empty())
 		{
 			return false;
 		}

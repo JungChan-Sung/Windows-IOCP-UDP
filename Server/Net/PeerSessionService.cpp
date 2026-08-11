@@ -14,7 +14,10 @@ namespace server::net
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
 
-		if (authenticatedIdentity.accountId <= 0 || !common::net::IsValidSessionToken(authenticatedIdentity.sessionToken) || authenticatedIdentity.nickname.empty())
+		if (authenticatedIdentity.accountId <= 0 
+			|| authenticatedIdentity.persistentPlayerId <= 0 
+			|| !common::net::IsValidSessionToken(authenticatedIdentity.sessionToken) 
+			|| authenticatedIdentity.nickname.empty())
 		{
 			return joinResult;
 		}

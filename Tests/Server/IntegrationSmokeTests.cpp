@@ -95,6 +95,8 @@ namespace
 	[[nodiscard]] server::net::PeerSessionService::JoinResult JoinPeerForTest(
 		const server::net::PeerSessionService& peerSessionService,
 		const sockaddr_in& remoteAddress,
+		std::int64_t accountId,
+		std::int64_t persistentPlayerId,
 		common::game::RoomId roomId,
 		server::net::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
@@ -104,23 +106,18 @@ namespace
 		TimePoint currentTime
 	)
 	{
-		const common::net::EndpointKey endpointKey
-			= common::net::MakeEndpointKey(remoteAddress);
+		const common::net::EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 
 		const common::net::SessionToken sessionToken{
-			.high = static_cast<std::uint64_t>(
-				remoteAddress.sin_addr.S_un.S_addr
-			),
-			.low = static_cast<std::uint64_t>(
-				remoteAddress.sin_port
-			),
+			.high = static_cast<std::uint64_t>(remoteAddress.sin_addr.S_un.S_addr),
+			.low = static_cast<std::uint64_t>(remoteAddress.sin_port),
 		};
 
-		const server::net::PeerSessionService::AuthenticatedIdentity
-			authenticatedIdentity{
-				.accountId = 1001,
-				.sessionToken = sessionToken,
-				.nickname = "nickname",
+		const server::net::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{
+			.accountId = accountId,
+			.persistentPlayerId = persistentPlayerId,
+			.sessionToken = sessionToken,
+			.nickname = "nickname",
 		};
 
 		return peerSessionService.JoinPeer(
@@ -154,12 +151,19 @@ namespace
 		const common::net::EndpointKey firstEndpointKey = common::net::MakeEndpointKey(firstRemoteAddress);
 		const common::net::EndpointKey secondEndpointKey = common::net::MakeEndpointKey(secondRemoteAddress);
 
+		constexpr std::int64_t firstAccountId = 1001;
+		constexpr std::int64_t secondAccountId = 1002;
+		constexpr std::int64_t firstPersistentPlayerId = 5001;
+		constexpr std::int64_t secondPersistentPlayerId = 5002;
 		constexpr common::game::RoomId roomId = 1;
+
 		const TimePoint startTime = Clock::now();
 
 		const server::net::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
 			peerSessionService,
 			firstRemoteAddress,
+			firstAccountId,
+			firstPersistentPlayerId,
 			roomId,
 			peerRoomManager,
 			gameWorld,
@@ -172,6 +176,8 @@ namespace
 		const server::net::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
 			peerSessionService,
 			secondRemoteAddress,
+			secondAccountId,
+			secondPersistentPlayerId,
 			roomId,
 			peerRoomManager,
 			gameWorld,
@@ -189,38 +195,46 @@ namespace
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 2, "IntegrationSmoke: room member count after join");
 		tests::Expect(result, gameWorld.GetPlayerCount() == 2, "IntegrationSmoke: player count after join");
 
+		const server::net::PeerState* firstPeerState = peerRoomManager.FindJoinedPeer(firstEndpointKey);
+		const server::net::PeerState* secondPeerState = peerRoomManager.FindJoinedPeer(secondEndpointKey);
+
+		tests::Expect(
+			result,
+			firstPeerState != nullptr
+			&& firstPeerState->accountId == firstAccountId
+			&& firstPeerState->persistentPlayerId == firstPersistentPlayerId,
+			"IntegrationSmoke: first persistent identity stored"
+		);
+
+		tests::Expect(
+			result,
+			secondPeerState != nullptr
+			&& secondPeerState->accountId == secondAccountId
+			&& secondPeerState->persistentPlayerId == secondPersistentPlayerId,
+			"IntegrationSmoke: second persistent identity stored"
+		);
+
 		common::packet::InputCommandPacket inputCommandPacket{};
 		inputCommandPacket.inputSequence = 1;
 		inputCommandPacket.inputFlags = common::game::InputFlags::Right;
 
 		const TimePoint inputTime = startTime + common::time::Milliseconds(10);
 
-		const bool inputApplied = playerCommandService.ApplyInputCommand(
-			firstEndpointKey,
-			inputCommandPacket,
-			peerRoomManager,
-			gameWorld,
-			inputTime
-		);
+		const bool inputApplied
+			= playerCommandService.ApplyInputCommand(firstEndpointKey, inputCommandPacket, peerRoomManager, gameWorld, inputTime);
 
 		tests::Expect(result, inputApplied, "IntegrationSmoke: input command applied");
 
 		const TimePoint fireTime = startTime + common::time::Milliseconds(20);
 
-		const bool fireSucceeded = playerCommandService.FireBullet(
-			firstEndpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fireSucceeded
+			= playerCommandService.FireBullet(firstEndpointKey, peerRoomManager, gameWorld, gameSimulation, weaponRuleConfig, fireTime);
 
 		tests::Expect(result, fireSucceeded, "IntegrationSmoke: fire succeeds");
 		tests::Expect(result, gameWorld.GetBulletCount() == 1, "IntegrationSmoke: bullet count after fire");
 
 		const server::game::PlayerState* firstPlayerStateBeforeUpdate = gameWorld.FindPlayer(firstJoinResult.playerId);
-		const float firstPlayerXBeforeUpdate = (firstPlayerStateBeforeUpdate != nullptr) ? firstPlayerStateBeforeUpdate->x : 0.0F;
+		const float firstPlayerXBeforeUpdate = firstPlayerStateBeforeUpdate != nullptr ? firstPlayerStateBeforeUpdate->x : 0.0F;
 
 		gameSimulation.UpdatePlayers(0.05F, peerRoomManager.GetPeerTable(), gameWorld);
 		gameWorld.AdvanceServerTick();
@@ -230,8 +244,7 @@ namespace
 
 		if (firstPlayerStateAfterUpdate != nullptr)
 		{
-			tests::Expect(result, firstPlayerStateAfterUpdate->x > firstPlayerXBeforeUpdate,
-				"IntegrationSmoke: input moved first player");
+			tests::Expect(result, firstPlayerStateAfterUpdate->x > firstPlayerXBeforeUpdate, "IntegrationSmoke: input moved first player");
 			tests::Expect(result, firstPlayerStateAfterUpdate->inputFlags == common::game::InputFlags::Right,
 				"IntegrationSmoke: first player input flag kept");
 			tests::Expect(result, firstPlayerStateAfterUpdate->fireCooldownRemainingSeconds > 0.0F,
@@ -273,14 +286,12 @@ namespace
 			if (IsSameRemoteAddress(playerSnapshotTask.remoteAddress, firstRemoteAddress))
 			{
 				firstPlayerSnapshotFound = true;
-				tests::Expect(result, packet.lastProcessedInputSequence == 1,
-					"IntegrationSmoke: first snapshot last input sequence");
+				tests::Expect(result, packet.lastProcessedInputSequence == 1, "IntegrationSmoke: first snapshot last input sequence");
 			}
 			else if (IsSameRemoteAddress(playerSnapshotTask.remoteAddress, secondRemoteAddress))
 			{
 				secondPlayerSnapshotFound = true;
-				tests::Expect(result, packet.lastProcessedInputSequence == 0,
-					"IntegrationSmoke: second snapshot last input sequence");
+				tests::Expect(result, packet.lastProcessedInputSequence == 0, "IntegrationSmoke: second snapshot last input sequence");
 			}
 			else
 			{
@@ -301,8 +312,7 @@ namespace
 			tests::Expect(result, packet.chunkIndex == 0, "IntegrationSmoke: bullet snapshot chunk index");
 			tests::Expect(result, packet.chunkCount == 1, "IntegrationSmoke: bullet snapshot chunk count");
 			tests::Expect(result, packet.bulletCount == 1, "IntegrationSmoke: bullet snapshot bullet count");
-			tests::Expect(result, bulletSnapshotTask.remoteAddressList.size() == 2,
-				"IntegrationSmoke: bullet snapshot remote count");
+			tests::Expect(result, bulletSnapshotTask.remoteAddressList.size() == 2, "IntegrationSmoke: bullet snapshot remote count");
 			tests::Expect(result, ContainsRemoteAddress(bulletSnapshotTask.remoteAddressList, firstRemoteAddress),
 				"IntegrationSmoke: bullet snapshot first remote");
 			tests::Expect(result, ContainsRemoteAddress(bulletSnapshotTask.remoteAddressList, secondRemoteAddress),
@@ -336,13 +346,20 @@ namespace
 		const sockaddr_in secondRemoteAddress = MakeRemoteAddress(11);
 		const common::net::EndpointKey firstEndpointKey = common::net::MakeEndpointKey(firstRemoteAddress);
 
+		constexpr std::int64_t firstAccountId = 1010;
+		constexpr std::int64_t secondAccountId = 1011;
+		constexpr std::int64_t firstPersistentPlayerId = 5010;
+		constexpr std::int64_t secondPersistentPlayerId = 5011;
 		constexpr common::game::RoomId firstRoomId = 1;
 		constexpr common::game::RoomId secondRoomId = 2;
+
 		const TimePoint startTime = Clock::now();
 
 		const server::net::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
 			peerSessionService,
 			firstRemoteAddress,
+			firstAccountId,
+			firstPersistentPlayerId,
 			firstRoomId,
 			peerRoomManager,
 			gameWorld,
@@ -355,6 +372,8 @@ namespace
 		const server::net::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
 			peerSessionService,
 			secondRemoteAddress,
+			secondAccountId,
+			secondPersistentPlayerId,
 			firstRoomId,
 			peerRoomManager,
 			gameWorld,
@@ -381,6 +400,16 @@ namespace
 		tests::Expect(result, roomChangeResult.nextRoomId == secondRoomId, "IntegrationSmoke: room change next room");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(firstRoomId) == 1, "IntegrationSmoke: first room member count");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(secondRoomId) == 1, "IntegrationSmoke: second room member count");
+
+		const server::net::PeerState* firstPeerState = peerRoomManager.FindJoinedPeer(firstEndpointKey);
+
+		tests::Expect(
+			result,
+			firstPeerState != nullptr
+			&& firstPeerState->accountId == firstAccountId
+			&& firstPeerState->persistentPlayerId == firstPersistentPlayerId,
+			"IntegrationSmoke: room change preserves persistent identity"
+		);
 
 		const std::vector<server::net::PlayerSnapshotTask> playerSnapshotTaskList = snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
 			peerRoomManager.GetRoomTable(),
@@ -423,9 +452,9 @@ namespace
 
 namespace tests::server
 {
-	tests::DebugTestResult RunIntegrationSmokeTests()
+	DebugTestResult RunIntegrationSmokeTests()
 	{
-		tests::DebugTestResult result{};
+		DebugTestResult result{};
 
 		RunJoinInputFireSnapshotSmokeTest(result);
 		RunRoomChangeSnapshotSmokeTest(result);

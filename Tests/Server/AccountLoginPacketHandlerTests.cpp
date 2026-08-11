@@ -138,6 +138,8 @@ namespace
 			.empty(),
 			"AccountLoginPacketHandler: invalid request account data cleared"
 		);
+
+		tests::Expect(result, responseTask->persistentPlayerId == 0, "AccountLoginPacketHandler: invalid request persistent player id cleared");
 	}
 
 	void RunDatabaseFailureResponseTest(
@@ -186,6 +188,8 @@ namespace
 			.empty(),
 			"AccountLoginPacketHandler: database failure account data cleared"
 		);
+
+		tests::Expect(result, responseTask->persistentPlayerId == 0, "AccountLoginPacketHandler: database failure persistent player id cleared");
 	}
 
 	void FinalizeResponseTaskList(

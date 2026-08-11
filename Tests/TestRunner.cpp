@@ -39,6 +39,7 @@
 #include "Server/AccountLoginAdmissionServiceTests.h"
 #include "Server/AccountLoginTaskProcessorTests.h"
 #include "Server/AccountLoginPacketHandlerTests.h"
+#include "Server/AccountLoginPersistenceIntegrationTests.h"
 #include "Server/AuthenticatedAccountRegistryTests.h"
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
@@ -106,6 +107,7 @@ namespace tests
 		MergeAndPrint(totalResult, "AccountServiceIntegration", server::RunAccountServiceIntegrationTests());
 		MergeAndPrint(totalResult, "AccountLoginTaskProcessor", server::RunAccountLoginTaskProcessorTests());
 		MergeAndPrint(totalResult, "AccountLoginPacketHandler", server::RunAccountLoginPacketHandlerTests());
+		MergeAndPrint(totalResult, "AccountLoginPersistenceIntegration", server::RunAccountLoginPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "AccountLoginAdmissionService", server::RunAccountLoginAdmissionServiceTests());
 		MergeAndPrint(totalResult, "AuthenticatedAccountRegistry", server::RunAuthenticatedAccountRegistryTests());
 

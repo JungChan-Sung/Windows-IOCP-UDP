@@ -36,6 +36,7 @@ namespace server::account
 	{
 	public:
 		std::int64_t accountId = 0;
+		std::int64_t persistentPlayerId = 0;
 		std::string loginName;
 		std::string nickname;
 	};

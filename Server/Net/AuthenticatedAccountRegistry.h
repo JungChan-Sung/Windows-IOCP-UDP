@@ -16,6 +16,7 @@ namespace server::net
 	{
 	public:
 		std::int64_t accountId = 0;
+		std::int64_t persistentPlayerId = 0;
 		common::net::SessionToken sessionToken{};
 		std::string nickname;
 		common::time::TimePoint authenticatedTime{};
@@ -48,6 +49,7 @@ namespace server::net
 		[[nodiscard]] bool Upsert(
 			const EndpointKey& endpointKey,
 			std::int64_t accountId,
+			std::int64_t persistentPlayerId,
 			common::net::SessionToken sessionToken,
 			std::string nickname,
 			TimePoint authenticatedTime

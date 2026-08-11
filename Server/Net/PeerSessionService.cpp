@@ -22,7 +22,9 @@ namespace server::net
 		PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (existingPeerState != nullptr)
 		{
-			if (existingPeerState->accountId != authenticatedIdentity.accountId || existingPeerState->sessionToken != authenticatedIdentity.sessionToken)
+			if (existingPeerState->accountId != authenticatedIdentity.accountId 
+				|| existingPeerState->persistentPlayerId != authenticatedIdentity.persistentPlayerId
+				|| existingPeerState->sessionToken != authenticatedIdentity.sessionToken)
 			{
 				return joinResult;
 			}
@@ -59,6 +61,7 @@ namespace server::net
 			currentTime
 		);
 		peerState.accountId = authenticatedIdentity.accountId;
+		peerState.persistentPlayerId = authenticatedIdentity.persistentPlayerId;
 		peerState.sessionToken = authenticatedIdentity.sessionToken;
 		peerState.nickname = authenticatedIdentity.nickname;
 		peerState.lastInputSequence = 0;

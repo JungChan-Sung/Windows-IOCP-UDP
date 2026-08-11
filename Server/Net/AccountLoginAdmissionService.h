@@ -45,6 +45,7 @@ namespace server::net
 	public:
 		[[nodiscard]] Status Apply(
 			const EndpointKey& endpointKey,
+			std::int64_t persistentPlayerId,
 			common::packet::AccountLoginResponsePacket& responsePacket,
 			TimePoint currentTime,
 			AuthenticatedAccountRegistry& authenticatedAccountRegistry,

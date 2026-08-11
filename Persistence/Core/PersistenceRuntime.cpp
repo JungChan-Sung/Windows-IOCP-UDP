@@ -145,6 +145,53 @@ namespace persistence
 		return repository.FindPlayerByAccountId(accountId);
 	}
 
+	PersistenceRuntime::FindOrCreatePlayerResult PersistenceRuntime::FindOrCreatePlayerByAccountId(std::int64_t accountId)
+	{
+		std::scoped_lock lock(databaseMutex_);
+
+		if (!enabled_ || !IsStartedUnlocked())
+		{
+			return std::unexpected(MakeNotStartedError());
+		}
+
+		player::PlayerRepository repository(connection_);
+		player::PlayerRepository::FindPlayerResult findResult = repository.FindPlayerByAccountId(accountId);
+		if (!findResult.has_value())
+		{
+			return std::unexpected(findResult.error());
+		}
+
+		if (findResult->has_value())
+		{
+			return std::move(**findResult);
+		}
+
+		player::PlayerRepository::CreatePlayerResult createResult = repository.CreatePlayer(accountId);
+		if (createResult.has_value())
+		{
+			return std::move(*createResult);
+		}
+
+		const core::DatabaseError createError = createResult.error();
+		if (!IsDuplicateConstraintError(createError))
+		{
+			return std::unexpected(createError);
+		}
+
+		findResult = repository.FindPlayerByAccountId(accountId);
+		if (!findResult.has_value())
+		{
+			return std::unexpected(findResult.error());
+		}
+
+		if (!findResult->has_value())
+		{
+			return std::unexpected(createError);
+		}
+
+		return std::move(**findResult);
+	}
+
 	void PersistenceRuntime::StopUnlocked() noexcept
 	{
 		connection_.Close();

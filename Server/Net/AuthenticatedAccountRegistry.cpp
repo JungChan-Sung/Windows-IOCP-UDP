@@ -4,7 +4,7 @@
 
 namespace server::net
 {
-	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, std::int64_t accountId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
+	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, std::int64_t accountId, std::int64_t persistentPlayerId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
 	{
 		if (accountId <= 0 || !common::net::IsValidSessionToken(sessionToken) || nickname.empty())
 		{
@@ -15,10 +15,12 @@ namespace server::net
 			endpointKey,
 			AuthenticatedAccount{
 				.accountId = accountId,
+				.persistentPlayerId = persistentPlayerId,
 				.sessionToken = sessionToken,
 				.nickname = std::move(nickname),
 				.authenticatedTime = authenticatedTime,
-			});
+			}
+			);
 
 		return true;
 	}

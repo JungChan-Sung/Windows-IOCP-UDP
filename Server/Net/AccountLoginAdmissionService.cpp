@@ -15,7 +15,7 @@ namespace server::net
 		responsePacket.nickname.clear();
 	}
 
-	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
+	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, std::int64_t persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
 	{
 		using ResponseStatus = common::packet::AccountLoginResponseStatus;
 
@@ -24,7 +24,7 @@ namespace server::net
 			return Status::Unchanged;
 		}
 
-		if (responsePacket.accountId <= 0 || responsePacket.nickname.empty())
+		if (responsePacket.accountId <= 0 || persistentPlayerId <= 0 || responsePacket.nickname.empty())
 		{
 			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
 			return Status::RegistrationFailed;
@@ -40,6 +40,12 @@ namespace server::net
 			}
 
 			if (!common::net::IsValidSessionToken(endpointPeerState->sessionToken))
+			{
+				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
+				return Status::RegistrationFailed;
+			}
+
+			if (endpointPeerState->persistentPlayerId != persistentPlayerId)
 			{
 				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
 				return Status::RegistrationFailed;
@@ -67,10 +73,19 @@ namespace server::net
 		}
 
 		const AuthenticatedAccount* endpointAccount = authenticatedAccountRegistry.Find(endpointKey);
-		if (endpointAccount != nullptr && endpointAccount->accountId != responsePacket.accountId)
+		if (endpointAccount != nullptr)
 		{
-			SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
-			return Status::AlreadyLoggedIn;
+			if (endpointAccount->accountId != responsePacket.accountId)
+			{
+				SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
+				return Status::AlreadyLoggedIn;
+			}
+
+			if (endpointAccount->persistentPlayerId != persistentPlayerId)
+			{
+				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
+				return Status::RegistrationFailed;
+			}
 		}
 
 		const std::optional<common::net::SessionToken> sessionToken = GenerateSessionToken();
@@ -81,12 +96,13 @@ namespace server::net
 		}
 
 		const bool registered = authenticatedAccountRegistry.Upsert(
-				endpointKey,
-				responsePacket.accountId,
-				*sessionToken,
-				responsePacket.nickname,
-				currentTime
-			);
+			endpointKey,
+			responsePacket.accountId,
+			persistentPlayerId,
+			*sessionToken,
+			responsePacket.nickname,
+			currentTime
+		);
 		if (!registered)
 		{
 			SetFailureResponse(responsePacket, ResponseStatus::ServerError);

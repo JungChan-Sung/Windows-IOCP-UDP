@@ -40,6 +40,7 @@ namespace server::net
 		public:
 			sockaddr_in remoteAddress{};
 			common::packet::AccountLoginResponsePacket responsePacket;
+			std::int64_t persistentPlayerId = 0;
 			TaskId taskId = invalidTaskId;
 			bool isLatestRequest = false;
 		};

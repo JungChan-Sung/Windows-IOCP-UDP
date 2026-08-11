@@ -30,6 +30,7 @@ namespace server::net
 		{
 		public:
 			std::int64_t accountId = 0;
+			std::int64_t persistentPlayerId = 0;
 			common::net::SessionToken sessionToken{};
 			std::string_view nickname;
 		};

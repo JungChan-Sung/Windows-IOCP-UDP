@@ -787,6 +787,7 @@ namespace server::net
 				// JoinResponse 유실로 인한 기존 참가자의 재요청.
 				// 패킷 토큰은 JoinPeer()에서 PeerState 토큰과 비교한다.
 				authenticatedIdentity.accountId = existingPeerState->accountId;
+				authenticatedIdentity.persistentPlayerId = existingPeerState->persistentPlayerId;
 				authenticatedIdentity.sessionToken = packet.sessionToken;
 				authenticatedIdentity.nickname = existingPeerState->nickname;
 
@@ -798,6 +799,7 @@ namespace server::net
 				if (authenticatedAccount != nullptr)
 				{
 					authenticatedIdentity.accountId = authenticatedAccount->accountId;
+					authenticatedIdentity.persistentPlayerId = authenticatedAccount->persistentPlayerId;
 					authenticatedIdentity.sessionToken = authenticatedAccount->sessionToken;
 					authenticatedIdentity.nickname = authenticatedAccount->nickname;
 
@@ -1059,6 +1061,7 @@ namespace server::net
 
 						admissionStatus = accountLoginAdmissionService_.Apply(
 							common::net::MakeEndpointKey(responseTask.remoteAddress),
+							responseTask.persistentPlayerId,
 							responseTask.responsePacket,
 							currentTime,
 							authenticatedAccountRegistry_,
@@ -1093,6 +1096,7 @@ namespace server::net
 					responseTask.responsePacket.accountId = 0;
 					responseTask.responsePacket.sessionToken = common::net::invalidSessionToken;
 					responseTask.responsePacket.nickname.clear();
+					responseTask.persistentPlayerId = 0;
 				}
 			}
 

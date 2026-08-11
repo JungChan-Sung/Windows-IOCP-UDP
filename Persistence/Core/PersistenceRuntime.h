@@ -32,6 +32,11 @@ namespace persistence
 
 		using CreatePlayerResult = player::PlayerRepository::CreatePlayerResult;
 		using FindPlayerResult = player::PlayerRepository::FindPlayerResult;
+		using FindOrCreatePlayerResult = std::expected<player::PlayerRecord, core::DatabaseError>;
+
+	private:
+		inline static constexpr std::int32_t duplicateIndexNativeError = 2601;
+		inline static constexpr std::int32_t uniqueConstraintNativeError = 2627;
 
 	private:
 		odbc::OdbcEnvironment environment_;
@@ -53,6 +58,7 @@ namespace persistence
 
 	private:
 		[[nodiscard]] static core::DatabaseError MakeNotStartedError();
+		[[nodiscard]] static bool IsDuplicateConstraintError(const core::DatabaseError& databaseError) noexcept;
 
 	public:
 		[[nodiscard]] StartResult Start(const PersistenceRuntimeStartConfig& startConfig);
@@ -64,6 +70,7 @@ namespace persistence
 
 		[[nodiscard]] CreatePlayerResult CreatePlayer(std::int64_t accountId);
 		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(std::int64_t accountId);
+		[[nodiscard]] FindOrCreatePlayerResult FindOrCreatePlayerByAccountId(std::int64_t accountId);
 
 	private:
 		void StopUnlocked() noexcept;

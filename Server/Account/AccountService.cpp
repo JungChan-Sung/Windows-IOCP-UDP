@@ -70,8 +70,25 @@ namespace server::account
 			return std::unexpected(LoginAccountError{ LoginAccountFailure::InvalidCredentials });
 		}
 
+		const persistence::PersistenceRuntime::FindOrCreatePlayerResult playerResult = persistenceRuntime_.FindOrCreatePlayerByAccountId(account.accountId);
+		if (!playerResult.has_value())
+		{
+			return std::unexpected(LoginAccountError{ playerResult.error() });
+		}
+
+		if (playerResult->playerId <= 0 || playerResult->accountId != account.accountId)
+		{
+			return std::unexpected(LoginAccountError{
+				persistence::core::DatabaseError{
+					.failure = persistence::core::DatabaseFailure::StatementDataReadFailed,
+					.message = "Persistent player record does not match the authenticated account.",
+				}
+				});
+		}
+
 		return AccountLoginRecord{
 			.accountId = account.accountId,
+			.persistentPlayerId = playerResult->playerId,
 			.loginName = std::move(account.loginName),
 			.nickname = std::move(account.nickname),
 		};

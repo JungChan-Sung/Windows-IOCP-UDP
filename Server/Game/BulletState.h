@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/WeaponRules.h>
 

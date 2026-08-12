@@ -320,6 +320,7 @@ namespace server::game
 		BulletState bulletState{};
 		bulletState.bulletId = bulletId;
 		bulletState.ownerPlayerId = ownerPlayerId;
+		bulletState.ownerPersistentPlayerId = ownerPersistentPlayerId;
 		bulletState.roomId = roomId;
 		bulletState.x = playerState.x;
 		bulletState.y = playerState.y;

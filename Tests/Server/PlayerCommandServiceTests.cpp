@@ -73,13 +73,8 @@ namespace
 	{
 		const sockaddr_in remoteAddress = MakeRemoteAddress(endpointKey);
 
-		peerRoomManager.UpsertJoinedPeer(
-			remoteAddress,
-			endpointKey,
-			playerId,
-			roomId,
-			currentTime
-		);
+		server::net::PeerState& peerState = peerRoomManager.UpsertJoinedPeer(remoteAddress, endpointKey, playerId, roomId, currentTime);
+		peerState.persistentPlayerId = static_cast<std::int64_t>(5000 + playerId);
 
 		gameWorld.UpsertPlayer(MakePlayer(playerId, 100.0F, 100.0F));
 	}
@@ -275,6 +270,8 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
+		constexpr std::int64_t persistentPlayerId = 5000 + playerId;
+
 		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, playerId, roomId, joinTime);
 
 		server::game::PlayerState* playerState = gameWorld.FindPlayer(playerId);
@@ -319,6 +316,7 @@ namespace
 
 			tests::Expect(result, bulletState.bulletId == 1, "PlayerCommandService: fire bullet id");
 			tests::Expect(result, bulletState.ownerPlayerId == playerId, "PlayerCommandService: fire owner id");
+			tests::Expect(result, bulletState.ownerPersistentPlayerId == persistentPlayerId, "PlayerCommandService: fire persistent owner id");
 			tests::Expect(result, bulletState.roomId == roomId, "PlayerCommandService: fire room id");
 			tests::Expect(result, IsNearlyEqual(bulletState.x, 50.0F), "PlayerCommandService: fire bullet x");
 			tests::Expect(result, IsNearlyEqual(bulletState.y, 60.0F), "PlayerCommandService: fire bullet y");

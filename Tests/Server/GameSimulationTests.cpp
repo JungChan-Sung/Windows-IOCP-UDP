@@ -42,6 +42,7 @@ namespace
 
 		peerState.endpointKey = endpointKey;
 		peerState.playerId = playerId;
+		peerState.persistentPlayerId = static_cast<std::int64_t>(1000 + playerId);
 		peerState.roomId = roomId;
 		peerState.isJoined = true;
 	}
@@ -65,6 +66,9 @@ namespace
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
 
+		constexpr std::int64_t ownerPersistentPlayerId = 5001;
+
+
 		server::game::PlayerState ownerPlayer{};
 		ownerPlayer.playerId = 1;
 		ownerPlayer.x = 100.0F;
@@ -74,6 +78,7 @@ namespace
 		const server::game::BulletState bulletState = simulation.CreateBullet(
 			10,
 			ownerPlayer.playerId,
+			ownerPersistentPlayerId,
 			1,
 			ownerPlayer,
 			3.0F,
@@ -101,6 +106,8 @@ namespace
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
 
+		constexpr std::int64_t ownerPersistentPlayerId = 5001;
+
 		server::game::PlayerState ownerPlayer{};
 		ownerPlayer.playerId = 1;
 		ownerPlayer.weaponType = common::game::WeaponType::Basic;
@@ -108,6 +115,7 @@ namespace
 		const server::game::BulletState bulletState = simulation.CreateBullet(
 			11,
 			ownerPlayer.playerId,
+			ownerPersistentPlayerId,
 			1,
 			ownerPlayer,
 			0.0F,
@@ -140,8 +148,9 @@ namespace
 
 		gameWorld.AddBullet(bulletState);
 
-		simulation.UpdateBullets(0.1F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.1F, peerTable, gameWorld, gameRuleConfig);
 
+		tests::Expect(result, killEventList.empty(), "GameSimulation: expired bullet creates no kill event");
 		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: expired bullet removed");
 	}
 
@@ -180,11 +189,12 @@ namespace
 
 		gameWorld.AddBullet(bulletState);
 
-		simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
 
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
 		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: hit target exists");
+		tests::Expect(result, killEventList.empty(), "GameSimulation: non-lethal hit creates no kill event");
 		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: hit bullet removed");
 		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: hit impact effect spawned");
 
@@ -207,6 +217,8 @@ namespace
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
 		constexpr common::game::PlayerId targetPlayerId = 2;
+		constexpr std::int64_t ownerPersistentPlayerId = 1001;
+		constexpr std::int64_t targetPersistentPlayerId = 1002;
 		constexpr common::game::RoomId roomId = 1;
 
 		server::game::PlayerState ownerPlayer = MakePlayer(ownerPlayerId, 100.0F, 100.0F);
@@ -222,6 +234,7 @@ namespace
 		server::game::BulletState bulletState{};
 		bulletState.bulletId = 1;
 		bulletState.ownerPlayerId = ownerPlayerId;
+		bulletState.ownerPersistentPlayerId = ownerPersistentPlayerId;
 		bulletState.roomId = roomId;
 		bulletState.x = targetPlayer.x;
 		bulletState.y = targetPlayer.y;
@@ -233,13 +246,14 @@ namespace
 
 		gameWorld.AddBullet(bulletState);
 
-		simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
 
 		const server::game::PlayerState* updatedOwnerPlayer = gameWorld.FindPlayer(ownerPlayerId);
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
 		tests::Expect(result, updatedOwnerPlayer != nullptr, "GameSimulation: kill owner exists");
 		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: kill target exists");
+		tests::Expect(result, killEventList.size() == 1, "GameSimulation: lethal hit creates one kill event");
 
 		if (updatedOwnerPlayer == nullptr || updatedTargetPlayer == nullptr)
 		{
@@ -252,6 +266,19 @@ namespace
 		tests::Expect(result, updatedOwnerPlayer->killCount == 1, "GameSimulation: kill owner killCount");
 		tests::Expect(result, updatedTargetPlayer->inputFlags == common::game::InputFlags::None, "GameSimulation: kill clears input");
 		tests::Expect(result, updatedTargetPlayer->respawnRemainingSeconds > 0.0F, "GameSimulation: kill sets respawn timer");
+
+		if (killEventList.size() != 1)
+		{
+			return;
+		}
+
+		const server::game::KillEvent& killEvent = killEventList.front();
+
+		tests::Expect(result, killEvent.killerPlayerId == ownerPlayerId, "GameSimulation: kill event killer player id");
+		tests::Expect(result, killEvent.killerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: kill event killer persistent player id");
+		tests::Expect(result, killEvent.victimPlayerId == targetPlayerId, "GameSimulation: kill event victim player id");
+		tests::Expect(result, killEvent.victimPersistentPlayerId == targetPersistentPlayerId, "GameSimulation: kill event victim persistent player id");
+		tests::Expect(result, killEvent.roomId == roomId, "GameSimulation: kill event room id");
 	}
 
 	void RunInvinciblePlayerIgnoresBulletTest(tests::DebugTestResult& result)
@@ -289,11 +316,12 @@ namespace
 
 		gameWorld.AddBullet(bulletState);
 
-		simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
 
 		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
 
 		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: invincible target exists");
+		tests::Expect(result, killEventList.empty(), "GameSimulation: invincible target creates no kill event");
 		tests::Expect(result, gameWorld.GetBulletCount() == 1, "GameSimulation: invincible bullet remains");
 		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 0, "GameSimulation: invincible no impact");
 

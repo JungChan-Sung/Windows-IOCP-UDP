@@ -12,6 +12,7 @@
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameWorld.h>
+#include <Server/Game/KillEvent.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Net/PeerState.h>
 
@@ -47,7 +48,7 @@ namespace server::game
 
 	public:
 		void UpdatePlayers(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld) const;
-		void UpdateBullets(
+		[[nodiscard]] KillEventList UpdateBullets(
 			float deltaTime, 
 			const PeerTable& peerTable,	
 			GameWorld& gameWorld, 
@@ -61,8 +62,10 @@ namespace server::game
 		) const;
 		void UpdatePlayerTimers(float deltaTime, GameWorld& gameWorld) const;
 
-		[[nodiscard]] BulletState CreateBullet(BulletId bulletId,
+		[[nodiscard]] BulletState CreateBullet(
+			BulletId bulletId,
 			PlayerId ownerPlayerId,
+			std::int64_t ownerPersistentPlayerId,
 			RoomId roomId,
 			const PlayerState& playerState,
 			float directionX,

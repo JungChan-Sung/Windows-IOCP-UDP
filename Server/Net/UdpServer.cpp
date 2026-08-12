@@ -367,33 +367,27 @@ namespace server::net
 
 		ProcessAccountLoginResponses();
 
+		game::KillEventList killEventList;
+
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			gameSimulation_.UpdatePlayers(
-				config_.tick.fixedDeltaSeconds,
-				peerRoomManager_.GetPeerTable(),
-				gameWorld_
-			);
-			gameSimulation_.UpdateBullets(
+			gameSimulation_.UpdatePlayers(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_);
+
+			killEventList = gameSimulation_.UpdateBullets(
 				config_.tick.fixedDeltaSeconds,
 				peerRoomManager_.GetPeerTable(),
 				gameWorld_,
 				config_.gameRule
 			);
-			gameSimulation_.UpdateRespawns(
-				config_.tick.fixedDeltaSeconds,
-				peerRoomManager_.GetPeerTable(),
-				gameWorld_,
-				config_.gameRule
-			);
-			gameSimulation_.UpdatePlayerTimers(
-				config_.tick.fixedDeltaSeconds,
-				gameWorld_
-			);
+
+			gameSimulation_.UpdateRespawns(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_, config_.gameRule);
+			gameSimulation_.UpdatePlayerTimers(config_.tick.fixedDeltaSeconds, gameWorld_);
 
 			gameWorld_.AdvanceServerTick();
 		}
+
+		static_cast<void>(killEventList);
 
 		RemoveTimedOutPeers();
 		ProcessReliableResends();

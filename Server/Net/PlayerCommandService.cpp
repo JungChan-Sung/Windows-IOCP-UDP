@@ -95,6 +95,7 @@ namespace server::net
 		game::BulletState bulletState = gameSimulation.CreateBullet(
 			gameWorld.AllocateBulletId(),
 			peerState.playerId,
+			peerState.persistentPlayerId,
 			peerState.roomId,
 			playerState,
 			playerState.lastMoveDirectionX,

@@ -248,6 +248,9 @@
     <ClInclude Include="Net\SessionTokenGenerator.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Game\KillEvent.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini">

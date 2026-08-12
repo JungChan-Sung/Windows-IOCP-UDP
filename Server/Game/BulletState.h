@@ -10,6 +10,7 @@ namespace server::game
 	public:
 		common::game::BulletId bulletId = 0;
 		common::game::PlayerId ownerPlayerId = 0;
+		std::int64_t ownerPersistentPlayerId = 0;
 		common::game::RoomId roomId = 0;
 
 		float x = 0.0F;

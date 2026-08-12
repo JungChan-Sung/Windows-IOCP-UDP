@@ -64,8 +64,10 @@ namespace server::game
 		}
 	}
 
-	void GameSimulation::UpdateBullets(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	KillEventList GameSimulation::UpdateBullets(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
+		KillEventList killEventList;
+
 		GameWorld::BulletStateList& bulletStateList = gameWorld.GetBulletStateList();
 
 		for (std::size_t bulletIndex = 0; bulletIndex < bulletStateList.size();)
@@ -223,6 +225,14 @@ namespace server::game
 						{
 							++ownerPlayerState->killCount;
 						}
+
+						killEventList.push_back(KillEvent{
+							.killerPlayerId = bulletState.ownerPlayerId,
+							.killerPersistentPlayerId = bulletState.ownerPersistentPlayerId,
+							.victimPlayerId = peerState.playerId,
+							.victimPersistentPlayerId = peerState.persistentPlayerId,
+							.roomId = bulletState.roomId,
+							});
 					}
 
 					shouldEraseBullet = true;
@@ -238,6 +248,8 @@ namespace server::game
 
 			gameWorld.RemoveBulletAt(bulletIndex);
 		}
+
+		return killEventList;
 	}
 
 	void GameSimulation::UpdateRespawns(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
@@ -274,7 +286,7 @@ namespace server::game
 			RespawnPlayer(
 				playerId,
 				peerIterator->second.roomId,
-				gameWorld, 
+				gameWorld,
 				gameRuleConfig
 			);
 		}
@@ -290,7 +302,7 @@ namespace server::game
 		}
 	}
 
-	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const config::WeaponRuleConfig& weaponRuleConfig) const
+	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, std::int64_t ownerPersistentPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const config::WeaponRuleConfig& weaponRuleConfig) const
 	{
 		const common::game::WeaponRule& weaponRule = GetWeaponRule(playerState.weaponType, weaponRuleConfig);
 

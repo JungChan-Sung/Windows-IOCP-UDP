@@ -190,6 +190,7 @@
     <ClInclude Include="Game\GameTickRunner.h" />
     <ClInclude Include="Game\GameWorld.h" />
     <ClInclude Include="Game\ImpactEffectState.h" />
+    <ClInclude Include="Game\KillEvent.h" />
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Net\AccountLoginAdmissionService.h" />

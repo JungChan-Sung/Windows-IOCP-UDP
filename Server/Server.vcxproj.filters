@@ -136,7 +136,7 @@
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Game\MatchHistoryTracker.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -255,7 +255,7 @@
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
     <ClInclude Include="Game\MatchHistoryTracker.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

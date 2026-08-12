@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Game/KillEvent.h>
@@ -17,7 +18,7 @@ namespace server::game
 	struct MatchPlayerStats
 	{
 	public:
-		std::int64_t persistentPlayerId = 0;
+		common::identity::PersistentPlayerId persistentPlayerId = 0;
 		std::uint32_t killCount = 0;
 		std::uint32_t deathCount = 0;
 	};
@@ -37,6 +38,7 @@ namespace server::game
 	{
 	public:
 		using RoomId = common::game::RoomId;
+		using PersistentPlayerId = common::identity::PersistentPlayerId;
 		using SystemTimePoint = common::time::SystemTimePoint;
 
 	private:
@@ -45,8 +47,8 @@ namespace server::game
 		public:
 			RoomId roomId = 0;
 			SystemTimePoint startedAt{};
-			std::unordered_map<std::int64_t, MatchPlayerStats> playerStatsTable;
-			std::unordered_set<std::int64_t> activePlayerSet;
+			std::unordered_map<PersistentPlayerId, MatchPlayerStats> playerStatsTable;
+			std::unordered_set<PersistentPlayerId> activePlayerSet;
 		};
 
 	private:

@@ -70,6 +70,9 @@
     <Filter Include="헤더 파일\Packet\Account">
       <UniqueIdentifier>{1250ec11-d599-4a18-abfb-b4d505c2864d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Identity">
+      <UniqueIdentifier>{ec3f1128-e17c-44f5-a497-ba368bd9a361}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -278,6 +281,9 @@
     </ClInclude>
     <ClInclude Include="Net\SessionToken.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Identity\IdentityTypes.h">
+      <Filter>헤더 파일\Identity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

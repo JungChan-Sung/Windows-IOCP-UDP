@@ -6,6 +6,8 @@
 #include <string_view>
 #include <variant>
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Account/AccountRepository.h>
 #include <Persistence/Account/AccountValidation.h>
 #include <Persistence/Core/DatabaseError.h>
@@ -35,8 +37,8 @@ namespace server::account
 	struct AccountLoginRecord
 	{
 	public:
-		std::int64_t accountId = 0;
-		std::int64_t persistentPlayerId = 0;
+		common::identity::AccountId accountId = 0;
+		common::identity::PersistentPlayerId persistentPlayerId = 0;
 		std::string loginName;
 		std::string nickname;
 	};

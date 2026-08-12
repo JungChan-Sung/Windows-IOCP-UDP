@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 
@@ -22,7 +24,7 @@ namespace persistence::account
 	struct AccountRecord
 	{
 	public:
-		std::int64_t accountId = 0;
+		common::identity::AccountId accountId = 0;
 		std::string loginName;
 		std::string passwordHash;
 		std::string nickname;

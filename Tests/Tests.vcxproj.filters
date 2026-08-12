@@ -318,11 +318,11 @@
     <ClCompile Include="Server\AccountLoginPersistenceIntegrationTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Server\MatchHistoryTrackerTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\Server\Game\MatchHistoryTracker.cpp">
       <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\MatchHistoryTrackerTests.cpp">
+      <Filter>소스 파일\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -498,7 +498,7 @@
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\MatchHistoryTrackerTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

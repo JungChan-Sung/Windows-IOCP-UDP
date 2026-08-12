@@ -4,6 +4,8 @@
 #include <expected>
 #include <optional>
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 
@@ -12,8 +14,8 @@ namespace persistence::player
 	struct PlayerRecord
 	{
 	public:
-		std::int64_t playerId = 0;
-		std::int64_t accountId = 0;
+		common::identity::PersistentPlayerId playerId = 0;
+		common::identity::AccountId accountId = 0;
 	};
 
 	class PlayerRepository final
@@ -36,7 +38,7 @@ namespace persistence::player
 		PlayerRepository& operator=(PlayerRepository&&) = delete;
 
 	public:
-		[[nodiscard]] CreatePlayerResult CreatePlayer(std::int64_t accountId);
-		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(std::int64_t accountId);
+		[[nodiscard]] CreatePlayerResult CreatePlayer(common::identity::AccountId accountId);
+		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(common::identity::AccountId accountId);
 	};
 }

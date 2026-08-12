@@ -5,6 +5,8 @@
 #include <mutex>
 #include <string_view>
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Account/AccountRepository.h>
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
@@ -68,9 +70,9 @@ namespace persistence
 		[[nodiscard]] FindAccountResult FindAccountByLoginName(std::string_view loginName);
 		[[nodiscard]] ExistsAccountResult ExistsByLoginName(std::string_view loginName);
 
-		[[nodiscard]] CreatePlayerResult CreatePlayer(std::int64_t accountId);
-		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(std::int64_t accountId);
-		[[nodiscard]] FindOrCreatePlayerResult FindOrCreatePlayerByAccountId(std::int64_t accountId);
+		[[nodiscard]] CreatePlayerResult CreatePlayer(common::identity::AccountId accountId);
+		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(common::identity::AccountId accountId);
+		[[nodiscard]] FindOrCreatePlayerResult FindOrCreatePlayerByAccountId(common::identity::AccountId accountId);
 
 	private:
 		void StopUnlocked() noexcept;

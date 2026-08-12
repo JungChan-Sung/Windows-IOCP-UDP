@@ -25,7 +25,7 @@ namespace server::game
 		};
 	}
 
-	bool MatchHistoryTracker::EnterPlayer(RoomId roomId, std::int64_t persistentPlayerId, SystemTimePoint currentTime)
+	bool MatchHistoryTracker::EnterPlayer(RoomId roomId, PersistentPlayerId persistentPlayerId, SystemTimePoint currentTime)
 	{
 		if (roomId <= 0 || persistentPlayerId <= 0)
 		{
@@ -57,7 +57,7 @@ namespace server::game
 		return true;
 	}
 
-	bool MatchHistoryTracker::LeavePlayer(RoomId roomId, std::int64_t persistentPlayerId, SystemTimePoint currentTime)
+	bool MatchHistoryTracker::LeavePlayer(RoomId roomId, PersistentPlayerId persistentPlayerId, SystemTimePoint currentTime)
 	{
 		if (roomId <= 0 || persistentPlayerId <= 0)
 		{

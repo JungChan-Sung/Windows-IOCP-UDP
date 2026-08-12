@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Identity/IdentityTypes.h>
 
 namespace server::game
 {
@@ -11,10 +12,10 @@ namespace server::game
 	{
 	public:
 		common::game::PlayerId killerPlayerId = 0;
-		std::int64_t killerPersistentPlayerId = 0;
+		common::identity::PersistentPlayerId killerPersistentPlayerId = 0;
 
 		common::game::PlayerId victimPlayerId = 0;
-		std::int64_t victimPersistentPlayerId = 0;
+		common::identity::PersistentPlayerId victimPersistentPlayerId = 0;
 
 		common::game::RoomId roomId = 0;
 	};

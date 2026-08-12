@@ -90,6 +90,7 @@ namespace
 
 		tests::Expect(result, bulletState.bulletId == 10, "GameSimulation: CreateBullet bulletId");
 		tests::Expect(result, bulletState.ownerPlayerId == 1, "GameSimulation: CreateBullet ownerPlayerId");
+		tests::Expect(result, bulletState.ownerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: CreateBullet ownerPersistentPlayerId");
 		tests::Expect(result, bulletState.roomId == 1, "GameSimulation: CreateBullet roomId");
 		tests::Expect(result, bulletState.x == ownerPlayer.x, "GameSimulation: CreateBullet x");
 		tests::Expect(result, bulletState.y == ownerPlayer.y, "GameSimulation: CreateBullet y");
@@ -128,6 +129,7 @@ namespace
 		tests::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed),
 			"GameSimulation: CreateBullet fallback velocityX");
 		tests::Expect(result, IsNearlyEqual(bulletState.velocityY, 0.0F), "GameSimulation: CreateBullet fallback velocityY");
+		tests::Expect(result, bulletState.ownerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: fallback persistent owner id");
 	}
 
 	void RunBulletLifetimeRemoveTest(tests::DebugTestResult& result)

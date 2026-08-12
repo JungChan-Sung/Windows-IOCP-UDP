@@ -135,6 +135,9 @@
     <ClCompile Include="Net\SessionTokenGenerator.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Game\MatchHistoryTracker.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -250,6 +253,9 @@
     </ClInclude>
     <ClInclude Include="Game\KillEvent.h">
       <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\MatchHistoryTracker.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

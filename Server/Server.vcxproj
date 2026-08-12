@@ -154,6 +154,7 @@
     <ClCompile Include="Game\GameSimulation.cpp" />
     <ClCompile Include="Game\GameTickRunner.cpp" />
     <ClCompile Include="Game\GameWorld.cpp" />
+    <ClCompile Include="Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="Net\AccountLoginAdmissionService.cpp" />
     <ClCompile Include="Net\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="Net\AccountPacketMapper.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Game\GameWorld.h" />
     <ClInclude Include="Game\ImpactEffectState.h" />
     <ClInclude Include="Game\KillEvent.h" />
+    <ClInclude Include="Game\MatchHistoryTracker.h" />
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Net\AccountLoginAdmissionService.h" />

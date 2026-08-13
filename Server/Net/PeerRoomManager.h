@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -73,8 +74,8 @@ namespace server::net
 		[[nodiscard]] const PeerState* FindPeer(const EndpointKey& endpointKey) const noexcept;
 		[[nodiscard]] PeerState* FindJoinedPeer(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] const PeerState* FindJoinedPeer(const EndpointKey& endpointKey) const noexcept;
-		[[nodiscard]] PeerState* FindJoinedPeerByAccountId(std::int64_t accountId) noexcept;
-		[[nodiscard]] const PeerState* FindJoinedPeerByAccountId(std::int64_t accountId) const noexcept;
+		[[nodiscard]] PeerState* FindJoinedPeerByAccountId(common::identity::AccountId accountId) noexcept;
+		[[nodiscard]] const PeerState* FindJoinedPeerByAccountId(common::identity::AccountId accountId) const noexcept;
 		[[nodiscard]] const RoomMemberSet* FindRoomMemberSet(RoomId roomId) const noexcept;
 
 		[[nodiscard]] PeerState& UpsertJoinedPeer(

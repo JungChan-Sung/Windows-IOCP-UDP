@@ -49,8 +49,8 @@ namespace server::net
 	public:
 		[[nodiscard]] bool Upsert(
 			const EndpointKey& endpointKey,
-			std::int64_t accountId,
-			std::int64_t persistentPlayerId,
+			common::identity::AccountId accountId,
+			common::identity::PersistentPlayerId persistentPlayerId,
 			common::net::SessionToken sessionToken,
 			std::string nickname,
 			TimePoint authenticatedTime
@@ -60,7 +60,7 @@ namespace server::net
 		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey) const noexcept;
 		[[nodiscard]] AuthenticatedAccount* Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) noexcept;
 		[[nodiscard]] const AuthenticatedAccount* Find(const EndpointKey& endpointKey, common::net::SessionToken sessionToken) const noexcept;
-		[[nodiscard]] std::optional<EndpointKey> FindEndpointByAccountId(std::int64_t accountId) const noexcept;
+		[[nodiscard]] std::optional<EndpointKey> FindEndpointByAccountId(common::identity::AccountId accountId) const noexcept;
 
 		[[nodiscard]] bool Remove(const EndpointKey& endpointKey) noexcept;
 		[[nodiscard]] std::size_t RemoveExpired(TimePoint currentTime, Duration timeout) noexcept;

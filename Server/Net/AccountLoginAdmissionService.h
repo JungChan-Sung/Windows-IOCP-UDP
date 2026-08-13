@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
@@ -45,7 +46,7 @@ namespace server::net
 	public:
 		[[nodiscard]] Status Apply(
 			const EndpointKey& endpointKey,
-			std::int64_t persistentPlayerId,
+			common::identity::PersistentPlayerId persistentPlayerId,
 			common::packet::AccountLoginResponsePacket& responsePacket,
 			TimePoint currentTime,
 			AuthenticatedAccountRegistry& authenticatedAccountRegistry,

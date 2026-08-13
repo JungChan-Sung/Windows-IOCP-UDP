@@ -1,5 +1,7 @@
 #include "PlayerRepository.h"
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Odbc/OdbcStatement.h>
 
 namespace
@@ -20,7 +22,7 @@ namespace persistence::player
 		: connection_(connection)
 	{}
 
-	PlayerRepository::CreatePlayerResult PlayerRepository::CreatePlayer(std::int64_t accountId)
+	PlayerRepository::CreatePlayerResult PlayerRepository::CreatePlayer(common::identity::AccountId accountId)
 	{
 		if (!connection_.IsOpen())
 		{
@@ -93,7 +95,7 @@ VALUES
 		};
 	}
 
-	PlayerRepository::FindPlayerResult PlayerRepository::FindPlayerByAccountId(std::int64_t accountId)
+	PlayerRepository::FindPlayerResult PlayerRepository::FindPlayerByAccountId(common::identity::AccountId accountId)
 	{
 		if (!connection_.IsOpen())
 		{

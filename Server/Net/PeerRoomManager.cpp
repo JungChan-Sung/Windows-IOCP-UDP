@@ -62,7 +62,7 @@ namespace server::net
 		return peerState;
 	}
 
-	PeerState* PeerRoomManager::FindJoinedPeerByAccountId(std::int64_t accountId) noexcept
+	PeerState* PeerRoomManager::FindJoinedPeerByAccountId(common::identity::AccountId accountId) noexcept
 	{
 		if (accountId <= 0)
 		{
@@ -85,7 +85,7 @@ namespace server::net
 		return nullptr;
 	}
 
-	const PeerState* PeerRoomManager::FindJoinedPeerByAccountId(std::int64_t accountId) const noexcept
+	const PeerState* PeerRoomManager::FindJoinedPeerByAccountId(common::identity::AccountId accountId) const noexcept
 	{
 		if (accountId <= 0)
 		{

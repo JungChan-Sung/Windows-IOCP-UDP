@@ -15,7 +15,7 @@ namespace server::net
 		responsePacket.nickname.clear();
 	}
 
-	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, std::int64_t persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
+	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
 	{
 		using ResponseStatus = common::packet::AccountLoginResponseStatus;
 

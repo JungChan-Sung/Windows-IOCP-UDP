@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Packet/PacketHeader.h>
 
@@ -39,7 +40,7 @@ namespace common::packet
 		AccountLoginRequestId requestId = invalidAccountLoginRequestId;
 		AccountLoginResponseStatus status = AccountLoginResponseStatus::ServerError;
 
-		std::int64_t accountId = 0;
+		common::identity::AccountId accountId = 0;
 		common::net::SessionToken sessionToken{};
 		std::string nickname;
 	};

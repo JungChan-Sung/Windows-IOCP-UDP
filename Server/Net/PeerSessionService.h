@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
@@ -29,8 +30,8 @@ namespace server::net
 		struct AuthenticatedIdentity
 		{
 		public:
-			std::int64_t accountId = 0;
-			std::int64_t persistentPlayerId = 0;
+			common::identity::AccountId accountId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			common::net::SessionToken sessionToken{};
 			std::string_view nickname;
 		};

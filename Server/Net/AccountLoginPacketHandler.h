@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
@@ -40,7 +41,7 @@ namespace server::net
 		public:
 			sockaddr_in remoteAddress{};
 			common::packet::AccountLoginResponsePacket responsePacket;
-			std::int64_t persistentPlayerId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			TaskId taskId = invalidTaskId;
 			bool isLatestRequest = false;
 		};

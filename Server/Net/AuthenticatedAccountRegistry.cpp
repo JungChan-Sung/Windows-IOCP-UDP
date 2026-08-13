@@ -2,9 +2,11 @@
 
 #include <utility>
 
+#include <Common/Identity/IdentityTypes.h>
+
 namespace server::net
 {
-	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, std::int64_t accountId, std::int64_t persistentPlayerId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
+	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, common::identity::AccountId accountId, common::identity::PersistentPlayerId persistentPlayerId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
 	{
 		if (accountId <= 0 || persistentPlayerId <= 0 || !common::net::IsValidSessionToken(sessionToken) || nickname.empty())
 		{
@@ -69,7 +71,7 @@ namespace server::net
 		return account;
 	}
 
-	std::optional<AuthenticatedAccountRegistry::EndpointKey> AuthenticatedAccountRegistry::FindEndpointByAccountId(std::int64_t accountId) const noexcept
+	std::optional<AuthenticatedAccountRegistry::EndpointKey> AuthenticatedAccountRegistry::FindEndpointByAccountId(common::identity::AccountId accountId) const noexcept
 	{
 		if (accountId <= 0)
 		{

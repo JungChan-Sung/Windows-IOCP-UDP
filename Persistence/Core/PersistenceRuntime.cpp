@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <Common/Identity/IdentityTypes.h>
+
 #include <Persistence/Schema/DatabaseSchema.h>
 
 namespace persistence
@@ -127,7 +129,7 @@ namespace persistence
 		return repository.ExistsByLoginName(loginName);
 	}
 
-	PersistenceRuntime::CreatePlayerResult PersistenceRuntime::CreatePlayer(std::int64_t accountId)
+	PersistenceRuntime::CreatePlayerResult PersistenceRuntime::CreatePlayer(common::identity::AccountId accountId)
 	{
 		std::scoped_lock lock(databaseMutex_);
 
@@ -140,7 +142,7 @@ namespace persistence
 		return repository.CreatePlayer(accountId);
 	}
 
-	PersistenceRuntime::FindPlayerResult PersistenceRuntime::FindPlayerByAccountId(std::int64_t accountId)
+	PersistenceRuntime::FindPlayerResult PersistenceRuntime::FindPlayerByAccountId(common::identity::AccountId accountId)
 	{
 		std::scoped_lock lock(databaseMutex_);
 
@@ -153,7 +155,7 @@ namespace persistence
 		return repository.FindPlayerByAccountId(accountId);
 	}
 
-	PersistenceRuntime::FindOrCreatePlayerResult PersistenceRuntime::FindOrCreatePlayerByAccountId(std::int64_t accountId)
+	PersistenceRuntime::FindOrCreatePlayerResult PersistenceRuntime::FindOrCreatePlayerByAccountId(common::identity::AccountId accountId)
 	{
 		std::scoped_lock lock(databaseMutex_);
 

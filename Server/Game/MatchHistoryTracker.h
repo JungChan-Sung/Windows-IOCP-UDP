@@ -72,14 +72,14 @@ namespace server::game
 		[[nodiscard]] static CompletedMatch BuildCompletedMatch(ActiveMatch&& activeMatch, SystemTimePoint endedAt);
 
 	public:
-		[[nodiscard]] bool EnterPlayer(RoomId roomId, std::int64_t persistentPlayerId, SystemTimePoint currentTime);
-		[[nodiscard]] bool LeavePlayer(RoomId roomId, std::int64_t persistentPlayerId, SystemTimePoint currentTime);
+		[[nodiscard]] bool EnterPlayer(RoomId roomId, PersistentPlayerId persistentPlayerId, SystemTimePoint currentTime);
+		[[nodiscard]] bool LeavePlayer(RoomId roomId, PersistentPlayerId persistentPlayerId, SystemTimePoint currentTime);
 
 		[[nodiscard]] bool RecordKill(const KillEvent& killEvent);
 		[[nodiscard]] std::size_t RecordKills(std::span<const KillEvent> killEventList);
 
 		void CompleteAll(SystemTimePoint currentTime);
-
+		  
 		[[nodiscard]] CompletedMatchList ExtractCompletedMatches();
 
 		void Clear() noexcept;

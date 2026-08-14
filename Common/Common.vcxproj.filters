@@ -73,6 +73,9 @@
     <Filter Include="헤더 파일\Identity">
       <UniqueIdentifier>{ec3f1128-e17c-44f5-a497-ba368bd9a361}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Time">
+      <UniqueIdentifier>{25236bdd-58f0-4d8f-9a65-478bc1175eb2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -285,6 +288,9 @@
     <ClInclude Include="Identity\IdentityTypes.h">
       <Filter>헤더 파일\Identity</Filter>
     </ClInclude>
+    <ClInclude Include="Time\SystemDateTime.h">
+      <Filter>헤더 파일\Time</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -322,6 +328,9 @@
     </ClCompile>
     <ClCompile Include="String\UtfConversion.cpp">
       <Filter>소스 파일\String</Filter>
+    </ClCompile>
+    <ClCompile Include="Time\SystemDateTime.cpp">
+      <Filter>소스 파일\Time</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

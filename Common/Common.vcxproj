@@ -88,6 +88,7 @@
     <ClInclude Include="String\StringFormat.h" />
     <ClInclude Include="String\UtfConversion.h" />
     <ClInclude Include="Threading\ThreadPool.h" />
+    <ClInclude Include="Time\SystemDateTime.h" />
     <ClInclude Include="Time\TimeTypes.h" />
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +104,7 @@
     <ClCompile Include="Net\WsaSession.cpp" />
     <ClCompile Include="String\UtfConversion.cpp" />
     <ClCompile Include="Threading\ThreadPool.cpp" />
+    <ClCompile Include="Time\SystemDateTime.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

@@ -1,12 +1,12 @@
 #include "OdbcStatement.h"
 
 #include <array>
-#include <chrono>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include <Common/String/UtfConversion.h>
+#include <Common/Time/SystemDateTime.h>
 
 #include <Persistence/Odbc/OdbcDiagnostic.h>
 
@@ -267,22 +267,18 @@ namespace persistence::odbc
 				});
 		}
 
-		const auto milliseconds = std::chrono::floor<std::chrono::milliseconds>(value);
-		const auto dayPoint = std::chrono::floor<std::chrono::days>(milliseconds);
-
-		const std::chrono::year_month_day date{ dayPoint };
-		const std::chrono::hh_mm_ss timeOfDay{ milliseconds - dayPoint };
+		const common::time::SystemDateTime dateTime = common::time::ToSystemDateTime(value);
 
 		boundTimestampParameters_.push_back(BoundTimestampParameter{});
 		BoundTimestampParameter& parameter = boundTimestampParameters_.back();
 
-		parameter.value.year = static_cast<SQLSMALLINT>(static_cast<int>(date.year()));
-		parameter.value.month = static_cast<SQLUSMALLINT>(static_cast<unsigned>(date.month()));
-		parameter.value.day = static_cast<SQLUSMALLINT>(static_cast<unsigned>(date.day()));
-		parameter.value.hour = static_cast<SQLUSMALLINT>(timeOfDay.hours().count());
-		parameter.value.minute = static_cast<SQLUSMALLINT>(timeOfDay.minutes().count());
-		parameter.value.second = static_cast<SQLUSMALLINT>(timeOfDay.seconds().count());
-		parameter.value.fraction = static_cast<SQLUINTEGER>(timeOfDay.subseconds().count()) * 1'000'000U;
+		parameter.value.year = static_cast<SQLSMALLINT>(dateTime.year);
+		parameter.value.month = static_cast<SQLUSMALLINT>(dateTime.month);
+		parameter.value.day = static_cast<SQLUSMALLINT>(dateTime.day);
+		parameter.value.hour = static_cast<SQLUSMALLINT>(dateTime.hour);
+		parameter.value.minute = static_cast<SQLUSMALLINT>(dateTime.minute);
+		parameter.value.second = static_cast<SQLUSMALLINT>(dateTime.second);
+		parameter.value.fraction = static_cast<SQLUINTEGER>(dateTime.millisecond) * 1'000'000U;
 
 		const SQLRETURN bindResult = ::SQLBindParameter(
 			statementHandle_,
@@ -296,7 +292,6 @@ namespace persistence::odbc
 			static_cast<SQLLEN>(sizeof(parameter.value)),
 			&parameter.indicator
 		);
-
 		if (!SQL_SUCCEEDED(bindResult))
 		{
 			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{

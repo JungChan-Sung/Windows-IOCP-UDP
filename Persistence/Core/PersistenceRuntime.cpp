@@ -202,6 +202,19 @@ namespace persistence
 		return std::move(**findResult);
 	}
 
+	PersistenceRuntime::SaveMatchResult PersistenceRuntime::SaveMatch(const match::MatchCreateRequest& request)
+	{
+		std::scoped_lock lock(databaseMutex_);
+
+		if (!enabled_ || !IsStartedUnlocked())
+		{
+			return std::unexpected(MakeNotStartedError());
+		}
+
+		match::MatchHistoryRepository repository(connection_);
+		return repository.SaveMatch(request);
+	}
+
 	void PersistenceRuntime::StopUnlocked() noexcept
 	{
 		connection_.Close();

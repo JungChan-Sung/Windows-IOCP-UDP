@@ -218,12 +218,15 @@ namespace persistence::odbc
 		);
 		if (!SQL_SUCCEEDED(autoCommitResult))
 		{
-			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::TransactionCommitFailed,
-				.handleType = SQL_HANDLE_DBC,
-				.handle = connectionHandle_,
-				.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
-				}));
+			core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
+					.failure = core::DatabaseFailure::TransactionCommitFailed,
+					.handleType = SQL_HANDLE_DBC,
+					.handle = connectionHandle_,
+					.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
+				});
+
+			Close();
+			return std::unexpected(std::move(error));
 		}
 
 		return {};
@@ -260,12 +263,15 @@ namespace persistence::odbc
 		);
 		if (!SQL_SUCCEEDED(autoCommitResult))
 		{
-			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
-				.failure = core::DatabaseFailure::TransactionRollbackFailed,
-				.handleType = SQL_HANDLE_DBC,
-				.handle = connectionHandle_,
-				.message = "Transaction rolled back, but failed to restore ODBC auto-commit mode.",
-				}));
+			core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
+					.failure = core::DatabaseFailure::TransactionCommitFailed,
+					.handleType = SQL_HANDLE_DBC,
+					.handle = connectionHandle_,
+					.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
+				});
+
+			Close();
+			return std::unexpected(std::move(error));
 		}
 
 		return {};

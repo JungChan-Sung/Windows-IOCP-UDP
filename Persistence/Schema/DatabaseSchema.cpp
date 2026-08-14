@@ -78,6 +78,79 @@ END
 			return std::unexpected(createPlayersResult.error());
 		}
 
+		constexpr std::string_view createMatchesTableQuery = R"sql(
+IF OBJECT_ID(N'dbo.matches', N'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.matches
+	(
+		match_id BIGINT IDENTITY(1,1) NOT NULL,
+		room_id INT NOT NULL,
+		started_at_utc DATETIME2(3) NOT NULL,
+		ended_at_utc DATETIME2(3) NOT NULL,
+
+		CONSTRAINT PK_matches
+			PRIMARY KEY (match_id),
+
+		CONSTRAINT CK_matches_room_id
+			CHECK (room_id > 0),
+
+		CONSTRAINT CK_matches_time_range
+			CHECK (ended_at_utc >= started_at_utc)
+	);
+END
+)sql";
+
+		odbc::OdbcStatement matchStatement;
+		const odbc::OdbcStatement::ExecuteResult createMatchesResult = matchStatement.ExecuteDirect(connection, createMatchesTableQuery);
+		if (!createMatchesResult.has_value())
+		{
+			return std::unexpected(createMatchesResult.error());
+		}
+
+		constexpr std::string_view createMatchPlayersTableQuery = R"sql(
+IF OBJECT_ID(N'dbo.match_players', N'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.match_players
+	(
+		match_id BIGINT NOT NULL,
+		player_id BIGINT NOT NULL,
+		kill_count BIGINT NOT NULL,
+		death_count BIGINT NOT NULL,
+
+		CONSTRAINT PK_match_players
+			PRIMARY KEY (match_id, player_id),
+
+		CONSTRAINT FK_match_players_matches
+			FOREIGN KEY (match_id)
+			REFERENCES dbo.matches(match_id)
+			ON DELETE CASCADE,
+
+		CONSTRAINT FK_match_players_players
+			FOREIGN KEY (player_id)
+			REFERENCES dbo.players(player_id)
+			ON DELETE CASCADE,
+
+		CONSTRAINT CK_match_players_kill_count
+			CHECK (kill_count >= 0),
+
+		CONSTRAINT CK_match_players_death_count
+			CHECK (death_count >= 0)
+	);
+
+	CREATE INDEX IX_match_players_player_id
+		ON dbo.match_players(player_id, match_id);
+END
+)sql";
+
+		odbc::OdbcStatement matchPlayerStatement;
+		const odbc::OdbcStatement::ExecuteResult createMatchPlayersResult
+			= matchPlayerStatement.ExecuteDirect(connection, createMatchPlayersTableQuery);
+
+		if (!createMatchPlayersResult.has_value())
+		{
+			return std::unexpected(createMatchPlayersResult.error());
+		}
+
 		return {};
 	}
 }

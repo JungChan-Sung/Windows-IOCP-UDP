@@ -9,6 +9,7 @@
 
 #include <Persistence/Account/AccountRepository.h>
 #include <Persistence/Core/DatabaseError.h>
+#include <Persistence/Match/MatchHistoryRepository.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 #include <Persistence/Odbc/OdbcEnvironment.h>
 #include <Persistence/Player/PlayerRepository.h>
@@ -35,6 +36,8 @@ namespace persistence
 		using CreatePlayerResult = player::PlayerRepository::CreatePlayerResult;
 		using FindPlayerResult = player::PlayerRepository::FindPlayerResult;
 		using FindOrCreatePlayerResult = std::expected<player::PlayerRecord, core::DatabaseError>;
+
+		using SaveMatchResult = match::MatchHistoryRepository::SaveMatchResult;
 
 	private:
 		inline static constexpr std::int32_t duplicateIndexNativeError = 2601;
@@ -73,6 +76,8 @@ namespace persistence
 		[[nodiscard]] CreatePlayerResult CreatePlayer(common::identity::AccountId accountId);
 		[[nodiscard]] FindPlayerResult FindPlayerByAccountId(common::identity::AccountId accountId);
 		[[nodiscard]] FindOrCreatePlayerResult FindOrCreatePlayerByAccountId(common::identity::AccountId accountId);
+
+		[[nodiscard]] SaveMatchResult SaveMatch(const match::MatchCreateRequest& request);
 
 	private:
 		void StopUnlocked() noexcept;

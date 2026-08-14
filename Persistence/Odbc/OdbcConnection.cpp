@@ -105,6 +105,12 @@ namespace persistence::odbc
 			return;
 		}
 
+		if (transactionActive_)
+		{
+			static_cast<void>(::SQLEndTran(SQL_HANDLE_DBC, connectionHandle_, SQL_ROLLBACK));
+			transactionActive_ = false;
+		}
+
 		::SQLDisconnect(connectionHandle_);
 		::SQLFreeHandle(SQL_HANDLE_DBC, connectionHandle_);
 		connectionHandle_ = SQL_NULL_HDBC;
@@ -138,6 +144,128 @@ namespace persistence::odbc
 		if (!executeResult.has_value())
 		{
 			return std::unexpected(executeResult.error());
+		}
+
+		return {};
+	}
+
+	OdbcConnection::TransactionResult OdbcConnection::BeginTransaction()
+	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+				.failure = core::DatabaseFailure::TransactionBeginFailed,
+				.message = "Database connection is not open.",
+				});
+		}
+
+		if (transactionActive_)
+		{
+			return std::unexpected(core::DatabaseError{
+				.failure = core::DatabaseFailure::TransactionBeginFailed,
+				.message = "Database transaction is already active.",
+				});
+		}
+
+		const SQLRETURN result = ::SQLSetConnectAttrW(
+			connectionHandle_,
+			SQL_ATTR_AUTOCOMMIT,
+			reinterpret_cast<SQLPOINTER>(static_cast<std::intptr_t>(SQL_AUTOCOMMIT_OFF)),
+			0
+		);
+		if (!SQL_SUCCEEDED(result))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::TransactionBeginFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Failed to begin ODBC transaction.",
+				}));
+		}
+
+		transactionActive_ = true;
+		return {};
+	}
+
+	OdbcConnection::TransactionResult OdbcConnection::CommitTransaction()
+	{
+		if (!IsOpen() || !transactionActive_)
+		{
+			return std::unexpected(core::DatabaseError{
+				.failure = core::DatabaseFailure::TransactionCommitFailed,
+				.message = "Database transaction is not active.",
+				});
+		}
+
+		const SQLRETURN endResult = ::SQLEndTran(SQL_HANDLE_DBC, connectionHandle_, SQL_COMMIT);
+		if (!SQL_SUCCEEDED(endResult))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::TransactionCommitFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Failed to commit ODBC transaction.",
+				}));
+		}
+
+		transactionActive_ = false;
+
+		const SQLRETURN autoCommitResult = ::SQLSetConnectAttrW(
+			connectionHandle_,
+			SQL_ATTR_AUTOCOMMIT,
+			reinterpret_cast<SQLPOINTER>(static_cast<std::intptr_t>(SQL_AUTOCOMMIT_ON)),
+			0
+		);
+		if (!SQL_SUCCEEDED(autoCommitResult))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::TransactionCommitFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
+				}));
+		}
+
+		return {};
+	}
+
+	OdbcConnection::TransactionResult OdbcConnection::RollbackTransaction()
+	{
+		if (!IsOpen() || !transactionActive_)
+		{
+			return std::unexpected(core::DatabaseError{
+				.failure = core::DatabaseFailure::TransactionRollbackFailed,
+				.message = "Database transaction is not active.",
+				});
+		}
+
+		const SQLRETURN endResult = ::SQLEndTran(SQL_HANDLE_DBC, connectionHandle_, SQL_ROLLBACK);
+		if (!SQL_SUCCEEDED(endResult))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::TransactionRollbackFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Failed to roll back ODBC transaction.",
+				}));
+		}
+
+		transactionActive_ = false;
+
+		const SQLRETURN autoCommitResult = ::SQLSetConnectAttrW(
+			connectionHandle_,
+			SQL_ATTR_AUTOCOMMIT,
+			reinterpret_cast<SQLPOINTER>(static_cast<std::intptr_t>(SQL_AUTOCOMMIT_ON)),
+			0
+		);
+		if (!SQL_SUCCEEDED(autoCommitResult))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::TransactionRollbackFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Transaction rolled back, but failed to restore ODBC auto-commit mode.",
+				}));
 		}
 
 		return {};

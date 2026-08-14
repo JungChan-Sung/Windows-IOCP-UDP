@@ -1,6 +1,7 @@
 #include "OdbcStatement.h"
 
 #include <array>
+#include <chrono>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -256,6 +257,59 @@ namespace persistence::odbc
 		return {};
 	}
 
+	OdbcStatement::BindResult OdbcStatement::BindInputSystemTimePoint(SQLUSMALLINT parameterNumber, common::time::SystemTimePoint value)
+	{
+		if (!IsOpen())
+		{
+			return std::unexpected(core::DatabaseError{
+				.failure = core::DatabaseFailure::StatementParameterBindFailed,
+				.message = "ODBC statement is not prepared.",
+				});
+		}
+
+		const auto milliseconds = std::chrono::floor<std::chrono::milliseconds>(value);
+		const auto dayPoint = std::chrono::floor<std::chrono::days>(milliseconds);
+
+		const std::chrono::year_month_day date{ dayPoint };
+		const std::chrono::hh_mm_ss timeOfDay{ milliseconds - dayPoint };
+
+		boundTimestampParameters_.push_back(BoundTimestampParameter{});
+		BoundTimestampParameter& parameter = boundTimestampParameters_.back();
+
+		parameter.value.year = static_cast<SQLSMALLINT>(static_cast<int>(date.year()));
+		parameter.value.month = static_cast<SQLUSMALLINT>(static_cast<unsigned>(date.month()));
+		parameter.value.day = static_cast<SQLUSMALLINT>(static_cast<unsigned>(date.day()));
+		parameter.value.hour = static_cast<SQLUSMALLINT>(timeOfDay.hours().count());
+		parameter.value.minute = static_cast<SQLUSMALLINT>(timeOfDay.minutes().count());
+		parameter.value.second = static_cast<SQLUSMALLINT>(timeOfDay.seconds().count());
+		parameter.value.fraction = static_cast<SQLUINTEGER>(timeOfDay.subseconds().count()) * 1'000'000U;
+
+		const SQLRETURN bindResult = ::SQLBindParameter(
+			statementHandle_,
+			parameterNumber,
+			SQL_PARAM_INPUT,
+			SQL_C_TYPE_TIMESTAMP,
+			SQL_TYPE_TIMESTAMP,
+			23,
+			3,
+			static_cast<SQLPOINTER>(&parameter.value),
+			static_cast<SQLLEN>(sizeof(parameter.value)),
+			&parameter.indicator
+		);
+
+		if (!SQL_SUCCEEDED(bindResult))
+		{
+			return std::unexpected(MakeOdbcError(OdbcDiagnosticContext{
+				.failure = core::DatabaseFailure::StatementParameterBindFailed,
+				.handleType = SQL_HANDLE_STMT,
+				.handle = statementHandle_,
+				.message = "Failed to bind ODBC timestamp parameter.",
+				}));
+		}
+
+		return {};
+	}
+
 	OdbcStatement::ExecuteResult OdbcStatement::Execute()
 	{
 		if (!IsOpen())
@@ -456,5 +510,6 @@ namespace persistence::odbc
 
 		boundStringParameters_.clear();
 		boundInt64Parameters_.clear();
+		boundTimestampParameters_.clear();
 	}
 }

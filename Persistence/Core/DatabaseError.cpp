@@ -20,6 +20,15 @@ namespace persistence::core
 		case DatabaseFailure::ConnectionOpenFailed:
 			return "ConnectionOpenFailed";
 
+		case DatabaseFailure::TransactionBeginFailed:
+			return "TransactionBeginFailed";
+
+		case DatabaseFailure::TransactionCommitFailed:
+			return "TransactionCommitFailed";
+
+		case DatabaseFailure::TransactionRollbackFailed:
+			return "TransactionRollbackFailed";
+
 		case DatabaseFailure::StatementAllocationFailed:
 			return "StatementAllocationFailed";
 

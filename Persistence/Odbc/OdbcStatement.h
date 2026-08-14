@@ -10,6 +10,8 @@
 #include <string>
 #include <string_view>
 
+#include <Common/Time/TimeTypes.h>
+
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 
@@ -32,6 +34,13 @@ namespace persistence::odbc
 			SQLLEN indicator = 0;
 		};
 
+		struct BoundTimestampParameter
+		{
+		public:
+			SQL_TIMESTAMP_STRUCT value{};
+			SQLLEN indicator = sizeof(SQL_TIMESTAMP_STRUCT);
+		};
+
 	public:
 		using ExecuteResult = std::expected<void, core::DatabaseError>;
 		using BindResult = std::expected<void, core::DatabaseError>;
@@ -44,6 +53,7 @@ namespace persistence::odbc
 		SQLHSTMT statementHandle_ = SQL_NULL_HSTMT;
 		std::deque<BoundStringParameter> boundStringParameters_;
 		std::deque<BoundInt64Parameter> boundInt64Parameters_;
+		std::deque<BoundTimestampParameter> boundTimestampParameters_;
 
 	public:
 		OdbcStatement() = default;
@@ -61,6 +71,7 @@ namespace persistence::odbc
 		[[nodiscard]] ExecuteResult Prepare(const OdbcConnection& connection, std::string_view query);
 		[[nodiscard]] BindResult BindInputString(SQLUSMALLINT parameterNumber, std::string_view value);
 		[[nodiscard]] BindResult BindInputInt64(SQLUSMALLINT parameterNumber, std::int64_t value);
+		[[nodiscard]] BindResult BindInputSystemTimePoint(SQLUSMALLINT parameterNumber, common::time::SystemTimePoint value);
 		[[nodiscard]] ExecuteResult Execute();
 
 		[[nodiscard]] FetchResult Fetch();

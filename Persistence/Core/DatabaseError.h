@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace persistence::core
+namespace  persistence::core
 {
 	enum class DatabaseFailure
 	{
@@ -13,6 +13,11 @@ namespace persistence::core
 		EnvironmentVersionSetFailed,
 		ConnectionAllocationFailed,
 		ConnectionOpenFailed,
+
+		TransactionBeginFailed,
+		TransactionCommitFailed,
+		TransactionRollbackFailed,
+
 		StatementAllocationFailed,
 		StatementPrepareFailed,
 		StatementParameterBindFailed,

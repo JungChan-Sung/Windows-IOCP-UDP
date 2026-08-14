@@ -24,9 +24,11 @@ namespace persistence::odbc
 	public:
 		using OpenResult = std::expected<void, core::DatabaseError>;
 		using HealthCheckResult = std::expected<void, core::DatabaseError>;
+		using TransactionResult = std::expected<void, core::DatabaseError>;
 
 	private:
 		SQLHDBC connectionHandle_ = SQL_NULL_HDBC;
+		bool transactionActive_ = false;
 
 	public:
 		OdbcConnection() = default;
@@ -44,7 +46,16 @@ namespace persistence::odbc
 
 		[[nodiscard]] HealthCheckResult ExecuteHealthCheck() const;
 
+		[[nodiscard]] TransactionResult BeginTransaction();
+		[[nodiscard]] TransactionResult CommitTransaction();
+		[[nodiscard]] TransactionResult RollbackTransaction();
+
 	public:
+		[[nodiscard]] bool IsTransactionActive() const noexcept
+		{
+			return transactionActive_;
+		}
+
 		[[nodiscard]] SQLHDBC GetHandle() const noexcept
 		{
 			return connectionHandle_;

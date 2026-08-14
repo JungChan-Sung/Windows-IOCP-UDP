@@ -44,6 +44,7 @@ namespace server::net
 
 			sockaddr_in remoteAddress{};
 			PlayerId playerId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
 			game::GameSimulation::SpawnPosition spawnPosition{};
 		};
@@ -54,6 +55,7 @@ namespace server::net
 			bool shouldBroadcastPlayerLeft = false;
 
 			PlayerId playerId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
 		};
 
@@ -63,6 +65,7 @@ namespace server::net
 			bool changed = false;
 
 			PlayerId playerId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId previousRoomId = 0;
 			RoomId nextRoomId = 0;
 			sockaddr_in remoteAddress{};

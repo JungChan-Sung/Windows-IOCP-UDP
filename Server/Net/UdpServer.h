@@ -22,6 +22,7 @@
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameTickRunner.h>
 #include <Server/Game/GameWorld.h>
+#include <Server/Game/MatchHistoryTracker.h>
 #include <Server/Net/AccountLoginAdmissionService.h>
 #include <Server/Net/AuthenticatedAccountRegistry.h>
 #include <Server/Net/InvalidPacketLogLimiter.h>
@@ -83,6 +84,7 @@ namespace server::net
 
 		game::GameSimulation gameSimulation_;
 		game::GameWorld gameWorld_;
+		game::MatchHistoryTracker matchHistoryTracker_;
 
 		AuthenticatedAccountRegistry authenticatedAccountRegistry_;
 		AccountLoginAdmissionService accountLoginAdmissionService_;

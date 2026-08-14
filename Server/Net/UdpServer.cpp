@@ -323,6 +323,7 @@ namespace server::net
 			authenticatedAccountRegistry_.Clear();
 			peerRoomManager_.Clear();
 			gameWorld_.Clear();
+			matchHistoryTracker_.Clear();
 		}
 
 		invalidPacketLogLimiter_.Reset();
@@ -367,19 +368,23 @@ namespace server::net
 
 		ProcessAccountLoginResponses();
 
-		game::KillEventList killEventList;
+		std::size_t killEventCount = 0;
+		std::size_t recordedKillCount = 0;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
 			gameSimulation_.UpdatePlayers(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_);
 
-			killEventList = gameSimulation_.UpdateBullets(
+			const game::KillEventList killEventList = gameSimulation_.UpdateBullets(
 				config_.tick.fixedDeltaSeconds,
 				peerRoomManager_.GetPeerTable(),
 				gameWorld_,
 				config_.gameRule
 			);
+
+			killEventCount = killEventList.size();
+			recordedKillCount = matchHistoryTracker_.RecordKills(killEventList);
 
 			gameSimulation_.UpdateRespawns(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_, config_.gameRule);
 			gameSimulation_.UpdatePlayerTimers(config_.tick.fixedDeltaSeconds, gameWorld_);
@@ -387,7 +392,10 @@ namespace server::net
 			gameWorld_.AdvanceServerTick();
 		}
 
-		static_cast<void>(killEventList);
+		if (recordedKillCount != killEventCount)
+		{
+			LogError("Some kill events could not be recorded in match history.");
+		}
 
 		RemoveTimedOutPeers();
 		ProcessReliableResends();
@@ -769,6 +777,7 @@ namespace server::net
 
 		PeerSessionService::JoinResult joinResult{};
 		bool hasAuthenticatedIdentity = false;
+		bool matchHistoryEntered = true;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -818,10 +827,20 @@ namespace server::net
 
 				if (joinResult.shouldBroadcastPlayerJoined)
 				{
-					// 계정 정보는 이제 PeerState가 소유한다.
+					matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
+						joinResult.roomId,
+						joinResult.persistentPlayerId,
+						common::time::SystemClock::now()
+					);
+
 					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
 				}
 			}
+		}
+
+		if (!matchHistoryEntered)
+		{
+			LogError("Failed to enter player into match history.");
 		}
 
 		if (!hasAuthenticatedIdentity)
@@ -928,15 +947,25 @@ namespace server::net
 	void UdpServer::ProcessLeaveRequest(const EndpointKey& endpointKey)
 	{
 		PeerSessionService::LeaveResult leaveResult{};
+		bool matchHistoryLeft = true;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			leaveResult = peerSessionService_.LeavePeer(
-				endpointKey,
-				peerRoomManager_,
-				gameWorld_
-			);
+			leaveResult = peerSessionService_.LeavePeer(endpointKey, peerRoomManager_, gameWorld_);
+			if (leaveResult.shouldBroadcastPlayerLeft)
+			{
+				matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
+					leaveResult.roomId,
+					leaveResult.persistentPlayerId,
+					common::time::SystemClock::now()
+				);
+			}
+		}
+
+		if (!matchHistoryLeft)
+		{
+			LogError("Failed to leave player from match history.");
 		}
 
 		if (!leaveResult.shouldBroadcastPlayerLeft)
@@ -960,6 +989,9 @@ namespace server::net
 		PeerSessionService::RoomChangeResult roomChangeResult{};
 		std::optional<common::packet::PacketBuffer> reliableResponsePacketBuffer;
 
+		bool previousMatchLeft = true;
+		bool nextMatchEntered = true;
+
 		{
 			std::scoped_lock lock(stateMutex_);
 
@@ -974,6 +1006,20 @@ namespace server::net
 
 			if (roomChangeResult.changed)
 			{
+				const common::time::SystemTimePoint currentSystemTime = common::time::SystemClock::now();
+
+				previousMatchLeft = matchHistoryTracker_.LeavePlayer(
+					roomChangeResult.previousRoomId,
+					roomChangeResult.persistentPlayerId,
+					currentSystemTime
+				);
+
+				nextMatchEntered = matchHistoryTracker_.EnterPlayer(
+					roomChangeResult.nextRoomId,
+					roomChangeResult.persistentPlayerId,
+					currentSystemTime
+				);
+
 				PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 				if (peerState != nullptr)
 				{
@@ -1213,8 +1259,16 @@ namespace server::net
 
 			timedOutBroadcastList.reserve(timedOutPeerList.size());
 
+			const common::time::SystemTimePoint currentSystemTime = common::time::SystemClock::now();
+
 			for (const PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
 			{
+				static_cast<void>(matchHistoryTracker_.LeavePlayer(
+					timedOutPeer.roomId, 
+					timedOutPeer.persistentPlayerId, 
+					currentSystemTime
+				));
+
 				gameWorld_.RemovePlayer(timedOutPeer.playerId);
 
 				timedOutBroadcastList.push_back(TimedOutBroadcast{

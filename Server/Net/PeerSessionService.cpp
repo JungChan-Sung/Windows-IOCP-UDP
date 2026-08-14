@@ -40,6 +40,7 @@ namespace server::net
 				joinResult.shouldSendResponse = true;
 				joinResult.shouldBroadcastPlayerJoined = false;
 				joinResult.playerId = existingPeerState->playerId;
+				joinResult.persistentPlayerId = existingPeerState->persistentPlayerId;
 				joinResult.roomId = existingPeerState->roomId;
 				joinResult.spawnPosition.x = existingPlayerState->x;
 				joinResult.spawnPosition.y = existingPlayerState->y;
@@ -79,6 +80,7 @@ namespace server::net
 		joinResult.shouldSendResponse = true;
 		joinResult.shouldBroadcastPlayerJoined = true;
 		joinResult.playerId = playerId;
+		joinResult.persistentPlayerId = authenticatedIdentity.persistentPlayerId;
 		joinResult.roomId = initialRoomId;
 		joinResult.spawnPosition = spawnPosition;
 		return joinResult;
@@ -88,9 +90,16 @@ namespace server::net
 	{
 		LeaveResult leaveResult{};
 
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		if (peerState == nullptr)
+		{
+			return leaveResult;
+		}
+
+		const common::identity::PersistentPlayerId persistentPlayerId = peerState->persistentPlayerId;
+
 		PlayerId playerId = 0;
 		RoomId roomId = 0;
-
 		if (!peerRoomManager.RemovePeer(endpointKey, playerId, roomId))
 		{
 			return leaveResult;
@@ -100,6 +109,7 @@ namespace server::net
 
 		leaveResult.shouldBroadcastPlayerLeft = true;
 		leaveResult.playerId = playerId;
+		leaveResult.persistentPlayerId = persistentPlayerId;
 		leaveResult.roomId = roomId;
 		return leaveResult;
 	}
@@ -159,6 +169,7 @@ namespace server::net
 
 		changeResult.changed = true;
 		changeResult.playerId = roomChangeResult.playerId;
+		changeResult.persistentPlayerId = peerState->persistentPlayerId;
 		changeResult.previousRoomId = roomChangeResult.previousRoomId;
 		changeResult.nextRoomId = roomChangeResult.nextRoomId;
 		changeResult.remoteAddress = roomChangeResult.remoteAddress;

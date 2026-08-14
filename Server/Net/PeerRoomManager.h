@@ -34,6 +34,7 @@ namespace server::net
 		public:
 			EndpointKey endpointKey{};
 			PlayerId playerId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
 		};
 

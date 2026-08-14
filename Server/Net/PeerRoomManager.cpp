@@ -253,11 +253,12 @@ namespace server::net
 
 			if (peerIterator->second.isJoined)
 			{
-				TimedOutPeer timedOutPeer{};
-				timedOutPeer.endpointKey = peerIterator->first;
-				timedOutPeer.playerId = peerIterator->second.playerId;
-				timedOutPeer.roomId = peerIterator->second.roomId;
-				timedOutPeerList.push_back(timedOutPeer);
+				timedOutPeerList.push_back(TimedOutPeer{
+					.endpointKey = peerIterator->first,
+					.playerId = peerIterator->second.playerId,
+					.persistentPlayerId = peerIterator->second.persistentPlayerId,
+					.roomId = peerIterator->second.roomId,
+					});
 
 				auto roomIterator = roomTable_.find(peerIterator->second.roomId);
 				if (roomIterator != roomTable_.end())

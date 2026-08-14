@@ -160,6 +160,7 @@
     <ClInclude Include="Account\AccountValidation.h" />
     <ClInclude Include="Core\DatabaseError.h" />
     <ClInclude Include="Core\PersistenceRuntime.h" />
+    <ClInclude Include="Match\MatchHistoryRepository.h" />
     <ClInclude Include="Odbc\OdbcConnection.h" />
     <ClInclude Include="Odbc\OdbcDiagnostic.h" />
     <ClInclude Include="Odbc\OdbcDiagnosticContext.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="Account\AccountValidation.cpp" />
     <ClCompile Include="Core\DatabaseError.cpp" />
     <ClCompile Include="Core\PersistenceRuntime.cpp" />
+    <ClCompile Include="Match\MatchHistoryRepository.cpp" />
     <ClCompile Include="Odbc\OdbcConnection.cpp" />
     <ClCompile Include="Odbc\OdbcDiagnostic.cpp" />
     <ClCompile Include="Odbc\OdbcEnvironment.cpp" />

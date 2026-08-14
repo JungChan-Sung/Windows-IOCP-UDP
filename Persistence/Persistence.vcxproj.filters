@@ -43,6 +43,12 @@
     <Filter Include="소스 파일\Player">
       <UniqueIdentifier>{f7b2773d-95d2-40ca-ab37-0be1a2959a57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Match">
+      <UniqueIdentifier>{f5e1c8b9-28e7-4212-977b-a7cb26b37533}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Match">
+      <UniqueIdentifier>{7f8532d8-9f04-4656-8f36-00e7ae8eb8ff}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h">
@@ -81,6 +87,9 @@
     <ClInclude Include="Player\PlayerRepository.h">
       <Filter>헤더 파일\Player</Filter>
     </ClInclude>
+    <ClInclude Include="Match\MatchHistoryRepository.h">
+      <Filter>헤더 파일\Match</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -112,6 +121,9 @@
     </ClCompile>
     <ClCompile Include="Player\PlayerRepository.cpp">
       <Filter>소스 파일\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Match\MatchHistoryRepository.cpp">
+      <Filter>소스 파일\Match</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

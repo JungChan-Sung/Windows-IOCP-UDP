@@ -49,6 +49,12 @@
     <Filter Include="헤더 파일\Account">
       <UniqueIdentifier>{97e201ab-5a65-4e38-903f-1f2e02ec4a69}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Match">
+      <UniqueIdentifier>{4fc960d7-88e9-4eb3-b8fc-43ef79f29554}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Match">
+      <UniqueIdentifier>{9b009059-403c-4f41-8064-d9b537e4b3a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -137,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="Game\MatchHistoryTracker.cpp">
       <Filter>소스 파일\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Match\MatchHistoryTaskProcessor.cpp">
+      <Filter>소스 파일\Match</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +265,9 @@
     </ClInclude>
     <ClInclude Include="Game\MatchHistoryTracker.h">
       <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Match\MatchHistoryTaskProcessor.h">
+      <Filter>헤더 파일\Match</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

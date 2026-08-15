@@ -124,6 +124,8 @@ namespace server::net
 		void AttachAccountLoginPacketHandler(AccountLoginPacketHandler& accountLoginPacketHandler) noexcept;
 		void DetachAccountLoginPacketHandler() noexcept;
 
+		[[nodiscard]] game::CompletedMatchList ExtractCompletedMatches();
+
 	private:
 		void UpdateGameTick();
 

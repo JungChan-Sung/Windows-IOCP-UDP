@@ -359,6 +359,12 @@ namespace server::net
 		accountLoginPacketHandler_ = nullptr;
 	}
 
+	game::CompletedMatchList UdpServer::ExtractCompletedMatches()
+	{
+		std::scoped_lock lock(stateMutex_);
+		return matchHistoryTracker_.ExtractCompletedMatches();
+	}
+
 	void UdpServer::UpdateGameTick()
 	{
 		if (!isRunning_.load())

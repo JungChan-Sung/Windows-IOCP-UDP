@@ -22,6 +22,7 @@ namespace server::app
 	GameServerApp::GameServerApp()
 		: accountService_(persistenceRuntime_),
 		accountLoginTaskProcessor_(accountService_),
+		matchHistoryTaskProcessor_(persistenceRuntime_),
 		accountLoginPacketHandler_(accountLoginTaskProcessor_)
 	{}
 
@@ -38,7 +39,7 @@ namespace server::app
 				}
 				else if constexpr (std::is_same_v<ErrorType, common::threading::ThreadPool::StartError>)
 				{
-					return common::string::FormatScopedName("AccountLoginTaskProcessor", common::threading::ThreadPool::ToString(error));
+					return common::string::FormatScopedName("ThreadPool", common::threading::ThreadPool::ToString(error));
 				}
 				else if constexpr (std::is_same_v<ErrorType, net::UdpServer::StartError>)
 				{
@@ -109,6 +110,22 @@ namespace server::app
 			return std::unexpected(RunError{ accountLoginProcessorStartResult.error() });
 		}
 
+		const match::MatchHistoryTaskProcessor::StartResult matchHistoryProcessorStartResult = matchHistoryTaskProcessor_.Start();
+		if (!matchHistoryProcessorStartResult.has_value())
+		{
+			logger_.Error(common::string::FormatScopedName(
+				"MatchHistoryTaskProcessor",
+				common::threading::ThreadPool::ToString(matchHistoryProcessorStartResult.error())
+			));
+
+			accountLoginTaskProcessor_.Stop();
+			accountLoginPacketHandler_.Clear();
+
+			persistenceRuntime_.Stop();
+
+			return std::unexpected(RunError{ matchHistoryProcessorStartResult.error() });
+		}
+
 		udpServer_.AttachLogger(logger_);
 		udpServer_.AttachAccountLoginPacketHandler(accountLoginPacketHandler_);
 
@@ -117,6 +134,8 @@ namespace server::app
 		{
 			udpServer_.DetachAccountLoginPacketHandler();
 			udpServer_.DetachLogger();
+
+			matchHistoryTaskProcessor_.Stop();
 
 			accountLoginTaskProcessor_.Stop();
 			accountLoginPacketHandler_.Clear();
@@ -131,10 +150,16 @@ namespace server::app
 		MainLoop();
 
 		udpServer_.Stop();
+
+		ProcessCompletedMatches();
+
+		matchHistoryTaskProcessor_.StopAfterDrain();
+		ProcessMatchHistorySaveCompletions();
+
 		udpServer_.DetachAccountLoginPacketHandler();
 		udpServer_.DetachLogger();
 
-		accountLoginTaskProcessor_.Stop();
+		accountLoginTaskProcessor_.StopAfterDrain();
 		accountLoginPacketHandler_.Clear();
 
 		persistenceRuntime_.Stop();
@@ -220,10 +245,61 @@ namespace server::app
 		logger_.Info("Press ESC to stop.");
 	}
 
+	void GameServerApp::ProcessCompletedMatches()
+	{
+		game::CompletedMatchList completedMatchList = udpServer_.ExtractCompletedMatches();
+		for (game::CompletedMatch& completedMatch : completedMatchList)
+		{
+			const common::game::RoomId roomId = completedMatch.roomId;
+
+			if (matchHistoryTaskProcessor_.Enqueue(std::move(completedMatch)))
+			{
+				continue;
+			}
+
+			const std::string message = common::log::LogMessageBuilder{}
+				.Append("Failed to enqueue completed match history. ")
+				.AppendNamedValue("RoomId", roomId)
+				.Build();
+
+			logger_.Error(message);
+		}
+	}
+
+	void GameServerApp::ProcessMatchHistorySaveCompletions()
+	{
+		match::MatchHistoryTaskProcessor::CompletionList completionList = matchHistoryTaskProcessor_.ExtractCompletionList();
+		for (match::MatchHistorySaveCompletion& completion : completionList)
+		{
+			if (completion.saveResult.has_value())
+			{
+				const std::string message = common::log::LogMessageBuilder{}
+					.Append("Match history saved. ")
+					.AppendNamedValue("MatchId", *completion.saveResult)
+					.AppendCommaNamedValue("RoomId", completion.roomId)
+					.Build();
+
+				logger_.Info(message);
+				continue;
+			}
+
+			const std::string message = common::log::LogMessageBuilder{}
+				.Append("Failed to save match history. ")
+				.AppendNamedValue("RoomId", completion.roomId)
+				.AppendCommaNamedValue("Error", persistence::core::ToString(completion.saveResult.error()))
+				.Build();
+
+			logger_.Error(message);
+		}
+	}
+
 	void GameServerApp::MainLoop() noexcept
 	{
 		while (true)
 		{
+			ProcessCompletedMatches();
+			ProcessMatchHistorySaveCompletions();
+
 			if ((::GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0)
 			{
 				break;

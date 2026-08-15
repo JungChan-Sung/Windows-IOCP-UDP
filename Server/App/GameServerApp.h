@@ -13,6 +13,7 @@
 #include <Server/Account/AccountLoginTaskProcessor.h>
 #include <Server/Account/AccountService.h>
 #include <Server/Config/ServerConfigLoader.h>
+#include <Server/Match/MatchHistoryTaskProcessor.h>
 #include <Server/Net/AccountLoginPacketHandler.h>
 #include <Server/Net/UdpServer.h>
 
@@ -36,6 +37,8 @@ namespace server::app
 
 		account::AccountService accountService_;
 		account::AccountLoginTaskProcessor accountLoginTaskProcessor_;
+
+		match::MatchHistoryTaskProcessor matchHistoryTaskProcessor_;
 
 		net::AccountLoginPacketHandler accountLoginPacketHandler_;
 		net::UdpServer udpServer_;
@@ -61,6 +64,9 @@ namespace server::app
 
 		void LogConfigWarnings(std::span<const config::ServerConfigWarning> warningList) const;
 		void LogStartupConfig(const config::ServerConfig& serverConfig) const;
+
+		void ProcessCompletedMatches();
+		void ProcessMatchHistorySaveCompletions();
 
 		void MainLoop() noexcept;
 	};

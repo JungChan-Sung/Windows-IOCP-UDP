@@ -248,6 +248,17 @@ namespace server::app
 	void GameServerApp::ProcessCompletedMatches()
 	{
 		game::CompletedMatchList completedMatchList = udpServer_.ExtractCompletedMatches();
+
+		if (completedMatchList.empty())
+		{
+			return;
+		}
+
+		if (!persistenceRuntime_.IsEnabled())
+		{
+			return;
+		}
+
 		for (game::CompletedMatch& completedMatch : completedMatchList)
 		{
 			const common::game::RoomId roomId = completedMatch.roomId;
@@ -263,6 +274,7 @@ namespace server::app
 				.Build();
 
 			logger_.Error(message);
+		}
 		}
 	}
 

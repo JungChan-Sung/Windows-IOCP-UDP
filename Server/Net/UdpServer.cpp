@@ -971,7 +971,7 @@ namespace server::net
 					common::time::SystemClock::now()
 				);
 
-				if (matchHistoryLeft && peerRoomManager_.GetRoomMemberCount(leaveResult.roomId) == 0)
+				if (peerRoomManager_.GetRoomMemberCount(leaveResult.roomId) == 0)
 				{
 					gameWorld_.ClearRoomTransientState(leaveResult.roomId);
 				}
@@ -1029,7 +1029,7 @@ namespace server::net
 					currentSystemTime
 				);
 
-				if (previousMatchLeft && peerRoomManager_.GetRoomMemberCount(roomChangeResult.previousRoomId) == 0)
+				if (peerRoomManager_.GetRoomMemberCount(roomChangeResult.previousRoomId) == 0)
 				{
 					gameWorld_.ClearRoomTransientState(roomChangeResult.previousRoomId);
 				}
@@ -1051,6 +1051,26 @@ namespace server::net
 					);
 				}
 			}
+		}
+
+		if (!previousMatchLeft)
+		{
+			std::ostringstream stream;
+			stream << "Failed to leave player from previous match history."
+				<< " PersistentPlayerId=" << roomChangeResult.persistentPlayerId
+				<< ", RoomId=" << roomChangeResult.previousRoomId;
+
+			LogError(stream.str());
+		}
+
+		if (!nextMatchEntered)
+		{
+			std::ostringstream stream;
+			stream << "Failed to enter player into next match history."
+				<< " PersistentPlayerId=" << roomChangeResult.persistentPlayerId
+				<< ", RoomId=" << roomChangeResult.nextRoomId;
+
+			LogError(stream.str());
 		}
 
 		if (!roomChangeResult.changed)
@@ -1263,6 +1283,7 @@ namespace server::net
 
 		std::vector<TimedOutBroadcast> timedOutBroadcastList;
 		std::size_t expiredAuthenticatedAccountCount = 0;
+		std::size_t matchHistoryLeaveFailureCount = 0;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -1289,7 +1310,12 @@ namespace server::net
 					currentSystemTime
 				);
 
-				if (matchHistoryLeft && peerRoomManager_.GetRoomMemberCount(timedOutPeer.roomId) == 0)
+				if (!matchHistoryLeft)
+				{
+					++matchHistoryLeaveFailureCount;
+				}
+
+				if (peerRoomManager_.GetRoomMemberCount(timedOutPeer.roomId) == 0)
 				{
 					gameWorld_.ClearRoomTransientState(timedOutPeer.roomId);
 				}
@@ -1310,6 +1336,15 @@ namespace server::net
 				<< expiredAuthenticatedAccountCount;
 
 			LogDebug(stream.str());
+		}
+
+		if (matchHistoryLeaveFailureCount > 0)
+		{
+			std::ostringstream stream;
+			stream << "Failed to remove timed out players from match history."
+				<< " Count=" << matchHistoryLeaveFailureCount;
+
+			LogError(stream.str());
 		}
 
 		for (const TimedOutBroadcast& timedOutBroadcast : timedOutBroadcastList)

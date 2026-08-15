@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-namespace  persistence::core
+namespace persistence::core
 {
 	enum class DatabaseFailure
 	{

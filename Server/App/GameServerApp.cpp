@@ -275,7 +275,6 @@ namespace server::app
 
 			logger_.Error(message);
 		}
-		}
 	}
 
 	void GameServerApp::ProcessMatchHistorySaveCompletions()

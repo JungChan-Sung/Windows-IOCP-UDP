@@ -52,6 +52,7 @@
 #include "Server/IntegrationSmokeTests.h"
 #include "Server/InvalidPacketLogLimiterTests.h"
 #include "Server/MatchHistoryTrackerTests.h"
+#include "Server/MatchHistoryPersistenceIntegrationTests.h"
 #include "String/UtfConversionTests.h"
 #include "Game/WorldCollisionTests.h"
 
@@ -85,6 +86,7 @@ namespace tests
 		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());
 		MergeAndPrint(totalResult, "GameSimulation", server::RunGameSimulationTests());
 		MergeAndPrint(totalResult, "MatchHistoryTracker", server::RunMatchHistoryTrackerTests());
+		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());
 		MergeAndPrint(totalResult, "PlayerCommandService", server::RunPlayerCommandServiceTests());
 		MergeAndPrint(totalResult, "SnapshotBroadcastBuilder", server::RunSnapshotBroadcastBuilderTests());

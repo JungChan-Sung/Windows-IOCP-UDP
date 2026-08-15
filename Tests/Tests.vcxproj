@@ -148,6 +148,7 @@
     <ClCompile Include="..\Server\Game\GameSimulation.cpp" />
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
     <ClCompile Include="..\Server\Game\MatchHistoryTracker.cpp" />
+    <ClCompile Include="..\Server\Match\MatchHistoryTaskProcessor.cpp" />
     <ClCompile Include="..\Server\Net\AccountLoginAdmissionService.cpp" />
     <ClCompile Include="..\Server\Net\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="..\Server\Net\AccountPacketMapper.cpp" />
@@ -202,6 +203,7 @@
     <ClCompile Include="Server\GameSimulationTests.cpp" />
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
+    <ClCompile Include="Server\MatchHistoryPersistenceIntegrationTests.cpp" />
     <ClCompile Include="Server\MatchHistoryTrackerTests.cpp" />
     <ClCompile Include="Server\PacketPayloadValidatorTests.cpp" />
     <ClCompile Include="Server\PasswordHashVerifierTests.cpp" />
@@ -270,6 +272,7 @@
     <ClInclude Include="Server\GameSimulationTests.h" />
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
     <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />
+    <ClInclude Include="Server\MatchHistoryPersistenceIntegrationTests.h" />
     <ClInclude Include="Server\MatchHistoryTrackerTests.h" />
     <ClInclude Include="Server\PacketPayloadValidatorTests.h" />
     <ClInclude Include="Server\PasswordHashVerifierTests.h" />

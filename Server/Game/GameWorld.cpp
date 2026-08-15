@@ -112,4 +112,31 @@ namespace server::game
 	{
 		pendingImpactEffectStatePool_.RecycleAll();
 	}
+
+	void GameWorld::ClearRoomTransientState(RoomId roomId) noexcept
+	{
+		BulletStateList& bulletStateList = bulletStatePool_.GetActiveStateList();
+		for (std::size_t bulletIndex = 0; bulletIndex < bulletStateList.size();)
+		{
+			if (bulletStateList[bulletIndex].roomId != roomId)
+			{
+				++bulletIndex;
+				continue;
+			}
+
+			bulletStatePool_.RemoveAt(bulletIndex);
+		}
+
+		ImpactEffectStateList& impactEffectStateList = pendingImpactEffectStatePool_.GetActiveStateList();
+		for (std::size_t effectIndex = 0; effectIndex < impactEffectStateList.size();)
+		{
+			if (impactEffectStateList[effectIndex].roomId != roomId)
+			{
+				++effectIndex;
+				continue;
+			}
+
+			pendingImpactEffectStatePool_.RemoveAt(effectIndex);
+		}
+	}
 }

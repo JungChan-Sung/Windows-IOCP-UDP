@@ -219,10 +219,10 @@ namespace persistence::odbc
 		if (!SQL_SUCCEEDED(autoCommitResult))
 		{
 			core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
-					.failure = core::DatabaseFailure::TransactionCommitFailed,
-					.handleType = SQL_HANDLE_DBC,
-					.handle = connectionHandle_,
-					.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
+				.failure = core::DatabaseFailure::TransactionCommitFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
 				});
 
 			Close();
@@ -264,10 +264,10 @@ namespace persistence::odbc
 		if (!SQL_SUCCEEDED(autoCommitResult))
 		{
 			core::DatabaseError error = MakeOdbcError(OdbcDiagnosticContext{
-					.failure = core::DatabaseFailure::TransactionCommitFailed,
-					.handleType = SQL_HANDLE_DBC,
-					.handle = connectionHandle_,
-					.message = "Transaction committed, but failed to restore ODBC auto-commit mode.",
+				.failure = core::DatabaseFailure::TransactionRollbackFailed,
+				.handleType = SQL_HANDLE_DBC,
+				.handle = connectionHandle_,
+				.message = "Transaction rolled back, but failed to restore ODBC auto-commit mode.",
 				});
 
 			Close();

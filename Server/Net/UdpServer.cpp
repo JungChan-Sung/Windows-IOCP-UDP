@@ -320,10 +320,14 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
+			if (wasRunning)
+			{
+				matchHistoryTracker_.CompleteAll(common::time::SystemClock::now());
+			}
+
 			authenticatedAccountRegistry_.Clear();
 			peerRoomManager_.Clear();
 			gameWorld_.Clear();
-			matchHistoryTracker_.Clear();
 		}
 
 		invalidPacketLogLimiter_.Reset();
@@ -966,6 +970,11 @@ namespace server::net
 					leaveResult.persistentPlayerId,
 					common::time::SystemClock::now()
 				);
+
+				if (matchHistoryLeft && peerRoomManager_.GetRoomMemberCount(leaveResult.roomId) == 0)
+				{
+					gameWorld_.ClearRoomTransientState(leaveResult.roomId);
+				}
 			}
 		}
 
@@ -1019,6 +1028,11 @@ namespace server::net
 					roomChangeResult.persistentPlayerId,
 					currentSystemTime
 				);
+
+				if (previousMatchLeft && peerRoomManager_.GetRoomMemberCount(roomChangeResult.previousRoomId) == 0)
+				{
+					gameWorld_.ClearRoomTransientState(roomChangeResult.previousRoomId);
+				}
 
 				nextMatchEntered = matchHistoryTracker_.EnterPlayer(
 					roomChangeResult.nextRoomId,
@@ -1269,11 +1283,16 @@ namespace server::net
 
 			for (const PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
 			{
-				static_cast<void>(matchHistoryTracker_.LeavePlayer(
-					timedOutPeer.roomId, 
-					timedOutPeer.persistentPlayerId, 
+				const bool matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
+					timedOutPeer.roomId,
+					timedOutPeer.persistentPlayerId,
 					currentSystemTime
-				));
+				);
+
+				if (matchHistoryLeft && peerRoomManager_.GetRoomMemberCount(timedOutPeer.roomId) == 0)
+				{
+					gameWorld_.ClearRoomTransientState(timedOutPeer.roomId);
+				}
 
 				gameWorld_.RemovePlayer(timedOutPeer.playerId);
 

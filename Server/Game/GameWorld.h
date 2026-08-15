@@ -19,6 +19,7 @@ namespace server::game
 	public:
 		using PlayerId = common::game::PlayerId;
 		using BulletId = common::game::BulletId;
+		using RoomId = common::game::RoomId;
 
 		using PlayerTable = std::unordered_map<PlayerId, PlayerState>;
 		using BulletStateList = std::vector<BulletState>;
@@ -64,6 +65,8 @@ namespace server::game
 
 		[[nodiscard]] bool HasPendingImpactEffects() const noexcept;
 		void ClearPendingImpactEffects() noexcept;
+
+		void ClearRoomTransientState(RoomId roomId) noexcept;
 
 	public:
 		[[nodiscard]] PlayerTable& GetPlayerTable() noexcept

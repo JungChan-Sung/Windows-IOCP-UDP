@@ -201,6 +201,7 @@
     <ClCompile Include="Server\AccountServiceTests.cpp" />
     <ClCompile Include="Server\AuthenticatedAccountRegistryTests.cpp" />
     <ClCompile Include="Server\GameSimulationTests.cpp" />
+    <ClCompile Include="Server\GameWorldTests.cpp" />
     <ClCompile Include="Server\IntegrationSmokeTests.cpp" />
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp" />
     <ClCompile Include="Server\MatchHistoryPersistenceIntegrationTests.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="Server\AccountServiceTests.h" />
     <ClInclude Include="Server\AuthenticatedAccountRegistryTests.h" />
     <ClInclude Include="Server\GameSimulationTests.h" />
+    <ClInclude Include="Server\GameWorldTests.h" />
     <ClInclude Include="Server\IntegrationSmokeTests.h" />
     <ClInclude Include="Server\InvalidPacketLogLimiterTests.h" />
     <ClInclude Include="Server\MatchHistoryPersistenceIntegrationTests.h" />

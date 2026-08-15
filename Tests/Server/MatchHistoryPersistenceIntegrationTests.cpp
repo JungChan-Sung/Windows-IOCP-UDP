@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
@@ -16,8 +17,10 @@
 #include <Common/Threading/ThreadPool.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Persistence/Account/AccountRepository.h>
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Core/PersistenceRuntime.h>
+#include <Persistence/Match/MatchHistoryRepository.h>
 #include <Persistence/Odbc/OdbcConnection.h>
 #include <Persistence/Odbc/OdbcEnvironment.h>
 #include <Persistence/Odbc/OdbcStatement.h>

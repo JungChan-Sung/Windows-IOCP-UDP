@@ -44,6 +44,7 @@
 #include "Server/ServerConfigTests.h"
 #include "Server/ServerMetricsCollectorTests.h"
 #include "Server/GameSimulationTests.h"
+#include "Server/GameWorldTests.h"
 #include "Server/PeerSessionServiceTests.h"
 #include "Server/PlayerCommandServiceTests.h"
 #include "Server/PacketPayloadValidatorTests.h"
@@ -85,6 +86,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());
 		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());
 		MergeAndPrint(totalResult, "GameSimulation", server::RunGameSimulationTests());
+		MergeAndPrint(totalResult, "GameWorld", server::RunGameWorldTests());
 		MergeAndPrint(totalResult, "MatchHistoryTracker", server::RunMatchHistoryTrackerTests());
 		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());

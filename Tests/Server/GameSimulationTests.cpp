@@ -11,43 +11,46 @@
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
+#include <Server/Game/PlayerSimulationContext.h>
 #include <Server/Game/PlayerState.h>
-#include <Server/Net/PeerState.h>
 
 #include <Tests/DebugTestResult.h>
 
 namespace
 {
-	using PeerTable = server::game::GameSimulation::PeerTable;
+	using PlayerSimulationContextList =
+		server::game::PlayerSimulationContextList;
 
-	[[nodiscard]] bool IsNearlyEqual(float lhs, float rhs, float epsilon = 0.001F) noexcept
+	[[nodiscard]] bool IsNearlyEqual(
+		float lhs,
+		float rhs,
+		float epsilon = 0.001F
+	) noexcept
 	{
 		return std::fabs(lhs - rhs) <= epsilon;
 	}
 
-	[[nodiscard]] common::net::EndpointKey MakeEndpointKey(std::uint32_t index) noexcept
+	void AddPlayerContext(
+		PlayerSimulationContextList& playerContextList,
+		common::game::PlayerId playerId,
+		common::game::RoomId roomId
+	)
 	{
-		common::net::EndpointKey endpointKey{};
-		endpointKey.address = index;
-		endpointKey.port = static_cast<std::uint16_t>(10000 + index);
-		return endpointKey;
+		playerContextList.push_back(
+			server::game::PlayerSimulationContext{
+				.playerId = playerId,
+				.persistentPlayerId =
+					static_cast<std::int64_t>(1000 + playerId),
+				.roomId = roomId,
+			}
+		);
 	}
 
-	void AddJoinedPeer(PeerTable& peerTable, common::game::PlayerId playerId, common::game::RoomId roomId)
-	{
-		const common::net::EndpointKey endpointKey = MakeEndpointKey(playerId);
-
-		auto [peerIterator, _] = peerTable.try_emplace(endpointKey);
-		server::net::PeerState& peerState = peerIterator->second;
-
-		peerState.endpointKey = endpointKey;
-		peerState.playerId = playerId;
-		peerState.persistentPlayerId = static_cast<std::int64_t>(1000 + playerId);
-		peerState.roomId = roomId;
-		peerState.isJoined = true;
-	}
-
-	[[nodiscard]] server::game::PlayerState MakePlayer(common::game::PlayerId playerId, float x, float y)
+	[[nodiscard]] server::game::PlayerState MakePlayer(
+		common::game::PlayerId playerId,
+		float x,
+		float y
+	)
 	{
 		server::game::PlayerState playerState{};
 		playerState.playerId = playerId;
@@ -61,13 +64,14 @@ namespace
 		return playerState;
 	}
 
-	void RunCreateBulletDirectionTest(tests::DebugTestResult& result)
+	void RunCreateBulletDirectionTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
 
 		constexpr std::int64_t ownerPersistentPlayerId = 5001;
-
 
 		server::game::PlayerState ownerPlayer{};
 		ownerPlayer.playerId = 1;
@@ -75,34 +79,92 @@ namespace
 		ownerPlayer.y = 200.0F;
 		ownerPlayer.weaponType = common::game::WeaponType::Basic;
 
-		const server::game::BulletState bulletState = simulation.CreateBullet(
-			10,
-			ownerPlayer.playerId,
-			ownerPersistentPlayerId,
-			1,
-			ownerPlayer,
-			3.0F,
-			4.0F,
-			weaponRuleConfig
+		const server::game::BulletState bulletState =
+			simulation.CreateBullet(
+				10,
+				ownerPlayer.playerId,
+				ownerPersistentPlayerId,
+				1,
+				ownerPlayer,
+				3.0F,
+				4.0F,
+				weaponRuleConfig
+			);
+
+		const common::game::WeaponRule& weaponRule =
+			weaponRuleConfig.basicWeaponRule;
+
+		tests::Expect(
+			result,
+			bulletState.bulletId == 10,
+			"GameSimulation: CreateBullet bulletId"
 		);
 
-		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
+		tests::Expect(
+			result,
+			bulletState.ownerPlayerId == 1,
+			"GameSimulation: CreateBullet ownerPlayerId"
+		);
 
-		tests::Expect(result, bulletState.bulletId == 10, "GameSimulation: CreateBullet bulletId");
-		tests::Expect(result, bulletState.ownerPlayerId == 1, "GameSimulation: CreateBullet ownerPlayerId");
-		tests::Expect(result, bulletState.ownerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: CreateBullet ownerPersistentPlayerId");
-		tests::Expect(result, bulletState.roomId == 1, "GameSimulation: CreateBullet roomId");
-		tests::Expect(result, bulletState.x == ownerPlayer.x, "GameSimulation: CreateBullet x");
-		tests::Expect(result, bulletState.y == ownerPlayer.y, "GameSimulation: CreateBullet y");
-		tests::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed * 0.6F),
-			"GameSimulation: CreateBullet velocityX normalized");
-		tests::Expect(result, IsNearlyEqual(bulletState.velocityY, weaponRule.bulletSpeed * 0.8F),
-			"GameSimulation: CreateBullet velocityY normalized");
-		tests::Expect(result, bulletState.damage == weaponRule.bulletDamage, "GameSimulation: CreateBullet damage");
-		tests::Expect(result, bulletState.radius == weaponRule.bulletRadius, "GameSimulation: CreateBullet radius");
+		tests::Expect(
+			result,
+			bulletState.ownerPersistentPlayerId
+			== ownerPersistentPlayerId,
+			"GameSimulation: CreateBullet ownerPersistentPlayerId"
+		);
+
+		tests::Expect(
+			result,
+			bulletState.roomId == 1,
+			"GameSimulation: CreateBullet roomId"
+		);
+
+		tests::Expect(
+			result,
+			bulletState.x == ownerPlayer.x,
+			"GameSimulation: CreateBullet x"
+		);
+
+		tests::Expect(
+			result,
+			bulletState.y == ownerPlayer.y,
+			"GameSimulation: CreateBullet y"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				bulletState.velocityX,
+				weaponRule.bulletSpeed * 0.6F
+			),
+			"GameSimulation: CreateBullet velocityX normalized"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				bulletState.velocityY,
+				weaponRule.bulletSpeed * 0.8F
+			),
+			"GameSimulation: CreateBullet velocityY normalized"
+		);
+
+		tests::Expect(
+			result,
+			bulletState.damage == weaponRule.bulletDamage,
+			"GameSimulation: CreateBullet damage"
+		);
+
+		tests::Expect(
+			result,
+			bulletState.radius == weaponRule.bulletRadius,
+			"GameSimulation: CreateBullet radius"
+		);
 	}
 
-	void RunCreateBulletFallbackDirectionTest(tests::DebugTestResult& result)
+	void RunCreateBulletFallbackDirectionTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -113,31 +175,55 @@ namespace
 		ownerPlayer.playerId = 1;
 		ownerPlayer.weaponType = common::game::WeaponType::Basic;
 
-		const server::game::BulletState bulletState = simulation.CreateBullet(
-			11,
-			ownerPlayer.playerId,
-			ownerPersistentPlayerId,
-			1,
-			ownerPlayer,
-			0.0F,
-			0.0F,
-			weaponRuleConfig
+		const server::game::BulletState bulletState =
+			simulation.CreateBullet(
+				11,
+				ownerPlayer.playerId,
+				ownerPersistentPlayerId,
+				1,
+				ownerPlayer,
+				0.0F,
+				0.0F,
+				weaponRuleConfig
+			);
+
+		const common::game::WeaponRule& weaponRule =
+			weaponRuleConfig.basicWeaponRule;
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				bulletState.velocityX,
+				weaponRule.bulletSpeed
+			),
+			"GameSimulation: CreateBullet fallback velocityX"
 		);
 
-		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				bulletState.velocityY,
+				0.0F
+			),
+			"GameSimulation: CreateBullet fallback velocityY"
+		);
 
-		tests::Expect(result, IsNearlyEqual(bulletState.velocityX, weaponRule.bulletSpeed),
-			"GameSimulation: CreateBullet fallback velocityX");
-		tests::Expect(result, IsNearlyEqual(bulletState.velocityY, 0.0F), "GameSimulation: CreateBullet fallback velocityY");
-		tests::Expect(result, bulletState.ownerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: fallback persistent owner id");
+		tests::Expect(
+			result,
+			bulletState.ownerPersistentPlayerId
+			== ownerPersistentPlayerId,
+			"GameSimulation: fallback persistent owner id"
+		);
 	}
 
-	void RunBulletLifetimeRemoveTest(tests::DebugTestResult& result)
+	void RunBulletLifetimeRemoveTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
 		server::config::GameRuleConfig gameRuleConfig{};
-		PeerTable peerTable;
+		PlayerSimulationContextList playerContextList;
 
 		server::game::BulletState bulletState{};
 		bulletState.bulletId = 1;
@@ -146,36 +232,75 @@ namespace
 		bulletState.x = 100.0F;
 		bulletState.y = 100.0F;
 		bulletState.remainingLifeSeconds = 0.05F;
-		bulletState.radius = common::game::defaultBasicBulletRadius;
+		bulletState.radius =
+			common::game::defaultBasicBulletRadius;
 
 		gameWorld.AddBullet(bulletState);
 
-		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.1F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList =
+			simulation.UpdateBullets(
+				0.1F,
+				playerContextList,
+				gameWorld,
+				gameRuleConfig
+			);
 
-		tests::Expect(result, killEventList.empty(), "GameSimulation: expired bullet creates no kill event");
-		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: expired bullet removed");
+		tests::Expect(
+			result,
+			killEventList.empty(),
+			"GameSimulation: expired bullet creates no kill event"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetBulletCount() == 0,
+			"GameSimulation: expired bullet removed"
+		);
 	}
 
-	void RunBulletHitPlayerTest(tests::DebugTestResult& result)
+	void RunBulletHitPlayerTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
 		server::config::GameRuleConfig gameRuleConfig{};
-		PeerTable peerTable;
+		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
 		constexpr common::game::PlayerId targetPlayerId = 2;
 		constexpr common::game::RoomId roomId = 1;
 
-		server::game::PlayerState ownerPlayer = MakePlayer(ownerPlayerId, 100.0F, 100.0F);
-		server::game::PlayerState targetPlayer = MakePlayer(targetPlayerId, 130.0F, 100.0F);
+		server::game::PlayerState ownerPlayer =
+			MakePlayer(
+				ownerPlayerId,
+				100.0F,
+				100.0F
+			);
+
+		server::game::PlayerState targetPlayer =
+			MakePlayer(
+				targetPlayerId,
+				130.0F,
+				100.0F
+			);
+
 		targetPlayer.hp = gameRuleConfig.initialPlayerHp;
 
 		gameWorld.UpsertPlayer(ownerPlayer);
 		gameWorld.UpsertPlayer(targetPlayer);
 
-		AddJoinedPeer(peerTable, ownerPlayerId, roomId);
-		AddJoinedPeer(peerTable, targetPlayerId, roomId);
+		AddPlayerContext(
+			playerContextList,
+			ownerPlayerId,
+			roomId
+		);
+
+		AddPlayerContext(
+			playerContextList,
+			targetPlayerId,
+			roomId
+		);
 
 		server::game::BulletState bulletState{};
 		bulletState.bulletId = 1;
@@ -187,56 +312,124 @@ namespace
 		bulletState.velocityY = 0.0F;
 		bulletState.remainingLifeSeconds = 1.0F;
 		bulletState.damage = 1;
-		bulletState.radius = common::game::defaultBasicBulletRadius;
+		bulletState.radius =
+			common::game::defaultBasicBulletRadius;
 
 		gameWorld.AddBullet(bulletState);
 
-		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList =
+			simulation.UpdateBullets(
+				0.0F,
+				playerContextList,
+				gameWorld,
+				gameRuleConfig
+			);
 
-		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
+		const server::game::PlayerState* updatedTargetPlayer =
+			gameWorld.FindPlayer(targetPlayerId);
 
-		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: hit target exists");
-		tests::Expect(result, killEventList.empty(), "GameSimulation: non-lethal hit creates no kill event");
-		tests::Expect(result, gameWorld.GetBulletCount() == 0, "GameSimulation: hit bullet removed");
-		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: hit impact effect spawned");
+		tests::Expect(
+			result,
+			updatedTargetPlayer != nullptr,
+			"GameSimulation: hit target exists"
+		);
+
+		tests::Expect(
+			result,
+			killEventList.empty(),
+			"GameSimulation: non-lethal hit creates no kill event"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetBulletCount() == 0,
+			"GameSimulation: hit bullet removed"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPendingImpactEffectCount() == 1,
+			"GameSimulation: hit impact effect spawned"
+		);
 
 		if (updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		tests::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp - 1, "GameSimulation: hit hp decreased");
-		tests::Expect(result, updatedTargetPlayer->hitFlashRemainingSeconds > 0.0F, "GameSimulation: hit flash timer set");
-		tests::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: hit target still alive");
+		tests::Expect(
+			result,
+			updatedTargetPlayer->hp
+			== gameRuleConfig.initialPlayerHp - 1,
+			"GameSimulation: hit hp decreased"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer->hitFlashRemainingSeconds > 0.0F,
+			"GameSimulation: hit flash timer set"
+		);
+
+		tests::Expect(
+			result,
+			!updatedTargetPlayer->isDead,
+			"GameSimulation: hit target still alive"
+		);
 	}
 
-	void RunBulletKillPlayerTest(tests::DebugTestResult& result)
+	void RunBulletKillPlayerTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
 		server::config::GameRuleConfig gameRuleConfig{};
-		PeerTable peerTable;
+		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
 		constexpr common::game::PlayerId targetPlayerId = 2;
+
 		constexpr std::int64_t ownerPersistentPlayerId = 1001;
 		constexpr std::int64_t targetPersistentPlayerId = 1002;
+
 		constexpr common::game::RoomId roomId = 1;
 
-		server::game::PlayerState ownerPlayer = MakePlayer(ownerPlayerId, 100.0F, 100.0F);
-		server::game::PlayerState targetPlayer = MakePlayer(targetPlayerId, 130.0F, 100.0F);
+		server::game::PlayerState ownerPlayer =
+			MakePlayer(
+				ownerPlayerId,
+				100.0F,
+				100.0F
+			);
+
+		server::game::PlayerState targetPlayer =
+			MakePlayer(
+				targetPlayerId,
+				130.0F,
+				100.0F
+			);
+
 		targetPlayer.hp = 1;
 
 		gameWorld.UpsertPlayer(ownerPlayer);
 		gameWorld.UpsertPlayer(targetPlayer);
 
-		AddJoinedPeer(peerTable, ownerPlayerId, roomId);
-		AddJoinedPeer(peerTable, targetPlayerId, roomId);
+		AddPlayerContext(
+			playerContextList,
+			ownerPlayerId,
+			roomId
+		);
+
+		AddPlayerContext(
+			playerContextList,
+			targetPlayerId,
+			roomId
+		);
 
 		server::game::BulletState bulletState{};
 		bulletState.bulletId = 1;
 		bulletState.ownerPlayerId = ownerPlayerId;
-		bulletState.ownerPersistentPlayerId = ownerPersistentPlayerId;
+		bulletState.ownerPersistentPlayerId =
+			ownerPersistentPlayerId;
 		bulletState.roomId = roomId;
 		bulletState.x = targetPlayer.x;
 		bulletState.y = targetPlayer.y;
@@ -244,65 +437,170 @@ namespace
 		bulletState.velocityY = 0.0F;
 		bulletState.remainingLifeSeconds = 1.0F;
 		bulletState.damage = 1;
-		bulletState.radius = common::game::defaultBasicBulletRadius;
+		bulletState.radius =
+			common::game::defaultBasicBulletRadius;
 
 		gameWorld.AddBullet(bulletState);
 
-		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList =
+			simulation.UpdateBullets(
+				0.0F,
+				playerContextList,
+				gameWorld,
+				gameRuleConfig
+			);
 
-		const server::game::PlayerState* updatedOwnerPlayer = gameWorld.FindPlayer(ownerPlayerId);
-		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
+		const server::game::PlayerState* updatedOwnerPlayer =
+			gameWorld.FindPlayer(ownerPlayerId);
 
-		tests::Expect(result, updatedOwnerPlayer != nullptr, "GameSimulation: kill owner exists");
-		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: kill target exists");
-		tests::Expect(result, killEventList.size() == 1, "GameSimulation: lethal hit creates one kill event");
+		const server::game::PlayerState* updatedTargetPlayer =
+			gameWorld.FindPlayer(targetPlayerId);
 
-		if (updatedOwnerPlayer == nullptr || updatedTargetPlayer == nullptr)
+		tests::Expect(
+			result,
+			updatedOwnerPlayer != nullptr,
+			"GameSimulation: kill owner exists"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer != nullptr,
+			"GameSimulation: kill target exists"
+		);
+
+		tests::Expect(
+			result,
+			killEventList.size() == 1,
+			"GameSimulation: lethal hit creates one kill event"
+		);
+
+		if (updatedOwnerPlayer == nullptr
+			|| updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		tests::Expect(result, updatedTargetPlayer->hp == 0, "GameSimulation: kill target hp zero");
-		tests::Expect(result, updatedTargetPlayer->isDead, "GameSimulation: kill target dead");
-		tests::Expect(result, updatedTargetPlayer->deathCount == 1, "GameSimulation: kill target deathCount");
-		tests::Expect(result, updatedOwnerPlayer->killCount == 1, "GameSimulation: kill owner killCount");
-		tests::Expect(result, updatedTargetPlayer->inputFlags == common::game::InputFlags::None, "GameSimulation: kill clears input");
-		tests::Expect(result, updatedTargetPlayer->respawnRemainingSeconds > 0.0F, "GameSimulation: kill sets respawn timer");
+		tests::Expect(
+			result,
+			updatedTargetPlayer->hp == 0,
+			"GameSimulation: kill target hp zero"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer->isDead,
+			"GameSimulation: kill target dead"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer->deathCount == 1,
+			"GameSimulation: kill target deathCount"
+		);
+
+		tests::Expect(
+			result,
+			updatedOwnerPlayer->killCount == 1,
+			"GameSimulation: kill owner killCount"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer->inputFlags
+			== common::game::InputFlags::None,
+			"GameSimulation: kill clears input"
+		);
+
+		tests::Expect(
+			result,
+			updatedTargetPlayer->respawnRemainingSeconds > 0.0F,
+			"GameSimulation: kill sets respawn timer"
+		);
 
 		if (killEventList.size() != 1)
 		{
 			return;
 		}
 
-		const server::game::KillEvent& killEvent = killEventList.front();
+		const server::game::KillEvent& killEvent =
+			killEventList.front();
 
-		tests::Expect(result, killEvent.killerPlayerId == ownerPlayerId, "GameSimulation: kill event killer player id");
-		tests::Expect(result, killEvent.killerPersistentPlayerId == ownerPersistentPlayerId, "GameSimulation: kill event killer persistent player id");
-		tests::Expect(result, killEvent.victimPlayerId == targetPlayerId, "GameSimulation: kill event victim player id");
-		tests::Expect(result, killEvent.victimPersistentPlayerId == targetPersistentPlayerId, "GameSimulation: kill event victim persistent player id");
-		tests::Expect(result, killEvent.roomId == roomId, "GameSimulation: kill event room id");
+		tests::Expect(
+			result,
+			killEvent.killerPlayerId == ownerPlayerId,
+			"GameSimulation: kill event killer player id"
+		);
+
+		tests::Expect(
+			result,
+			killEvent.killerPersistentPlayerId
+			== ownerPersistentPlayerId,
+			"GameSimulation: kill event killer persistent player id"
+		);
+
+		tests::Expect(
+			result,
+			killEvent.victimPlayerId == targetPlayerId,
+			"GameSimulation: kill event victim player id"
+		);
+
+		tests::Expect(
+			result,
+			killEvent.victimPersistentPlayerId
+			== targetPersistentPlayerId,
+			"GameSimulation: kill event victim persistent player id"
+		);
+
+		tests::Expect(
+			result,
+			killEvent.roomId == roomId,
+			"GameSimulation: kill event room id"
+		);
 	}
 
-	void RunInvinciblePlayerIgnoresBulletTest(tests::DebugTestResult& result)
+	void RunInvinciblePlayerIgnoresBulletTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
 		server::config::GameRuleConfig gameRuleConfig{};
-		PeerTable peerTable;
+		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
 		constexpr common::game::PlayerId targetPlayerId = 2;
 		constexpr common::game::RoomId roomId = 1;
 
-		server::game::PlayerState ownerPlayer = MakePlayer(ownerPlayerId, 100.0F, 100.0F);
-		server::game::PlayerState targetPlayer = MakePlayer(targetPlayerId, 130.0F, 100.0F);
+		server::game::PlayerState ownerPlayer =
+			MakePlayer(
+				ownerPlayerId,
+				100.0F,
+				100.0F
+			);
+
+		server::game::PlayerState targetPlayer =
+			MakePlayer(
+				targetPlayerId,
+				130.0F,
+				100.0F
+			);
+
 		targetPlayer.invincibilityRemainingSeconds = 1.0F;
 
 		gameWorld.UpsertPlayer(ownerPlayer);
 		gameWorld.UpsertPlayer(targetPlayer);
 
-		AddJoinedPeer(peerTable, ownerPlayerId, roomId);
-		AddJoinedPeer(peerTable, targetPlayerId, roomId);
+		AddPlayerContext(
+			playerContextList,
+			ownerPlayerId,
+			roomId
+		);
+
+		AddPlayerContext(
+			playerContextList,
+			targetPlayerId,
+			roomId
+		);
 
 		server::game::BulletState bulletState{};
 		bulletState.bulletId = 1;
@@ -314,39 +612,84 @@ namespace
 		bulletState.velocityY = 0.0F;
 		bulletState.remainingLifeSeconds = 1.0F;
 		bulletState.damage = 1;
-		bulletState.radius = common::game::defaultBasicBulletRadius;
+		bulletState.radius =
+			common::game::defaultBasicBulletRadius;
 
 		gameWorld.AddBullet(bulletState);
 
-		const server::game::KillEventList killEventList = simulation.UpdateBullets(0.0F, peerTable, gameWorld, gameRuleConfig);
+		const server::game::KillEventList killEventList =
+			simulation.UpdateBullets(
+				0.0F,
+				playerContextList,
+				gameWorld,
+				gameRuleConfig
+			);
 
-		const server::game::PlayerState* updatedTargetPlayer = gameWorld.FindPlayer(targetPlayerId);
+		const server::game::PlayerState* updatedTargetPlayer =
+			gameWorld.FindPlayer(targetPlayerId);
 
-		tests::Expect(result, updatedTargetPlayer != nullptr, "GameSimulation: invincible target exists");
-		tests::Expect(result, killEventList.empty(), "GameSimulation: invincible target creates no kill event");
-		tests::Expect(result, gameWorld.GetBulletCount() == 1, "GameSimulation: invincible bullet remains");
-		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 0, "GameSimulation: invincible no impact");
+		tests::Expect(
+			result,
+			updatedTargetPlayer != nullptr,
+			"GameSimulation: invincible target exists"
+		);
+
+		tests::Expect(
+			result,
+			killEventList.empty(),
+			"GameSimulation: invincible target creates no kill event"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetBulletCount() == 1,
+			"GameSimulation: invincible bullet remains"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPendingImpactEffectCount() == 0,
+			"GameSimulation: invincible no impact"
+		);
 
 		if (updatedTargetPlayer == nullptr)
 		{
 			return;
 		}
 
-		tests::Expect(result, updatedTargetPlayer->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: invincible hp unchanged");
-		tests::Expect(result, !updatedTargetPlayer->isDead, "GameSimulation: invincible not dead");
+		tests::Expect(
+			result,
+			updatedTargetPlayer->hp
+			== gameRuleConfig.initialPlayerHp,
+			"GameSimulation: invincible hp unchanged"
+		);
+
+		tests::Expect(
+			result,
+			!updatedTargetPlayer->isDead,
+			"GameSimulation: invincible not dead"
+		);
 	}
 
-	void RunRespawnTest(tests::DebugTestResult& result)
+	void RunRespawnTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
 		server::config::GameRuleConfig gameRuleConfig{};
-		PeerTable peerTable;
+		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId playerId = 1;
 		constexpr common::game::RoomId roomId = 1;
 
-		server::game::PlayerState playerState = MakePlayer(playerId, 0.0F, 0.0F);
+		server::game::PlayerState playerState =
+			MakePlayer(
+				playerId,
+				0.0F,
+				0.0F
+			);
+
 		playerState.hp = 0;
 		playerState.isDead = true;
 		playerState.respawnRemainingSeconds = 0.05F;
@@ -355,30 +698,94 @@ namespace
 		playerState.lastMoveDirectionY = -1.0F;
 
 		gameWorld.UpsertPlayer(playerState);
-		AddJoinedPeer(peerTable, playerId, roomId);
 
-		simulation.UpdateRespawns(0.1F, peerTable, gameWorld, gameRuleConfig);
+		AddPlayerContext(
+			playerContextList,
+			playerId,
+			roomId
+		);
 
-		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(playerId);
+		simulation.UpdateRespawns(
+			0.1F,
+			playerContextList,
+			gameWorld,
+			gameRuleConfig
+		);
 
-		tests::Expect(result, updatedPlayerState != nullptr, "GameSimulation: respawn player exists");
-		tests::Expect(result, gameWorld.GetPendingImpactEffectCount() == 1, "GameSimulation: respawn spawn effect");
+		const server::game::PlayerState* updatedPlayerState =
+			gameWorld.FindPlayer(playerId);
+
+		tests::Expect(
+			result,
+			updatedPlayerState != nullptr,
+			"GameSimulation: respawn player exists"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPendingImpactEffectCount() == 1,
+			"GameSimulation: respawn spawn effect"
+		);
 
 		if (updatedPlayerState == nullptr)
 		{
 			return;
 		}
 
-		tests::Expect(result, !updatedPlayerState->isDead, "GameSimulation: respawn not dead");
-		tests::Expect(result, updatedPlayerState->hp == gameRuleConfig.initialPlayerHp, "GameSimulation: respawn hp");
-		tests::Expect(result, updatedPlayerState->respawnRemainingSeconds == 0.0F, "GameSimulation: respawn timer cleared");
-		tests::Expect(result, updatedPlayerState->invincibilityRemainingSeconds > 0.0F, "GameSimulation: respawn invincible");
-		tests::Expect(result, updatedPlayerState->inputFlags == common::game::InputFlags::None, "GameSimulation: respawn input cleared");
-		tests::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionX, 1.0F), "GameSimulation: respawn direction x");
-		tests::Expect(result, IsNearlyEqual(updatedPlayerState->lastMoveDirectionY, 0.0F), "GameSimulation: respawn direction y");
+		tests::Expect(
+			result,
+			!updatedPlayerState->isDead,
+			"GameSimulation: respawn not dead"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->hp
+			== gameRuleConfig.initialPlayerHp,
+			"GameSimulation: respawn hp"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->respawnRemainingSeconds == 0.0F,
+			"GameSimulation: respawn timer cleared"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->invincibilityRemainingSeconds > 0.0F,
+			"GameSimulation: respawn invincible"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->inputFlags
+			== common::game::InputFlags::None,
+			"GameSimulation: respawn input cleared"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				updatedPlayerState->lastMoveDirectionX,
+				1.0F
+			),
+			"GameSimulation: respawn direction x"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(
+				updatedPlayerState->lastMoveDirectionY,
+				0.0F
+			),
+			"GameSimulation: respawn direction y"
+		);
 	}
 
-	void RunTimerClampTest(tests::DebugTestResult& result)
+	void RunTimerClampTest(
+		tests::DebugTestResult& result
+	)
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
@@ -391,20 +798,42 @@ namespace
 
 		gameWorld.UpsertPlayer(playerState);
 
-		simulation.UpdatePlayerTimers(0.1F, gameWorld);
+		simulation.UpdatePlayerTimers(
+			0.1F,
+			gameWorld
+		);
 
-		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(1);
+		const server::game::PlayerState* updatedPlayerState =
+			gameWorld.FindPlayer(1);
 
-		tests::Expect(result, updatedPlayerState != nullptr, "GameSimulation: timer player exists");
+		tests::Expect(
+			result,
+			updatedPlayerState != nullptr,
+			"GameSimulation: timer player exists"
+		);
 
 		if (updatedPlayerState == nullptr)
 		{
 			return;
 		}
 
-		tests::Expect(result, updatedPlayerState->invincibilityRemainingSeconds == 0.0F, "GameSimulation: invincibility timer clamp");
-		tests::Expect(result, updatedPlayerState->hitFlashRemainingSeconds == 0.0F, "GameSimulation: hit flash timer clamp");
-		tests::Expect(result, updatedPlayerState->fireCooldownRemainingSeconds == 0.0F, "GameSimulation: fire cooldown timer clamp");
+		tests::Expect(
+			result,
+			updatedPlayerState->invincibilityRemainingSeconds == 0.0F,
+			"GameSimulation: invincibility timer clamp"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->hitFlashRemainingSeconds == 0.0F,
+			"GameSimulation: hit flash timer clamp"
+		);
+
+		tests::Expect(
+			result,
+			updatedPlayerState->fireCooldownRemainingSeconds == 0.0F,
+			"GameSimulation: fire cooldown timer clamp"
+		);
 	}
 }
 

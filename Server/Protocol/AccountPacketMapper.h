@@ -3,6 +3,7 @@
 #include <Common/Packet/Account/AccountPacket.h>
 
 #include <Server/Account/AccountService.h>
+#include <Server/Service/AccountLoginAdmissionService.h>
 
 namespace server::protocol
 {
@@ -10,4 +11,10 @@ namespace server::protocol
 		common::packet::AccountLoginRequestId requestId, 
 		account::LoginAccountResult loginResult
 	);
+
+	void ApplyAccountLoginAdmissionResult(
+		const service::AccountLoginAdmissionService::Result&
+		admissionResult,
+		common::packet::AccountLoginResponsePacket& responsePacket
+	) noexcept;
 }

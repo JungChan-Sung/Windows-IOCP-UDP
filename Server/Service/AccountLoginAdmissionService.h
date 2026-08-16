@@ -2,11 +2,11 @@
 
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/Account/AccountPacket.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
+#include <Server/Service/PeerRoomManager.h>
 
 namespace server::service
 {
@@ -28,6 +28,24 @@ namespace server::service
 		using TimePoint = common::time::TimePoint;
 
 	public:
+		struct Request
+		{
+		public:
+			EndpointKey endpointKey{};
+			common::identity::AccountId accountId = 0;
+			common::identity::PersistentPlayerId persistentPlayerId = 0;
+			std::string_view nickname;
+			TimePoint currentTime{};
+		};
+
+		struct Result
+		{
+		public:
+			Status status = Status::RegistrationFailed;
+			common::net::SessionToken sessionToken = common::net::invalidSessionToken;
+		};
+
+	public:
 		AccountLoginAdmissionService() = default;
 		~AccountLoginAdmissionService() noexcept = default;
 
@@ -37,18 +55,9 @@ namespace server::service
 		AccountLoginAdmissionService(AccountLoginAdmissionService&&) = delete;
 		AccountLoginAdmissionService& operator=(AccountLoginAdmissionService&&) = delete;
 
-	private:
-		static void SetFailureResponse(
-			common::packet::AccountLoginResponsePacket& responsePacket,
-			common::packet::AccountLoginResponseStatus status
-		) noexcept;
-
 	public:
-		[[nodiscard]] Status Apply(
-			const EndpointKey& endpointKey,
-			common::identity::PersistentPlayerId persistentPlayerId,
-			common::packet::AccountLoginResponsePacket& responsePacket,
-			TimePoint currentTime,
+		[[nodiscard]] Result Apply(
+			const Request& request,
 			AuthenticatedAccountRegistry& authenticatedAccountRegistry,
 			const PeerRoomManager& peerRoomManager
 		) const;

@@ -1,116 +1,113 @@
 #include "AccountLoginAdmissionService.h"
 
 #include <optional>
+#include <string>
 
 #include <Server/Service/SessionTokenGenerator.h>
 
 namespace server::service
 {
-
-	void AccountLoginAdmissionService::SetFailureResponse(common::packet::AccountLoginResponsePacket& responsePacket, common::packet::AccountLoginResponseStatus status) noexcept
+	AccountLoginAdmissionService::Result AccountLoginAdmissionService::Apply(const Request& request, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
 	{
-		responsePacket.status = status;
-		responsePacket.accountId = 0;
-		responsePacket.sessionToken = common::net::invalidSessionToken;
-		responsePacket.nickname.clear();
-	}
-
-	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
-	{
-		using ResponseStatus = common::packet::AccountLoginResponseStatus;
-
-		if (responsePacket.status != ResponseStatus::Succeeded)
+		if (request.accountId <= 0 || request.persistentPlayerId <= 0 || request.nickname.empty())
 		{
-			return Status::Unchanged;
+			return Result{
+				.status = Status::RegistrationFailed,
+			};
 		}
 
-		if (responsePacket.accountId <= 0 || persistentPlayerId <= 0 || responsePacket.nickname.empty())
-		{
-			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-			return Status::RegistrationFailed;
-		}
-
-		const PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(request.endpointKey);
 		if (endpointPeerState != nullptr)
 		{
-			if (endpointPeerState->accountId != responsePacket.accountId)
+			if (endpointPeerState->accountId != request.accountId)
 			{
-				SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
-				return Status::AlreadyLoggedIn;
+				return Result{
+					.status = Status::AlreadyLoggedIn,
+				};
 			}
 
 			if (!common::net::IsValidSessionToken(endpointPeerState->sessionToken))
 			{
-				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-				return Status::RegistrationFailed;
+				return Result{
+					.status = Status::RegistrationFailed,
+				};
 			}
 
-			if (endpointPeerState->persistentPlayerId != persistentPlayerId)
+			if (endpointPeerState->persistentPlayerId != request.persistentPlayerId)
 			{
-				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-				return Status::RegistrationFailed;
+				return Result{
+					.status = Status::RegistrationFailed,
+				};
 			}
 
-			responsePacket.sessionToken = endpointPeerState->sessionToken;
+			static_cast<void>(authenticatedAccountRegistry.Remove(request.endpointKey));
 
-			static_cast<void>(authenticatedAccountRegistry.Remove(endpointKey));
-
-			return Status::ExistingSession;
+			return Result{
+				.status = Status::ExistingSession,
+				.sessionToken = endpointPeerState->sessionToken,
+			};
 		}
 
-		const PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(responsePacket.accountId);
+		const PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(request.accountId);
 		if (accountPeerState != nullptr)
 		{
-			SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
-			return Status::AlreadyLoggedIn;
+			return Result{
+				.status = Status::AlreadyLoggedIn,
+			};
 		}
 
-		const std::optional<EndpointKey> authenticatedEndpointKey = authenticatedAccountRegistry.FindEndpointByAccountId(responsePacket.accountId);
-		if (authenticatedEndpointKey.has_value() && *authenticatedEndpointKey != endpointKey)
+		const std::optional<EndpointKey> authenticatedEndpointKey = authenticatedAccountRegistry.FindEndpointByAccountId(request.accountId);
+		if (authenticatedEndpointKey.has_value() && *authenticatedEndpointKey != request.endpointKey)
 		{
-			SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
-			return Status::AlreadyLoggedIn;
+			return Result{
+				.status = Status::AlreadyLoggedIn,
+			};
 		}
 
-		const AuthenticatedAccount* endpointAccount = authenticatedAccountRegistry.Find(endpointKey);
+		const AuthenticatedAccount* endpointAccount = authenticatedAccountRegistry.Find(request.endpointKey);
 		if (endpointAccount != nullptr)
 		{
-			if (endpointAccount->accountId != responsePacket.accountId)
+			if (endpointAccount->accountId != request.accountId)
 			{
-				SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);
-				return Status::AlreadyLoggedIn;
+				return Result{
+					.status = Status::AlreadyLoggedIn,
+				};
 			}
 
-			if (endpointAccount->persistentPlayerId != persistentPlayerId)
+			if (endpointAccount->persistentPlayerId != request.persistentPlayerId)
 			{
-				SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-				return Status::RegistrationFailed;
+				return Result{
+					.status = Status::RegistrationFailed,
+				};
 			}
 		}
 
 		const std::optional<common::net::SessionToken> sessionToken = GenerateSessionToken();
 		if (!sessionToken.has_value())
 		{
-			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-			return Status::TokenGenerationFailed;
+			return Result{
+				.status = Status::TokenGenerationFailed,
+			};
 		}
 
 		const bool registered = authenticatedAccountRegistry.Upsert(
-			endpointKey,
-			responsePacket.accountId,
-			persistentPlayerId,
+			request.endpointKey,
+			request.accountId,
+			request.persistentPlayerId,
 			*sessionToken,
-			responsePacket.nickname,
-			currentTime
+			std::string(request.nickname),
+			request.currentTime
 		);
 		if (!registered)
 		{
-			SetFailureResponse(responsePacket, ResponseStatus::ServerError);
-			return Status::RegistrationFailed;
+			return Result{
+				.status = Status::RegistrationFailed,
+			};
 		}
 
-		responsePacket.sessionToken = *sessionToken;
-
-		return Status::Authenticated;
+		return Result{
+			.status = Status::Authenticated,
+			.sessionToken = *sessionToken,
+		};
 	}
 }

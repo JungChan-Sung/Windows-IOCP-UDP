@@ -26,6 +26,7 @@
 
 #include <Server/Config/ServerConfigValidator.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
+#include <Server/Protocol/AccountPacketMapper.h>
 #include <Server/Protocol/PacketPayloadValidator.h>
 
 namespace
@@ -1147,38 +1148,49 @@ namespace server::net
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
 		protocol::AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList(currentTime);
-		for (protocol::AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
+		for (protocol::AccountLoginPacketHandler::ResponseTask&
+			responseTask : responseTaskList)
 		{
 			if (responseTask.taskId != protocol::AccountLoginPacketHandler::invalidTaskId)
 			{
 				if (responseTask.isLatestRequest)
 				{
-					service::AccountLoginAdmissionService::Status admissionStatus{};
+					if (responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded)
+					{
+						const service::AccountLoginAdmissionService::Request admissionRequest{
+							.endpointKey = common::net::MakeEndpointKey(responseTask.remoteAddress),
+							.accountId = responseTask.responsePacket.accountId,
+							.persistentPlayerId = responseTask.persistentPlayerId,
+							.nickname = responseTask.responsePacket.nickname,
+							.currentTime = currentTime,
+						};
 
-					{
-						std::scoped_lock lock(stateMutex_);
+						service::AccountLoginAdmissionService::Result admissionResult{};
 
-						admissionStatus = accountLoginAdmissionService_.Apply(
-							common::net::MakeEndpointKey(responseTask.remoteAddress),
-							responseTask.persistentPlayerId,
-							responseTask.responsePacket,
-							currentTime,
-							authenticatedAccountRegistry_,
-							peerRoomManager_
-						);
-					}
+						{
+							std::scoped_lock lock(stateMutex_);
 
-					if (admissionStatus == service::AccountLoginAdmissionService::Status::AlreadyLoggedIn)
-					{
-						LogWarning("Account login rejected because the account is already logged in.");
-					}
-					else if (admissionStatus == service::AccountLoginAdmissionService::Status::TokenGenerationFailed)
-					{
-						LogError("Failed to generate account session token.");
-					}
-					else if (admissionStatus == service::AccountLoginAdmissionService::Status::RegistrationFailed)
-					{
-						LogError("Failed to register authenticated account.");
+							admissionResult = accountLoginAdmissionService_.Apply(
+								admissionRequest,
+								authenticatedAccountRegistry_,
+								peerRoomManager_
+							);
+						}
+
+						protocol::ApplyAccountLoginAdmissionResult(admissionResult, responseTask.responsePacket);
+
+						if (admissionResult.status == service::AccountLoginAdmissionService::Status::AlreadyLoggedIn)
+						{
+							LogWarning("Account login rejected because the account is already logged in.");
+						}
+						else if (admissionResult.status == service::AccountLoginAdmissionService::Status::TokenGenerationFailed)
+						{
+							LogError("Failed to generate account session token.");
+						}
+						else if (admissionResult.status == service::AccountLoginAdmissionService::Status::RegistrationFailed)
+						{
+							LogError("Failed to register authenticated account.");
+						}
 					}
 				}
 				else

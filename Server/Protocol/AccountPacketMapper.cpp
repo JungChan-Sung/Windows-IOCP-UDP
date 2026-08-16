@@ -3,9 +3,22 @@
 #include <utility>
 #include <variant>
 
+namespace
+{
+	void ClearAccountLoginResponseData(common::packet::AccountLoginResponsePacket& responsePacket) noexcept
+	{
+		responsePacket.accountId = 0;
+		responsePacket.sessionToken = common::net::invalidSessionToken;
+		responsePacket.nickname.clear();
+	}
+}
+
 namespace server::protocol
 {
-	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(common::packet::AccountLoginRequestId requestId, account::LoginAccountResult loginResult)
+	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(
+		common::packet::AccountLoginRequestId requestId, 
+		account::LoginAccountResult loginResult
+	)
 	{
 		if (loginResult.has_value())
 		{
@@ -38,5 +51,34 @@ namespace server::protocol
 
 		response.status = common::packet::AccountLoginResponseStatus::ServerError;
 		return response;
+	}
+
+	void ApplyAccountLoginAdmissionResult(
+		const service::AccountLoginAdmissionService::Result&
+		admissionResult,
+		common::packet::AccountLoginResponsePacket& responsePacket
+	) noexcept
+	{
+		using AdmissionStatus = service::AccountLoginAdmissionService::Status;
+
+		switch (admissionResult.status)
+		{
+		case AdmissionStatus::Authenticated:
+		case AdmissionStatus::ExistingSession:
+			responsePacket.status = common::packet::AccountLoginResponseStatus::Succeeded;
+			responsePacket.sessionToken = admissionResult.sessionToken;
+			return;
+
+		case AdmissionStatus::AlreadyLoggedIn:
+			responsePacket.status = common::packet::AccountLoginResponseStatus::AlreadyLoggedIn;
+			break;
+
+		case AdmissionStatus::TokenGenerationFailed:
+		case AdmissionStatus::RegistrationFailed:
+			responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
+			break;
+		}
+
+		ClearAccountLoginResponseData(responsePacket);
 	}
 }

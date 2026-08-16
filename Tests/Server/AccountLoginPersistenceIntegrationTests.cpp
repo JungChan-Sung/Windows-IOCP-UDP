@@ -25,6 +25,7 @@
 #include <Server/Account/AccountService.h>
 #include <Server/Service/PeerRoomManager.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
+#include <Server/Protocol/AccountPacketMapper.h>
 #include <Server/Service/AccountLoginAdmissionService.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
 
@@ -405,21 +406,34 @@ WHERE login_name = ?;
 
 			server::service::PeerRoomManager peerRoomManager;
 
-			const server::service::AccountLoginAdmissionService::Status
-				admissionStatus =
+			const server::service::AccountLoginAdmissionService::Request
+				admissionRequest{
+					.endpointKey = endpointKey,
+					.accountId = responseTask.responsePacket.accountId,
+					.persistentPlayerId =
+						responseTask.persistentPlayerId,
+					.nickname = responseTask.responsePacket.nickname,
+					.currentTime = completionTime,
+			};
+
+			const server::service::AccountLoginAdmissionService::Result
+				admissionResult =
 				admissionService.Apply(
-					endpointKey,
-					responseTask.persistentPlayerId,
-					responseTask.responsePacket,
-					completionTime,
+					admissionRequest,
 					authenticatedAccountRegistry,
 					peerRoomManager
 				);
 
+			server::protocol::ApplyAccountLoginAdmissionResult(
+				admissionResult,
+				responseTask.responsePacket
+			);
+
 			tests::Expect(
 				result,
-				admissionStatus
-				== server::service::AccountLoginAdmissionService::Status::Authenticated,
+				admissionResult.status
+				== server::service::AccountLoginAdmissionService
+				::Status::Authenticated,
 				"AccountLoginPersistenceIntegration: login admitted"
 			);
 

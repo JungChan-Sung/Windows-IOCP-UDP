@@ -1,20 +1,18 @@
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
-#include <unordered_map>
-#include <vector>
+#include <cstdint>
+#include <span>
 
 #include <Common/Game/GameTypes.h>
-#include <Common/Net/Endpoint.h>
 #include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/KillEvent.h>
+#include <Server/Game/PlayerSimulationContext.h>
 #include <Server/Game/PlayerState.h>
-#include <Server/Net/PeerState.h>
 
 namespace server::game
 {
@@ -32,9 +30,6 @@ namespace server::game
 		using PlayerId = common::game::PlayerId;
 		using BulletId = common::game::BulletId;
 		using RoomId = common::game::RoomId;
-		using EndpointKey = common::net::EndpointKey;
-
-		using PeerTable = std::unordered_map<EndpointKey, net::PeerState, common::net::EndpointKeyHasher>;
 
 	public:
 		GameSimulation() = default;
@@ -47,16 +42,16 @@ namespace server::game
 		GameSimulation& operator=(GameSimulation&&) = delete;
 
 	public:
-		void UpdatePlayers(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld) const;
+		void UpdatePlayers(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld) const;
 		[[nodiscard]] KillEventList UpdateBullets(
 			float deltaTime, 
-			const PeerTable& peerTable,	
+			std::span<const PlayerSimulationContext> playerContextList,
 			GameWorld& gameWorld, 
 			const config::GameRuleConfig& gameRuleConfig
 		) const;
 		void UpdateRespawns(
 			float deltaTime,
-			const PeerTable& peerTable, 
+			std::span<const PlayerSimulationContext> playerContextList,
 			GameWorld& gameWorld,
 			const config::GameRuleConfig& gameRuleConfig
 		) const;

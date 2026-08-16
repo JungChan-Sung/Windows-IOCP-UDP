@@ -31,16 +31,11 @@ namespace
 
 namespace server::game
 {
-	void GameSimulation::UpdatePlayers(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld) const
+	void GameSimulation::UpdatePlayers(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld) const
 	{
-		for (const auto& [_, peerState] : peerTable)
+		for (const PlayerSimulationContext& playerContext : playerContextList)
 		{
-			if (!peerState.isJoined)
-			{
-				continue;
-			}
-
-			PlayerState* playerState = gameWorld.FindPlayer(peerState.playerId);
+			PlayerState* playerState = gameWorld.FindPlayer(playerContext.playerId);
 			if (playerState == nullptr)
 			{
 				continue;
@@ -59,12 +54,12 @@ namespace server::game
 				playerState->moveSpeed,
 				common::game::playerHalfExtent,
 				common::game::defaultWorldBounds,
-				common::game::GetWallRectListForRoom(peerState.roomId)
+				common::game::GetWallRectListForRoom(playerContext.roomId)
 			);
 		}
 	}
 
-	KillEventList GameSimulation::UpdateBullets(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	KillEventList GameSimulation::UpdateBullets(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
 		KillEventList killEventList;
 
@@ -163,24 +158,19 @@ namespace server::game
 
 			if (!shouldEraseBullet)
 			{
-				for (const auto& [_, peerState] : peerTable)
+				for (const PlayerSimulationContext& playerContext : playerContextList)
 				{
-					if (!peerState.isJoined)
+					if (playerContext.playerId == bulletState.ownerPlayerId)
 					{
 						continue;
 					}
 
-					if (peerState.playerId == bulletState.ownerPlayerId)
+					if (playerContext.roomId != bulletState.roomId)
 					{
 						continue;
 					}
 
-					if (peerState.roomId != bulletState.roomId)
-					{
-						continue;
-					}
-
-					PlayerState* playerState = gameWorld.FindPlayer(peerState.playerId);
+					PlayerState* playerState = gameWorld.FindPlayer(playerContext.playerId);
 					if (playerState == nullptr)
 					{
 						continue;
@@ -229,8 +219,8 @@ namespace server::game
 						killEventList.push_back(KillEvent{
 							.killerPlayerId = bulletState.ownerPlayerId,
 							.killerPersistentPlayerId = bulletState.ownerPersistentPlayerId,
-							.victimPlayerId = peerState.playerId,
-							.victimPersistentPlayerId = peerState.persistentPlayerId,
+							.victimPlayerId = playerContext.playerId,
+							.victimPersistentPlayerId = playerContext.persistentPlayerId,
 							.roomId = bulletState.roomId,
 							});
 					}
@@ -252,7 +242,7 @@ namespace server::game
 		return killEventList;
 	}
 
-	void GameSimulation::UpdateRespawns(float deltaTime, const PeerTable& peerTable, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::UpdateRespawns(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
 	{
 		GameWorld::PlayerTable& playerTable = gameWorld.GetPlayerTable();
 
@@ -269,23 +259,22 @@ namespace server::game
 				continue;
 			}
 
-			const auto peerIterator = std::find_if(
-				peerTable.begin(),
-				peerTable.end(),
-				[playerId](const auto& pair)
+			const auto playerContextIterator = std::find_if(
+				playerContextList.begin(),
+				playerContextList.end(),
+				[playerId](const PlayerSimulationContext& playerContext)
 				{
-					return pair.second.playerId == playerId && pair.second.isJoined;
+					return playerContext.playerId == playerId;
 				}
 			);
-
-			if (peerIterator == peerTable.end())
+			if (playerContextIterator == playerContextList.end())
 			{
 				continue;
 			}
 
 			RespawnPlayer(
 				playerId,
-				peerIterator->second.roomId,
+				playerContextIterator->roomId,
 				gameWorld,
 				gameRuleConfig
 			);

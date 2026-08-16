@@ -9,7 +9,6 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
@@ -147,20 +146,10 @@ namespace
 			joinTime
 		);
 
-		common::packet::InputCommandPacket packet{};
-		packet.inputSequence = 1;
-		packet.inputFlags =
-			common::game::InputFlags::Right
-			| common::game::InputFlags::Up;
+		constexpr std::uint32_t inputSequence = 1;
+		const common::game::InputFlags inputFlags = common::game::InputFlags::Right | common::game::InputFlags::Up;
 
-		const bool applied =
-			service.ApplyInputCommand(
-				endpointKey,
-				packet,
-				peerRoomManager,
-				gameWorld,
-				commandTime
-			);
+		const bool applied = service.ApplyInputCommand(endpointKey, inputSequence, inputFlags, peerRoomManager, gameWorld, commandTime);
 
 		tests::Expect(
 			result,
@@ -205,7 +194,7 @@ namespace
 		{
 			tests::Expect(
 				result,
-				playerState->inputFlags == packet.inputFlags,
+				playerState->inputFlags == inputFlags,
 				"PlayerCommandService: input flags updated"
 			);
 
@@ -260,34 +249,29 @@ namespace
 			joinTime
 		);
 
-		common::packet::InputCommandPacket firstPacket{};
-		firstPacket.inputSequence = 10;
-		firstPacket.inputFlags =
-			common::game::InputFlags::Right;
+		constexpr std::uint32_t firstInputSequence = 10;
+		constexpr common::game::InputFlags firstInputFlags = common::game::InputFlags::Right;
 
-		common::packet::InputCommandPacket stalePacket{};
-		stalePacket.inputSequence = 10;
-		stalePacket.inputFlags =
-			common::game::InputFlags::Left;
+		constexpr std::uint32_t staleInputSequence = 10;
+		constexpr common::game::InputFlags staleInputFlags = common::game::InputFlags::Left;
 
-		const bool firstApplied =
-			service.ApplyInputCommand(
-				endpointKey,
-				firstPacket,
-				peerRoomManager,
-				gameWorld,
-				firstCommandTime
-			);
+		const bool firstApplied = service.ApplyInputCommand(
+			endpointKey,
+			firstInputSequence,
+			firstInputFlags,
+			peerRoomManager,
+			gameWorld,
+			firstCommandTime
+		);
 
-		const bool staleApplied =
-			service.ApplyInputCommand(
-				endpointKey,
-				stalePacket,
-				peerRoomManager,
-				gameWorld,
-				staleCommandTime
-			);
-
+		const bool staleApplied = service.ApplyInputCommand(
+			endpointKey,
+			staleInputSequence,
+			staleInputFlags,
+			peerRoomManager,
+			gameWorld,
+			staleCommandTime
+		);
 		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
@@ -368,15 +352,14 @@ namespace
 			playerState->isDead = true;
 		}
 
-		common::packet::InputCommandPacket packet{};
-		packet.inputSequence = 1;
-		packet.inputFlags =
-			common::game::InputFlags::Down;
+		constexpr std::uint32_t inputSequence = 1;
+		constexpr common::game::InputFlags inputFlags = common::game::InputFlags::Down;
 
 		const bool applied =
 			service.ApplyInputCommand(
 				endpointKey,
-				packet,
+				inputSequence,
+				inputFlags,
 				peerRoomManager,
 				gameWorld,
 				commandTime
@@ -420,15 +403,14 @@ namespace
 
 		const TimePoint commandTime = Clock::now();
 
-		common::packet::InputCommandPacket packet{};
-		packet.inputSequence = 1;
-		packet.inputFlags =
-			common::game::InputFlags::Right;
+		constexpr std::uint32_t inputSequence = 1;
+		constexpr common::game::InputFlags inputFlags = common::game::InputFlags::Right;
 
 		const bool applied =
 			service.ApplyInputCommand(
 				endpointKey,
-				packet,
+				inputSequence,
+				inputFlags,
 				peerRoomManager,
 				gameWorld,
 				commandTime

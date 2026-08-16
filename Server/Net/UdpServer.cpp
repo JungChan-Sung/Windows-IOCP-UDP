@@ -949,7 +949,8 @@ namespace server::net
 
 		if (!playerCommandService_.ApplyInputCommand(
 			endpointKey,
-			packet,
+			packet.inputSequence,
+			packet.inputFlags,
 			peerRoomManager_,
 			gameWorld_,
 			common::time::Clock::now()))

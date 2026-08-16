@@ -37,7 +37,7 @@ namespace
 
 namespace server::service
 {
-	bool PlayerCommandService::ApplyInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, TimePoint currentTime) const
+	bool PlayerCommandService::ApplyInputCommand(const EndpointKey& endpointKey, std::uint32_t inputSequence, common::game::InputFlags inputFlags, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, TimePoint currentTime) const
 	{
 		PeerPlayerView peerPlayerView = FindJoinedPeerPlayer(endpointKey, peerRoomManager, gameWorld);
 		if (peerPlayerView.peerState == nullptr || peerPlayerView.playerState == nullptr)
@@ -53,16 +53,16 @@ namespace server::service
 			return false;
 		}
 
-		if (packet.inputSequence <= peerState.lastInputSequence)
+		if (inputSequence <= peerState.lastInputSequence)
 		{
 			return false;
 		}
 
-		peerState.lastInputSequence = packet.inputSequence;
+		peerState.lastInputSequence = inputSequence;
 		peerState.lastRecvTime = currentTime;
-		playerState.inputFlags = packet.inputFlags;
+		playerState.inputFlags = inputFlags;
 
-		UpdateLastMoveDirection(playerState, packet.inputFlags);
+		UpdateLastMoveDirection(playerState, inputFlags);
 
 		return true;
 	}

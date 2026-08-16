@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/SessionToken.h>
@@ -15,7 +17,6 @@ namespace server::service
 	public:
 		enum class Status
 		{
-			Unchanged,
 			Authenticated,
 			ExistingSession,
 			AlreadyLoggedIn,

@@ -344,7 +344,8 @@ namespace
 		const bool inputApplied =
 			playerCommandService.ApplyInputCommand(
 				firstEndpointKey,
-				inputCommandPacket,
+				inputCommandPacket.inputSequence,
+				inputCommandPacket.inputFlags,
 				peerRoomManager,
 				gameWorld,
 				inputTime

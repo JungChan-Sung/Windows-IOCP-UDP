@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
+#include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfig.h>
@@ -39,13 +41,15 @@ namespace server::service
 	public:
 		[[nodiscard]] bool ApplyInputCommand(
 			const EndpointKey& endpointKey,
-			const common::packet::InputCommandPacket& packet,
+			std::uint32_t inputSequence,
+			common::game::InputFlags inputFlags,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			TimePoint currentTime
 		) const;
 
-		[[nodiscard]] bool FireBullet(const EndpointKey& endpointKey,
+		[[nodiscard]] bool FireBullet(
+			const EndpointKey& endpointKey,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,

@@ -78,9 +78,6 @@
     <ClCompile Include="App\GameServerApp.cpp">
       <Filter>소스 파일\App</Filter>
     </ClCompile>
-    <ClCompile Include="Net\PeerRoomManager.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Net\UdpPacketSender.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
@@ -159,6 +156,9 @@
     <ClCompile Include="Diagnostics\InvalidPacketLogLimiter.cpp">
       <Filter>소스 파일\Diagnostics</Filter>
     </ClCompile>
+    <ClCompile Include="Service\PeerRoomManager.cpp">
+      <Filter>소스 파일\Service</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -166,9 +166,6 @@
     </ClInclude>
     <ClInclude Include="Game\PlayerState.h">
       <Filter>헤더 파일\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\PeerState.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="App\GameServerApp.h">
       <Filter>헤더 파일\App</Filter>
@@ -178,9 +175,6 @@
     </ClInclude>
     <ClInclude Include="Game\ImpactEffectState.h">
       <Filter>헤더 파일\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\PeerRoomManager.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Game\GameWorld.h">
       <Filter>헤더 파일\Game</Filter>
@@ -280,6 +274,15 @@
     </ClInclude>
     <ClInclude Include="Diagnostics\InvalidPacketLogLimiter.h">
       <Filter>헤더 파일\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\PlayerSimulationContext.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\PeerState.h">
+      <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\PeerRoomManager.h">
+      <Filter>헤더 파일\Service</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

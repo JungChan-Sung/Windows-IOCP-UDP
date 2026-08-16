@@ -150,7 +150,6 @@
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
     <ClCompile Include="..\Server\Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="..\Server\Match\MatchHistoryTaskProcessor.cpp" />
-    <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
     <ClCompile Include="..\Server\Protocol\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="..\Server\Protocol\AccountPacketMapper.cpp" />
     <ClCompile Include="..\Server\Protocol\PacketPayloadValidator.cpp" />
@@ -158,6 +157,7 @@
     <ClCompile Include="..\Server\Protocol\UdpPacketDispatcher.cpp" />
     <ClCompile Include="..\Server\Service\AccountLoginAdmissionService.cpp" />
     <ClCompile Include="..\Server\Service\AuthenticatedAccountRegistry.cpp" />
+    <ClCompile Include="..\Server\Service\PeerRoomManager.cpp" />
     <ClCompile Include="..\Server\Service\PeerSessionService.cpp" />
     <ClCompile Include="..\Server\Service\PlayerCommandService.cpp" />
     <ClCompile Include="..\Server\Service\SessionTokenGenerator.cpp" />

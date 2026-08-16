@@ -35,7 +35,7 @@ namespace server::protocol
 					continue;
 				}
 
-				const net::PeerState& peerState = peerIterator->second;
+				const service::PeerState& peerState = peerIterator->second;
 				if (!peerState.isJoined)
 				{
 					continue;
@@ -195,7 +195,7 @@ namespace server::protocol
 				continue;
 			}
 
-			const net::PeerState& peerState = peerIterator->second;
+			const service::PeerState& peerState = peerIterator->second;
 			if (!peerState.isJoined)
 			{
 				continue;

@@ -12,7 +12,7 @@
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Time/TimeTypes.h>
 
-namespace server::net
+namespace server::service
 {
 	struct PeerState
 	{

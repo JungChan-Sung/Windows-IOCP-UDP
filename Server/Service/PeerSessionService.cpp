@@ -9,7 +9,7 @@
 
 namespace server::service
 {
-	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, net::PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -22,7 +22,7 @@ namespace server::service
 			return joinResult;
 		}
 
-		net::PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (existingPeerState != nullptr)
 		{
 			if (existingPeerState->accountId != authenticatedIdentity.accountId 
@@ -57,7 +57,7 @@ namespace server::service
 
 		const PlayerId playerId = gameWorld.AllocatePlayerId();
 
-		net::PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
+		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
 			remoteAddress,
 			endpointKey,
 			playerId,
@@ -86,11 +86,11 @@ namespace server::service
 		return joinResult;
 	}
 
-	PeerSessionService::LeaveResult PeerSessionService::LeavePeer(const EndpointKey& endpointKey, net::PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
+	PeerSessionService::LeaveResult PeerSessionService::LeavePeer(const EndpointKey& endpointKey, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
 	{
 		LeaveResult leaveResult{};
 
-		const net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (peerState == nullptr)
 		{
 			return leaveResult;
@@ -114,7 +114,7 @@ namespace server::service
 		return leaveResult;
 	}
 
-	PeerSessionService::RoomChangeResult PeerSessionService::ChangePeerRoom(const EndpointKey& endpointKey, RoomId nextRoomId, net::PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, TimePoint currentTime) const
+	PeerSessionService::RoomChangeResult PeerSessionService::ChangePeerRoom(const EndpointKey& endpointKey, RoomId nextRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, TimePoint currentTime) const
 	{
 		RoomChangeResult changeResult{};
 
@@ -123,7 +123,7 @@ namespace server::service
 			return changeResult;
 		}
 
-		net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (peerState == nullptr)
 		{
 			return changeResult;
@@ -145,7 +145,7 @@ namespace server::service
 			return changeResult;
 		}
 
-		net::PeerRoomManager::RoomChangeResult roomChangeResult{};
+		PeerRoomManager::RoomChangeResult roomChangeResult{};
 		const bool changed = peerRoomManager.ChangePeerRoom(
 			endpointKey,
 			nextRoomId,

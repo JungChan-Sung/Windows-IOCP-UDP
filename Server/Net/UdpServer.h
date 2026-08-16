@@ -24,11 +24,11 @@
 #include <Server/Game/GameTickRunner.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/MatchHistoryTracker.h>
-#include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/UdpIocpTransport.h>
 #include <Server/Net/UdpPacketSender.h>
 #include <Server/Service/AccountLoginAdmissionService.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
+#include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/PeerSessionService.h>
 #include <Server/Service/PlayerCommandService.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
@@ -95,9 +95,7 @@ namespace server::net
 
 		service::AuthenticatedAccountRegistry authenticatedAccountRegistry_;
 		service::AccountLoginAdmissionService accountLoginAdmissionService_;
-
-		PeerRoomManager peerRoomManager_;
-
+		service::PeerRoomManager peerRoomManager_;
 		service::PeerSessionService peerSessionService_;
 		service::PlayerCommandService playerCommandService_;
 
@@ -144,12 +142,12 @@ namespace server::net
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableGamePacket(
-			PeerState& peerState,
+			service::PeerState& peerState,
 			common::packet::ConstPacketSpan serializedGamePacket
 		);
-		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(PeerState& peerState);
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(service::PeerState& peerState);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(
-			PeerState& peerState,
+			service::PeerState& peerState,
 			RoomId roomId,
 			float spawnX,
 			float spawnY

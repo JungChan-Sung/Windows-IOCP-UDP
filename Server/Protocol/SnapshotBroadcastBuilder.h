@@ -12,8 +12,9 @@
 #include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Game/GameWorld.h>
-#include <Server/Net/PeerState.h>
 #include <Server/Protocol/SnapshotBroadcastTask.h>
+#include <Server/Service/PeerRoomManager.h>
+#include <Server/Service/PeerState.h>
 
 namespace server::protocol
 {
@@ -26,9 +27,9 @@ namespace server::protocol
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
 
-		using PeerTable = std::unordered_map<EndpointKey, net::PeerState, common::net::EndpointKeyHasher>;
-		using RoomMemberSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
-		using RoomTable = std::unordered_map<RoomId, RoomMemberSet>;
+		using PeerTable = service::PeerRoomManager::PeerTable;
+		using RoomMemberSet = service::PeerRoomManager::RoomMemberSet;
+		using RoomTable = service::PeerRoomManager::RoomTable;
 
 		using PlayerTable = game::GameWorld::PlayerTable;
 		using BulletStateList = game::GameWorld::BulletStateList;

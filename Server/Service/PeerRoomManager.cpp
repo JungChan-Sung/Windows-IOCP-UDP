@@ -1,6 +1,6 @@
 #include "PeerRoomManager.h"
 
-namespace server::net
+namespace server::service
 {
 	void PeerRoomManager::Clear() noexcept
 	{

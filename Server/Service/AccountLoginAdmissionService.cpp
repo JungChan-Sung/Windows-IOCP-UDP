@@ -15,7 +15,7 @@ namespace server::service
 		responsePacket.nickname.clear();
 	}
 
-	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const net::PeerRoomManager& peerRoomManager) const
+	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
 	{
 		using ResponseStatus = common::packet::AccountLoginResponseStatus;
 
@@ -30,7 +30,7 @@ namespace server::service
 			return Status::RegistrationFailed;
 		}
 
-		const net::PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (endpointPeerState != nullptr)
 		{
 			if (endpointPeerState->accountId != responsePacket.accountId)
@@ -58,7 +58,7 @@ namespace server::service
 			return Status::ExistingSession;
 		}
 
-		const net::PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(responsePacket.accountId);
+		const PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(responsePacket.accountId);
 		if (accountPeerState != nullptr)
 		{
 			SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);

@@ -129,9 +129,6 @@
     <ClCompile Include="Game\WorldCollisionTests.cpp">
       <Filter>소스 파일\Game</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\PeerRoomManager.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
@@ -331,6 +328,9 @@
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="..\Server\Diagnostics\InvalidPacketLogLimiter.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\PeerRoomManager.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>

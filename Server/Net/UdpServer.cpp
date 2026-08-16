@@ -425,7 +425,7 @@ namespace server::net
 		playerContextList.reserve(peerRoomManager_.GetJoinedPeerCount());
 
 		peerRoomManager_.ForEachJoinedPeer(
-			[&playerContextList](const PeerState& peerState)
+			[&playerContextList](const service::PeerState& peerState)
 			{
 				playerContextList.push_back(game::PlayerSimulationContext{
 					.playerId = peerState.playerId,
@@ -524,7 +524,7 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+			service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 			if (peerState == nullptr)
 			{
 				serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
@@ -592,13 +592,12 @@ namespace server::net
 		return packetDispatcher_.Dispatch(remoteAddress, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(PeerState& peerState, common::packet::ConstPacketSpan serializedGamePacket)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(service::PeerState& peerState, common::packet::ConstPacketSpan serializedGamePacket)
 	{
-		const std::optional<common::packet::PacketHeader> packetHeader =
-			common::packet::DeserializePacketHeader(
-				serializedGamePacket.data(),
-				static_cast<int>(serializedGamePacket.size())
-			);
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(
+			serializedGamePacket.data(),
+			static_cast<int>(serializedGamePacket.size())
+		);
 
 		if (!packetHeader.has_value())
 		{
@@ -648,14 +647,14 @@ namespace server::net
 		return reliablePacketBuffer;
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(PeerState& peerState)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(service::PeerState& peerState)
 	{
 		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingAckHeader();
 
 		return common::net::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(PeerState& peerState, RoomId roomId, float spawnX, float spawnY)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(service::PeerState& peerState, RoomId roomId, float spawnX, float spawnY)
 	{
 		common::packet::JoinRoomResponsePacket packet{};
 		packet.roomId = roomId;
@@ -761,7 +760,7 @@ namespace server::net
 			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 
 			peerRoomManager_.ForEachJoinedPeer(
-				[&resendTaskList, &giveUpPacketCount, currentTime](PeerState& peerState)
+				[&resendTaskList, &giveUpPacketCount, currentTime](service::PeerState& peerState)
 				{
 					common::net::ReliableUdpSession::ResendResult resendResult = peerState.reliableSession.ExtractResendResult(currentTime);
 
@@ -812,7 +811,7 @@ namespace server::net
 
 			service::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{};
 
-			const PeerState* existingPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+			const service::PeerState* existingPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 			if (existingPeerState != nullptr)
 			{
 				// JoinResponse 유실로 인한 기존 참가자의 재요청.
@@ -1058,7 +1057,7 @@ namespace server::net
 					currentSystemTime
 				);
 
-				PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+				service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 				if (peerState != nullptr)
 				{
 					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(
@@ -1307,7 +1306,7 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			const common::time::TimePoint currentTime = common::time::Clock::now();
-			const std::vector<PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
+			const std::vector<service::PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
 				currentTime,
 				config_.session.peerTimeout
 			);
@@ -1320,7 +1319,7 @@ namespace server::net
 
 			const common::time::SystemTimePoint currentSystemTime = common::time::SystemClock::now();
 
-			for (const PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
+			for (const service::PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
 			{
 				const bool matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
 					timedOutPeer.roomId,
@@ -1504,7 +1503,7 @@ namespace server::net
 
 			std::size_t reliablePendingPacketCount = 0;
 			peerRoomManager_.ForEachJoinedPeer(
-				[&reliablePendingPacketCount](const PeerState& peerState)
+				[&reliablePendingPacketCount](const service::PeerState& peerState)
 				{
 					reliablePendingPacketCount += peerState.reliableSession.GetPendingPacketCount();
 				}

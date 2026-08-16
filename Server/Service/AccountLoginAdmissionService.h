@@ -5,7 +5,7 @@
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Net/PeerRoomManager.h>
+#include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
 
 namespace server::service
@@ -50,7 +50,7 @@ namespace server::service
 			common::packet::AccountLoginResponsePacket& responsePacket,
 			TimePoint currentTime,
 			AuthenticatedAccountRegistry& authenticatedAccountRegistry,
-			const net::PeerRoomManager& peerRoomManager
+			const PeerRoomManager& peerRoomManager
 		) const;
 	};
 }

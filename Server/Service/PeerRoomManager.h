@@ -13,9 +13,9 @@
 #include <Common/Net/Endpoint.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Net/PeerState.h>
+#include <Server/Service/PeerState.h>
 
-namespace server::net
+namespace server::service
 {
 	class PeerRoomManager
 	{

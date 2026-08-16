@@ -785,14 +785,14 @@ namespace server::net
 	{
 		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 
-		PeerSessionService::JoinResult joinResult{};
+		service::PeerSessionService::JoinResult joinResult{};
 		bool hasAuthenticatedIdentity = false;
 		bool matchHistoryEntered = true;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			PeerSessionService::AuthenticatedIdentity authenticatedIdentity{};
+			service::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{};
 
 			const PeerState* existingPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
 			if (existingPeerState != nullptr)
@@ -808,7 +808,7 @@ namespace server::net
 			}
 			else
 			{
-				const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey, packet.sessionToken);
+				const service::AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey, packet.sessionToken);
 				if (authenticatedAccount != nullptr)
 				{
 					authenticatedIdentity.accountId = authenticatedAccount->accountId;
@@ -956,7 +956,7 @@ namespace server::net
 
 	void UdpServer::ProcessLeaveRequest(const EndpointKey& endpointKey)
 	{
-		PeerSessionService::LeaveResult leaveResult{};
+		service::PeerSessionService::LeaveResult leaveResult{};
 		bool matchHistoryLeft = true;
 
 		{
@@ -1001,7 +1001,7 @@ namespace server::net
 
 	void UdpServer::ProcessJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet)
 	{
-		PeerSessionService::RoomChangeResult roomChangeResult{};
+		service::PeerSessionService::RoomChangeResult roomChangeResult{};
 		std::optional<common::packet::PacketBuffer> reliableResponsePacketBuffer;
 
 		bool previousMatchLeft = true;
@@ -1134,7 +1134,7 @@ namespace server::net
 			{
 				if (responseTask.isLatestRequest)
 				{
-					AccountLoginAdmissionService::Status admissionStatus{};
+					service::AccountLoginAdmissionService::Status admissionStatus{};
 
 					{
 						std::scoped_lock lock(stateMutex_);
@@ -1149,15 +1149,15 @@ namespace server::net
 						);
 					}
 
-					if (admissionStatus == AccountLoginAdmissionService::Status::AlreadyLoggedIn)
+					if (admissionStatus == service::AccountLoginAdmissionService::Status::AlreadyLoggedIn)
 					{
 						LogWarning("Account login rejected because the account is already logged in.");
 					}
-					else if (admissionStatus == AccountLoginAdmissionService::Status::TokenGenerationFailed)
+					else if (admissionStatus == service::AccountLoginAdmissionService::Status::TokenGenerationFailed)
 					{
 						LogError("Failed to generate account session token.");
 					}
-					else if (admissionStatus == AccountLoginAdmissionService::Status::RegistrationFailed)
+					else if (admissionStatus == service::AccountLoginAdmissionService::Status::RegistrationFailed)
 					{
 						LogError("Failed to register authenticated account.");
 					}

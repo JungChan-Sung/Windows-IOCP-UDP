@@ -2,9 +2,9 @@
 
 #include <optional>
 
-#include <Server/Net/SessionTokenGenerator.h>
+#include <Server/Service/SessionTokenGenerator.h>
 
-namespace server::net
+namespace server::service
 {
 
 	void AccountLoginAdmissionService::SetFailureResponse(common::packet::AccountLoginResponsePacket& responsePacket, common::packet::AccountLoginResponseStatus status) noexcept
@@ -15,7 +15,7 @@ namespace server::net
 		responsePacket.nickname.clear();
 	}
 
-	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const PeerRoomManager& peerRoomManager) const
+	AccountLoginAdmissionService::Status AccountLoginAdmissionService::Apply(const EndpointKey& endpointKey, common::identity::PersistentPlayerId persistentPlayerId, common::packet::AccountLoginResponsePacket& responsePacket, TimePoint currentTime, AuthenticatedAccountRegistry& authenticatedAccountRegistry, const net::PeerRoomManager& peerRoomManager) const
 	{
 		using ResponseStatus = common::packet::AccountLoginResponseStatus;
 
@@ -30,7 +30,7 @@ namespace server::net
 			return Status::RegistrationFailed;
 		}
 
-		const PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const net::PeerState* endpointPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (endpointPeerState != nullptr)
 		{
 			if (endpointPeerState->accountId != responsePacket.accountId)
@@ -58,7 +58,7 @@ namespace server::net
 			return Status::ExistingSession;
 		}
 
-		const PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(responsePacket.accountId);
+		const net::PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(responsePacket.accountId);
 		if (accountPeerState != nullptr)
 		{
 			SetFailureResponse(responsePacket, ResponseStatus::AlreadyLoggedIn);

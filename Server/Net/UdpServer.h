@@ -23,14 +23,14 @@
 #include <Server/Game/GameTickRunner.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/MatchHistoryTracker.h>
-#include <Server/Net/AccountLoginAdmissionService.h>
-#include <Server/Net/AuthenticatedAccountRegistry.h>
 #include <Server/Net/InvalidPacketLogLimiter.h>
 #include <Server/Net/PeerRoomManager.h>
-#include <Server/Net/PeerSessionService.h>
-#include <Server/Net/PlayerCommandService.h>
 #include <Server/Net/UdpIocpTransport.h>
 #include <Server/Net/UdpPacketSender.h>
+#include <Server/Service/AccountLoginAdmissionService.h>
+#include <Server/Service/AuthenticatedAccountRegistry.h>
+#include <Server/Service/PeerSessionService.h>
+#include <Server/Service/PlayerCommandService.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
 #include <Server/Protocol/UdpPacketDispatcher.h>
 
@@ -92,11 +92,13 @@ namespace server::net
 		game::GameWorld gameWorld_;
 		game::MatchHistoryTracker matchHistoryTracker_;
 
-		AuthenticatedAccountRegistry authenticatedAccountRegistry_;
-		AccountLoginAdmissionService accountLoginAdmissionService_;
+		service::AuthenticatedAccountRegistry authenticatedAccountRegistry_;
+		service::AccountLoginAdmissionService accountLoginAdmissionService_;
+
 		PeerRoomManager peerRoomManager_;
-		PeerSessionService peerSessionService_;
-		PlayerCommandService playerCommandService_;
+
+		service::PeerSessionService peerSessionService_;
+		service::PlayerCommandService playerCommandService_;
 
 		common::log::ILogger* logger_ = nullptr;
 

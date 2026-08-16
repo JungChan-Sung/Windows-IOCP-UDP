@@ -10,7 +10,7 @@
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/PeerState.h>
 
-namespace server::net
+namespace server::service
 {
 	class PlayerCommandService
 	{
@@ -18,7 +18,7 @@ namespace server::net
 		struct PeerPlayerView
 		{
 		public:
-			PeerState* peerState = nullptr;
+			net::PeerState* peerState = nullptr;
 			game::PlayerState* playerState = nullptr;
 		};
 
@@ -40,13 +40,13 @@ namespace server::net
 		[[nodiscard]] bool ApplyInputCommand(
 			const EndpointKey& endpointKey,
 			const common::packet::InputCommandPacket& packet,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			TimePoint currentTime
 		) const;
 
 		[[nodiscard]] bool FireBullet(const EndpointKey& endpointKey,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,
 			const config::WeaponRuleConfig& weaponRuleConfig, 
@@ -56,7 +56,7 @@ namespace server::net
 	private:
 		[[nodiscard]] PeerPlayerView FindJoinedPeerPlayer(
 			const EndpointKey& endpointKey,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld
 		) const;
 	};

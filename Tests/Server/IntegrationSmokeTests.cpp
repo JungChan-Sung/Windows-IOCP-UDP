@@ -19,10 +19,10 @@
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Net/PeerRoomManager.h>
-#include <Server/Net/PeerSessionService.h>
-#include <Server/Net/PlayerCommandService.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
 #include <Server/Protocol/SnapshotBroadcastTask.h>
+#include <Server/Service/PeerSessionService.h>
+#include <Server/Service/PlayerCommandService.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -92,8 +92,8 @@ namespace
 		return false;
 	}
 
-	[[nodiscard]] server::net::PeerSessionService::JoinResult JoinPeerForTest(
-		const server::net::PeerSessionService& peerSessionService,
+	[[nodiscard]] server::service::PeerSessionService::JoinResult JoinPeerForTest(
+		const server::service::PeerSessionService& peerSessionService,
 		const sockaddr_in& remoteAddress,
 		std::int64_t accountId,
 		std::int64_t persistentPlayerId,
@@ -113,7 +113,7 @@ namespace
 			.low = static_cast<std::uint64_t>(remoteAddress.sin_port),
 		};
 
-		const server::net::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{
+		const server::service::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{
 			.accountId = accountId,
 			.persistentPlayerId = persistentPlayerId,
 			.sessionToken = sessionToken,
@@ -136,8 +136,8 @@ namespace
 
 	void RunJoinInputFireSnapshotSmokeTest(tests::DebugTestResult& result)
 	{
-		server::net::PeerSessionService peerSessionService;
-		server::net::PlayerCommandService playerCommandService;
+		server::service::PeerSessionService peerSessionService;
+		server::service::PlayerCommandService playerCommandService;
 		server::protocol::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
 		server::net::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
@@ -159,7 +159,7 @@ namespace
 
 		const TimePoint startTime = Clock::now();
 
-		const server::net::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
+		const server::service::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
 			peerSessionService,
 			firstRemoteAddress,
 			firstAccountId,
@@ -173,7 +173,7 @@ namespace
 			startTime
 		);
 
-		const server::net::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
+		const server::service::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
 			peerSessionService,
 			secondRemoteAddress,
 			secondAccountId,
@@ -334,7 +334,7 @@ namespace
 
 	void RunRoomChangeSnapshotSmokeTest(tests::DebugTestResult& result)
 	{
-		server::net::PeerSessionService peerSessionService;
+		server::service::PeerSessionService peerSessionService;
 		server::protocol::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
 		server::net::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
@@ -355,7 +355,7 @@ namespace
 
 		const TimePoint startTime = Clock::now();
 
-		const server::net::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
+		const server::service::PeerSessionService::JoinResult firstJoinResult = JoinPeerForTest(
 			peerSessionService,
 			firstRemoteAddress,
 			firstAccountId,
@@ -369,7 +369,7 @@ namespace
 			startTime
 		);
 
-		const server::net::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
+		const server::service::PeerSessionService::JoinResult secondJoinResult = JoinPeerForTest(
 			peerSessionService,
 			secondRemoteAddress,
 			secondAccountId,
@@ -383,7 +383,7 @@ namespace
 			startTime + common::time::Milliseconds(1)
 		);
 
-		const server::net::PeerSessionService::RoomChangeResult roomChangeResult = peerSessionService.ChangePeerRoom(
+		const server::service::PeerSessionService::RoomChangeResult roomChangeResult = peerSessionService.ChangePeerRoom(
 			firstEndpointKey,
 			secondRoomId,
 			peerRoomManager,

@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace server::net
+namespace server::service
 {
 	std::optional<common::net::SessionToken> GenerateSessionToken() noexcept
 	{

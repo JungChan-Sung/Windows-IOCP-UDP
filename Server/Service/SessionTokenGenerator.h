@@ -4,7 +4,7 @@
 
 #include <Common/Net/SessionToken.h>
 
-namespace server::net
+namespace server::service
 {
 	[[nodiscard]] std::optional<common::net::SessionToken> GenerateSessionToken() noexcept;
 }

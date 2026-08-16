@@ -4,7 +4,7 @@
 
 #include <Common/Identity/IdentityTypes.h>
 
-namespace server::net
+namespace server::service
 {
 	bool AuthenticatedAccountRegistry::Upsert(const EndpointKey& endpointKey, common::identity::AccountId accountId, common::identity::PersistentPlayerId persistentPlayerId, common::net::SessionToken sessionToken, std::string nickname, TimePoint authenticatedTime)
 	{

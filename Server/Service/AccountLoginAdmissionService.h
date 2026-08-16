@@ -5,10 +5,10 @@
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Net/AuthenticatedAccountRegistry.h>
 #include <Server/Net/PeerRoomManager.h>
+#include <Server/Service/AuthenticatedAccountRegistry.h>
 
-namespace server::net
+namespace server::service
 {
 	class AccountLoginAdmissionService final
 	{
@@ -50,7 +50,7 @@ namespace server::net
 			common::packet::AccountLoginResponsePacket& responsePacket,
 			TimePoint currentTime,
 			AuthenticatedAccountRegistry& authenticatedAccountRegistry,
-			const PeerRoomManager& peerRoomManager
+			const net::PeerRoomManager& peerRoomManager
 		) const;
 	};
 }

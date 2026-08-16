@@ -132,14 +132,8 @@
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\PeerSessionService.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp">
       <Filter>소스 파일\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Server\Net\PlayerCommandService.cpp">
-      <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="Server\UdpPacketDispatcherTests.cpp">
       <Filter>소스 파일\Server</Filter>
@@ -282,20 +276,11 @@
     <ClCompile Include="..\Client\Net\AccountLoginState.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\AuthenticatedAccountRegistry.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\AuthenticatedAccountRegistryTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\AccountLoginAdmissionService.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\AccountLoginAdmissionServiceTests.cpp">
       <Filter>소스 파일\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Server\Net\SessionTokenGenerator.cpp">
-      <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="Persistence\PlayerRepositoryIntegrationTests.cpp">
       <Filter>소스 파일\Persistence</Filter>
@@ -331,6 +316,21 @@
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="..\Server\Protocol\UdpPacketDispatcher.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\AccountLoginAdmissionService.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\AuthenticatedAccountRegistry.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\PeerSessionService.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\PlayerCommandService.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Service\SessionTokenGenerator.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>

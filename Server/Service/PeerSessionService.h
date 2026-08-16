@@ -16,7 +16,7 @@
 #include <Server/Game/GameWorld.h>
 #include <Server/Net/PeerRoomManager.h>
 
-namespace server::net
+namespace server::service
 {
 	class PeerSessionService
 	{
@@ -88,7 +88,7 @@ namespace server::net
 			const EndpointKey& endpointKey,
 			const AuthenticatedIdentity& authenticatedIdentity,
 			RoomId initialRoomId,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,
 			const config::GameRuleConfig& gameRuleConfig,
@@ -97,13 +97,13 @@ namespace server::net
 		) const;
 		[[nodiscard]] LeaveResult LeavePeer(
 			const EndpointKey& endpointKey,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld
 		) const;
 		[[nodiscard]] RoomChangeResult ChangePeerRoom(
 			const EndpointKey& endpointKey,
 			RoomId nextRoomId,
-			PeerRoomManager& peerRoomManager,
+			net::PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,
 			TimePoint currentTime

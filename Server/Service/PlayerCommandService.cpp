@@ -35,9 +35,9 @@ namespace
 	}
 }
 
-namespace server::net
+namespace server::service
 {
-	bool PlayerCommandService::ApplyInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, TimePoint currentTime) const
+	bool PlayerCommandService::ApplyInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet, net::PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, TimePoint currentTime) const
 	{
 		PeerPlayerView peerPlayerView = FindJoinedPeerPlayer(endpointKey, peerRoomManager, gameWorld);
 		if (peerPlayerView.peerState == nullptr || peerPlayerView.playerState == nullptr)
@@ -45,7 +45,7 @@ namespace server::net
 			return false;
 		}
 
-		PeerState& peerState = *peerPlayerView.peerState;
+		net::PeerState& peerState = *peerPlayerView.peerState;
 		game::PlayerState& playerState = *peerPlayerView.playerState;
 
 		if (playerState.isDead)
@@ -67,7 +67,7 @@ namespace server::net
 		return true;
 	}
 
-	bool server::net::PlayerCommandService::FireBullet(const EndpointKey& endpointKey, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
+	bool PlayerCommandService::FireBullet(const EndpointKey& endpointKey, net::PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
 	{
 		PeerPlayerView peerPlayerView = FindJoinedPeerPlayer(endpointKey, peerRoomManager, gameWorld);
 		if (peerPlayerView.peerState == nullptr || peerPlayerView.playerState == nullptr)
@@ -75,7 +75,7 @@ namespace server::net
 			return false;
 		}
 
-		PeerState& peerState = *peerPlayerView.peerState;
+		net::PeerState& peerState = *peerPlayerView.peerState;
 		game::PlayerState& playerState = *peerPlayerView.playerState;
 
 		if (playerState.isDead)
@@ -109,9 +109,9 @@ namespace server::net
 		return true;
 	}
 
-	PlayerCommandService::PeerPlayerView PlayerCommandService::FindJoinedPeerPlayer(const EndpointKey& endpointKey, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
+	PlayerCommandService::PeerPlayerView PlayerCommandService::FindJoinedPeerPlayer(const EndpointKey& endpointKey, net::PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
 	{
-		PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		net::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (peerState == nullptr)
 		{
 			return {};

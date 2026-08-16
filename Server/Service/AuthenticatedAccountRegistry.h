@@ -11,7 +11,7 @@
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
-namespace server::net
+namespace server::service
 {
 	struct AuthenticatedAccount
 	{

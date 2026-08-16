@@ -156,13 +156,8 @@
     <ClCompile Include="Game\GameWorld.cpp" />
     <ClCompile Include="Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="Match\MatchHistoryTaskProcessor.cpp" />
-    <ClCompile Include="Net\AccountLoginAdmissionService.cpp" />
-    <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp" />
     <ClCompile Include="Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="Net\PeerRoomManager.cpp" />
-    <ClCompile Include="Net\PeerSessionService.cpp" />
-    <ClCompile Include="Net\PlayerCommandService.cpp" />
-    <ClCompile Include="Net\SessionTokenGenerator.cpp" />
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
     <ClCompile Include="Net\UdpIocpTransportMetrics.cpp" />
     <ClCompile Include="Net\UdpPacketSender.cpp" />
@@ -173,6 +168,11 @@
     <ClCompile Include="Protocol\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="Protocol\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Service\AccountLoginAdmissionService.cpp" />
+    <ClCompile Include="Service\AuthenticatedAccountRegistry.cpp" />
+    <ClCompile Include="Service\PeerSessionService.cpp" />
+    <ClCompile Include="Service\PlayerCommandService.cpp" />
+    <ClCompile Include="Service\SessionTokenGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Account\AccountLoginTaskProcessor.h" />
@@ -197,14 +197,9 @@
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Match\MatchHistoryTaskProcessor.h" />
-    <ClInclude Include="Net\AccountLoginAdmissionService.h" />
-    <ClInclude Include="Net\AuthenticatedAccountRegistry.h" />
     <ClInclude Include="Net\InvalidPacketLogLimiter.h" />
     <ClInclude Include="Net\PeerRoomManager.h" />
-    <ClInclude Include="Net\PeerSessionService.h" />
     <ClInclude Include="Net\PeerState.h" />
-    <ClInclude Include="Net\PlayerCommandService.h" />
-    <ClInclude Include="Net\SessionTokenGenerator.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />
     <ClInclude Include="Net\UdpIocpTransportMetrics.h" />
     <ClInclude Include="Net\UdpPacketSender.h" />
@@ -215,6 +210,11 @@
     <ClInclude Include="Protocol\SnapshotBroadcastBuilder.h" />
     <ClInclude Include="Protocol\SnapshotBroadcastTask.h" />
     <ClInclude Include="Protocol\UdpPacketDispatcher.h" />
+    <ClInclude Include="Service\AccountLoginAdmissionService.h" />
+    <ClInclude Include="Service\AuthenticatedAccountRegistry.h" />
+    <ClInclude Include="Service\PeerSessionService.h" />
+    <ClInclude Include="Service\PlayerCommandService.h" />
+    <ClInclude Include="Service\SessionTokenGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini" />

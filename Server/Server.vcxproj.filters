@@ -61,6 +61,12 @@
     <Filter Include="소스 파일\Protocol">
       <UniqueIdentifier>{3c8ef35e-1bd1-46d4-bdd6-ff0be13881e7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Service">
+      <UniqueIdentifier>{a16bc4bb-83ed-4f3f-8b85-f1998c6c088e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Service">
+      <UniqueIdentifier>{8d548320-5857-4640-802a-d5fab1f10893}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -76,12 +82,6 @@
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\UdpPacketSender.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\PeerSessionService.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\PlayerCommandService.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\UdpIocpTransport.cpp">
@@ -123,15 +123,6 @@
     <ClCompile Include="Account\AccountLoginTaskProcessor.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
-    <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\AccountLoginAdmissionService.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\SessionTokenGenerator.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Game\MatchHistoryTracker.cpp">
       <Filter>소스 파일\Game</Filter>
     </ClCompile>
@@ -152,6 +143,21 @@
     </ClCompile>
     <ClCompile Include="Protocol\UdpPacketDispatcher.cpp">
       <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\SessionTokenGenerator.cpp">
+      <Filter>소스 파일\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\PlayerCommandService.cpp">
+      <Filter>소스 파일\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\PeerSessionService.cpp">
+      <Filter>소스 파일\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\AuthenticatedAccountRegistry.cpp">
+      <Filter>소스 파일\Service</Filter>
+    </ClCompile>
+    <ClCompile Include="Service\AccountLoginAdmissionService.cpp">
+      <Filter>소스 파일\Service</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -180,12 +186,6 @@
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
     <ClInclude Include="Net\UdpPacketSender.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\PeerSessionService.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\PlayerCommandService.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\UdpIocpTransport.h">
@@ -239,15 +239,6 @@
     <ClInclude Include="Account\AccountLoginTaskProcessor.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
-    <ClInclude Include="Net\AuthenticatedAccountRegistry.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\AccountLoginAdmissionService.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\SessionTokenGenerator.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
     <ClInclude Include="Game\KillEvent.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
@@ -274,6 +265,21 @@
     </ClInclude>
     <ClInclude Include="Protocol\UdpPacketDispatcher.h">
       <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\AccountLoginAdmissionService.h">
+      <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\AuthenticatedAccountRegistry.h">
+      <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\PeerSessionService.h">
+      <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\PlayerCommandService.h">
+      <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Service\SessionTokenGenerator.h">
+      <Filter>헤더 파일\Service</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

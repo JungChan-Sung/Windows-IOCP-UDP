@@ -2,7 +2,7 @@
 
 #include <Common/Packet/Game/GamePacket.h>
 
-namespace server::net
+namespace server::protocol
 {
 	class PacketPayloadValidator
 	{

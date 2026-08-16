@@ -11,7 +11,7 @@
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketHeader.h>
 
-namespace server::net
+namespace server::protocol
 {
 	class UdpPacketDispatcher
 	{

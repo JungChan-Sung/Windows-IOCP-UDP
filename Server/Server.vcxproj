@@ -157,21 +157,21 @@
     <ClCompile Include="Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="Match\MatchHistoryTaskProcessor.cpp" />
     <ClCompile Include="Net\AccountLoginAdmissionService.cpp" />
-    <ClCompile Include="Net\AccountLoginPacketHandler.cpp" />
-    <ClCompile Include="Net\AccountPacketMapper.cpp" />
     <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp" />
     <ClCompile Include="Net\InvalidPacketLogLimiter.cpp" />
-    <ClCompile Include="Net\PacketPayloadValidator.cpp" />
     <ClCompile Include="Net\PeerRoomManager.cpp" />
     <ClCompile Include="Net\PeerSessionService.cpp" />
     <ClCompile Include="Net\PlayerCommandService.cpp" />
     <ClCompile Include="Net\SessionTokenGenerator.cpp" />
-    <ClCompile Include="Net\SnapshotBroadcastBuilder.cpp" />
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
     <ClCompile Include="Net\UdpIocpTransportMetrics.cpp" />
-    <ClCompile Include="Net\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Net\UdpPacketSender.cpp" />
     <ClCompile Include="Net\UdpServer.cpp" />
+    <ClCompile Include="Protocol\AccountLoginPacketHandler.cpp" />
+    <ClCompile Include="Protocol\AccountPacketMapper.cpp" />
+    <ClCompile Include="Protocol\PacketPayloadValidator.cpp" />
+    <ClCompile Include="Protocol\SnapshotBroadcastBuilder.cpp" />
+    <ClCompile Include="Protocol\UdpPacketDispatcher.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -198,23 +198,23 @@
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Match\MatchHistoryTaskProcessor.h" />
     <ClInclude Include="Net\AccountLoginAdmissionService.h" />
-    <ClInclude Include="Net\AccountLoginPacketHandler.h" />
-    <ClInclude Include="Net\AccountPacketMapper.h" />
     <ClInclude Include="Net\AuthenticatedAccountRegistry.h" />
     <ClInclude Include="Net\InvalidPacketLogLimiter.h" />
-    <ClInclude Include="Net\PacketPayloadValidator.h" />
     <ClInclude Include="Net\PeerRoomManager.h" />
     <ClInclude Include="Net\PeerSessionService.h" />
     <ClInclude Include="Net\PeerState.h" />
     <ClInclude Include="Net\PlayerCommandService.h" />
     <ClInclude Include="Net\SessionTokenGenerator.h" />
-    <ClInclude Include="Net\SnapshotBroadcastBuilder.h" />
-    <ClInclude Include="Net\SnapshotBroadcastTask.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />
     <ClInclude Include="Net\UdpIocpTransportMetrics.h" />
-    <ClInclude Include="Net\UdpPacketDispatcher.h" />
     <ClInclude Include="Net\UdpPacketSender.h" />
     <ClInclude Include="Net\UdpServer.h" />
+    <ClInclude Include="Protocol\AccountLoginPacketHandler.h" />
+    <ClInclude Include="Protocol\AccountPacketMapper.h" />
+    <ClInclude Include="Protocol\PacketPayloadValidator.h" />
+    <ClInclude Include="Protocol\SnapshotBroadcastBuilder.h" />
+    <ClInclude Include="Protocol\SnapshotBroadcastTask.h" />
+    <ClInclude Include="Protocol\UdpPacketDispatcher.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini" />

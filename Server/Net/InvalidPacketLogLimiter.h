@@ -7,14 +7,14 @@
 
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Net/UdpPacketDispatcher.h>
+#include <Server/Protocol/UdpPacketDispatcher.h>
 
 namespace server::net
 {
 	class InvalidPacketLogLimiter
 	{
 	public:
-		using DispatchStatus = UdpPacketDispatcher::DispatchStatus;
+		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
 		using Clock = common::time::Clock;
 		using TimePoint = common::time::TimePoint;
 		using Duration = common::time::Duration;

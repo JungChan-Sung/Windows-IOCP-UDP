@@ -3,9 +3,9 @@
 #include <optional>
 #include <utility>
 
-#include <Server/Net/AccountPacketMapper.h>
+#include <Server/Protocol/AccountPacketMapper.h>
 
-namespace server::net
+namespace server::protocol
 {
 	AccountLoginPacketHandler::AccountLoginPacketHandler(account::AccountLoginTaskProcessor& taskProcessor) noexcept
 		: taskProcessor_(taskProcessor)

@@ -6,7 +6,7 @@
 
 #include <Common/Packet/PacketSerialization.h>
 
-namespace server::net
+namespace server::protocol
 {
 	std::size_t UdpPacketDispatcher::PacketTypeHasher::operator()(common::packet::PacketType packetType) const noexcept
 	{

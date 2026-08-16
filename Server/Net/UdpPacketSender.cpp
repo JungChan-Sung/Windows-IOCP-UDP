@@ -170,11 +170,11 @@ namespace server::net
 		return BroadcastSerializedPacket(*this, remoteAddressList, packet);
 	}
 
-	std::size_t UdpPacketSender::SendPlayerSnapshotTasks(std::span<const PlayerSnapshotTask> playerSnapshotTaskList)
+	std::size_t UdpPacketSender::SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList)
 	{
 		std::size_t sentCount = 0;
 
-		for (const PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
+		for (const protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
 		{
 			if (SendSerializedPacket(*this, playerSnapshotTask.remoteAddress, playerSnapshotTask.snapshotPacket))
 			{
@@ -185,11 +185,11 @@ namespace server::net
 		return sentCount;
 	}
 
-	std::size_t UdpPacketSender::SendBulletSnapshotTasks(std::span<const BulletSnapshotTask> bulletSnapshotTaskList)
+	std::size_t UdpPacketSender::SendBulletSnapshotTasks(std::span<const protocol::BulletSnapshotTask> bulletSnapshotTaskList)
 	{
 		std::size_t sentCount = 0;
 
-		for (const BulletSnapshotTask& bulletSnapshotTask : bulletSnapshotTaskList)
+		for (const protocol::BulletSnapshotTask& bulletSnapshotTask : bulletSnapshotTaskList)
 		{
 			sentCount += BroadcastSerializedPacket(
 				*this,
@@ -201,11 +201,11 @@ namespace server::net
 		return sentCount;
 	}
 
-	std::size_t UdpPacketSender::SendImpactEffectTasks(std::span<const ImpactEffectTask> impactEffectTaskList)
+	std::size_t UdpPacketSender::SendImpactEffectTasks(std::span<const protocol::ImpactEffectTask> impactEffectTaskList)
 	{
 		std::size_t sentCount = 0;
 
-		for (const ImpactEffectTask& impactEffectTask : impactEffectTaskList)
+		for (const protocol::ImpactEffectTask& impactEffectTask : impactEffectTaskList)
 		{
 			sentCount += BroadcastSerializedPacket(
 				*this,

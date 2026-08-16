@@ -14,8 +14,8 @@
 #include <Server/Account/AccountService.h>
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Match/MatchHistoryTaskProcessor.h>
-#include <Server/Net/AccountLoginPacketHandler.h>
 #include <Server/Net/UdpServer.h>
+#include <Server/Protocol/AccountLoginPacketHandler.h>
 
 namespace server::app
 {
@@ -40,7 +40,7 @@ namespace server::app
 
 		match::MatchHistoryTaskProcessor matchHistoryTaskProcessor_;
 
-		net::AccountLoginPacketHandler accountLoginPacketHandler_;
+		protocol::AccountLoginPacketHandler accountLoginPacketHandler_;
 		net::UdpServer udpServer_;
 
 	public:

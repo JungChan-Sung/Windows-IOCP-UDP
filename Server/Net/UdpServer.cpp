@@ -25,8 +25,8 @@
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Config/ServerConfigValidator.h>
-#include <Server/Net/AccountLoginPacketHandler.h>
-#include <Server/Net/PacketPayloadValidator.h>
+#include <Server/Protocol/AccountLoginPacketHandler.h>
+#include <Server/Protocol/PacketPayloadValidator.h>
 
 namespace
 {
@@ -38,15 +38,15 @@ namespace
 
 	template <typename TObject>
 	void RegisterAddressOnlyPacketHandler(
-		server::net::UdpPacketDispatcher& packetDispatcher,
+		server::protocol::UdpPacketDispatcher& packetDispatcher,
 		common::packet::PacketType packetType,
 		TObject& object,
 		int expectedPacketSize,
 		AddressOnlyPacketHandler<TObject> handler
 	)
 	{
-		using DispatchStatus = server::net::UdpPacketDispatcher::DispatchStatus;
-		using PacketProcessResult = server::net::UdpPacketDispatcher::PacketProcessResult;
+		using DispatchStatus = server::protocol::UdpPacketDispatcher::DispatchStatus;
+		using PacketProcessResult = server::protocol::UdpPacketDispatcher::PacketProcessResult;
 
 		packetDispatcher.RegisterHandler(
 			packetType,
@@ -61,15 +61,15 @@ namespace
 
 	template <typename TObject, typename TPacket>
 	void RegisterTypedPacketHandler(
-		server::net::UdpPacketDispatcher& packetDispatcher,
+		server::protocol::UdpPacketDispatcher& packetDispatcher,
 		common::packet::PacketType packetType,
 		TObject& object,
 		AddressTypedPacketHandler<TObject, TPacket> handler
 	)
 	{
 		using Packet = std::remove_cvref_t<TPacket>;
-		using DispatchStatus = server::net::UdpPacketDispatcher::DispatchStatus;
-		using PacketProcessResult = server::net::UdpPacketDispatcher::PacketProcessResult;
+		using DispatchStatus = server::protocol::UdpPacketDispatcher::DispatchStatus;
+		using PacketProcessResult = server::protocol::UdpPacketDispatcher::PacketProcessResult;
 
 		packetDispatcher.RegisterHandler(
 			packetType,
@@ -91,7 +91,7 @@ namespace
 
 	template <typename TObject, typename TPacket, typename TValidator>
 	void RegisterTypedPacketHandler(
-		server::net::UdpPacketDispatcher& packetDispatcher,
+		server::protocol::UdpPacketDispatcher& packetDispatcher,
 		common::packet::PacketType packetType,
 		TObject& object,
 		TValidator validator,
@@ -99,9 +99,9 @@ namespace
 	)
 	{
 		using Packet = std::remove_cvref_t<TPacket>;
-		using DispatchStatus = server::net::UdpPacketDispatcher::DispatchStatus;
-		using PacketProcessResult = server::net::UdpPacketDispatcher::PacketProcessResult;
-		using PayloadValidationStatus = server::net::PacketPayloadValidator::PayloadValidationStatus;
+		using DispatchStatus = server::protocol::UdpPacketDispatcher::DispatchStatus;
+		using PacketProcessResult = server::protocol::UdpPacketDispatcher::PacketProcessResult;
+		using PayloadValidationStatus = server::protocol::PacketPayloadValidator::PayloadValidationStatus;
 
 		packetDispatcher.RegisterHandler(
 			packetType,
@@ -244,13 +244,13 @@ namespace server::net
 
 				serverMetricsCollector_.IncrementReceivedPacketCount();
 
-				const UdpPacketDispatcher::DispatchResult dispatchResult = DispatchPacket(
+				const protocol::UdpPacketDispatcher::DispatchResult dispatchResult = DispatchPacket(
 					remoteAddress,
 					packetData,
 					packetSize
 				);
 
-				if (dispatchResult.status != UdpPacketDispatcher::DispatchStatus::Succeeded)
+				if (dispatchResult.status != protocol::UdpPacketDispatcher::DispatchStatus::Succeeded)
 				{
 					serverMetricsCollector_.IncrementInvalidPacketDropCount();
 					LogInvalidPacket(remoteAddress, dispatchResult);
@@ -353,7 +353,7 @@ namespace server::net
 		logger_ = nullptr;
 	}
 
-	void UdpServer::AttachAccountLoginPacketHandler(AccountLoginPacketHandler& accountLoginPacketHandler) noexcept
+	void UdpServer::AttachAccountLoginPacketHandler(protocol::AccountLoginPacketHandler& accountLoginPacketHandler) noexcept
 	{
 		accountLoginPacketHandler_ = &accountLoginPacketHandler;
 	}
@@ -445,7 +445,7 @@ namespace server::net
 			packetDispatcher_,
 			common::packet::PacketType::InputCommand,
 			*this,
-			&PacketPayloadValidator::ValidateInputCommandPacket,
+			&protocol::PacketPayloadValidator::ValidateInputCommandPacket,
 			&UdpServer::HandleInputCommand
 		);
 
@@ -469,12 +469,12 @@ namespace server::net
 			packetDispatcher_,
 			common::packet::PacketType::JoinRoomRequest,
 			*this,
-			&PacketPayloadValidator::ValidateJoinRoomRequestPacket,
+			&protocol::PacketPayloadValidator::ValidateJoinRoomRequestPacket,
 			&UdpServer::HandleJoinRoomRequest
 		);
 	}
 
-	UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
 		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
@@ -485,10 +485,10 @@ namespace server::net
 		return packetDispatcher_.Dispatch(remoteAddress, packetData, packetSize);
 	}
 
-	UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
 	{
-		using DispatchResult = UdpPacketDispatcher::DispatchResult;
-		using DispatchStatus = UdpPacketDispatcher::DispatchStatus;
+		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
+		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
 
 		const std::optional<common::net::ReliableUdpPacketView> packetView = common::net::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
@@ -698,7 +698,7 @@ namespace server::net
 			return;
 		}
 
-		const AccountLoginPacketHandler::EnqueueStatus enqueueStatus = accountLoginPacketHandler_->Enqueue(
+		const protocol::AccountLoginPacketHandler::EnqueueStatus enqueueStatus = accountLoginPacketHandler_->Enqueue(
 			remoteAddress,
 			packet,
 			common::time::Clock::now()
@@ -706,12 +706,12 @@ namespace server::net
 
 		switch (enqueueStatus)
 		{
-		case AccountLoginPacketHandler::EnqueueStatus::Enqueued:
-		case AccountLoginPacketHandler::EnqueueStatus::DuplicatePending:
-		case AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued:
+		case protocol::AccountLoginPacketHandler::EnqueueStatus::Enqueued:
+		case protocol::AccountLoginPacketHandler::EnqueueStatus::DuplicatePending:
+		case protocol::AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued:
 			return;
 
-		case AccountLoginPacketHandler::EnqueueStatus::TaskEnqueueFailed:
+		case protocol::AccountLoginPacketHandler::EnqueueStatus::TaskEnqueueFailed:
 		default:
 			break;
 		}
@@ -1127,10 +1127,10 @@ namespace server::net
 		}
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
-		AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList(currentTime);
-		for (AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
+		protocol::AccountLoginPacketHandler::ResponseTaskList responseTaskList = accountLoginPacketHandler_->ExtractResponseTaskList(currentTime);
+		for (protocol::AccountLoginPacketHandler::ResponseTask& responseTask : responseTaskList)
 		{
-			if (responseTask.taskId != AccountLoginPacketHandler::invalidTaskId)
+			if (responseTask.taskId != protocol::AccountLoginPacketHandler::invalidTaskId)
 			{
 				if (responseTask.isLatestRequest)
 				{
@@ -1191,7 +1191,7 @@ namespace server::net
 
 	void UdpServer::BroadcastPlayerSnapshots()
 	{
-		std::vector<PlayerSnapshotTask> playerSnapshotTaskList;
+		std::vector<protocol::PlayerSnapshotTask> playerSnapshotTaskList;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -1209,7 +1209,7 @@ namespace server::net
 
 	void UdpServer::BroadcastBulletSnapshots()
 	{
-		std::vector<BulletSnapshotTask> bulletSnapshotTaskList;
+		std::vector<protocol::BulletSnapshotTask> bulletSnapshotTaskList;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -1227,7 +1227,7 @@ namespace server::net
 
 	void UdpServer::BroadcastImpactEffects()
 	{
-		std::vector<ImpactEffectTask> impactEffectTaskList;
+		std::vector<protocol::ImpactEffectTask> impactEffectTaskList;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -1400,7 +1400,7 @@ namespace server::net
 		logger_->Error(message);
 	}
 
-	void UdpServer::LogInvalidPacket(const sockaddr_in& remoteAddress, const UdpPacketDispatcher::DispatchResult& dispatchResult)
+	void UdpServer::LogInvalidPacket(const sockaddr_in& remoteAddress, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult)
 	{
 		const InvalidPacketLogLimiter::LogDecision logDecision = invalidPacketLogLimiter_.Record(
 			dispatchResult.status,
@@ -1415,7 +1415,7 @@ namespace server::net
 		std::ostringstream stream;
 		stream << "Invalid UDP packet dropped. "
 			<< "Endpoint=" << FormatEndpoint(remoteAddress)
-			<< ", Reason=" << UdpPacketDispatcher::ToString(dispatchResult.status)
+			<< ", Reason=" << protocol::UdpPacketDispatcher::ToString(dispatchResult.status)
 			<< ", ActualSize=" << dispatchResult.actualPacketSize;
 
 		if (dispatchResult.declaredPacketSize > 0)
@@ -1445,12 +1445,12 @@ namespace server::net
 			stream << ", SuppressedSinceLastLog=" << logDecision.suppressedCount;
 		}
 
-		if (dispatchResult.status == UdpPacketDispatcher::DispatchStatus::InvalidPacketPayload
+		if (dispatchResult.status == protocol::UdpPacketDispatcher::DispatchStatus::InvalidPacketPayload
 			&& dispatchResult.detailCode != 0)
 		{
-			const auto payloadValidationStatus = static_cast<PacketPayloadValidator::PayloadValidationStatus>(dispatchResult.detailCode);
+			const auto payloadValidationStatus = static_cast<protocol::PacketPayloadValidator::PayloadValidationStatus>(dispatchResult.detailCode);
 
-			stream << ", PayloadReason=" << PacketPayloadValidator::ToString(payloadValidationStatus);
+			stream << ", PayloadReason=" << protocol::PacketPayloadValidator::ToString(payloadValidationStatus);
 		}
 
 		LogWarning(stream.str());

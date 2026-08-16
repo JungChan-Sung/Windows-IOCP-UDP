@@ -4,7 +4,7 @@
 
 #include <Server/Account/AccountService.h>
 
-namespace server::net
+namespace server::protocol
 {
 	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(
 		common::packet::AccountLoginRequestId requestId, 

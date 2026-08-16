@@ -3,7 +3,7 @@
 #include <utility>
 #include <variant>
 
-namespace server::net
+namespace server::protocol
 {
 	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(common::packet::AccountLoginRequestId requestId, account::LoginAccountResult loginResult)
 	{

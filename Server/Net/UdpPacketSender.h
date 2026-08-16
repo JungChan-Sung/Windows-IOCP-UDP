@@ -8,7 +8,7 @@
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Fault/UdpFaultSimulator.h>
 
-#include <Server/Net/SnapshotBroadcastTask.h>
+#include <Server/Protocol/SnapshotBroadcastTask.h>
 
 namespace common::packet
 {
@@ -52,9 +52,9 @@ namespace server::net
 		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId, float x, float y);
 		[[nodiscard]] std::size_t BroadcastPlayerLeft(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId);
 
-		[[nodiscard]] std::size_t SendPlayerSnapshotTasks(std::span<const PlayerSnapshotTask> playerSnapshotTaskList);
-		[[nodiscard]] std::size_t SendBulletSnapshotTasks(std::span<const BulletSnapshotTask> bulletSnapshotTaskList);
-		[[nodiscard]] std::size_t SendImpactEffectTasks(std::span<const ImpactEffectTask> impactEffectTaskList);
+		[[nodiscard]] std::size_t SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList);
+		[[nodiscard]] std::size_t SendBulletSnapshotTasks(std::span<const protocol::BulletSnapshotTask> bulletSnapshotTaskList);
+		[[nodiscard]] std::size_t SendImpactEffectTasks(std::span<const protocol::ImpactEffectTask> impactEffectTaskList);
 
 		void SetFaultSimulationConfig(const common::net::UdpFaultSimulationConfig& config);
 		void ResetFaultSimulation();

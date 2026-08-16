@@ -6,7 +6,7 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Packet/Game/GamePacket.h>
 
-#include <Server/Net/PacketPayloadValidator.h>
+#include <Server/Protocol/PacketPayloadValidator.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -18,11 +18,14 @@ namespace
 		packet.inputSequence = 1;
 		packet.inputFlags = common::game::InputFlags::Up | common::game::InputFlags::Right;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateInputCommandPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateInputCommandPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
-			"PacketPayloadValidator: valid input command succeeds");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
+			"PacketPayloadValidator: valid input command succeeds"
+		);
 	}
 
 	void RunValidateInputCommandInvalidSequenceTest(tests::DebugTestResult& result)
@@ -31,11 +34,14 @@ namespace
 		packet.inputSequence = 0;
 		packet.inputFlags = common::game::InputFlags::Up;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateInputCommandPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateInputCommandPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::InvalidInputSequence,
-			"PacketPayloadValidator: input sequence zero rejected");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::InvalidInputSequence,
+			"PacketPayloadValidator: input sequence zero rejected"
+		);
 	}
 
 	void RunValidateInputCommandInvalidFlagsTest(tests::DebugTestResult& result)
@@ -44,11 +50,14 @@ namespace
 		packet.inputSequence = 1;
 		packet.inputFlags = static_cast<common::game::InputFlags>(0x80);
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateInputCommandPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateInputCommandPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::InvalidInputFlags,
-			"PacketPayloadValidator: invalid input flags rejected");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::InvalidInputFlags,
+			"PacketPayloadValidator: invalid input flags rejected"
+		);
 	}
 
 	void RunValidateInputCommandNoneFlagsAllowedTest(tests::DebugTestResult& result)
@@ -57,11 +66,14 @@ namespace
 		packet.inputSequence = 1;
 		packet.inputFlags = common::game::InputFlags::None;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateInputCommandPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateInputCommandPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
-			"PacketPayloadValidator: none input flags allowed");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
+			"PacketPayloadValidator: none input flags allowed"
+		);
 	}
 
 	void RunValidateJoinRoomRequestSucceededTest(tests::DebugTestResult& result)
@@ -69,11 +81,14 @@ namespace
 		common::packet::JoinRoomRequestPacket packet{};
 		packet.roomId = 1;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
-			"PacketPayloadValidator: valid room id succeeds");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::Succeeded,
+			"PacketPayloadValidator: valid room id succeeds"
+		);
 	}
 
 	void RunValidateJoinRoomRequestZeroRoomRejectedTest(tests::DebugTestResult& result)
@@ -81,11 +96,14 @@ namespace
 		common::packet::JoinRoomRequestPacket packet{};
 		packet.roomId = 0;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::InvalidRoomId,
-			"PacketPayloadValidator: zero room id rejected");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::InvalidRoomId,
+			"PacketPayloadValidator: zero room id rejected"
+		);
 	}
 
 	void RunValidateJoinRoomRequestNegativeRoomRejectedTest(tests::DebugTestResult& result)
@@ -93,34 +111,57 @@ namespace
 		common::packet::JoinRoomRequestPacket packet{};
 		packet.roomId = -1;
 
-		const server::net::PacketPayloadValidator::PayloadValidationStatus status
-			= server::net::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
+		const server::protocol::PacketPayloadValidator::PayloadValidationStatus status
+			= server::protocol::PacketPayloadValidator::ValidateJoinRoomRequestPacket(packet);
 
-		tests::Expect(result, status == server::net::PacketPayloadValidator::PayloadValidationStatus::InvalidRoomId,
-			"PacketPayloadValidator: negative room id rejected");
+		tests::Expect(
+			result,
+			status == server::protocol::PacketPayloadValidator::PayloadValidationStatus::InvalidRoomId,
+			"PacketPayloadValidator: negative room id rejected"
+		);
 	}
 
 	void RunToStringTest(tests::DebugTestResult& result)
 	{
-		using Status = server::net::PacketPayloadValidator::PayloadValidationStatus;
-
-		tests::Expect(result, std::string_view(server::net::PacketPayloadValidator::ToString(Status::Succeeded)) == "Succeeded",
-			"PacketPayloadValidator: ToString Succeeded");
-		tests::Expect(result,
-			std::string_view(server::net::PacketPayloadValidator::ToString(Status::InvalidInputSequence)) == "InvalidInputSequence",
-			"PacketPayloadValidator: ToString InvalidInputSequence");
-		tests::Expect(result,
-			std::string_view(server::net::PacketPayloadValidator::ToString(Status::InvalidInputFlags)) == "InvalidInputFlags",
-			"PacketPayloadValidator: ToString InvalidInputFlags");
-		tests::Expect(result,
-			std::string_view(server::net::PacketPayloadValidator::ToString(Status::InvalidRoomId)) == "InvalidRoomId",
-			"PacketPayloadValidator: ToString InvalidRoomId");
+		using Status = server::protocol::PacketPayloadValidator::PayloadValidationStatus;
 
 		tests::Expect(
 			result,
 			std::string_view(
-				server::net::PacketPayloadValidator::ToString(
-					static_cast<server::net::PacketPayloadValidator::PayloadValidationStatus>(999)
+				server::protocol::PacketPayloadValidator::ToString(Status::Succeeded)
+			) == "Succeeded",
+			"PacketPayloadValidator: ToString Succeeded"
+		);
+
+		tests::Expect(
+			result,
+			std::string_view(
+				server::protocol::PacketPayloadValidator::ToString(Status::InvalidInputSequence)
+			) == "InvalidInputSequence",
+			"PacketPayloadValidator: ToString InvalidInputSequence"
+		);
+
+		tests::Expect(
+			result,
+			std::string_view(
+				server::protocol::PacketPayloadValidator::ToString(Status::InvalidInputFlags)
+			) == "InvalidInputFlags",
+			"PacketPayloadValidator: ToString InvalidInputFlags"
+		);
+
+		tests::Expect(
+			result,
+			std::string_view(
+				server::protocol::PacketPayloadValidator::ToString(Status::InvalidRoomId)
+			) == "InvalidRoomId",
+			"PacketPayloadValidator: ToString InvalidRoomId"
+		);
+
+		tests::Expect(
+			result,
+			std::string_view(
+				server::protocol::PacketPayloadValidator::ToString(
+					static_cast<server::protocol::PacketPayloadValidator::PayloadValidationStatus>(999)
 				)
 			) == "Unknown",
 			"PacketPayloadValidator: ToString Unknown"

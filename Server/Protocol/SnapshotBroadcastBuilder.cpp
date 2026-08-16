@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace server::net
+namespace server::protocol
 {
 	std::vector<PlayerSnapshotTask> SnapshotBroadcastBuilder::BuildPlayerSnapshotTasks(
 		const RoomTable& roomTable,
@@ -35,7 +35,7 @@ namespace server::net
 					continue;
 				}
 
-				const PeerState& peerState = peerIterator->second;
+				const net::PeerState& peerState = peerIterator->second;
 				if (!peerState.isJoined)
 				{
 					continue;
@@ -195,7 +195,7 @@ namespace server::net
 				continue;
 			}
 
-			const PeerState& peerState = peerIterator->second;
+			const net::PeerState& peerState = peerIterator->second;
 			if (!peerState.isJoined)
 			{
 				continue;

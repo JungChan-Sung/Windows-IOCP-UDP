@@ -55,6 +55,12 @@
     <Filter Include="소스 파일\Match">
       <UniqueIdentifier>{9b009059-403c-4f41-8064-d9b537e4b3a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Protocol">
+      <UniqueIdentifier>{d9739478-510b-46c1-b862-e447204e548e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Protocol">
+      <UniqueIdentifier>{3c8ef35e-1bd1-46d4-bdd6-ff0be13881e7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -65,12 +71,6 @@
     </ClCompile>
     <ClCompile Include="App\GameServerApp.cpp">
       <Filter>소스 파일\App</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\UdpPacketDispatcher.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\SnapshotBroadcastBuilder.cpp">
-      <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\PeerRoomManager.cpp">
       <Filter>소스 파일\Net</Filter>
@@ -102,9 +102,6 @@
     <ClCompile Include="Diagnostics\ServerStatusReporter.cpp">
       <Filter>소스 파일\Diagnostics</Filter>
     </ClCompile>
-    <ClCompile Include="Net\PacketPayloadValidator.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Game\GameSimulation.cpp">
       <Filter>소스 파일\Game</Filter>
     </ClCompile>
@@ -123,14 +120,8 @@
     <ClCompile Include="Account\PasswordHashVerifier.cpp">
       <Filter>소스 파일\Account</Filter>
     </ClCompile>
-    <ClCompile Include="Net\AccountPacketMapper.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Account\AccountLoginTaskProcessor.cpp">
       <Filter>소스 파일\Account</Filter>
-    </ClCompile>
-    <ClCompile Include="Net\AccountLoginPacketHandler.cpp">
-      <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\AuthenticatedAccountRegistry.cpp">
       <Filter>소스 파일\Net</Filter>
@@ -147,6 +138,21 @@
     <ClCompile Include="Match\MatchHistoryTaskProcessor.cpp">
       <Filter>소스 파일\Match</Filter>
     </ClCompile>
+    <ClCompile Include="Protocol\AccountLoginPacketHandler.cpp">
+      <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\AccountPacketMapper.cpp">
+      <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\PacketPayloadValidator.cpp">
+      <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\SnapshotBroadcastBuilder.cpp">
+      <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\UdpPacketDispatcher.cpp">
+      <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -161,17 +167,11 @@
     <ClInclude Include="App\GameServerApp.h">
       <Filter>헤더 파일\App</Filter>
     </ClInclude>
-    <ClInclude Include="Net\UdpPacketDispatcher.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
     <ClInclude Include="Game\BulletState.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
     <ClInclude Include="Game\ImpactEffectState.h">
       <Filter>헤더 파일\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\SnapshotBroadcastBuilder.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\PeerRoomManager.h">
       <Filter>헤더 파일\Net</Filter>
@@ -186,9 +186,6 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\PlayerCommandService.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\SnapshotBroadcastTask.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\UdpIocpTransport.h">
@@ -218,9 +215,6 @@
     <ClInclude Include="Diagnostics\ServerStatusReporter.h">
       <Filter>헤더 파일\Diagnostics</Filter>
     </ClInclude>
-    <ClInclude Include="Net\PacketPayloadValidator.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
     <ClInclude Include="Game\GameSimulation.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
@@ -242,14 +236,8 @@
     <ClInclude Include="Account\PasswordHashVerifier.h">
       <Filter>헤더 파일\Account</Filter>
     </ClInclude>
-    <ClInclude Include="Net\AccountPacketMapper.h">
-      <Filter>헤더 파일\Net</Filter>
-    </ClInclude>
     <ClInclude Include="Account\AccountLoginTaskProcessor.h">
       <Filter>헤더 파일\Account</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\AccountLoginPacketHandler.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\AuthenticatedAccountRegistry.h">
       <Filter>헤더 파일\Net</Filter>
@@ -268,6 +256,24 @@
     </ClInclude>
     <ClInclude Include="Match\MatchHistoryTaskProcessor.h">
       <Filter>헤더 파일\Match</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\AccountLoginPacketHandler.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\AccountPacketMapper.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\PacketPayloadValidator.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\SnapshotBroadcastBuilder.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\SnapshotBroadcastTask.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\UdpPacketDispatcher.h">
+      <Filter>헤더 파일\Protocol</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

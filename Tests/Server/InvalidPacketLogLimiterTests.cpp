@@ -4,13 +4,13 @@
 #include <cstdint>
 
 #include <Server/Net/InvalidPacketLogLimiter.h>
-#include <Server/Net/UdpPacketDispatcher.h>
+#include <Server/Protocol/UdpPacketDispatcher.h>
 
 #include <Tests/DebugTestResult.h>
 
 namespace
 {
-	using DispatchStatus = server::net::UdpPacketDispatcher::DispatchStatus;
+	using DispatchStatus = server::protocol::UdpPacketDispatcher::DispatchStatus;
 	using Clock = server::net::InvalidPacketLogLimiter::Clock;
 	using TimePoint = server::net::InvalidPacketLogLimiter::TimePoint;
 
@@ -18,7 +18,11 @@ namespace
 	{
 		server::net::InvalidPacketLogLimiter logLimiter;
 
-		tests::Expect(result, logLimiter.GetTotalDroppedCount() == 0, "InvalidPacketLogLimiter: initial total dropped count");
+		tests::Expect(
+			result,
+			logLimiter.GetTotalDroppedCount() == 0,
+			"InvalidPacketLogLimiter: initial total dropped count"
+		);
 	}
 
 	void RunSucceededStatusIgnoredTest(tests::DebugTestResult& result)
@@ -56,8 +60,10 @@ namespace
 
 		const server::net::InvalidPacketLogLimiter::LogDecision firstDecision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
+
 		const server::net::InvalidPacketLogLimiter::LogDecision secondDecision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
+
 		const server::net::InvalidPacketLogLimiter::LogDecision thirdDecision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
 
@@ -82,6 +88,7 @@ namespace
 
 		const server::net::InvalidPacketLogLimiter::LogDecision fourthDecision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
+
 		const server::net::InvalidPacketLogLimiter::LogDecision fifthDecision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
 
@@ -106,7 +113,10 @@ namespace
 		logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
 
 		const server::net::InvalidPacketLogLimiter::LogDecision intervalDecision =
-			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now + std::chrono::seconds(5));
+			logLimiter.Record(
+				DispatchStatus::InvalidPacketHeader,
+				now + std::chrono::seconds(5)
+			);
 
 		tests::Expect(result, intervalDecision.shouldLog, "InvalidPacketLogLimiter: interval invalid packet logs");
 		tests::Expect(result, intervalDecision.totalCount == 6, "InvalidPacketLogLimiter: interval total count");
@@ -114,7 +124,10 @@ namespace
 		tests::Expect(result, logLimiter.GetTotalDroppedCount() == 6, "InvalidPacketLogLimiter: interval total dropped count");
 
 		const server::net::InvalidPacketLogLimiter::LogDecision nextDecision =
-			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now + std::chrono::seconds(5));
+			logLimiter.Record(
+				DispatchStatus::InvalidPacketHeader,
+				now + std::chrono::seconds(5)
+			);
 
 		tests::Expect(result, !nextDecision.shouldLog, "InvalidPacketLogLimiter: next packet after interval is suppressed again");
 		tests::Expect(result, nextDecision.suppressedCount == 1, "InvalidPacketLogLimiter: suppressed count reset after interval log");
@@ -147,11 +160,19 @@ namespace
 		logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);
 		logLimiter.Record(DispatchStatus::InvalidPacketPayload, now);
 
-		tests::Expect(result, logLimiter.GetTotalDroppedCount() == 2, "InvalidPacketLogLimiter: total dropped count before reset");
+		tests::Expect(
+			result,
+			logLimiter.GetTotalDroppedCount() == 2,
+			"InvalidPacketLogLimiter: total dropped count before reset"
+		);
 
 		logLimiter.Reset();
 
-		tests::Expect(result, logLimiter.GetTotalDroppedCount() == 0, "InvalidPacketLogLimiter: total dropped count after reset");
+		tests::Expect(
+			result,
+			logLimiter.GetTotalDroppedCount() == 0,
+			"InvalidPacketLogLimiter: total dropped count after reset"
+		);
 
 		const server::net::InvalidPacketLogLimiter::LogDecision decision =
 			logLimiter.Record(DispatchStatus::InvalidPacketHeader, now);

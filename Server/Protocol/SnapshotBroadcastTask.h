@@ -6,7 +6,7 @@
 
 #include <Common/Packet/Game/GamePacket.h>
 
-namespace server::net
+namespace server::protocol
 {
 	using RemoteAddressList = std::vector<sockaddr_in>;
 

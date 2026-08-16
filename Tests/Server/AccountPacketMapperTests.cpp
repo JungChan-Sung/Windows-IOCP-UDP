@@ -11,7 +11,7 @@
 #include <Persistence/Core/DatabaseError.h>
 
 #include <Server/Account/AccountService.h>
-#include <Server/Net/AccountPacketMapper.h>
+#include <Server/Protocol/AccountPacketMapper.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -65,7 +65,7 @@ namespace tests::server
 			};
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::net::BuildAccountLoginResponse(
+				= ::server::protocol::BuildAccountLoginResponse(
 					requestId,
 					std::move(loginResult)
 				);
@@ -113,7 +113,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::net::BuildAccountLoginResponse(
+				= ::server::protocol::BuildAccountLoginResponse(
 					requestId,
 					std::move(loginResult)
 				);
@@ -135,7 +135,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::net::BuildAccountLoginResponse(
+				= ::server::protocol::BuildAccountLoginResponse(
 					requestId,
 					std::move(loginResult)
 				);
@@ -160,7 +160,7 @@ namespace tests::server
 			);
 
 			const common::packet::AccountLoginResponsePacket response
-				= ::server::net::BuildAccountLoginResponse(
+				= ::server::protocol::BuildAccountLoginResponse(
 					requestId,
 					std::move(loginResult)
 				);

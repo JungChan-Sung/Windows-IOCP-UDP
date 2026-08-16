@@ -21,7 +21,7 @@ namespace
 	}
 }
 
-namespace server::net
+namespace server::protocol
 {
 	PacketPayloadValidator::PayloadValidationStatus PacketPayloadValidator::ValidateInputCommandPacket(const common::packet::InputCommandPacket& packet) noexcept
 	{

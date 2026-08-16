@@ -13,9 +13,9 @@
 
 #include <Server/Game/GameWorld.h>
 #include <Server/Net/PeerState.h>
-#include <Server/Net/SnapshotBroadcastTask.h>
+#include <Server/Protocol/SnapshotBroadcastTask.h>
 
-namespace server::net
+namespace server::protocol
 {
 	class SnapshotBroadcastBuilder
 	{
@@ -26,7 +26,7 @@ namespace server::net
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
 
-		using PeerTable = std::unordered_map<EndpointKey, PeerState, common::net::EndpointKeyHasher>;
+		using PeerTable = std::unordered_map<EndpointKey, net::PeerState, common::net::EndpointKeyHasher>;
 		using RoomMemberSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
 		using RoomTable = std::unordered_map<RoomId, RoomMemberSet>;
 

@@ -29,10 +29,10 @@
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/PeerSessionService.h>
 #include <Server/Net/PlayerCommandService.h>
-#include <Server/Net/SnapshotBroadcastBuilder.h>
 #include <Server/Net/UdpIocpTransport.h>
-#include <Server/Net/UdpPacketDispatcher.h>
 #include <Server/Net/UdpPacketSender.h>
+#include <Server/Protocol/SnapshotBroadcastBuilder.h>
+#include <Server/Protocol/UdpPacketDispatcher.h>
 
 namespace common::log
 {
@@ -47,9 +47,13 @@ namespace common::packet
 	struct JoinRoomRequestPacket;
 }
 
-namespace server::net
+namespace server::protocol
 {
 	class AccountLoginPacketHandler;
+}
+
+namespace server::net
+{
 
 	class UdpServer
 	{
@@ -75,9 +79,11 @@ namespace server::net
 
 		mutable std::mutex stateMutex_;
 
-		UdpPacketDispatcher packetDispatcher_;
+		protocol::UdpPacketDispatcher packetDispatcher_;
+		protocol::SnapshotBroadcastBuilder snapshotBroadcastBuilder_;
+		protocol::AccountLoginPacketHandler* accountLoginPacketHandler_ = nullptr;
+
 		UdpPacketSender packetSender_;
-		SnapshotBroadcastBuilder snapshotBroadcastBuilder_;
 		InvalidPacketLogLimiter invalidPacketLogLimiter_;
 		diagnostics::ServerMetricsCollector serverMetricsCollector_;
 		diagnostics::ServerStatusReporter serverStatusReporter_;
@@ -93,7 +99,6 @@ namespace server::net
 		PlayerCommandService playerCommandService_;
 
 		common::log::ILogger* logger_ = nullptr;
-		AccountLoginPacketHandler* accountLoginPacketHandler_ = nullptr;
 
 		config::ServerConfig config_{};
 
@@ -121,7 +126,7 @@ namespace server::net
 		void AttachLogger(common::log::ILogger& logger) noexcept;
 		void DetachLogger() noexcept;
 
-		void AttachAccountLoginPacketHandler(AccountLoginPacketHandler& accountLoginPacketHandler) noexcept;
+		void AttachAccountLoginPacketHandler(protocol::AccountLoginPacketHandler& accountLoginPacketHandler) noexcept;
 		void DetachAccountLoginPacketHandler() noexcept;
 
 		[[nodiscard]] game::CompletedMatchList ExtractCompletedMatches();
@@ -130,8 +135,8 @@ namespace server::net
 		void UpdateGameTick();
 
 		void RegisterPacketHandlers();
-		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
-		[[nodiscard]] UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
+		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
+		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
 
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableGamePacket(
 			PeerState& peerState,
@@ -173,7 +178,7 @@ namespace server::net
 		void LogInfo(std::string_view message) const;
 		void LogWarning(std::string_view message) const;
 		void LogError(std::string_view message) const;
-		void LogInvalidPacket(const sockaddr_in& remoteAddress, const UdpPacketDispatcher::DispatchResult& dispatchResult);
+		void LogInvalidPacket(const sockaddr_in& remoteAddress, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult);
 		void LogServerStatusIfDue();
 
 		[[nodiscard]] diagnostics::ServerStatusSnapshot BuildServerStatusSnapshot() const;

@@ -21,8 +21,8 @@
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/PeerSessionService.h>
 #include <Server/Net/PlayerCommandService.h>
-#include <Server/Net/SnapshotBroadcastBuilder.h>
-#include <Server/Net/SnapshotBroadcastTask.h>
+#include <Server/Protocol/SnapshotBroadcastBuilder.h>
+#include <Server/Protocol/SnapshotBroadcastTask.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -79,7 +79,7 @@ namespace
 		return nullptr;
 	}
 
-	[[nodiscard]] bool ContainsRemoteAddress(const server::net::RemoteAddressList& remoteAddressList, const sockaddr_in& remoteAddress)
+	[[nodiscard]] bool ContainsRemoteAddress(const server::protocol::RemoteAddressList& remoteAddressList, const sockaddr_in& remoteAddress)
 	{
 		for (const sockaddr_in& currentRemoteAddress : remoteAddressList)
 		{
@@ -138,7 +138,7 @@ namespace
 	{
 		server::net::PeerSessionService peerSessionService;
 		server::net::PlayerCommandService playerCommandService;
-		server::net::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
+		server::protocol::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
 		server::net::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
@@ -251,13 +251,13 @@ namespace
 				"IntegrationSmoke: fire cooldown set");
 		}
 
-		const std::vector<server::net::PlayerSnapshotTask> playerSnapshotTaskList = snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
+		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList = snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
 			peerRoomManager.GetRoomTable(),
 			peerRoomManager.GetPeerTable(),
 			gameWorld
 		);
 
-		const std::vector<server::net::BulletSnapshotTask> bulletSnapshotTaskList = snapshotBroadcastBuilder.BuildBulletSnapshotTasks(
+		const std::vector<server::protocol::BulletSnapshotTask> bulletSnapshotTaskList = snapshotBroadcastBuilder.BuildBulletSnapshotTasks(
 			peerRoomManager.GetRoomTable(),
 			peerRoomManager.GetPeerTable(),
 			gameWorld
@@ -269,7 +269,7 @@ namespace
 		bool firstPlayerSnapshotFound = false;
 		bool secondPlayerSnapshotFound = false;
 
-		for (const server::net::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
+		for (const server::protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
 		{
 			const common::packet::PlayerSnapshotPacket& packet = playerSnapshotTask.snapshotPacket;
 
@@ -304,7 +304,7 @@ namespace
 
 		if (!bulletSnapshotTaskList.empty())
 		{
-			const server::net::BulletSnapshotTask& bulletSnapshotTask = bulletSnapshotTaskList.front();
+			const server::protocol::BulletSnapshotTask& bulletSnapshotTask = bulletSnapshotTaskList.front();
 			const common::packet::BulletSnapshotPacket& packet = bulletSnapshotTask.snapshotPacket;
 
 			tests::Expect(result, packet.serverTick == gameWorld.GetServerTick(), "IntegrationSmoke: bullet snapshot tick");
@@ -335,7 +335,7 @@ namespace
 	void RunRoomChangeSnapshotSmokeTest(tests::DebugTestResult& result)
 	{
 		server::net::PeerSessionService peerSessionService;
-		server::net::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
+		server::protocol::SnapshotBroadcastBuilder snapshotBroadcastBuilder;
 		server::net::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
@@ -411,7 +411,7 @@ namespace
 			"IntegrationSmoke: room change preserves persistent identity"
 		);
 
-		const std::vector<server::net::PlayerSnapshotTask> playerSnapshotTaskList = snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
+		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList = snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
 			peerRoomManager.GetRoomTable(),
 			peerRoomManager.GetPeerTable(),
 			gameWorld
@@ -419,7 +419,7 @@ namespace
 
 		tests::Expect(result, playerSnapshotTaskList.size() == 2, "IntegrationSmoke: room split player snapshot task count");
 
-		for (const server::net::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
+		for (const server::protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
 		{
 			const common::packet::PlayerSnapshotPacket& packet = playerSnapshotTask.snapshotPacket;
 

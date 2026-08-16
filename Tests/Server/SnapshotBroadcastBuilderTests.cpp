@@ -15,8 +15,8 @@
 #include <Server/Game/ImpactEffectState.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Net/PeerState.h>
-#include <Server/Net/SnapshotBroadcastBuilder.h>
-#include <Server/Net/SnapshotBroadcastTask.h>
+#include <Server/Protocol/SnapshotBroadcastBuilder.h>
+#include <Server/Protocol/SnapshotBroadcastTask.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -24,11 +24,19 @@ namespace
 {
 	using EndpointKey = common::net::EndpointKey;
 	using EndpointKeyList = std::vector<EndpointKey>;
-	using PeerTable = server::net::SnapshotBroadcastBuilder::PeerTable;
-	using RoomTable = server::net::SnapshotBroadcastBuilder::RoomTable;
-	using RoomMemberSet = server::net::SnapshotBroadcastBuilder::RoomMemberSet;
 
-	[[nodiscard]] EndpointKey MakeEndpointKey(std::uint32_t index) noexcept
+	using PeerTable =
+		server::protocol::SnapshotBroadcastBuilder::PeerTable;
+
+	using RoomTable =
+		server::protocol::SnapshotBroadcastBuilder::RoomTable;
+
+	using RoomMemberSet =
+		server::protocol::SnapshotBroadcastBuilder::RoomMemberSet;
+
+	[[nodiscard]] EndpointKey MakeEndpointKey(
+		std::uint32_t index
+	) noexcept
 	{
 		EndpointKey endpointKey{};
 		endpointKey.address = 0x7F000001 + index;
@@ -36,7 +44,9 @@ namespace
 		return endpointKey;
 	}
 
-	[[nodiscard]] sockaddr_in MakeRemoteAddress(const EndpointKey& endpointKey) noexcept
+	[[nodiscard]] sockaddr_in MakeRemoteAddress(
+		const EndpointKey& endpointKey
+	) noexcept
 	{
 		sockaddr_in remoteAddress{};
 		remoteAddress.sin_family = AF_INET;
@@ -45,27 +55,37 @@ namespace
 		return remoteAddress;
 	}
 
-	[[nodiscard]] bool IsSameRemoteAddress(const sockaddr_in& lhs, const sockaddr_in& rhs) noexcept
+	[[nodiscard]] bool IsSameRemoteAddress(
+		const sockaddr_in& lhs,
+		const sockaddr_in& rhs
+	) noexcept
 	{
 		return lhs.sin_family == rhs.sin_family
 			&& lhs.sin_addr.S_un.S_addr == rhs.sin_addr.S_un.S_addr
 			&& lhs.sin_port == rhs.sin_port;
 	}
 
-	[[nodiscard]] bool ContainsRemoteAddress(const server::net::RemoteAddressList& remoteAddressList, const sockaddr_in& remoteAddress)
+	[[nodiscard]] bool ContainsRemoteAddress(
+		const server::protocol::RemoteAddressList& remoteAddressList,
+		const sockaddr_in& remoteAddress
+	)
 	{
 		const auto remoteAddressIterator = std::ranges::find_if(
 			remoteAddressList,
 			[&remoteAddress](const sockaddr_in& currentRemoteAddress)
 			{
-				return IsSameRemoteAddress(currentRemoteAddress, remoteAddress);
+				return IsSameRemoteAddress(
+					currentRemoteAddress,
+					remoteAddress
+				);
 			}
 		);
 
 		return remoteAddressIterator != remoteAddressList.end();
 	}
 
-	[[nodiscard]] const common::packet::PlayerStateData* FindPlayerStateData(
+	[[nodiscard]]
+	const common::packet::PlayerStateData* FindPlayerStateData(
 		const common::packet::PlayerSnapshotPacket& packet,
 		common::game::PlayerId playerId
 	) noexcept
@@ -81,7 +101,8 @@ namespace
 		return nullptr;
 	}
 
-	[[nodiscard]] const common::packet::BulletStateData* FindBulletStateData(
+	[[nodiscard]]
+	const common::packet::BulletStateData* FindBulletStateData(
 		const common::packet::BulletSnapshotPacket& packet,
 		common::game::BulletId bulletId
 	) noexcept
@@ -97,7 +118,11 @@ namespace
 		return nullptr;
 	}
 
-	void AddRoomMember(RoomTable& roomTable, common::game::RoomId roomId, const EndpointKey& endpointKey)
+	void AddRoomMember(
+		RoomTable& roomTable,
+		common::game::RoomId roomId,
+		const EndpointKey& endpointKey
+	)
 	{
 		roomTable[roomId].insert(endpointKey);
 	}
@@ -111,8 +136,11 @@ namespace
 		std::uint32_t lastInputSequence
 	)
 	{
-		auto [peerIterator, _] = peerTable.try_emplace(endpointKey);
-		server::net::PeerState& peerState = peerIterator->second;
+		auto [peerIterator, _] =
+			peerTable.try_emplace(endpointKey);
+
+		server::net::PeerState& peerState =
+			peerIterator->second;
 
 		peerState.remoteAddress = MakeRemoteAddress(endpointKey);
 		peerState.endpointKey = endpointKey;
@@ -139,7 +167,8 @@ namespace
 		playerState.isDead = isDead;
 		playerState.killCount = playerId * 10;
 		playerState.deathCount = playerId;
-		playerState.respawnRemainingSeconds = isDead ? 2.0F : 0.0F;
+		playerState.respawnRemainingSeconds =
+			isDead ? 2.0F : 0.0F;
 		playerState.invincibilityRemainingSeconds = 1.0F;
 		playerState.hitFlashRemainingSeconds = 0.25F;
 
@@ -180,7 +209,10 @@ namespace
 		gameWorld.AddPendingImpactEffect(impactEffectState);
 	}
 
-	void AdvanceServerTick(server::game::GameWorld& gameWorld, std::uint32_t tickCount)
+	void AdvanceServerTick(
+		server::game::GameWorld& gameWorld,
+		std::uint32_t tickCount
+	)
 	{
 		for (std::uint32_t tick = 0; tick < tickCount; ++tick)
 		{
@@ -188,9 +220,11 @@ namespace
 		}
 	}
 
-	void RunBuildPlayerSnapshotTasksTest(tests::DebugTestResult& result)
+	void RunBuildPlayerSnapshotTasksTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
@@ -215,25 +249,36 @@ namespace
 		AddPlayer(gameWorld, 102, 30.0F, 40.0F, 0, true);
 		AddPlayer(gameWorld, 103, 50.0F, 60.0F, 3, false);
 
-		const std::vector<server::net::PlayerSnapshotTask> taskList = builder.BuildPlayerSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
+		const std::vector<server::protocol::PlayerSnapshotTask> taskList =
+			builder.BuildPlayerSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
+
+		tests::Expect(
+			result,
+			taskList.size() == 2,
+			"SnapshotBroadcastBuilder: player task count"
 		);
 
-		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: player task count");
-
-		for (const server::net::PlayerSnapshotTask& task : taskList)
+		for (const server::protocol::PlayerSnapshotTask& task : taskList)
 		{
-			const common::packet::PlayerSnapshotPacket& packet = task.snapshotPacket;
+			const common::packet::PlayerSnapshotPacket& packet =
+				task.snapshotPacket;
 
 			tests::Expect(result, packet.serverTick == 10, "SnapshotBroadcastBuilder: player packet serverTick");
 			tests::Expect(result, packet.roomId == 1, "SnapshotBroadcastBuilder: player packet roomId");
 			tests::Expect(result, packet.playerCount == 2, "SnapshotBroadcastBuilder: player packet playerCount");
 
-			const common::packet::PlayerStateData* firstPlayerData = FindPlayerStateData(packet, 101);
-			const common::packet::PlayerStateData* secondPlayerData = FindPlayerStateData(packet, 102);
-			const common::packet::PlayerStateData* unjoinedPlayerData = FindPlayerStateData(packet, 103);
+			const common::packet::PlayerStateData* firstPlayerData =
+				FindPlayerStateData(packet, 101);
+
+			const common::packet::PlayerStateData* secondPlayerData =
+				FindPlayerStateData(packet, 102);
+
+			const common::packet::PlayerStateData* unjoinedPlayerData =
+				FindPlayerStateData(packet, 103);
 
 			tests::Expect(result, firstPlayerData != nullptr, "SnapshotBroadcastBuilder: first player included");
 			tests::Expect(result, secondPlayerData != nullptr, "SnapshotBroadcastBuilder: second player included");
@@ -253,59 +298,108 @@ namespace
 				tests::Expect(result, secondPlayerData->isDead == 1, "SnapshotBroadcastBuilder: second player dead flag");
 			}
 
-			if (IsSameRemoteAddress(task.remoteAddress, MakeRemoteAddress(firstEndpointKey)))
+			if (IsSameRemoteAddress(
+				task.remoteAddress,
+				MakeRemoteAddress(firstEndpointKey)
+			))
 			{
-				tests::Expect(result, packet.lastProcessedInputSequence == 1001,
-					"SnapshotBroadcastBuilder: first peer last input sequence");
+				tests::Expect(
+					result,
+					packet.lastProcessedInputSequence == 1001,
+					"SnapshotBroadcastBuilder: first peer last input sequence"
+				);
 			}
-			else if (IsSameRemoteAddress(task.remoteAddress, MakeRemoteAddress(secondEndpointKey)))
+			else if (IsSameRemoteAddress(
+				task.remoteAddress,
+				MakeRemoteAddress(secondEndpointKey)
+			))
 			{
-				tests::Expect(result, packet.lastProcessedInputSequence == 1002,
-					"SnapshotBroadcastBuilder: second peer last input sequence");
+				tests::Expect(
+					result,
+					packet.lastProcessedInputSequence == 1002,
+					"SnapshotBroadcastBuilder: second peer last input sequence"
+				);
 			}
 			else
 			{
-				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected player snapshot target");
+				tests::Expect(
+					result,
+					false,
+					"SnapshotBroadcastBuilder: unexpected player snapshot target"
+				);
 			}
 		}
 	}
 
-	void RunBuildPlayerSnapshotMaxPlayerLimitTest(tests::DebugTestResult& result)
+	void RunBuildPlayerSnapshotMaxPlayerLimitTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
 
-		for (std::size_t index = 0; index < common::packet::maxPlayersPerSnapshot + 3; ++index)
+		for (std::size_t index = 0;
+			index < common::packet::maxPlayersPerSnapshot + 3;
+			++index)
 		{
-			const EndpointKey endpointKey = MakeEndpointKey(static_cast<std::uint32_t>(index + 1));
-			const common::game::PlayerId playerId = static_cast<common::game::PlayerId>(index + 1);
+			const EndpointKey endpointKey =
+				MakeEndpointKey(static_cast<std::uint32_t>(index + 1));
+
+			const common::game::PlayerId playerId =
+				static_cast<common::game::PlayerId>(index + 1);
 
 			AddRoomMember(roomTable, 1, endpointKey);
-			AddPeer(peerTable, endpointKey, playerId, 1, true, static_cast<std::uint32_t>(index + 1));
-			AddPlayer(gameWorld, playerId, static_cast<float>(index), static_cast<float>(index), 3, false);
+
+			AddPeer(
+				peerTable,
+				endpointKey,
+				playerId,
+				1,
+				true,
+				static_cast<std::uint32_t>(index + 1)
+			);
+
+			AddPlayer(
+				gameWorld,
+				playerId,
+				static_cast<float>(index),
+				static_cast<float>(index),
+				3,
+				false
+			);
 		}
 
-		const std::vector<server::net::PlayerSnapshotTask> taskList = builder.BuildPlayerSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::PlayerSnapshotTask> taskList =
+			builder.BuildPlayerSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.size() == common::packet::maxPlayersPerSnapshot + 3,
-			"SnapshotBroadcastBuilder: max player limit task count");
+		tests::Expect(
+			result,
+			taskList.size() == common::packet::maxPlayersPerSnapshot + 3,
+			"SnapshotBroadcastBuilder: max player limit task count"
+		);
 
 		if (!taskList.empty())
 		{
-			tests::Expect(result, taskList.front().snapshotPacket.playerCount == common::packet::maxPlayersPerSnapshot,
-				"SnapshotBroadcastBuilder: max player limit packet count");
+			tests::Expect(
+				result,
+				taskList.front().snapshotPacket.playerCount
+				== common::packet::maxPlayersPerSnapshot,
+				"SnapshotBroadcastBuilder: max player limit packet count"
+			);
 		}
 	}
 
-	void RunBuildBulletSnapshotEmptyRoomCreatesEmptyChunkTest(tests::DebugTestResult& result)
+	void RunBuildBulletSnapshotEmptyRoomCreatesEmptyChunkTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
@@ -313,23 +407,31 @@ namespace
 		AdvanceServerTick(gameWorld, 20);
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
+
 		AddRoomMember(roomTable, 1, endpointKey);
 		AddPeer(peerTable, endpointKey, 101, 1, true, 1);
 
-		const std::vector<server::net::BulletSnapshotTask> taskList = builder.BuildBulletSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::BulletSnapshotTask> taskList =
+			builder.BuildBulletSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.size() == 1, "SnapshotBroadcastBuilder: empty bullet room task count");
+		tests::Expect(
+			result,
+			taskList.size() == 1,
+			"SnapshotBroadcastBuilder: empty bullet room task count"
+		);
 
 		if (taskList.empty())
 		{
 			return;
 		}
 
-		const server::net::BulletSnapshotTask& task = taskList.front();
+		const server::protocol::BulletSnapshotTask& task =
+			taskList.front();
+
 		tests::Expect(result, task.remoteAddressList.size() == 1, "SnapshotBroadcastBuilder: empty bullet remote count");
 		tests::Expect(result, task.snapshotPacket.serverTick == 20, "SnapshotBroadcastBuilder: empty bullet serverTick");
 		tests::Expect(result, task.snapshotPacket.roomId == 1, "SnapshotBroadcastBuilder: empty bullet roomId");
@@ -338,9 +440,11 @@ namespace
 		tests::Expect(result, task.snapshotPacket.bulletCount == 0, "SnapshotBroadcastBuilder: empty bullet count");
 	}
 
-	void RunBuildBulletSnapshotRoomFilterTest(tests::DebugTestResult& result)
+	void RunBuildBulletSnapshotRoomFilterTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
@@ -350,61 +454,106 @@ namespace
 
 		AddRoomMember(roomTable, 1, roomOneEndpointKey);
 		AddRoomMember(roomTable, 2, roomTwoEndpointKey);
+
 		AddPeer(peerTable, roomOneEndpointKey, 101, 1, true, 1);
 		AddPeer(peerTable, roomTwoEndpointKey, 201, 2, true, 1);
 
 		AddBullet(gameWorld, 1001, 1, 10.0F, 20.0F);
 		AddBullet(gameWorld, 2001, 2, 30.0F, 40.0F);
 
-		const std::vector<server::net::BulletSnapshotTask> taskList = builder.BuildBulletSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
+		const std::vector<server::protocol::BulletSnapshotTask> taskList =
+			builder.BuildBulletSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
+
+		tests::Expect(
+			result,
+			taskList.size() == 2,
+			"SnapshotBroadcastBuilder: bullet room filter task count"
 		);
 
-		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet room filter task count");
-
-		for (const server::net::BulletSnapshotTask& task : taskList)
+		for (const server::protocol::BulletSnapshotTask& task : taskList)
 		{
 			if (task.snapshotPacket.roomId == 1)
 			{
 				tests::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room1 bullet count");
-				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) != nullptr,
-					"SnapshotBroadcastBuilder: room1 bullet included");
-				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) == nullptr,
-					"SnapshotBroadcastBuilder: room2 bullet excluded from room1");
-				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
-					"SnapshotBroadcastBuilder: room1 remote included");
+
+				tests::Expect(
+					result,
+					FindBulletStateData(task.snapshotPacket, 1001) != nullptr,
+					"SnapshotBroadcastBuilder: room1 bullet included"
+				);
+
+				tests::Expect(
+					result,
+					FindBulletStateData(task.snapshotPacket, 2001) == nullptr,
+					"SnapshotBroadcastBuilder: room2 bullet excluded from room1"
+				);
+
+				tests::Expect(
+					result,
+					ContainsRemoteAddress(
+						task.remoteAddressList,
+						MakeRemoteAddress(roomOneEndpointKey)
+					),
+					"SnapshotBroadcastBuilder: room1 remote included"
+				);
 			}
 			else if (task.snapshotPacket.roomId == 2)
 			{
 				tests::Expect(result, task.snapshotPacket.bulletCount == 1, "SnapshotBroadcastBuilder: room2 bullet count");
-				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 2001) != nullptr,
-					"SnapshotBroadcastBuilder: room2 bullet included");
-				tests::Expect(result, FindBulletStateData(task.snapshotPacket, 1001) == nullptr,
-					"SnapshotBroadcastBuilder: room1 bullet excluded from room2");
-				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
-					"SnapshotBroadcastBuilder: room2 remote included");
+
+				tests::Expect(
+					result,
+					FindBulletStateData(task.snapshotPacket, 2001) != nullptr,
+					"SnapshotBroadcastBuilder: room2 bullet included"
+				);
+
+				tests::Expect(
+					result,
+					FindBulletStateData(task.snapshotPacket, 1001) == nullptr,
+					"SnapshotBroadcastBuilder: room1 bullet excluded from room2"
+				);
+
+				tests::Expect(
+					result,
+					ContainsRemoteAddress(
+						task.remoteAddressList,
+						MakeRemoteAddress(roomTwoEndpointKey)
+					),
+					"SnapshotBroadcastBuilder: room2 remote included"
+				);
 			}
 			else
 			{
-				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected bullet room task");
+				tests::Expect(
+					result,
+					false,
+					"SnapshotBroadcastBuilder: unexpected bullet room task"
+				);
 			}
 		}
 	}
 
-	void RunBuildBulletSnapshotChunkSplitTest(tests::DebugTestResult& result)
+	void RunBuildBulletSnapshotChunkSplitTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
+
 		AddRoomMember(roomTable, 1, endpointKey);
 		AddPeer(peerTable, endpointKey, 101, 1, true, 1);
 
-		for (std::size_t index = 0; index < common::packet::maxBulletsPerSnapshot + 1; ++index)
+		for (std::size_t index = 0;
+			index < common::packet::maxBulletsPerSnapshot + 1;
+			++index)
 		{
 			AddBullet(
 				gameWorld,
@@ -415,20 +564,29 @@ namespace
 			);
 		}
 
-		const std::vector<server::net::BulletSnapshotTask> taskList = builder.BuildBulletSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::BulletSnapshotTask> taskList =
+			builder.BuildBulletSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet chunk split task count");
+		tests::Expect(
+			result,
+			taskList.size() == 2,
+			"SnapshotBroadcastBuilder: bullet chunk split task count"
+		);
 
 		std::uint16_t maxChunkBulletCount = 0;
 		std::uint16_t lastChunkBulletCount = 0;
 
-		for (const server::net::BulletSnapshotTask& task : taskList)
+		for (const server::protocol::BulletSnapshotTask& task : taskList)
 		{
-			tests::Expect(result, task.snapshotPacket.chunkCount == 2, "SnapshotBroadcastBuilder: bullet chunkCount");
+			tests::Expect(
+				result,
+				task.snapshotPacket.chunkCount == 2,
+				"SnapshotBroadcastBuilder: bullet chunkCount"
+			);
 
 			if (task.snapshotPacket.chunkIndex == 0)
 			{
@@ -440,14 +598,24 @@ namespace
 			}
 		}
 
-		tests::Expect(result, maxChunkBulletCount == common::packet::maxBulletsPerSnapshot,
-			"SnapshotBroadcastBuilder: first bullet chunk is full");
-		tests::Expect(result, lastChunkBulletCount == 1, "SnapshotBroadcastBuilder: last bullet chunk has remainder");
+		tests::Expect(
+			result,
+			maxChunkBulletCount == common::packet::maxBulletsPerSnapshot,
+			"SnapshotBroadcastBuilder: first bullet chunk is full"
+		);
+
+		tests::Expect(
+			result,
+			lastChunkBulletCount == 1,
+			"SnapshotBroadcastBuilder: last bullet chunk has remainder"
+		);
 	}
 
-	void RunBuildBulletSnapshotSkipsRoomWithoutRemoteAddressTest(tests::DebugTestResult& result)
+	void RunBuildBulletSnapshotSkipsRoomWithoutRemoteAddressTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
@@ -461,38 +629,53 @@ namespace
 
 		AddBullet(gameWorld, 1, 1, 10.0F, 20.0F);
 
-		const std::vector<server::net::BulletSnapshotTask> taskList = builder.BuildBulletSnapshotTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::BulletSnapshotTask> taskList =
+			builder.BuildBulletSnapshotTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: bullet room without remotes skipped");
+		tests::Expect(
+			result,
+			taskList.empty(),
+			"SnapshotBroadcastBuilder: bullet room without remotes skipped"
+		);
 	}
 
-	void RunBuildImpactEffectEmptyListCreatesNoTaskTest(tests::DebugTestResult& result)
+	void RunBuildImpactEffectEmptyListCreatesNoTaskTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
+
 		AddRoomMember(roomTable, 1, endpointKey);
 		AddPeer(peerTable, endpointKey, 101, 1, true, 1);
 
-		const std::vector<server::net::ImpactEffectTask> taskList = builder.BuildImpactEffectTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::ImpactEffectTask> taskList =
+			builder.BuildImpactEffectTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: empty impact list creates no task");
+		tests::Expect(
+			result,
+			taskList.empty(),
+			"SnapshotBroadcastBuilder: empty impact list creates no task"
+		);
 	}
 
-	void RunBuildImpactEffectRoomFilterTest(tests::DebugTestResult& result)
+	void RunBuildImpactEffectRoomFilterTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
@@ -502,57 +685,109 @@ namespace
 
 		AddRoomMember(roomTable, 1, roomOneEndpointKey);
 		AddRoomMember(roomTable, 2, roomTwoEndpointKey);
+
 		AddPeer(peerTable, roomOneEndpointKey, 101, 1, true, 1);
 		AddPeer(peerTable, roomTwoEndpointKey, 201, 2, true, 1);
 
-		AddImpactEffect(gameWorld, 1, common::packet::EffectType::Impact, 10.0F, 20.0F);
-		AddImpactEffect(gameWorld, 2, common::packet::EffectType::Spawn, 30.0F, 40.0F);
-
-		const std::vector<server::net::ImpactEffectTask> taskList = builder.BuildImpactEffectTasks(
-			roomTable,
-			peerTable,
-			gameWorld
+		AddImpactEffect(
+			gameWorld,
+			1,
+			common::packet::EffectType::Impact,
+			10.0F,
+			20.0F
 		);
 
-		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact room filter task count");
+		AddImpactEffect(
+			gameWorld,
+			2,
+			common::packet::EffectType::Spawn,
+			30.0F,
+			40.0F
+		);
 
-		for (const server::net::ImpactEffectTask& task : taskList)
+		const std::vector<server::protocol::ImpactEffectTask> taskList =
+			builder.BuildImpactEffectTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
+
+		tests::Expect(
+			result,
+			taskList.size() == 2,
+			"SnapshotBroadcastBuilder: impact room filter task count"
+		);
+
+		for (const server::protocol::ImpactEffectTask& task : taskList)
 		{
 			if (task.effectPacket.roomId == 1)
 			{
 				tests::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room1 impact count");
-				tests::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Impact,
-					"SnapshotBroadcastBuilder: room1 impact type");
-				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomOneEndpointKey)),
-					"SnapshotBroadcastBuilder: room1 impact remote");
+
+				tests::Expect(
+					result,
+					task.effectPacket.effects[0].effectType
+					== common::packet::EffectType::Impact,
+					"SnapshotBroadcastBuilder: room1 impact type"
+				);
+
+				tests::Expect(
+					result,
+					ContainsRemoteAddress(
+						task.remoteAddressList,
+						MakeRemoteAddress(roomOneEndpointKey)
+					),
+					"SnapshotBroadcastBuilder: room1 impact remote"
+				);
 			}
 			else if (task.effectPacket.roomId == 2)
 			{
 				tests::Expect(result, task.effectPacket.effectCount == 1, "SnapshotBroadcastBuilder: room2 impact count");
-				tests::Expect(result, task.effectPacket.effects[0].effectType == common::packet::EffectType::Spawn,
-					"SnapshotBroadcastBuilder: room2 impact type");
-				tests::Expect(result, ContainsRemoteAddress(task.remoteAddressList, MakeRemoteAddress(roomTwoEndpointKey)),
-					"SnapshotBroadcastBuilder: room2 impact remote");
+
+				tests::Expect(
+					result,
+					task.effectPacket.effects[0].effectType
+					== common::packet::EffectType::Spawn,
+					"SnapshotBroadcastBuilder: room2 impact type"
+				);
+
+				tests::Expect(
+					result,
+					ContainsRemoteAddress(
+						task.remoteAddressList,
+						MakeRemoteAddress(roomTwoEndpointKey)
+					),
+					"SnapshotBroadcastBuilder: room2 impact remote"
+				);
 			}
 			else
 			{
-				tests::Expect(result, false, "SnapshotBroadcastBuilder: unexpected impact room task");
+				tests::Expect(
+					result,
+					false,
+					"SnapshotBroadcastBuilder: unexpected impact room task"
+				);
 			}
 		}
 	}
 
-	void RunBuildImpactEffectChunkSplitTest(tests::DebugTestResult& result)
+	void RunBuildImpactEffectChunkSplitTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::net::SnapshotBroadcastBuilder builder;
+		server::protocol::SnapshotBroadcastBuilder builder;
 		server::game::GameWorld gameWorld;
 		PeerTable peerTable;
 		RoomTable roomTable;
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
+
 		AddRoomMember(roomTable, 1, endpointKey);
 		AddPeer(peerTable, endpointKey, 101, 1, true, 1);
 
-		for (std::size_t index = 0; index < common::packet::maxImpactEffectsPerPacket + 1; ++index)
+		for (std::size_t index = 0;
+			index < common::packet::maxImpactEffectsPerPacket + 1;
+			++index)
 		{
 			AddImpactEffect(
 				gameWorld,
@@ -563,20 +798,29 @@ namespace
 			);
 		}
 
-		const std::vector<server::net::ImpactEffectTask> taskList = builder.BuildImpactEffectTasks(
-			roomTable,
-			peerTable,
-			gameWorld
-		);
+		const std::vector<server::protocol::ImpactEffectTask> taskList =
+			builder.BuildImpactEffectTasks(
+				roomTable,
+				peerTable,
+				gameWorld
+			);
 
-		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact chunk split task count");
+		tests::Expect(
+			result,
+			taskList.size() == 2,
+			"SnapshotBroadcastBuilder: impact chunk split task count"
+		);
 
 		std::uint16_t maxChunkEffectCount = 0;
 		std::uint16_t lastChunkEffectCount = 0;
 
-		for (const server::net::ImpactEffectTask& task : taskList)
+		for (const server::protocol::ImpactEffectTask& task : taskList)
 		{
-			tests::Expect(result, task.effectPacket.chunkCount == 2, "SnapshotBroadcastBuilder: impact chunkCount");
+			tests::Expect(
+				result,
+				task.effectPacket.chunkCount == 2,
+				"SnapshotBroadcastBuilder: impact chunkCount"
+			);
 
 			if (task.effectPacket.chunkIndex == 0)
 			{
@@ -588,9 +832,18 @@ namespace
 			}
 		}
 
-		tests::Expect(result, maxChunkEffectCount == common::packet::maxImpactEffectsPerPacket,
-			"SnapshotBroadcastBuilder: first impact chunk is full");
-		tests::Expect(result, lastChunkEffectCount == 1, "SnapshotBroadcastBuilder: last impact chunk has remainder");
+		tests::Expect(
+			result,
+			maxChunkEffectCount
+			== common::packet::maxImpactEffectsPerPacket,
+			"SnapshotBroadcastBuilder: first impact chunk is full"
+		);
+
+		tests::Expect(
+			result,
+			lastChunkEffectCount == 1,
+			"SnapshotBroadcastBuilder: last impact chunk has remainder"
+		);
 	}
 }
 

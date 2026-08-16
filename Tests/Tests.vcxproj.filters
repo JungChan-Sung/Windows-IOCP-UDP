@@ -144,20 +144,11 @@
     <ClCompile Include="Server\UdpPacketDispatcherTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\UdpPacketDispatcher.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\PacketPayloadValidatorTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\PacketPayloadValidator.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp">
       <Filter>소스 파일\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Server\Net\SnapshotBroadcastBuilder.cpp">
-      <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="Server\IntegrationSmokeTests.cpp">
       <Filter>소스 파일\Server</Filter>
@@ -276,12 +267,6 @@
     <ClCompile Include="Server\AccountServiceTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\AccountLoginPacketHandler.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Server\Net\AccountPacketMapper.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="..\Server\Account\AccountLoginTaskProcessor.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
@@ -332,6 +317,21 @@
     </ClCompile>
     <ClCompile Include="Server\GameWorldTests.cpp">
       <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Protocol\AccountLoginPacketHandler.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Protocol\AccountPacketMapper.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Protocol\PacketPayloadValidator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Protocol\SnapshotBroadcastBuilder.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Protocol\UdpPacketDispatcher.cpp">
+      <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -17,7 +17,7 @@
 
 #include <Server/Account/AccountLoginTaskProcessor.h>
 
-namespace server::net
+namespace server::protocol
 {
 	class AccountLoginPacketHandler final
 	{

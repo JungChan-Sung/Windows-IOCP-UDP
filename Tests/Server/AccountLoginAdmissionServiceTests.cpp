@@ -12,8 +12,8 @@
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Net/PeerRoomManager.h>
-#include <Server/Net/PeerState.h>
+#include <Server/Service/PeerRoomManager.h>
+#include <Server/Service/PeerState.h>
 
 #include <Server/Service/AccountLoginAdmissionService.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
@@ -24,7 +24,7 @@ namespace
 {
 	using AccountLoginAdmissionService = server::service::AccountLoginAdmissionService;
 	using AuthenticatedAccountRegistry = server::service::AuthenticatedAccountRegistry;
-	using PeerRoomManager = server::net::PeerRoomManager;
+	using PeerRoomManager = server::service::PeerRoomManager;
 	using ResponsePacket = common::packet::AccountLoginResponsePacket;
 	using ResponseStatus = common::packet::AccountLoginResponseStatus;
 
@@ -87,7 +87,7 @@ namespace
 		);
 	}
 
-	server::net::PeerState& AddJoinedPeer(
+	server::service::PeerState& AddJoinedPeer(
 		PeerRoomManager& peerRoomManager,
 		const sockaddr_in& remoteAddress,
 		std::int64_t accountId,
@@ -97,7 +97,7 @@ namespace
 	{
 		const common::net::EndpointKey endpointKey = MakeEndpointKey(remoteAddress);
 
-		server::net::PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
+		server::service::PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
 			remoteAddress,
 			endpointKey,
 			1,
@@ -796,7 +796,7 @@ namespace
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(remoteAddress);
 
-		server::net::PeerState& peerState = AddJoinedPeer(
+		server::service::PeerState& peerState = AddJoinedPeer(
 			peerRoomManager,
 			remoteAddress,
 			1001,

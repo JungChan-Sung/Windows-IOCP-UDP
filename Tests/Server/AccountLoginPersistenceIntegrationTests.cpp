@@ -23,7 +23,7 @@
 
 #include <Server/Account/AccountLoginTaskProcessor.h>
 #include <Server/Account/AccountService.h>
-#include <Server/Net/PeerRoomManager.h>
+#include <Server/Service/PeerRoomManager.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
 #include <Server/Service/AccountLoginAdmissionService.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
@@ -403,7 +403,7 @@ WHERE login_name = ?;
 			server::service::AuthenticatedAccountRegistry
 				authenticatedAccountRegistry;
 
-			server::net::PeerRoomManager peerRoomManager;
+			server::service::PeerRoomManager peerRoomManager;
 
 			const server::service::AccountLoginAdmissionService::Status
 				admissionStatus =

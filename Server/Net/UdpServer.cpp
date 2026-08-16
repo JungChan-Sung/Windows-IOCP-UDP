@@ -387,13 +387,15 @@ namespace server::net
 			const game::PlayerSimulationContextList playerContextList = BuildPlayerSimulationContextList();
 
 			gameSimulation_.UpdatePlayers(config_.tick.fixedDeltaSeconds, playerContextList, gameWorld_);
-
 			const game::KillEventList killEventList = gameSimulation_.UpdateBullets(
 				config_.tick.fixedDeltaSeconds,
 				playerContextList,
 				gameWorld_,
 				config_.gameRule
 			);
+
+			killEventCount = killEventList.size();
+			recordedKillCount = matchHistoryTracker_.RecordKills(killEventList);
 
 			gameSimulation_.UpdateRespawns(config_.tick.fixedDeltaSeconds, playerContextList, gameWorld_, config_.gameRule);
 			gameSimulation_.UpdatePlayerTimers(config_.tick.fixedDeltaSeconds, gameWorld_);

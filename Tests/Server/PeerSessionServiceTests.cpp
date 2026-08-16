@@ -14,9 +14,9 @@
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
-#include <Server/Net/PeerRoomManager.h>
-#include <Server/Net/PeerState.h>
+#include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/PeerSessionService.h>
+#include <Server/Service/PeerState.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -61,7 +61,7 @@ namespace
 		const sockaddr_in& remoteAddress,
 		const common::net::EndpointKey& endpointKey,
 		common::game::RoomId initialRoomId,
-		server::net::PeerRoomManager& peerRoomManager,
+		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
 		const server::game::GameSimulation& gameSimulation,
 		const server::config::GameRuleConfig& gameRuleConfig,
@@ -104,7 +104,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -179,7 +179,7 @@ namespace
 			"PeerSessionService: join player count"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -232,7 +232,7 @@ namespace
 				"PeerSessionService: join lastRecvTime"
 			);
 
-			const server::net::PeerState* accountPeerState =
+			const server::service::PeerState* accountPeerState =
 				peerRoomManager.FindJoinedPeerByAccountId(1001);
 
 			tests::Expect(
@@ -308,7 +308,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -388,7 +388,7 @@ namespace
 			"PeerSessionService: existing join player count"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -418,7 +418,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -560,7 +560,7 @@ namespace
 			"PeerSessionService: existing join current state player count"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -596,7 +596,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -678,7 +678,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(4);
@@ -726,7 +726,7 @@ namespace
 	void RunChangePeerRoomTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -812,7 +812,7 @@ namespace
 			"PeerSessionService: next room count"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -877,7 +877,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -939,7 +939,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -996,7 +996,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 
@@ -1041,7 +1041,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1111,7 +1111,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1155,7 +1155,7 @@ namespace
 			"PeerSessionService: reliable config join broadcasts joined"
 		);
 
-		server::net::PeerState* peerState =
+		server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -1292,7 +1292,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1354,7 +1354,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1416,7 +1416,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1478,7 +1478,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1556,7 +1556,7 @@ namespace
 			"PeerSessionService: persistent player mismatch preserves player"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -1579,7 +1579,7 @@ namespace
 	)
 	{
 		server::service::PeerSessionService service;
-		server::net::PeerRoomManager peerRoomManager;
+		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::GameRuleConfig gameRuleConfig{};
@@ -1657,7 +1657,7 @@ namespace
 			"PeerSessionService: different token preserves existing player"
 		);
 
-		const server::net::PeerState* peerState =
+		const server::service::PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(

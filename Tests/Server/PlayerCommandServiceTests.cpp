@@ -15,8 +15,8 @@
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
-#include <Server/Net/PeerRoomManager.h>
-#include <Server/Net/PeerState.h>
+#include <Server/Service/PeerRoomManager.h>
+#include <Server/Service/PeerState.h>
 #include <Server/Service/PlayerCommandService.h>
 
 #include <Tests/DebugTestResult.h>
@@ -25,6 +25,15 @@ namespace
 {
 	using Clock = std::chrono::steady_clock;
 	using TimePoint = Clock::time_point;
+
+	using PeerRoomManager =
+		server::service::PeerRoomManager;
+
+	using PeerState =
+		server::service::PeerState;
+
+	using PlayerCommandService =
+		server::service::PlayerCommandService;
 
 	[[nodiscard]] bool IsNearlyEqual(
 		float lhs,
@@ -52,7 +61,8 @@ namespace
 	{
 		sockaddr_in remoteAddress{};
 		remoteAddress.sin_family = AF_INET;
-		remoteAddress.sin_addr.S_un.S_addr = endpointKey.address;
+		remoteAddress.sin_addr.S_un.S_addr =
+			endpointKey.address;
 		remoteAddress.sin_port = endpointKey.port;
 		return remoteAddress;
 	}
@@ -67,16 +77,18 @@ namespace
 		playerState.playerId = playerId;
 		playerState.x = x;
 		playerState.y = y;
-		playerState.hp = common::game::defaultInitialPlayerHp;
+		playerState.hp =
+			common::game::defaultInitialPlayerHp;
 		playerState.isDead = false;
-		playerState.weaponType = common::game::WeaponType::Basic;
+		playerState.weaponType =
+			common::game::WeaponType::Basic;
 		playerState.lastMoveDirectionX = 1.0F;
 		playerState.lastMoveDirectionY = 0.0F;
 		return playerState;
 	}
 
 	void AddJoinedPeerAndPlayer(
-		server::net::PeerRoomManager& peerRoomManager,
+		PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
 		const common::net::EndpointKey& endpointKey,
 		common::game::PlayerId playerId,
@@ -87,7 +99,7 @@ namespace
 		const sockaddr_in remoteAddress =
 			MakeRemoteAddress(endpointKey);
 
-		server::net::PeerState& peerState =
+		PeerState& peerState =
 			peerRoomManager.UpsertJoinedPeer(
 				remoteAddress,
 				endpointKey,
@@ -112,8 +124,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
 		const common::net::EndpointKey endpointKey =
@@ -141,13 +153,14 @@ namespace
 			common::game::InputFlags::Right
 			| common::game::InputFlags::Up;
 
-		const bool applied = service.ApplyInputCommand(
-			endpointKey,
-			packet,
-			peerRoomManager,
-			gameWorld,
-			commandTime
-		);
+		const bool applied =
+			service.ApplyInputCommand(
+				endpointKey,
+				packet,
+				peerRoomManager,
+				gameWorld,
+				commandTime
+			);
 
 		tests::Expect(
 			result,
@@ -155,7 +168,7 @@ namespace
 			"PlayerCommandService: input command applied"
 		);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		const server::game::PlayerState* playerState =
@@ -220,8 +233,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
 		const common::net::EndpointKey endpointKey =
@@ -231,6 +244,7 @@ namespace
 		constexpr common::game::RoomId roomId = 1;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint firstCommandTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -248,29 +262,33 @@ namespace
 
 		common::packet::InputCommandPacket firstPacket{};
 		firstPacket.inputSequence = 10;
-		firstPacket.inputFlags = common::game::InputFlags::Right;
+		firstPacket.inputFlags =
+			common::game::InputFlags::Right;
 
 		common::packet::InputCommandPacket stalePacket{};
 		stalePacket.inputSequence = 10;
-		stalePacket.inputFlags = common::game::InputFlags::Left;
+		stalePacket.inputFlags =
+			common::game::InputFlags::Left;
 
-		const bool firstApplied = service.ApplyInputCommand(
-			endpointKey,
-			firstPacket,
-			peerRoomManager,
-			gameWorld,
-			firstCommandTime
-		);
+		const bool firstApplied =
+			service.ApplyInputCommand(
+				endpointKey,
+				firstPacket,
+				peerRoomManager,
+				gameWorld,
+				firstCommandTime
+			);
 
-		const bool staleApplied = service.ApplyInputCommand(
-			endpointKey,
-			stalePacket,
-			peerRoomManager,
-			gameWorld,
-			staleCommandTime
-		);
+		const bool staleApplied =
+			service.ApplyInputCommand(
+				endpointKey,
+				stalePacket,
+				peerRoomManager,
+				gameWorld,
+				staleCommandTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		const server::game::PlayerState* playerState =
@@ -307,7 +325,8 @@ namespace
 		{
 			tests::Expect(
 				result,
-				playerState->inputFlags == common::game::InputFlags::Right,
+				playerState->inputFlags
+				== common::game::InputFlags::Right,
 				"PlayerCommandService: stale input flags unchanged"
 			);
 		}
@@ -317,8 +336,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
 		const common::net::EndpointKey endpointKey =
@@ -328,6 +347,7 @@ namespace
 		constexpr common::game::RoomId roomId = 1;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint commandTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -350,17 +370,19 @@ namespace
 
 		common::packet::InputCommandPacket packet{};
 		packet.inputSequence = 1;
-		packet.inputFlags = common::game::InputFlags::Down;
+		packet.inputFlags =
+			common::game::InputFlags::Down;
 
-		const bool applied = service.ApplyInputCommand(
-			endpointKey,
-			packet,
-			peerRoomManager,
-			gameWorld,
-			commandTime
-		);
+		const bool applied =
+			service.ApplyInputCommand(
+				endpointKey,
+				packet,
+				peerRoomManager,
+				gameWorld,
+				commandTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -389,8 +411,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
 		const common::net::EndpointKey endpointKey =
@@ -400,15 +422,17 @@ namespace
 
 		common::packet::InputCommandPacket packet{};
 		packet.inputSequence = 1;
-		packet.inputFlags = common::game::InputFlags::Right;
+		packet.inputFlags =
+			common::game::InputFlags::Right;
 
-		const bool applied = service.ApplyInputCommand(
-			endpointKey,
-			packet,
-			peerRoomManager,
-			gameWorld,
-			commandTime
-		);
+		const bool applied =
+			service.ApplyInputCommand(
+				endpointKey,
+				packet,
+				peerRoomManager,
+				gameWorld,
+				commandTime
+			);
 
 		tests::Expect(
 			result,
@@ -429,10 +453,12 @@ namespace
 		);
 	}
 
-	void RunFireBulletSuccessTest(tests::DebugTestResult& result)
+	void RunFireBulletSuccessTest(
+		tests::DebugTestResult& result
+	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -444,6 +470,7 @@ namespace
 		constexpr common::game::RoomId roomId = 2;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint fireTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -470,22 +497,24 @@ namespace
 			playerState->lastMoveDirectionY = 1.0F;
 		}
 
-		const bool fired = service.FireBullet(
-			endpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fired =
+			service.FireBullet(
+				endpointKey,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				weaponRuleConfig,
+				fireTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		const server::game::PlayerState* updatedPlayerState =
 			gameWorld.FindPlayer(playerId);
 
-		const server::game::GameWorld::BulletStateList& bulletStateList =
+		const server::game::GameWorld::BulletStateList&
+			bulletStateList =
 			gameWorld.GetBulletStateList();
 
 		tests::Expect(
@@ -514,7 +543,8 @@ namespace
 			tests::Expect(
 				result,
 				updatedPlayerState->fireCooldownRemainingSeconds
-				== weaponRuleConfig.basicWeaponRule.fireCooldownSeconds,
+				== weaponRuleConfig.basicWeaponRule
+				.fireCooldownSeconds,
 				"PlayerCommandService: fire cooldown set"
 			);
 		}
@@ -538,7 +568,8 @@ namespace
 
 			tests::Expect(
 				result,
-				bulletState.ownerPersistentPlayerId == persistentPlayerId,
+				bulletState.ownerPersistentPlayerId
+				== persistentPlayerId,
 				"PlayerCommandService: fire persistent owner id"
 			);
 
@@ -550,19 +581,28 @@ namespace
 
 			tests::Expect(
 				result,
-				IsNearlyEqual(bulletState.x, 50.0F),
+				IsNearlyEqual(
+					bulletState.x,
+					50.0F
+				),
 				"PlayerCommandService: fire bullet x"
 			);
 
 			tests::Expect(
 				result,
-				IsNearlyEqual(bulletState.y, 60.0F),
+				IsNearlyEqual(
+					bulletState.y,
+					60.0F
+				),
 				"PlayerCommandService: fire bullet y"
 			);
 
 			tests::Expect(
 				result,
-				IsNearlyEqual(bulletState.velocityX, 0.0F),
+				IsNearlyEqual(
+					bulletState.velocityX,
+					0.0F
+				),
 				"PlayerCommandService: fire velocity x"
 			);
 
@@ -570,7 +610,8 @@ namespace
 				result,
 				IsNearlyEqual(
 					bulletState.velocityY,
-					weaponRuleConfig.basicWeaponRule.bulletSpeed
+					weaponRuleConfig.basicWeaponRule
+					.bulletSpeed
 				),
 				"PlayerCommandService: fire velocity y"
 			);
@@ -578,14 +619,16 @@ namespace
 			tests::Expect(
 				result,
 				bulletState.damage
-				== weaponRuleConfig.basicWeaponRule.bulletDamage,
+				== weaponRuleConfig.basicWeaponRule
+				.bulletDamage,
 				"PlayerCommandService: fire damage"
 			);
 
 			tests::Expect(
 				result,
 				bulletState.radius
-				== weaponRuleConfig.basicWeaponRule.bulletRadius,
+				== weaponRuleConfig.basicWeaponRule
+				.bulletRadius,
 				"PlayerCommandService: fire radius"
 			);
 		}
@@ -595,8 +638,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -608,6 +651,7 @@ namespace
 		constexpr common::game::RoomId roomId = 1;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint fireTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -628,16 +672,17 @@ namespace
 			playerState->fireCooldownRemainingSeconds = 1.0F;
 		}
 
-		const bool fired = service.FireBullet(
-			endpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fired =
+			service.FireBullet(
+				endpointKey,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				weaponRuleConfig,
+				fireTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -666,8 +711,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -679,6 +724,7 @@ namespace
 		constexpr common::game::RoomId roomId = 1;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint fireTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -699,16 +745,17 @@ namespace
 			playerState->isDead = true;
 		}
 
-		const bool fired = service.FireBullet(
-			endpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fired =
+			service.FireBullet(
+				endpointKey,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				weaponRuleConfig,
+				fireTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
@@ -737,8 +784,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -748,14 +795,15 @@ namespace
 
 		const TimePoint fireTime = Clock::now();
 
-		const bool fired = service.FireBullet(
-			endpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fired =
+			service.FireBullet(
+				endpointKey,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				weaponRuleConfig,
+				fireTime
+			);
 
 		tests::Expect(
 			result,
@@ -780,8 +828,8 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::service::PlayerCommandService service;
-		server::net::PeerRoomManager peerRoomManager;
+		PlayerCommandService service;
+		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
 		server::config::WeaponRuleConfig weaponRuleConfig{};
@@ -793,6 +841,7 @@ namespace
 		constexpr common::game::RoomId roomId = 1;
 
 		const TimePoint joinTime = Clock::now();
+
 		const TimePoint fireTime =
 			joinTime + std::chrono::seconds(1);
 
@@ -807,16 +856,17 @@ namespace
 			joinTime
 		);
 
-		const bool fired = service.FireBullet(
-			endpointKey,
-			peerRoomManager,
-			gameWorld,
-			gameSimulation,
-			weaponRuleConfig,
-			fireTime
-		);
+		const bool fired =
+			service.FireBullet(
+				endpointKey,
+				peerRoomManager,
+				gameWorld,
+				gameSimulation,
+				weaponRuleConfig,
+				fireTime
+			);
 
-		const server::net::PeerState* peerState =
+		const PeerState* peerState =
 			peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(

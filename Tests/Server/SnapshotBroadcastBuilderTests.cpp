@@ -14,9 +14,9 @@
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/ImpactEffectState.h>
 #include <Server/Game/PlayerState.h>
-#include <Server/Net/PeerState.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
 #include <Server/Protocol/SnapshotBroadcastTask.h>
+#include <Server/Service/PeerState.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -139,7 +139,7 @@ namespace
 		auto [peerIterator, _] =
 			peerTable.try_emplace(endpointKey);
 
-		server::net::PeerState& peerState =
+		server::service::PeerState& peerState =
 			peerIterator->second;
 
 		peerState.remoteAddress = MakeRemoteAddress(endpointKey);

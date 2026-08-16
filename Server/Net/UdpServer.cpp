@@ -384,19 +384,18 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			gameSimulation_.UpdatePlayers(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_);
+			const game::PlayerSimulationContextList playerContextList = BuildPlayerSimulationContextList();
+
+			gameSimulation_.UpdatePlayers(config_.tick.fixedDeltaSeconds, playerContextList, gameWorld_);
 
 			const game::KillEventList killEventList = gameSimulation_.UpdateBullets(
 				config_.tick.fixedDeltaSeconds,
-				peerRoomManager_.GetPeerTable(),
+				playerContextList,
 				gameWorld_,
 				config_.gameRule
 			);
 
-			killEventCount = killEventList.size();
-			recordedKillCount = matchHistoryTracker_.RecordKills(killEventList);
-
-			gameSimulation_.UpdateRespawns(config_.tick.fixedDeltaSeconds, peerRoomManager_.GetPeerTable(), gameWorld_, config_.gameRule);
+			gameSimulation_.UpdateRespawns(config_.tick.fixedDeltaSeconds, playerContextList, gameWorld_, config_.gameRule);
 			gameSimulation_.UpdatePlayerTimers(config_.tick.fixedDeltaSeconds, gameWorld_);
 
 			gameWorld_.AdvanceServerTick();
@@ -418,6 +417,25 @@ namespace server::net
 		BroadcastImpactEffects();
 
 		LogServerStatusIfDue();
+	}
+
+	game::PlayerSimulationContextList UdpServer::BuildPlayerSimulationContextList() const
+	{
+		game::PlayerSimulationContextList playerContextList;
+		playerContextList.reserve(peerRoomManager_.GetJoinedPeerCount());
+
+		peerRoomManager_.ForEachJoinedPeer(
+			[&playerContextList](const PeerState& peerState)
+			{
+				playerContextList.push_back(game::PlayerSimulationContext{
+					.playerId = peerState.playerId,
+					.persistentPlayerId = peerState.persistentPlayerId,
+					.roomId = peerState.roomId,
+					});
+			}
+		);
+
+		return playerContextList;
 	}
 
 	void UdpServer::RegisterPacketHandlers()
@@ -1402,7 +1420,7 @@ namespace server::net
 
 	void UdpServer::LogInvalidPacket(const sockaddr_in& remoteAddress, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult)
 	{
-		const InvalidPacketLogLimiter::LogDecision logDecision = invalidPacketLogLimiter_.Record(
+		const diagnostics::InvalidPacketLogLimiter::LogDecision logDecision = invalidPacketLogLimiter_.Record(
 			dispatchResult.status,
 			common::time::Clock::now()
 		);

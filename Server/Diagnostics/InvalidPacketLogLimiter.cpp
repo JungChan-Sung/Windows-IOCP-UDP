@@ -1,6 +1,6 @@
 #include "InvalidPacketLogLimiter.h"
 
-namespace server::net
+namespace server::diagnostics
 {
 	InvalidPacketLogLimiter::LogDecision InvalidPacketLogLimiter::Record(DispatchStatus status, TimePoint currentTime)
 	{

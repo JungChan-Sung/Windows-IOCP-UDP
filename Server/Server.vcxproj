@@ -149,6 +149,7 @@
     <ClCompile Include="App\GameServerApp.cpp" />
     <ClCompile Include="Config\ServerConfigLoader.cpp" />
     <ClCompile Include="Config\ServerConfigValidator.cpp" />
+    <ClCompile Include="Diagnostics\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="Diagnostics\ServerMetricsCollector.cpp" />
     <ClCompile Include="Diagnostics\ServerStatusReporter.cpp" />
     <ClCompile Include="Game\GameSimulation.cpp" />
@@ -156,7 +157,6 @@
     <ClCompile Include="Game\GameWorld.cpp" />
     <ClCompile Include="Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="Match\MatchHistoryTaskProcessor.cpp" />
-    <ClCompile Include="Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="Net\PeerRoomManager.cpp" />
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
     <ClCompile Include="Net\UdpIocpTransportMetrics.cpp" />
@@ -183,6 +183,7 @@
     <ClInclude Include="Config\ServerConfigLoader.h" />
     <ClInclude Include="Config\ServerConfigValidator.h" />
     <ClInclude Include="Config\ServerConfigWarning.h" />
+    <ClInclude Include="Diagnostics\InvalidPacketLogLimiter.h" />
     <ClInclude Include="Diagnostics\ServerMetricsCollector.h" />
     <ClInclude Include="Diagnostics\ServerMetricsSnapshot.h" />
     <ClInclude Include="Diagnostics\ServerStatusReporter.h" />
@@ -197,7 +198,6 @@
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Match\MatchHistoryTaskProcessor.h" />
-    <ClInclude Include="Net\InvalidPacketLogLimiter.h" />
     <ClInclude Include="Net\PeerRoomManager.h" />
     <ClInclude Include="Net\PeerState.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />

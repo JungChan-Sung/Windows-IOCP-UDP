@@ -16,6 +16,7 @@
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Server/Config/ServerConfig.h>
+#include <Server/Diagnostics/InvalidPacketLogLimiter.h>
 #include <Server/Diagnostics/ServerMetricsCollector.h>
 #include <Server/Diagnostics/ServerStatusReporter.h>
 #include <Server/Diagnostics/ServerStatusSnapshot.h>
@@ -23,7 +24,6 @@
 #include <Server/Game/GameTickRunner.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/MatchHistoryTracker.h>
-#include <Server/Net/InvalidPacketLogLimiter.h>
 #include <Server/Net/PeerRoomManager.h>
 #include <Server/Net/UdpIocpTransport.h>
 #include <Server/Net/UdpPacketSender.h>
@@ -84,7 +84,8 @@ namespace server::net
 		protocol::AccountLoginPacketHandler* accountLoginPacketHandler_ = nullptr;
 
 		UdpPacketSender packetSender_;
-		InvalidPacketLogLimiter invalidPacketLogLimiter_;
+
+		diagnostics::InvalidPacketLogLimiter invalidPacketLogLimiter_;
 		diagnostics::ServerMetricsCollector serverMetricsCollector_;
 		diagnostics::ServerStatusReporter serverStatusReporter_;
 
@@ -135,6 +136,8 @@ namespace server::net
 
 	private:
 		void UpdateGameTick();
+
+		[[nodiscard]] game::PlayerSimulationContextList BuildPlayerSimulationContextList() const;
 
 		void RegisterPacketHandlers();
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);

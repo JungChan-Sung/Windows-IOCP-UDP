@@ -9,7 +9,7 @@
 
 #include <Server/Protocol/UdpPacketDispatcher.h>
 
-namespace server::net
+namespace server::diagnostics
 {
 	class InvalidPacketLogLimiter
 	{

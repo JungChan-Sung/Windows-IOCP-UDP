@@ -183,9 +183,6 @@
     <ClCompile Include="Server\InvalidPacketLogLimiterTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp">
-      <Filter>소스 파일\Link</Filter>
-    </ClCompile>
     <ClCompile Include="..\Client\Game\ClientWorld.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
@@ -331,6 +328,9 @@
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="..\Server\Service\SessionTokenGenerator.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Server\Diagnostics\InvalidPacketLogLimiter.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>

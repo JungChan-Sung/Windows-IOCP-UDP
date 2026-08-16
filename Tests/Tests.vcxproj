@@ -144,12 +144,12 @@
     <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigValidator.cpp" />
+    <ClCompile Include="..\Server\Diagnostics\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="..\Server\Diagnostics\ServerMetricsCollector.cpp" />
     <ClCompile Include="..\Server\Game\GameSimulation.cpp" />
     <ClCompile Include="..\Server\Game\GameWorld.cpp" />
     <ClCompile Include="..\Server\Game\MatchHistoryTracker.cpp" />
     <ClCompile Include="..\Server\Match\MatchHistoryTaskProcessor.cpp" />
-    <ClCompile Include="..\Server\Net\InvalidPacketLogLimiter.cpp" />
     <ClCompile Include="..\Server\Net\PeerRoomManager.cpp" />
     <ClCompile Include="..\Server\Protocol\AccountLoginPacketHandler.cpp" />
     <ClCompile Include="..\Server\Protocol\AccountPacketMapper.cpp" />

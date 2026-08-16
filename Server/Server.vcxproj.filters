@@ -96,9 +96,6 @@
     <ClCompile Include="Config\ServerConfigValidator.cpp">
       <Filter>소스 파일\Config</Filter>
     </ClCompile>
-    <ClCompile Include="Net\InvalidPacketLogLimiter.cpp">
-      <Filter>소스 파일\Net</Filter>
-    </ClCompile>
     <ClCompile Include="Diagnostics\ServerStatusReporter.cpp">
       <Filter>소스 파일\Diagnostics</Filter>
     </ClCompile>
@@ -159,6 +156,9 @@
     <ClCompile Include="Service\AccountLoginAdmissionService.cpp">
       <Filter>소스 파일\Service</Filter>
     </ClCompile>
+    <ClCompile Include="Diagnostics\InvalidPacketLogLimiter.cpp">
+      <Filter>소스 파일\Diagnostics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -205,9 +205,6 @@
     </ClInclude>
     <ClInclude Include="Config\ServerConfigValidator.h">
       <Filter>헤더 파일\Config</Filter>
-    </ClInclude>
-    <ClInclude Include="Net\InvalidPacketLogLimiter.h">
-      <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Diagnostics\ServerStatusSnapshot.h">
       <Filter>헤더 파일\Diagnostics</Filter>
@@ -280,6 +277,9 @@
     </ClInclude>
     <ClInclude Include="Service\SessionTokenGenerator.h">
       <Filter>헤더 파일\Service</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics\InvalidPacketLogLimiter.h">
+      <Filter>헤더 파일\Diagnostics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

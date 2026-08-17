@@ -27,6 +27,24 @@ namespace common::game
 
 	inline constexpr WeaponRule defaultBasicWeaponRule{};
 
+	struct WeaponRuleConfig
+	{
+	public:
+		WeaponRule basicWeaponRule = defaultBasicWeaponRule;
+	};
+
+	[[nodiscard]] constexpr const WeaponRule& GetWeaponRule(WeaponType weaponType, const WeaponRuleConfig& weaponRuleConfig) noexcept
+	{
+		switch (weaponType)
+		{
+		case WeaponType::Basic:
+			return weaponRuleConfig.basicWeaponRule;
+
+		default:
+			return weaponRuleConfig.basicWeaponRule;
+		}
+	}
+
 	[[nodiscard]] constexpr const WeaponRule& GetWeaponRule(WeaponType weaponType) noexcept
 	{
 		switch (weaponType)

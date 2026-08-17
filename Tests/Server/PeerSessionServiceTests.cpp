@@ -8,9 +8,10 @@
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/SessionToken.h>
+#include <Common/Game/GameRules.h>
 
-#include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
@@ -64,8 +65,8 @@ namespace
 		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
 		const server::game::GameSimulation& gameSimulation,
-		const server::config::GameRuleConfig& gameRuleConfig,
-		const server::config::ReliableUdpConfig& reliableUdpConfig,
+		const common::game::GameRuleConfig& gameRuleConfig,
+		const common::net::ReliableUdpConfig& reliableUdpConfig,
 		TimePoint currentTime
 	)
 	{
@@ -107,8 +108,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(1);
 		const common::net::EndpointKey endpointKey =
@@ -311,8 +312,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(2);
 		const common::net::EndpointKey endpointKey =
@@ -421,8 +422,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(11);
 		const common::net::EndpointKey endpointKey =
@@ -599,8 +600,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(3);
 		const common::net::EndpointKey endpointKey =
@@ -729,8 +730,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(5);
 		const common::net::EndpointKey endpointKey =
@@ -880,8 +881,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(6);
 		const common::net::EndpointKey endpointKey =
@@ -942,8 +943,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(7);
 		const common::net::EndpointKey endpointKey =
@@ -1044,8 +1045,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(9);
 		const common::net::EndpointKey endpointKey =
@@ -1114,9 +1115,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-
-		server::config::ReliableUdpConfig reliableUdpRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 		reliableUdpRuleConfig.maxPendingPacketCount = 3;
 		reliableUdpRuleConfig.maxResendCount = 1;
 		reliableUdpRuleConfig.resendInterval =
@@ -1295,8 +1295,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(12);
 		const common::net::EndpointKey endpointKey =
@@ -1357,8 +1357,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(15);
 		const common::net::EndpointKey endpointKey =
@@ -1419,8 +1419,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(13);
 		const common::net::EndpointKey endpointKey =
@@ -1481,8 +1481,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(16);
 		const common::net::EndpointKey endpointKey =
@@ -1582,8 +1582,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableUdpConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableUdpConfig{};
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(14);
 		const common::net::EndpointKey endpointKey =

@@ -156,8 +156,8 @@ namespace
 		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
 		const server::game::GameSimulation& gameSimulation,
-		const server::config::GameRuleConfig& gameRuleConfig,
-		const server::config::ReliableUdpConfig& reliableUdpRuleConfig,
+		const common::game::GameRuleConfig& gameRuleConfig,
+		const common::net::ReliableUdpConfig& reliableUdpRuleConfig,
 		TimePoint currentTime
 	)
 	{
@@ -208,9 +208,9 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::WeaponRuleConfig weaponRuleConfig{};
-		server::config::ReliableUdpConfig reliableRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
+		common::net::ReliableUdpConfig reliableRuleConfig{};
 
 		const sockaddr_in firstRemoteAddress =
 			MakeRemoteAddress(1);
@@ -680,8 +680,8 @@ namespace
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::GameRuleConfig gameRuleConfig{};
-		server::config::ReliableUdpConfig reliableRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
+		common::net::ReliableUdpConfig reliableRuleConfig{};
 
 		const sockaddr_in firstRemoteAddress =
 			MakeRemoteAddress(10);

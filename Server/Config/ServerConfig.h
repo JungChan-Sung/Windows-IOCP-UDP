@@ -9,6 +9,7 @@
 #include <Common/Game/WeaponRules.h>
 #include <Common/Log/LogLevel.h>
 #include <Common/Net/Fault/UdpFaultSimulationConfig.h>
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::config
@@ -28,34 +29,11 @@ namespace server::config
 		common::time::Seconds peerTimeout = common::time::Seconds(10);
 	};
 
-	struct ReliableUdpConfig
-	{
-	public:
-		std::size_t maxPendingPacketCount = 64;
-		int maxResendCount = 10;
-		common::time::Milliseconds resendInterval = common::time::Milliseconds(100);
-	};
-
 	struct TickConfig
 	{
 	public:
 		common::time::Duration tickInterval = common::game::defaultFixedTickInterval;
 		float fixedDeltaSeconds = common::game::defaultFixedDeltaSeconds;
-	};
-
-	struct GameRuleConfig
-	{
-	public:
-		int initialPlayerHp = common::game::defaultInitialPlayerHp;
-		float respawnDelaySeconds = common::game::defaultRespawnDelaySeconds;
-		float respawnInvincibilitySeconds = common::game::defaultRespawnInvincibilitySeconds;
-		float hitFlashDurationSeconds = common::game::defaultHitFlashDurationSeconds;
-	};
-
-	struct WeaponRuleConfig
-	{
-	public:
-		common::game::WeaponRule basicWeaponRule = common::game::defaultBasicWeaponRule;
 	};
 
 	struct DatabaseConfig
@@ -80,11 +58,11 @@ namespace server::config
 	public:
 		NetworkConfig network;
 		SessionConfig session;
-		ReliableUdpConfig reliableUdp;
+		common::net::ReliableUdpConfig reliableUdp;
 		common::net::UdpFaultSimulationConfig udpFaultSimulation;
 		TickConfig tick;
-		GameRuleConfig gameRule;
-		WeaponRuleConfig weaponRule;
+		common::game::GameRuleConfig gameRule;
+		common::game::WeaponRuleConfig weaponRule;
 		DatabaseConfig database;
 		DiagnosticsConfig diagnostics;
 	};

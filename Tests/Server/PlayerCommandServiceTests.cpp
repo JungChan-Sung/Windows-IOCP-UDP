@@ -10,7 +10,6 @@
 #include <Common/Game/WeaponRules.h>
 #include <Common/Net/Endpoint.h>
 
-#include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
@@ -443,7 +442,7 @@ namespace
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(5);
@@ -624,7 +623,7 @@ namespace
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(6);
@@ -697,7 +696,7 @@ namespace
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(7);
@@ -770,7 +769,7 @@ namespace
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(8);
@@ -814,7 +813,7 @@ namespace
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		server::game::GameSimulation gameSimulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
 			MakeEndpointKey(9);

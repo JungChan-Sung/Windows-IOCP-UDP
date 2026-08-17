@@ -6,12 +6,13 @@
 #include <string_view>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Game/GameRules.h>
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Config/ServerConfig.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Service/PeerRoomManager.h>
@@ -91,8 +92,8 @@ namespace server::service
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const game::GameSimulation& gameSimulation,
-			const config::GameRuleConfig& gameRuleConfig,
-			const config::ReliableUdpConfig& reliableUdpConfig,
+			const common::game::GameRuleConfig& gameRuleConfig,
+			const common::net::ReliableUdpConfig& reliableUdpConfig,
 			TimePoint currentTime
 		) const;
 		[[nodiscard]] LeaveResult LeavePeer(
@@ -113,7 +114,7 @@ namespace server::service
 		[[nodiscard]] game::PlayerState CreateInitialPlayerState(
 			PlayerId playerId,
 			const game::GameSimulation::SpawnPosition& spawnPosition,
-			const config::GameRuleConfig& gameRuleConfig
+			const common::game::GameRuleConfig& gameRuleConfig
 		) const noexcept;
 	};
 }

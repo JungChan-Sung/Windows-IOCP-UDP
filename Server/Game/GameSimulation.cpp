@@ -11,24 +11,6 @@
 #include <Common/Game/GameRules.h>
 #include <Common/Game/WeaponRules.h>
 
-namespace
-{
-	[[nodiscard]] const common::game::WeaponRule& GetWeaponRule(
-		common::game::WeaponType weaponType,
-		const server::config::WeaponRuleConfig& weaponRuleConfig
-	) noexcept
-	{
-		switch (weaponType)
-		{
-		case common::game::WeaponType::Basic:
-			return weaponRuleConfig.basicWeaponRule;
-
-		default:
-			return weaponRuleConfig.basicWeaponRule;
-		}
-	}
-}
-
 namespace server::game
 {
 	void GameSimulation::UpdatePlayers(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld) const
@@ -59,7 +41,7 @@ namespace server::game
 		}
 	}
 
-	KillEventList GameSimulation::UpdateBullets(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	KillEventList GameSimulation::UpdateBullets(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig) const
 	{
 		KillEventList killEventList;
 
@@ -242,7 +224,7 @@ namespace server::game
 		return killEventList;
 	}
 
-	void GameSimulation::UpdateRespawns(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::UpdateRespawns(float deltaTime, std::span<const PlayerSimulationContext> playerContextList, GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig) const
 	{
 		GameWorld::PlayerTable& playerTable = gameWorld.GetPlayerTable();
 
@@ -291,9 +273,9 @@ namespace server::game
 		}
 	}
 
-	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, std::int64_t ownerPersistentPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const config::WeaponRuleConfig& weaponRuleConfig) const
+	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, std::int64_t ownerPersistentPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const common::game::WeaponRuleConfig& weaponRuleConfig) const
 	{
-		const common::game::WeaponRule& weaponRule = GetWeaponRule(playerState.weaponType, weaponRuleConfig);
+		const common::game::WeaponRule& weaponRule = common::game::GetWeaponRule(playerState.weaponType, weaponRuleConfig);
 
 		const float length = std::sqrt((directionX * directionX) + (directionY * directionY));
 
@@ -351,7 +333,7 @@ namespace server::game
 		return fallbackSpawnPosition;
 	}
 
-	void GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const config::GameRuleConfig& gameRuleConfig) const
+	void GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig) const
 	{
 		PlayerState* playerState = gameWorld.FindPlayer(playerId);
 		if (playerState == nullptr)

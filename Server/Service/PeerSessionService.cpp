@@ -4,12 +4,12 @@
 
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/InputFlags.h>
-#include <Common/Packet/Game/GamePacket.h>
+#include <Common/Game/WeaponRules.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::service
 {
-	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::GameRuleConfig& gameRuleConfig, const config::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const common::game::GameRuleConfig& gameRuleConfig, const common::net::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -177,7 +177,7 @@ namespace server::service
 		return changeResult;
 	}
 
-	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const game::GameSimulation::SpawnPosition& spawnPosition, const config::GameRuleConfig& gameRuleConfig) const noexcept
+	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const game::GameSimulation::SpawnPosition& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept
 	{
 		game::PlayerState playerState{};
 		playerState.playerId = playerId;

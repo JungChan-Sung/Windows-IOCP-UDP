@@ -7,7 +7,6 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
 
-#include <Server/Config/ServerConfig.h>
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
@@ -69,7 +68,7 @@ namespace
 	)
 	{
 		server::game::GameSimulation simulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		constexpr std::int64_t ownerPersistentPlayerId = 5001;
 
@@ -167,7 +166,7 @@ namespace
 	)
 	{
 		server::game::GameSimulation simulation;
-		server::config::WeaponRuleConfig weaponRuleConfig{};
+		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		constexpr std::int64_t ownerPersistentPlayerId = 5001;
 
@@ -222,7 +221,7 @@ namespace
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
-		server::config::GameRuleConfig gameRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
 		PlayerSimulationContextList playerContextList;
 
 		server::game::BulletState bulletState{};
@@ -264,7 +263,7 @@ namespace
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
-		server::config::GameRuleConfig gameRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
 		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
@@ -383,7 +382,7 @@ namespace
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
-		server::config::GameRuleConfig gameRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
 		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
@@ -564,7 +563,7 @@ namespace
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
-		server::config::GameRuleConfig gameRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
 		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId ownerPlayerId = 1;
@@ -677,7 +676,7 @@ namespace
 	{
 		server::game::GameSimulation simulation;
 		server::game::GameWorld gameWorld;
-		server::config::GameRuleConfig gameRuleConfig{};
+		common::game::GameRuleConfig gameRuleConfig{};
 		PlayerSimulationContextList playerContextList;
 
 		constexpr common::game::PlayerId playerId = 1;

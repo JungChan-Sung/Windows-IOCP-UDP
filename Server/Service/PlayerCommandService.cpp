@@ -18,21 +18,6 @@ namespace
 		playerState.lastMoveDirectionX = direction.x;
 		playerState.lastMoveDirectionY = direction.y;
 	}
-
-	[[nodiscard]] const common::game::WeaponRule& GetWeaponRule(
-		common::game::WeaponType weaponType,
-		const server::config::WeaponRuleConfig& weaponRuleConfig
-	) noexcept
-	{
-		switch (weaponType)
-		{
-		case common::game::WeaponType::Basic:
-			return weaponRuleConfig.basicWeaponRule;
-
-		default:
-			return weaponRuleConfig.basicWeaponRule;
-		}
-	}
 }
 
 namespace server::service
@@ -67,7 +52,7 @@ namespace server::service
 		return true;
 	}
 
-	bool PlayerCommandService::FireBullet(const EndpointKey& endpointKey, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const config::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
+	bool PlayerCommandService::FireBullet(const EndpointKey& endpointKey, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const common::game::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
 	{
 		PeerPlayerView peerPlayerView = FindJoinedPeerPlayer(endpointKey, peerRoomManager, gameWorld);
 		if (peerPlayerView.peerState == nullptr || peerPlayerView.playerState == nullptr)
@@ -90,7 +75,7 @@ namespace server::service
 			return false;
 		}
 
-		const common::game::WeaponRule& weaponRule = GetWeaponRule(playerState.weaponType, weaponRuleConfig);
+		const common::game::WeaponRule& weaponRule = common::game::GetWeaponRule(playerState.weaponType, weaponRuleConfig);
 
 		game::BulletState bulletState = gameSimulation.CreateBullet(
 			gameWorld.AllocateBulletId(),

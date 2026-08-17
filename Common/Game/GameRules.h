@@ -7,4 +7,13 @@ namespace common::game
 	inline constexpr float defaultRespawnDelaySeconds = 3.0F;
 	inline constexpr float defaultRespawnInvincibilitySeconds = 1.2F;
 	inline constexpr float defaultHitFlashDurationSeconds = 0.15F;
+
+	struct GameRuleConfig
+	{
+	public:
+		int initialPlayerHp = defaultInitialPlayerHp;
+		float respawnDelaySeconds = defaultRespawnDelaySeconds;
+		float respawnInvincibilitySeconds = defaultRespawnInvincibilitySeconds;
+		float hitFlashDurationSeconds = defaultHitFlashDurationSeconds;
+	};
 }

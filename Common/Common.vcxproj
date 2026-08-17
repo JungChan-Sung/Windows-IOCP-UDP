@@ -46,6 +46,7 @@
     <ClInclude Include="Net\Fault\UdpFaultSimulationConfig.h" />
     <ClInclude Include="Net\Fault\UdpFaultSimulator.h" />
     <ClInclude Include="Net\IocpHandle.h" />
+    <ClInclude Include="Net\Reliable\ReliableUdpConfig.h" />
     <ClInclude Include="Net\Reliable\ReliableUdpPacketBuilder.h" />
     <ClInclude Include="Net\Reliable\ReliableUdpPacketHeader.h" />
     <ClInclude Include="Net\Reliable\ReliableUdpPacketSerialization.h" />

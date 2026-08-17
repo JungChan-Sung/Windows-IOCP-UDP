@@ -12,7 +12,6 @@
 #include <Common/Net/SessionToken.h>
 #include <Common/Game/GameRules.h>
 
-#include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Service/PeerRoomManager.h>
@@ -64,7 +63,6 @@ namespace
 		common::game::RoomId initialRoomId,
 		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
-		const server::game::GameSimulation& gameSimulation,
 		const common::game::GameRuleConfig& gameRuleConfig,
 		const common::net::ReliableUdpConfig& reliableUdpConfig,
 		TimePoint currentTime
@@ -85,7 +83,6 @@ namespace
 			initialRoomId,
 			peerRoomManager,
 			gameWorld,
-			gameSimulation,
 			gameRuleConfig,
 			reliableUdpConfig,
 			currentTime
@@ -107,7 +104,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -126,7 +122,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -311,7 +306,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -333,7 +327,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				firstTime
@@ -347,7 +340,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				secondTime
@@ -421,7 +413,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -447,7 +438,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				joinTime
@@ -460,7 +450,6 @@ namespace
 				nextRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				roomChangeTime
 			);
 
@@ -495,7 +484,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				retryTime
@@ -599,7 +587,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -618,7 +605,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -729,7 +715,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -752,7 +737,6 @@ namespace
 				previousRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				joinTime
@@ -773,7 +757,6 @@ namespace
 				nextRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				changeTime
 			);
 
@@ -880,7 +863,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -898,7 +880,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -912,7 +893,6 @@ namespace
 				0,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				now
 			);
 
@@ -942,7 +922,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -961,7 +940,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -975,7 +953,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				now
 			);
 
@@ -999,7 +976,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 
 		const sockaddr_in remoteAddress = MakeRemoteAddress(8);
 		const common::net::EndpointKey endpointKey =
@@ -1014,7 +990,6 @@ namespace
 				2,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				now
 			);
 
@@ -1044,7 +1019,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 
@@ -1063,7 +1037,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -1084,7 +1057,6 @@ namespace
 				2,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				now
 			);
 
@@ -1114,7 +1086,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpRuleConfig{};
 		reliableUdpRuleConfig.maxPendingPacketCount = 3;
@@ -1137,7 +1108,6 @@ namespace
 				initialRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpRuleConfig,
 				now
@@ -1294,7 +1264,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpConfig{};
 
@@ -1318,7 +1287,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				Clock::now()
@@ -1356,7 +1324,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpConfig{};
 
@@ -1380,7 +1347,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				Clock::now()
@@ -1418,7 +1384,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpConfig{};
 
@@ -1442,7 +1407,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				Clock::now()
@@ -1480,7 +1444,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpConfig{};
 
@@ -1498,7 +1461,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				firstJoinTime
@@ -1526,7 +1488,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				firstJoinTime + std::chrono::seconds(1)
@@ -1581,7 +1542,6 @@ namespace
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::net::ReliableUdpConfig reliableUdpConfig{};
 
@@ -1599,7 +1559,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				firstJoinTime
@@ -1627,7 +1586,6 @@ namespace
 				1,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableUdpConfig,
 				firstJoinTime + std::chrono::seconds(1)

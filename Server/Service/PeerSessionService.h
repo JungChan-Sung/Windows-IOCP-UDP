@@ -7,13 +7,13 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/GameRules.h>
+#include <Common/Game/RoomLayout.h>
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Service/PeerRoomManager.h>
 
@@ -47,7 +47,7 @@ namespace server::service
 			PlayerId playerId = 0;
 			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
-			game::GameSimulation::SpawnPosition spawnPosition{};
+			common::game::SpawnPoint spawnPosition{};
 		};
 
 		struct LeaveResult
@@ -70,7 +70,7 @@ namespace server::service
 			RoomId previousRoomId = 0;
 			RoomId nextRoomId = 0;
 			sockaddr_in remoteAddress{};
-			game::GameSimulation::SpawnPosition spawnPosition{};
+			common::game::SpawnPoint spawnPosition{};
 		};
 
 	public:
@@ -91,7 +91,6 @@ namespace server::service
 			RoomId initialRoomId,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
-			const game::GameSimulation& gameSimulation,
 			const common::game::GameRuleConfig& gameRuleConfig,
 			const common::net::ReliableUdpConfig& reliableUdpConfig,
 			TimePoint currentTime
@@ -106,14 +105,13 @@ namespace server::service
 			RoomId nextRoomId,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
-			const game::GameSimulation& gameSimulation,
 			TimePoint currentTime
 		) const;
 
 	private:
 		[[nodiscard]] game::PlayerState CreateInitialPlayerState(
 			PlayerId playerId,
-			const game::GameSimulation::SpawnPosition& spawnPosition,
+			const common::game::SpawnPoint& spawnPosition,
 			const common::game::GameRuleConfig& gameRuleConfig
 		) const noexcept;
 	};

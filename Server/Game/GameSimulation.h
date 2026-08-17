@@ -20,14 +20,6 @@ namespace server::game
 	class GameSimulation
 	{
 	public:
-		struct SpawnPosition
-		{
-		public:
-			float x = 0.0F;
-			float y = 0.0F;
-		};
-
-	public:
 		using PlayerId = common::game::PlayerId;
 		using BulletId = common::game::BulletId;
 		using RoomId = common::game::RoomId;
@@ -70,8 +62,6 @@ namespace server::game
 		) const;
 
 		void SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const;
-
-		[[nodiscard]] SpawnPosition GetSpawnPosition(RoomId roomId, std::size_t spawnIndex) const;
 
 	private:
 		void RespawnPlayer(

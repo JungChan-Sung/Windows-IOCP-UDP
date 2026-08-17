@@ -849,7 +849,6 @@ namespace server::net
 					config_.session.initialRoomId,
 					peerRoomManager_,
 					gameWorld_,
-					gameSimulation_,
 					config_.gameRule,
 					config_.reliableUdp,
 					common::time::Clock::now()
@@ -1036,7 +1035,6 @@ namespace server::net
 				packet.roomId,
 				peerRoomManager_,
 				gameWorld_,
-				gameSimulation_,
 				common::time::Clock::now()
 			);
 

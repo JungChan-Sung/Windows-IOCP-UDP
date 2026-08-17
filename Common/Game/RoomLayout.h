@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
@@ -98,5 +99,21 @@ namespace common::game
 		default:
 			return {};
 		}
+	}
+
+	inline constexpr SpawnPoint fallbackSpawnPoint{
+		.x = 100.0F,
+		.y = 100.0F,
+	};
+
+	[[nodiscard]] inline SpawnPoint GetSpawnPointForRoom(RoomId roomId, std::size_t spawnIndex) noexcept
+	{
+		const std::span<const SpawnPoint> spawnPointList = GetSpawnPointListForRoom(roomId);
+		if (spawnPointList.empty())
+		{
+			return fallbackSpawnPoint;
+		}
+
+		return spawnPointList[spawnIndex % spawnPointList.size()];
 	}
 }

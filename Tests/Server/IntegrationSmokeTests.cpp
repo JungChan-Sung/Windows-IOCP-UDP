@@ -190,7 +190,6 @@ namespace
 			roomId,
 			peerRoomManager,
 			gameWorld,
-			gameSimulation,
 			gameRuleConfig,
 			reliableUdpRuleConfig,
 			currentTime
@@ -743,7 +742,6 @@ namespace
 				secondRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				startTime
 				+ common::time::Milliseconds(10)
 			);

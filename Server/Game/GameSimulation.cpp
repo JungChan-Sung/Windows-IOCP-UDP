@@ -314,25 +314,6 @@ namespace server::game
 		gameWorld.AddPendingImpactEffect(std::move(impactEffectState));
 	}
 
-	GameSimulation::SpawnPosition GameSimulation::GetSpawnPosition(RoomId roomId, std::size_t spawnIndex) const
-	{
-		const std::span<const common::game::SpawnPoint> spawnPointList = common::game::GetSpawnPointListForRoom(roomId);
-		if (!spawnPointList.empty())
-		{
-			const common::game::SpawnPoint& spawnPoint = spawnPointList[spawnIndex % spawnPointList.size()];
-
-			SpawnPosition spawnPosition{};
-			spawnPosition.x = spawnPoint.x;
-			spawnPosition.y = spawnPoint.y;
-			return spawnPosition;
-		}
-
-		SpawnPosition fallbackSpawnPosition{};
-		fallbackSpawnPosition.x = 100.0F;
-		fallbackSpawnPosition.y = 100.0F;
-		return fallbackSpawnPosition;
-	}
-
 	void GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig) const
 	{
 		PlayerState* playerState = gameWorld.FindPlayer(playerId);
@@ -341,7 +322,7 @@ namespace server::game
 			return;
 		}
 
-		const SpawnPosition spawnPosition = GetSpawnPosition(roomId, 0);
+		const common::game::SpawnPoint spawnPosition = common::game::GetSpawnPointForRoom(roomId, 0);
 
 		playerState->x = spawnPosition.x;
 		playerState->y = spawnPosition.y;

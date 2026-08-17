@@ -9,7 +9,7 @@
 
 namespace server::service
 {
-	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const common::game::GameRuleConfig& gameRuleConfig, const common::net::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, const common::net::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -53,7 +53,7 @@ namespace server::service
 		}
 
 		const std::size_t spawnIndex = peerRoomManager.GetRoomMemberCount(initialRoomId);
-		const game::GameSimulation::SpawnPosition spawnPosition = gameSimulation.GetSpawnPosition(initialRoomId, spawnIndex);
+		const common::game::SpawnPoint spawnPosition = common::game::GetSpawnPointForRoom(initialRoomId, spawnIndex);
 
 		const PlayerId playerId = gameWorld.AllocatePlayerId();
 
@@ -114,7 +114,7 @@ namespace server::service
 		return leaveResult;
 	}
 
-	PeerSessionService::RoomChangeResult PeerSessionService::ChangePeerRoom(const EndpointKey& endpointKey, RoomId nextRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, TimePoint currentTime) const
+	PeerSessionService::RoomChangeResult PeerSessionService::ChangePeerRoom(const EndpointKey& endpointKey, RoomId nextRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, TimePoint currentTime) const
 	{
 		RoomChangeResult changeResult{};
 
@@ -161,7 +161,7 @@ namespace server::service
 		const std::size_t joinedRoomMemberCount = peerRoomManager.GetRoomMemberCount(nextRoomId);
 		const std::size_t spawnIndex = (joinedRoomMemberCount > 0) ? joinedRoomMemberCount - 1 : 0;
 
-		const game::GameSimulation::SpawnPosition spawnPosition = gameSimulation.GetSpawnPosition(nextRoomId, spawnIndex);
+		const common::game::SpawnPoint spawnPosition = common::game::GetSpawnPointForRoom(nextRoomId, spawnIndex);
 
 		playerState->x = spawnPosition.x;
 		playerState->y = spawnPosition.y;
@@ -177,7 +177,7 @@ namespace server::service
 		return changeResult;
 	}
 
-	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const game::GameSimulation::SpawnPosition& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept
+	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const common::game::SpawnPoint& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept
 	{
 		game::PlayerState playerState{};
 		playerState.playerId = playerId;

@@ -291,6 +291,9 @@
     <ClInclude Include="Time\SystemDateTime.h">
       <Filter>헤더 파일\Time</Filter>
     </ClInclude>
+    <ClInclude Include="Game\EffectType.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">

@@ -676,11 +676,11 @@ namespace
 		packet.chunkCount = 1;
 		packet.effectCount = 2;
 
-		packet.effects[0].effectType = common::packet::EffectType::Impact;
+		packet.effects[0].effectType = common::game::EffectType::Impact;
 		packet.effects[0].x = 55.0F;
 		packet.effects[0].y = 66.0F;
 
-		packet.effects[1].effectType = common::packet::EffectType::Spawn;
+		packet.effects[1].effectType = common::game::EffectType::Spawn;
 		packet.effects[1].x = 77.0F;
 		packet.effects[1].y = 88.0F;
 

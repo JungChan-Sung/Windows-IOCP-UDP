@@ -110,7 +110,7 @@ namespace server::game
 						impactX,
 						impactY,
 						bulletState.roomId,
-						common::packet::EffectType::Impact,
+						common::game::EffectType::Impact,
 						gameWorld
 					);
 
@@ -148,7 +148,7 @@ namespace server::game
 						impactX,
 						impactY,
 						bulletState.roomId,
-						common::packet::EffectType::Impact,
+						common::game::EffectType::Impact,
 						gameWorld
 					);
 
@@ -198,7 +198,7 @@ namespace server::game
 						bulletState.x,
 						bulletState.y,
 						bulletState.roomId,
-						common::packet::EffectType::Impact,
+						common::game::EffectType::Impact,
 						gameWorld
 					);
 
@@ -321,7 +321,7 @@ namespace server::game
 		return bulletState;
 	}
 
-	void GameSimulation::SpawnImpactEffect(float x, float y, RoomId roomId, common::packet::EffectType effectType, GameWorld& gameWorld) const
+	void GameSimulation::SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const
 	{
 		game::ImpactEffectState impactEffectState{};
 		impactEffectState.roomId = roomId;
@@ -377,7 +377,7 @@ namespace server::game
 			playerState->x,
 			playerState->y,
 			roomId,
-			common::packet::EffectType::Spawn,
+			common::game::EffectType::Spawn,
 			gameWorld
 		);
 	}

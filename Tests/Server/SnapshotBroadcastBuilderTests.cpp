@@ -195,7 +195,7 @@ namespace
 	void AddImpactEffect(
 		server::game::GameWorld& gameWorld,
 		common::game::RoomId roomId,
-		common::packet::EffectType effectType,
+		common::game::EffectType effectType,
 		float x,
 		float y
 	)
@@ -692,7 +692,7 @@ namespace
 		AddImpactEffect(
 			gameWorld,
 			1,
-			common::packet::EffectType::Impact,
+			common::game::EffectType::Impact,
 			10.0F,
 			20.0F
 		);
@@ -700,7 +700,7 @@ namespace
 		AddImpactEffect(
 			gameWorld,
 			2,
-			common::packet::EffectType::Spawn,
+			common::game::EffectType::Spawn,
 			30.0F,
 			40.0F
 		);
@@ -727,7 +727,7 @@ namespace
 				tests::Expect(
 					result,
 					task.effectPacket.effects[0].effectType
-					== common::packet::EffectType::Impact,
+					== common::game::EffectType::Impact,
 					"SnapshotBroadcastBuilder: room1 impact type"
 				);
 
@@ -747,7 +747,7 @@ namespace
 				tests::Expect(
 					result,
 					task.effectPacket.effects[0].effectType
-					== common::packet::EffectType::Spawn,
+					== common::game::EffectType::Spawn,
 					"SnapshotBroadcastBuilder: room2 impact type"
 				);
 
@@ -792,7 +792,7 @@ namespace
 			AddImpactEffect(
 				gameWorld,
 				1,
-				common::packet::EffectType::Impact,
+				common::game::EffectType::Impact,
 				static_cast<float>(index),
 				static_cast<float>(index)
 			);

@@ -38,7 +38,7 @@ namespace server::protocol
 	public:
 		SnapshotBroadcastBuilder() = default;
 		~SnapshotBroadcastBuilder() noexcept = default;
-
+		
 		SnapshotBroadcastBuilder(const SnapshotBroadcastBuilder&) = delete;
 		SnapshotBroadcastBuilder& operator=(const SnapshotBroadcastBuilder&) = delete;
 

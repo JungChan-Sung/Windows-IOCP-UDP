@@ -3,22 +3,16 @@
 #include <array>
 #include <cstdint>
 
+#include <Common/Game/EffectType.h>
 #include <Common/Packet/Game/GamePacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
 
 namespace common::packet
 {
-	enum class EffectType : std::uint8_t
-	{
-		None = 0,
-		Impact = 1,
-		Spawn = 2,
-	};
-
 	struct ImpactEffectData
 	{
 	public:
-		EffectType effectType = EffectType::None;
+		game::EffectType effectType = game::EffectType::None;
 		float x = 0.0F;
 		float y = 0.0F;
 	};

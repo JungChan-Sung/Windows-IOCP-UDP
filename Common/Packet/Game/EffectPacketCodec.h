@@ -24,12 +24,12 @@ namespace common::packet
 		+ uint16WireSize
 		+ uint16WireSize;
 
-	inline void WriteEffectType(PacketWriter& writer, EffectType effectType)
+	inline void WriteEffectType(PacketWriter& writer, game::EffectType effectType)
 	{
 		writer.WriteUInt8(static_cast<std::uint8_t>(effectType));
 	}
 
-	[[nodiscard]] inline bool ReadEffectType(PacketReader& reader, EffectType& effectType) noexcept
+	[[nodiscard]] inline bool ReadEffectType(PacketReader& reader, game::EffectType& effectType) noexcept
 	{
 		std::uint8_t rawValue = 0;
 		if (!reader.ReadUInt8(rawValue))
@@ -37,7 +37,7 @@ namespace common::packet
 			return false;
 		}
 
-		effectType = static_cast<EffectType>(rawValue);
+		effectType = static_cast<game::EffectType>(rawValue);
 
 		return true;
 	}

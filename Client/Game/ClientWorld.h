@@ -94,7 +94,7 @@ namespace client::game
 		struct RenderImpactEffectState
 		{
 		public:
-			common::packet::EffectType effectType = common::packet::EffectType::None;
+			common::game::EffectType effectType = common::game::EffectType::None;
 			float x = 0.0F;
 			float y = 0.0F;
 			float remainingSeconds = 0.0F;

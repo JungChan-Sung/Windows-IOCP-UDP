@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <span>
 
+#include <Common/Game/EffectType.h>
 #include <Common/Game/GameTypes.h>
-#include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Game/BulletState.h>
@@ -68,13 +68,7 @@ namespace server::game
 			const config::WeaponRuleConfig& weaponRuleConfig
 		) const;
 
-		void SpawnImpactEffect(
-			float x, 
-			float y, 
-			RoomId roomId, 
-			common::packet::EffectType effectType, 
-			GameWorld& gameWorld
-		) const;
+		void SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const;
 
 		[[nodiscard]] SpawnPosition GetSpawnPosition(RoomId roomId, std::size_t spawnIndex) const;
 

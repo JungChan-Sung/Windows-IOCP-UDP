@@ -69,7 +69,7 @@ namespace
 	void AddImpactEffect(
 		common::packet::ImpactEffectPacket& packet,
 		std::size_t index,
-		common::packet::EffectType effectType,
+		common::game::EffectType effectType,
 		float x,
 		float y
 	)
@@ -232,8 +232,8 @@ namespace
 		client::net::SnapshotChunkAssembler assembler;
 
 		common::packet::ImpactEffectPacket packet = MakeImpactEffectPacket(2, 700, 0, 1);
-		AddImpactEffect(packet, 0, common::packet::EffectType::Impact, 100.0F, 200.0F);
-		AddImpactEffect(packet, 1, common::packet::EffectType::Spawn, 300.0F, 400.0F);
+		AddImpactEffect(packet, 0, common::game::EffectType::Impact, 100.0F, 200.0F);
+		AddImpactEffect(packet, 1, common::game::EffectType::Spawn, 300.0F, 400.0F);
 
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledImpactEffectPacket> assembledPacket
 			= assembler.PushImpactEffectChunk(packet);
@@ -248,9 +248,9 @@ namespace
 		tests::Expect(result, assembledPacket->roomId == 2, "ClientSnapshotAssembler: single impact roomId");
 		tests::Expect(result, assembledPacket->serverTick == 700, "ClientSnapshotAssembler: single impact serverTick");
 		tests::Expect(result, assembledPacket->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: single impact count");
-		tests::Expect(result, assembledPacket->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
+		tests::Expect(result, assembledPacket->impactEffectDataList[0].effectType == common::game::EffectType::Impact,
 			"ClientSnapshotAssembler: single impact data 0");
-		tests::Expect(result, assembledPacket->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
+		tests::Expect(result, assembledPacket->impactEffectDataList[1].effectType == common::game::EffectType::Spawn,
 			"ClientSnapshotAssembler: single impact data 1");
 	}
 
@@ -259,10 +259,10 @@ namespace
 		client::net::SnapshotChunkAssembler assembler;
 
 		common::packet::ImpactEffectPacket firstPacket = MakeImpactEffectPacket(2, 800, 1, 2);
-		AddImpactEffect(firstPacket, 0, common::packet::EffectType::Spawn, 30.0F, 40.0F);
+		AddImpactEffect(firstPacket, 0, common::game::EffectType::Spawn, 30.0F, 40.0F);
 
 		common::packet::ImpactEffectPacket secondPacket = MakeImpactEffectPacket(2, 800, 0, 2);
-		AddImpactEffect(secondPacket, 0, common::packet::EffectType::Impact, 10.0F, 20.0F);
+		AddImpactEffect(secondPacket, 0, common::game::EffectType::Impact, 10.0F, 20.0F);
 
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledImpactEffectPacket> firstResult
 			= assembler.PushImpactEffectChunk(firstPacket);
@@ -278,9 +278,9 @@ namespace
 		}
 
 		tests::Expect(result, secondResult->impactEffectDataList.size() == 2, "ClientSnapshotAssembler: out-of-order impact count");
-		tests::Expect(result, secondResult->impactEffectDataList[0].effectType == common::packet::EffectType::Impact,
+		tests::Expect(result, secondResult->impactEffectDataList[0].effectType == common::game::EffectType::Impact,
 			"ClientSnapshotAssembler: out-of-order impact order 0");
-		tests::Expect(result, secondResult->impactEffectDataList[1].effectType == common::packet::EffectType::Spawn,
+		tests::Expect(result, secondResult->impactEffectDataList[1].effectType == common::game::EffectType::Spawn,
 			"ClientSnapshotAssembler: out-of-order impact order 1");
 	}
 
@@ -292,7 +292,7 @@ namespace
 		AddBullet(bulletPacket, 0, 90, 10.0F, 20.0F);
 
 		common::packet::ImpactEffectPacket impactPacket = MakeImpactEffectPacket(1, 900, 0, 1);
-		AddImpactEffect(impactPacket, 0, common::packet::EffectType::Impact, 10.0F, 20.0F);
+		AddImpactEffect(impactPacket, 0, common::game::EffectType::Impact, 10.0F, 20.0F);
 
 		const std::optional<client::net::SnapshotChunkAssembler::AssembledBulletSnapshot> bulletResult
 			= assembler.PushBulletSnapshotChunk(bulletPacket);

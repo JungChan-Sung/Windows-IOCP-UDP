@@ -24,7 +24,7 @@ namespace
 
 		for (const client::game::ClientWorld::RenderImpactEffectState& renderImpactEffectState : renderImpactEffectStateList)
 		{
-			if (renderImpactEffectState.effectType != common::packet::EffectType::Spawn)
+			if (renderImpactEffectState.effectType != common::game::EffectType::Spawn)
 			{
 				continue;
 			}
@@ -293,7 +293,7 @@ namespace client::render
 
 			switch (renderImpactEffectState.effectType)
 			{
-			case common::packet::EffectType::Impact:
+			case common::game::EffectType::Impact:
 			{
 				GdiPen effectPen(::CreatePen(PS_SOLID, 2, RGB(255, 200, 80)));
 				if (!effectPen.IsValid())
@@ -321,7 +321,7 @@ namespace client::render
 				break;
 			}
 
-			case common::packet::EffectType::Spawn:
+			case common::game::EffectType::Spawn:
 			{
 				GdiPen effectPen(::CreatePen(PS_SOLID, 2, RGB(80, 220, 255)));
 				if (!effectPen.IsValid())

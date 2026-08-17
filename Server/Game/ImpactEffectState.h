@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Common/Game/EffectType.h>
 #include <Common/Game/GameTypes.h>
-#include <Common/Packet/Game/GamePacket.h>
 
 namespace server::game
 {
@@ -9,7 +9,7 @@ namespace server::game
 	{
 	public:
 		common::game::RoomId roomId = 0;
-		common::packet::EffectType effectType = common::packet::EffectType::None;
+		common::game::EffectType effectType = common::game::EffectType::None;
 		float x = 0.0F;
 		float y = 0.0F;
 	};

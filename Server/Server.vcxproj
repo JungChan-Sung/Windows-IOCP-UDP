@@ -188,6 +188,7 @@
     <ClInclude Include="Diagnostics\ServerMetricsSnapshot.h" />
     <ClInclude Include="Diagnostics\ServerStatusReporter.h" />
     <ClInclude Include="Diagnostics\ServerStatusSnapshot.h" />
+    <ClInclude Include="Game\BulletFactory.h" />
     <ClInclude Include="Game\BulletState.h" />
     <ClInclude Include="Game\GameSimulation.h" />
     <ClInclude Include="Game\GameTickRunner.h" />

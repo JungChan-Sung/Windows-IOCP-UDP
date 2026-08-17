@@ -1,7 +1,6 @@
 #include "GameSimulation.h"
 
 #include <algorithm>
-#include <cmath>
 #include <utility>
 
 #include <Common/Game/Movement.h>
@@ -9,7 +8,6 @@
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/WorldCollision.h>
 #include <Common/Game/GameRules.h>
-#include <Common/Game/WeaponRules.h>
 
 namespace server::game
 {
@@ -271,36 +269,6 @@ namespace server::game
 			UpdateTimer(deltaTime, playerState.hitFlashRemainingSeconds);
 			UpdateTimer(deltaTime, playerState.fireCooldownRemainingSeconds);
 		}
-	}
-
-	BulletState GameSimulation::CreateBullet(BulletId bulletId, PlayerId ownerPlayerId, std::int64_t ownerPersistentPlayerId, RoomId roomId, const PlayerState& playerState, float directionX, float directionY, const common::game::WeaponRuleConfig& weaponRuleConfig) const
-	{
-		const common::game::WeaponRule& weaponRule = common::game::GetWeaponRule(playerState.weaponType, weaponRuleConfig);
-
-		const float length = std::sqrt((directionX * directionX) + (directionY * directionY));
-
-		float normalizedDirectionX = 1.0F;
-		float normalizedDirectionY = 0.0F;
-
-		if (length > 0.0F)
-		{
-			normalizedDirectionX = directionX / length;
-			normalizedDirectionY = directionY / length;
-		}
-
-		BulletState bulletState{};
-		bulletState.bulletId = bulletId;
-		bulletState.ownerPlayerId = ownerPlayerId;
-		bulletState.ownerPersistentPlayerId = ownerPersistentPlayerId;
-		bulletState.roomId = roomId;
-		bulletState.x = playerState.x;
-		bulletState.y = playerState.y;
-		bulletState.velocityX = normalizedDirectionX * weaponRule.bulletSpeed;
-		bulletState.velocityY = normalizedDirectionY * weaponRule.bulletSpeed;
-		bulletState.remainingLifeSeconds = weaponRule.bulletLifeSeconds;
-		bulletState.damage = weaponRule.bulletDamage;
-		bulletState.radius = weaponRule.bulletRadius;
-		return bulletState;
 	}
 
 	void GameSimulation::SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const

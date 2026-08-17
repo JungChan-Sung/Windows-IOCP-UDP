@@ -10,7 +10,6 @@
 #include <Common/Game/WeaponRules.h>
 #include <Common/Net/Endpoint.h>
 
-#include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Service/PeerRoomManager.h>
@@ -441,7 +440,6 @@ namespace
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
@@ -483,7 +481,6 @@ namespace
 				endpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);
@@ -622,7 +619,6 @@ namespace
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
@@ -658,7 +654,6 @@ namespace
 				endpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);
@@ -695,7 +690,6 @@ namespace
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
@@ -731,7 +725,6 @@ namespace
 				endpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);
@@ -768,7 +761,6 @@ namespace
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
@@ -781,7 +773,6 @@ namespace
 				endpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);
@@ -812,7 +803,6 @@ namespace
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
-		server::game::GameSimulation gameSimulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		const common::net::EndpointKey endpointKey =
@@ -842,7 +832,6 @@ namespace
 				endpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);

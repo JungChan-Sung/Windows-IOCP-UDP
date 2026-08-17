@@ -155,7 +155,6 @@ namespace
 		common::game::RoomId roomId,
 		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
-		const server::game::GameSimulation& gameSimulation,
 		const common::game::GameRuleConfig& gameRuleConfig,
 		const common::net::ReliableUdpConfig& reliableUdpRuleConfig,
 		TimePoint currentTime
@@ -243,7 +242,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableRuleConfig,
 				startTime
@@ -259,7 +257,6 @@ namespace
 				roomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableRuleConfig,
 				startTime
@@ -364,7 +361,6 @@ namespace
 				firstEndpointKey,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				weaponRuleConfig,
 				fireTime
 			);
@@ -712,7 +708,6 @@ namespace
 				firstRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableRuleConfig,
 				startTime
@@ -728,7 +723,6 @@ namespace
 				firstRoomId,
 				peerRoomManager,
 				gameWorld,
-				gameSimulation,
 				gameRuleConfig,
 				reliableRuleConfig,
 				startTime

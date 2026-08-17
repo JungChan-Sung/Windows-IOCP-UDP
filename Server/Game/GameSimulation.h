@@ -1,19 +1,17 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <span>
 
 #include <Common/Game/EffectType.h>
+#include <Common/Game/GameRules.h>
 #include <Common/Game/GameTypes.h>
 
 #include <Server/Game/BulletState.h>
-#include <Common/Game/GameRules.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/KillEvent.h>
 #include <Server/Game/PlayerSimulationContext.h>
 #include <Server/Game/PlayerState.h>
-#include <Common/Game/WeaponRules.h>
 
 namespace server::game
 {
@@ -49,17 +47,6 @@ namespace server::game
 			const common::game::GameRuleConfig& gameRuleConfig
 		) const;
 		void UpdatePlayerTimers(float deltaTime, GameWorld& gameWorld) const;
-
-		[[nodiscard]] BulletState CreateBullet(
-			BulletId bulletId,
-			PlayerId ownerPlayerId,
-			std::int64_t ownerPersistentPlayerId,
-			RoomId roomId,
-			const PlayerState& playerState,
-			float directionX,
-			float directionY, 
-			const common::game::WeaponRuleConfig& weaponRuleConfig
-		) const;
 
 		void SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const;
 

@@ -5,6 +5,8 @@
 #include <Common/Game/GameRules.h>
 #include <Common/Game/Movement.h>
 
+#include <Server/Game/BulletFactory.h>
+
 namespace
 {
 	void UpdateLastMoveDirection(server::game::PlayerState& playerState, common::game::InputFlags inputFlags) noexcept
@@ -52,7 +54,7 @@ namespace server::service
 		return true;
 	}
 
-	bool PlayerCommandService::FireBullet(const EndpointKey& endpointKey, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, const game::GameSimulation& gameSimulation, const common::game::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
+	bool PlayerCommandService::FireBullet(const EndpointKey& endpointKey, PeerRoomManager & peerRoomManager, game::GameWorld& gameWorld, const common::game::WeaponRuleConfig& weaponRuleConfig, TimePoint currentTime) const
 	{
 		PeerPlayerView peerPlayerView = FindJoinedPeerPlayer(endpointKey, peerRoomManager, gameWorld);
 		if (peerPlayerView.peerState == nullptr || peerPlayerView.playerState == nullptr)
@@ -76,8 +78,7 @@ namespace server::service
 		}
 
 		const common::game::WeaponRule& weaponRule = common::game::GetWeaponRule(playerState.weaponType, weaponRuleConfig);
-
-		game::BulletState bulletState = gameSimulation.CreateBullet(
+		game::BulletState bulletState = game::CreateBulletState(
 			gameWorld.AllocateBulletId(),
 			peerState.playerId,
 			peerState.persistentPlayerId,
@@ -85,7 +86,7 @@ namespace server::service
 			playerState,
 			playerState.lastMoveDirectionX,
 			playerState.lastMoveDirectionY,
-			weaponRuleConfig
+			weaponRule
 		);
 
 		gameWorld.AddBullet(std::move(bulletState));

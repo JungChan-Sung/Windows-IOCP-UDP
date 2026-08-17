@@ -966,7 +966,6 @@ namespace server::net
 			endpointKey,
 			peerRoomManager_,
 			gameWorld_,
-			gameSimulation_,
 			config_.weaponRule,
 			common::time::Clock::now()))
 		{

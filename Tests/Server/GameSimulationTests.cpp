@@ -7,6 +7,7 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
 
+#include <Server/Game/BulletFactory.h>
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
@@ -67,7 +68,6 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::game::GameSimulation simulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		constexpr std::int64_t ownerPersistentPlayerId = 5001;
@@ -78,56 +78,53 @@ namespace
 		ownerPlayer.y = 200.0F;
 		ownerPlayer.weaponType = common::game::WeaponType::Basic;
 
-		const server::game::BulletState bulletState =
-			simulation.CreateBullet(
-				10,
-				ownerPlayer.playerId,
-				ownerPersistentPlayerId,
-				1,
-				ownerPlayer,
-				3.0F,
-				4.0F,
-				weaponRuleConfig
-			);
-
-		const common::game::WeaponRule& weaponRule =
-			weaponRuleConfig.basicWeaponRule;
+		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
+		const server::game::BulletState bulletState = server::game::CreateBulletState(
+			10,
+			ownerPlayer.playerId,
+			ownerPersistentPlayerId,
+			1,
+			ownerPlayer,
+			3.0F,
+			4.0F,
+			weaponRule
+		);
 
 		tests::Expect(
 			result,
 			bulletState.bulletId == 10,
-			"GameSimulation: CreateBullet bulletId"
+			"GameSimulation: CreateBulletState bulletId"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.ownerPlayerId == 1,
-			"GameSimulation: CreateBullet ownerPlayerId"
+			"GameSimulation: CreateBulletState ownerPlayerId"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.ownerPersistentPlayerId
 			== ownerPersistentPlayerId,
-			"GameSimulation: CreateBullet ownerPersistentPlayerId"
+			"GameSimulation: CreateBulletState ownerPersistentPlayerId"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.roomId == 1,
-			"GameSimulation: CreateBullet roomId"
+			"GameSimulation: CreateBulletState roomId"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.x == ownerPlayer.x,
-			"GameSimulation: CreateBullet x"
+			"GameSimulation: CreateBulletState x"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.y == ownerPlayer.y,
-			"GameSimulation: CreateBullet y"
+			"GameSimulation: CreateBulletState y"
 		);
 
 		tests::Expect(
@@ -136,7 +133,7 @@ namespace
 				bulletState.velocityX,
 				weaponRule.bulletSpeed * 0.6F
 			),
-			"GameSimulation: CreateBullet velocityX normalized"
+			"GameSimulation: CreateBulletState velocityX normalized"
 		);
 
 		tests::Expect(
@@ -145,19 +142,19 @@ namespace
 				bulletState.velocityY,
 				weaponRule.bulletSpeed * 0.8F
 			),
-			"GameSimulation: CreateBullet velocityY normalized"
+			"GameSimulation: CreateBulletState velocityY normalized"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.damage == weaponRule.bulletDamage,
-			"GameSimulation: CreateBullet damage"
+			"GameSimulation: CreateBulletState damage"
 		);
 
 		tests::Expect(
 			result,
 			bulletState.radius == weaponRule.bulletRadius,
-			"GameSimulation: CreateBullet radius"
+			"GameSimulation: CreateBulletState radius"
 		);
 	}
 
@@ -165,7 +162,6 @@ namespace
 		tests::DebugTestResult& result
 	)
 	{
-		server::game::GameSimulation simulation;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
 		constexpr std::int64_t ownerPersistentPlayerId = 5001;
@@ -174,20 +170,17 @@ namespace
 		ownerPlayer.playerId = 1;
 		ownerPlayer.weaponType = common::game::WeaponType::Basic;
 
-		const server::game::BulletState bulletState =
-			simulation.CreateBullet(
-				11,
-				ownerPlayer.playerId,
-				ownerPersistentPlayerId,
-				1,
-				ownerPlayer,
-				0.0F,
-				0.0F,
-				weaponRuleConfig
-			);
-
-		const common::game::WeaponRule& weaponRule =
-			weaponRuleConfig.basicWeaponRule;
+		const common::game::WeaponRule& weaponRule = weaponRuleConfig.basicWeaponRule;
+		const server::game::BulletState bulletState = server::game::CreateBulletState(
+			11,
+			ownerPlayer.playerId,
+			ownerPersistentPlayerId,
+			1,
+			ownerPlayer,
+			0.0F,
+			0.0F,
+			weaponRule
+		);
 
 		tests::Expect(
 			result,
@@ -195,7 +188,7 @@ namespace
 				bulletState.velocityX,
 				weaponRule.bulletSpeed
 			),
-			"GameSimulation: CreateBullet fallback velocityX"
+			"GameSimulation: CreateBulletState fallback velocityX"
 		);
 
 		tests::Expect(
@@ -204,7 +197,7 @@ namespace
 				bulletState.velocityY,
 				0.0F
 			),
-			"GameSimulation: CreateBullet fallback velocityY"
+			"GameSimulation: CreateBulletState fallback velocityY"
 		);
 
 		tests::Expect(

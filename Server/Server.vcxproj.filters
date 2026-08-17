@@ -284,6 +284,9 @@
     <ClInclude Include="Service\PeerRoomManager.h">
       <Filter>헤더 파일\Service</Filter>
     </ClInclude>
+    <ClInclude Include="Game\BulletFactory.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini">

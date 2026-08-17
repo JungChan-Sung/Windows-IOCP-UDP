@@ -3,12 +3,11 @@
 #include <cstdint>
 
 #include <Common/Game/InputFlags.h>
+#include <Common/Game/WeaponRules.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
-#include <Common/Game/WeaponRules.h>
 #include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/PeerState.h>
 
@@ -52,7 +51,6 @@ namespace server::service
 			const EndpointKey& endpointKey,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
-			const game::GameSimulation& gameSimulation,
 			const common::game::WeaponRuleConfig& weaponRuleConfig, 
 			TimePoint currentTime
 		) const;

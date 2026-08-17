@@ -9,7 +9,7 @@
 
 namespace server::service
 {
-	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, const common::net::ReliableUdpConfig& reliableUdpConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
 		joinResult.remoteAddress = remoteAddress;
@@ -69,10 +69,6 @@ namespace server::service
 		peerState.sessionToken = authenticatedIdentity.sessionToken;
 		peerState.nickname = authenticatedIdentity.nickname;
 		peerState.lastInputSequence = 0;
-
-		peerState.reliableSession.SetMaxPendingPacketCount(reliableUdpConfig.maxPendingPacketCount);
-		peerState.reliableSession.SetMaxResendCount(reliableUdpConfig.maxResendCount);
-		peerState.reliableSession.SetResendInterval(reliableUdpConfig.resendInterval);
 
 		game::PlayerState playerState = CreateInitialPlayerState(playerId, spawnPosition, gameRuleConfig);
 		gameWorld.UpsertPlayer(std::move(playerState));

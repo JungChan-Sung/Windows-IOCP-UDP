@@ -48,8 +48,6 @@ namespace server::game
 		) const;
 		void UpdatePlayerTimers(float deltaTime, GameWorld& gameWorld) const;
 
-		void SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const;
-
 	private:
 		void RespawnPlayer(
 			PlayerId playerId, 
@@ -57,6 +55,8 @@ namespace server::game
 			GameWorld& gameWorld,
 			const common::game::GameRuleConfig& gameRuleConfig
 		) const;
+
+		void SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const;
 
 		[[nodiscard]] bool IsBulletCollidingWithPlayer(const BulletState& bulletState, const PlayerState& playerState) const noexcept;
 

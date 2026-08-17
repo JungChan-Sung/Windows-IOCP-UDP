@@ -850,12 +850,17 @@ namespace server::net
 					peerRoomManager_,
 					gameWorld_,
 					config_.gameRule,
-					config_.reliableUdp,
 					common::time::Clock::now()
 				);
 
 				if (joinResult.shouldBroadcastPlayerJoined)
 				{
+					service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
+					if (peerState != nullptr)
+					{
+						peerState->reliableSession.Configure(config_.reliableUdp);
+					}
+
 					matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
 						joinResult.roomId,
 						joinResult.persistentPlayerId,

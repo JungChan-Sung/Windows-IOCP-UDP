@@ -271,17 +271,6 @@ namespace server::game
 		}
 	}
 
-	void GameSimulation::SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const
-	{
-		game::ImpactEffectState impactEffectState{};
-		impactEffectState.roomId = roomId;
-		impactEffectState.effectType = effectType;
-		impactEffectState.x = x;
-		impactEffectState.y = y;
-
-		gameWorld.AddPendingImpactEffect(std::move(impactEffectState));
-	}
-
 	void GameSimulation::RespawnPlayer(PlayerId playerId, RoomId roomId, GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig) const
 	{
 		PlayerState* playerState = gameWorld.FindPlayer(playerId);
@@ -311,6 +300,17 @@ namespace server::game
 			common::game::EffectType::Spawn,
 			gameWorld
 		);
+	}
+
+	void GameSimulation::SpawnImpactEffect(float x, float y, RoomId roomId, common::game::EffectType effectType, GameWorld& gameWorld) const
+	{
+		game::ImpactEffectState impactEffectState{};
+		impactEffectState.roomId = roomId;
+		impactEffectState.effectType = effectType;
+		impactEffectState.x = x;
+		impactEffectState.y = y;
+
+		gameWorld.AddPendingImpactEffect(std::move(impactEffectState));
 	}
 
 	bool GameSimulation::IsBulletCollidingWithPlayer(const BulletState& bulletState, const PlayerState& playerState) const noexcept

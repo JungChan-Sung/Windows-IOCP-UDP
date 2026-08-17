@@ -10,7 +10,6 @@
 #include <Common/Game/RoomLayout.h>
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -92,7 +91,6 @@ namespace server::service
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			const common::game::GameRuleConfig& gameRuleConfig,
-			const common::net::ReliableUdpConfig& reliableUdpConfig,
 			TimePoint currentTime
 		) const;
 		[[nodiscard]] LeaveResult LeavePeer(

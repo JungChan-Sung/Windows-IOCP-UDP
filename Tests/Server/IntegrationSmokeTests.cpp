@@ -156,7 +156,6 @@ namespace
 		server::service::PeerRoomManager& peerRoomManager,
 		server::game::GameWorld& gameWorld,
 		const common::game::GameRuleConfig& gameRuleConfig,
-		const common::net::ReliableUdpConfig& reliableUdpRuleConfig,
 		TimePoint currentTime
 	)
 	{
@@ -190,7 +189,6 @@ namespace
 			peerRoomManager,
 			gameWorld,
 			gameRuleConfig,
-			reliableUdpRuleConfig,
 			currentTime
 		);
 	}
@@ -208,7 +206,6 @@ namespace
 		server::game::GameSimulation gameSimulation;
 		common::game::GameRuleConfig gameRuleConfig{};
 		common::game::WeaponRuleConfig weaponRuleConfig{};
-		common::net::ReliableUdpConfig reliableRuleConfig{};
 
 		const sockaddr_in firstRemoteAddress =
 			MakeRemoteAddress(1);
@@ -243,7 +240,6 @@ namespace
 				peerRoomManager,
 				gameWorld,
 				gameRuleConfig,
-				reliableRuleConfig,
 				startTime
 			);
 
@@ -258,7 +254,6 @@ namespace
 				peerRoomManager,
 				gameWorld,
 				gameRuleConfig,
-				reliableRuleConfig,
 				startTime
 				+ common::time::Milliseconds(1)
 			);
@@ -709,7 +704,6 @@ namespace
 				peerRoomManager,
 				gameWorld,
 				gameRuleConfig,
-				reliableRuleConfig,
 				startTime
 			);
 
@@ -724,7 +718,6 @@ namespace
 				peerRoomManager,
 				gameWorld,
 				gameRuleConfig,
-				reliableRuleConfig,
 				startTime
 				+ common::time::Milliseconds(1)
 			);

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <vector>
 
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/PacketBuffer.h>
 
@@ -162,6 +163,35 @@ namespace tests::net::reliableUdpSessionTest
 		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: pending count after ack-only");
 		tests::Expect(result, !session.HasReceivedAnySequence(), "ReliableUdpSession: ack-only does not update received sequence");
 	}
+
+	void RunConfigureTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		common::net::ReliableUdpConfig config{};
+		config.maxPendingPacketCount = 3;
+		config.maxResendCount = 1;
+		config.resendInterval = common::time::Milliseconds(150);
+
+		session.Configure(config);
+
+		const common::net::ReliableUdpSession::TimePoint now = common::net::ReliableUdpSession::Clock::now();
+
+		const bool firstRegistered = session.RegisterSentPacket(session.AllocateOutgoingSequence(), MakePacketBuffer('A'), now);
+		const bool secondRegistered = session.RegisterSentPacket(session.AllocateOutgoingSequence(), MakePacketBuffer('B'), now);
+		const bool thirdRegistered = session.RegisterSentPacket(session.AllocateOutgoingSequence(), MakePacketBuffer('C'), now);
+		const bool fourthRegistered = session.RegisterSentPacket(session.AllocateOutgoingSequence(), MakePacketBuffer('D'), now);
+
+		tests::Expect(result, firstRegistered && secondRegistered && thirdRegistered, "ReliableUdpSession: configured pending packets accepted");
+		tests::Expect(result, !fourthRegistered, "ReliableUdpSession: configured max pending packet count");
+		tests::Expect(result, session.GetMaxResendCount() == 1, "ReliableUdpSession: configured max resend count");
+
+		const common::net::ReliableUdpSession::ResendResult earlyResult = session.ExtractResendResult(now + common::time::Milliseconds(149));
+		tests::Expect(result, earlyResult.resendPacketList.empty(), "ReliableUdpSession: configured resend interval blocks early resend");
+
+		const common::net::ReliableUdpSession::ResendResult resendResult = session.ExtractResendResult(now + common::time::Milliseconds(150));
+		tests::Expect(result, resendResult.resendPacketList.size() == 3, "ReliableUdpSession: configured resend interval");
+	}
 }
 
 namespace tests::net
@@ -177,6 +207,7 @@ namespace tests::net
 		reliableUdpSessionTest::RunProcessReceivedAckRemovesPendingPacketTest(result);
 		reliableUdpSessionTest::RunExtractResendPacketsTest(result);
 		reliableUdpSessionTest::RunResetTest(result);
+		reliableUdpSessionTest::RunConfigureTest(result);
 
 		return result;
 	}

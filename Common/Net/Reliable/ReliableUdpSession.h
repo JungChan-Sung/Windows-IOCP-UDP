@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <utility>
 
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Net/Reliable/ReliableUdpProtocol.h>
 #include <Common/Net/Reliable/ReliableUdpSendWindow.h>
@@ -36,6 +37,13 @@ namespace common::net
 		ReliableUdpSession& operator=(ReliableUdpSession&&) noexcept = default;
 
 	public:
+		void Configure(const ReliableUdpConfig& config) noexcept
+		{
+			sendWindow_.SetMaxPendingPacketCount(config.maxPendingPacketCount);
+			sendWindow_.SetMaxResendCount(config.maxResendCount);
+			sendWindow_.SetResendInterval(config.resendInterval);
+		}
+
 		void Reset() noexcept
 		{
 			ackTracker_.Reset();

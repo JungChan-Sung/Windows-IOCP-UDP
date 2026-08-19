@@ -49,6 +49,7 @@
 #include "Server/PlayerCommandServiceTests.h"
 #include "Server/PacketPayloadValidatorTests.h"
 #include "Server/UdpPacketDispatcherTests.h"
+#include "Server/ReliableUdpSessionRegistryTests.h"
 #include "Server/SnapshotBroadcastBuilderTests.h"
 #include "Server/IntegrationSmokeTests.h"
 #include "Server/InvalidPacketLogLimiterTests.h"
@@ -91,6 +92,7 @@ namespace tests
 		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());
 		MergeAndPrint(totalResult, "PlayerCommandService", server::RunPlayerCommandServiceTests());
+		MergeAndPrint(totalResult, "ReliableUdpSessionRegistry", server::RunReliableUdpSessionRegistryTests());
 		MergeAndPrint(totalResult, "SnapshotBroadcastBuilder", server::RunSnapshotBroadcastBuilderTests());
 		MergeAndPrint(totalResult, "PacketPayloadValidator", server::RunPacketPayloadValidatorTests());
 		MergeAndPrint(totalResult, "UdpPacketDispatcher", server::RunUdpPacketDispatcherTests());

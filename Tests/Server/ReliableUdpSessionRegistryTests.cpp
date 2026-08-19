@@ -1,0 +1,216 @@
+#include "ReliableUdpSessionRegistryTests.h"
+
+#include <Common/Net/Endpoint.h>
+#include <Common/Net/Reliable/ReliableUdpConfig.h>
+#include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
+#include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Packet/PacketBuffer.h>
+#include <Common/Time/TimeTypes.h>
+
+#include <Server/Net/ReliableUdpSessionRegistry.h>
+
+#include <Tests/DebugTestResult.h>
+
+namespace
+{
+	using ReliableUdpSessionRegistry = server::net::ReliableUdpSessionRegistry;
+
+	[[nodiscard]] constexpr common::net::EndpointKey MakeEndpointKey(std::uint32_t address, std::uint16_t port) noexcept
+	{
+		return common::net::EndpointKey{
+			.address = address,
+			.port = port,
+		};
+	}
+
+	void RunInitialStateTest(tests::DebugTestResult& result)
+	{
+		const ReliableUdpSessionRegistry registry;
+
+		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: initially empty");
+		tests::Expect(result, registry.Find(MakeEndpointKey(1, 1000)) == nullptr, "ReliableUdpSessionRegistry: missing endpoint");
+	}
+
+	void RunUpsertAndFindTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(1, 1000);
+		const common::net::ReliableUdpConfig config{};
+
+		common::net::ReliableUdpSession& insertedSession = registry.Upsert(endpointKey, config);
+		common::net::ReliableUdpSession* foundSession = registry.Find(endpointKey);
+
+		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: upsert count");
+		tests::Expect(result, foundSession != nullptr, "ReliableUdpSessionRegistry: inserted session found");
+		tests::Expect(result, foundSession == &insertedSession, "ReliableUdpSessionRegistry: found session matches inserted session");
+
+		const ReliableUdpSessionRegistry& constRegistry = registry;
+		const common::net::ReliableUdpSession* constFoundSession = constRegistry.Find(endpointKey);
+
+		tests::Expect(result, constFoundSession != nullptr, "ReliableUdpSessionRegistry: const session found");
+		tests::Expect(result, constFoundSession == foundSession, "ReliableUdpSessionRegistry: const find matches mutable find");
+	}
+
+	void RunUpsertAppliesConfigTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(2, 2000);
+
+		common::net::ReliableUdpConfig config{};
+		config.maxPendingPacketCount = 1;
+		config.maxResendCount = 3;
+		config.resendInterval = common::time::Milliseconds(150);
+
+		common::net::ReliableUdpSession& session = registry.Upsert(endpointKey, config);
+
+		tests::Expect(result, session.GetMaxResendCount() == 3, "ReliableUdpSessionRegistry: max resend count configured");
+
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		const common::net::ReliableSequence firstSequence = session.AllocateOutgoingSequence();
+		const bool firstRegistered = session.RegisterSentPacket(firstSequence, common::packet::PacketBuffer{ 'A' }, now);
+
+		const common::net::ReliableSequence secondSequence = session.AllocateOutgoingSequence();
+		const bool secondRegistered = session.RegisterSentPacket(secondSequence, common::packet::PacketBuffer{ 'B' }, now);
+
+		tests::Expect(result, firstRegistered, "ReliableUdpSessionRegistry: configured first pending packet accepted");
+		tests::Expect(result, !secondRegistered, "ReliableUdpSessionRegistry: configured max pending packet count applied");
+
+		const common::net::ReliableUdpSession::ResendResult earlyResult =
+			session.ExtractResendResult(now + common::time::Milliseconds(149));
+
+		tests::Expect(result, earlyResult.resendPacketList.empty(), "ReliableUdpSessionRegistry: configured resend interval blocks early resend");
+
+		const common::net::ReliableUdpSession::ResendResult resendResult =
+			session.ExtractResendResult(now + common::time::Milliseconds(150));
+
+		tests::Expect(result, resendResult.resendPacketList.size() == 1, "ReliableUdpSessionRegistry: configured resend interval applied");
+	}
+
+	void RunUpsertExistingSessionResetsStateTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(3, 3000);
+
+		common::net::ReliableUdpConfig firstConfig{};
+		firstConfig.maxPendingPacketCount = 4;
+		firstConfig.maxResendCount = 5;
+
+		common::net::ReliableUdpSession& firstSession = registry.Upsert(endpointKey, firstConfig);
+
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		const common::net::ReliableSequence firstSequence = firstSession.AllocateOutgoingSequence();
+		const bool registered = firstSession.RegisterSentPacket(firstSequence, common::packet::PacketBuffer{ 'A' }, now);
+
+		common::net::ReliableUdpPacketHeader receivedHeader{};
+		receivedHeader.sequence = 100;
+
+		const bool isNewPacket = firstSession.ProcessReceivedDataHeader(receivedHeader);
+
+		tests::Expect(result, registered, "ReliableUdpSessionRegistry: pending packet registered before reset");
+		tests::Expect(result, isNewPacket, "ReliableUdpSessionRegistry: received sequence registered before reset");
+		tests::Expect(result, firstSession.GetPendingPacketCount() == 1, "ReliableUdpSessionRegistry: pending packet exists before reset");
+		tests::Expect(result, firstSession.GetNextSequence() == 2, "ReliableUdpSessionRegistry: outgoing sequence advanced before reset");
+		tests::Expect(result, firstSession.HasReceivedAnySequence(), "ReliableUdpSessionRegistry: received sequence exists before reset");
+
+		common::net::ReliableUdpConfig secondConfig{};
+		secondConfig.maxPendingPacketCount = 2;
+		secondConfig.maxResendCount = 7;
+		secondConfig.resendInterval = common::time::Milliseconds(200);
+
+		common::net::ReliableUdpSession& resetSession = registry.Upsert(endpointKey, secondConfig);
+
+		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: existing upsert keeps count");
+		tests::Expect(result, resetSession.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: existing upsert clears pending packets");
+		tests::Expect(result, resetSession.GetNextSequence() == 1, "ReliableUdpSessionRegistry: existing upsert resets outgoing sequence");
+		tests::Expect(result, !resetSession.HasReceivedAnySequence(), "ReliableUdpSessionRegistry: existing upsert resets received sequence");
+		tests::Expect(result, resetSession.GetMaxResendCount() == 7, "ReliableUdpSessionRegistry: existing upsert applies new config");
+	}
+
+	void RunMultipleSessionTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey firstEndpointKey = MakeEndpointKey(4, 4000);
+		const common::net::EndpointKey secondEndpointKey = MakeEndpointKey(5, 5000);
+
+		const common::net::ReliableUdpConfig config{};
+
+		common::net::ReliableUdpSession& firstSession = registry.Upsert(firstEndpointKey, config);
+		common::net::ReliableUdpSession& secondSession = registry.Upsert(secondEndpointKey, config);
+
+		const common::net::ReliableSequence firstSequence = firstSession.AllocateOutgoingSequence();
+
+		tests::Expect(result, registry.GetCount() == 2, "ReliableUdpSessionRegistry: multiple session count");
+		tests::Expect(result, firstSequence == 1, "ReliableUdpSessionRegistry: first session sequence allocated");
+		tests::Expect(result, secondSession.GetNextSequence() == 1, "ReliableUdpSessionRegistry: second session state independent");
+		tests::Expect(result, registry.Find(firstEndpointKey) == &firstSession, "ReliableUdpSessionRegistry: first session found");
+		tests::Expect(result, registry.Find(secondEndpointKey) == &secondSession, "ReliableUdpSessionRegistry: second session found");
+	}
+
+	void RunRemoveTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey firstEndpointKey = MakeEndpointKey(6, 6000);
+		const common::net::EndpointKey secondEndpointKey = MakeEndpointKey(7, 7000);
+		const common::net::EndpointKey unknownEndpointKey = MakeEndpointKey(8, 8000);
+
+		const common::net::ReliableUdpConfig config{};
+
+		static_cast<void>(registry.Upsert(firstEndpointKey, config));
+		static_cast<void>(registry.Upsert(secondEndpointKey, config));
+
+		const bool firstRemoved = registry.Remove(firstEndpointKey);
+		const bool unknownRemoved = registry.Remove(unknownEndpointKey);
+
+		tests::Expect(result, firstRemoved, "ReliableUdpSessionRegistry: existing session removed");
+		tests::Expect(result, !unknownRemoved, "ReliableUdpSessionRegistry: unknown session remove rejected");
+		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: remove count");
+		tests::Expect(result, registry.Find(firstEndpointKey) == nullptr, "ReliableUdpSessionRegistry: removed session missing");
+		tests::Expect(result, registry.Find(secondEndpointKey) != nullptr, "ReliableUdpSessionRegistry: other session preserved");
+	}
+
+	void RunClearTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey firstEndpointKey = MakeEndpointKey(9, 9000);
+		const common::net::EndpointKey secondEndpointKey = MakeEndpointKey(10, 10000);
+
+		const common::net::ReliableUdpConfig config{};
+
+		static_cast<void>(registry.Upsert(firstEndpointKey, config));
+		static_cast<void>(registry.Upsert(secondEndpointKey, config));
+
+		tests::Expect(result, registry.GetCount() == 2, "ReliableUdpSessionRegistry: sessions exist before clear");
+
+		registry.Clear();
+
+		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: clear removes all sessions");
+		tests::Expect(result, registry.Find(firstEndpointKey) == nullptr, "ReliableUdpSessionRegistry: first session missing after clear");
+		tests::Expect(result, registry.Find(secondEndpointKey) == nullptr, "ReliableUdpSessionRegistry: second session missing after clear");
+	}
+}
+
+namespace tests::server
+{
+	DebugTestResult RunReliableUdpSessionRegistryTests()
+	{
+		DebugTestResult result{};
+
+		RunInitialStateTest(result);
+		RunUpsertAndFindTest(result);
+		RunUpsertAppliesConfigTest(result);
+		RunUpsertExistingSessionResetsStateTest(result);
+		RunMultipleSessionTest(result);
+		RunRemoveTest(result);
+		RunClearTest(result);
+
+		return result;
+	}
+}

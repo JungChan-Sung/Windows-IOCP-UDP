@@ -200,6 +200,7 @@
     <ClInclude Include="Game\PlayerState.h" />
     <ClInclude Include="Game\StatePool.h" />
     <ClInclude Include="Match\MatchHistoryTaskProcessor.h" />
+    <ClInclude Include="Net\ReliableUdpSessionRegistry.h" />
     <ClInclude Include="Net\UdpIocpTransport.h" />
     <ClInclude Include="Net\UdpIocpTransportMetrics.h" />
     <ClInclude Include="Net\UdpPacketSender.h" />

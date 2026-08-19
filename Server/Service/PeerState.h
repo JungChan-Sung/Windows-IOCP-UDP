@@ -6,7 +6,6 @@
 #include <string>
 
 #include <Common/Net/Endpoint.h>
-#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Identity/IdentityTypes.h>
@@ -30,6 +29,5 @@ namespace server::service
 		common::game::RoomId roomId = 0;
 		bool isJoined = false;
 		common::time::TimePoint lastRecvTime{};
-		common::net::ReliableUdpSession reliableSession;
 	};
 }

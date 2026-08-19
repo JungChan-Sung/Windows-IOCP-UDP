@@ -287,6 +287,9 @@
     <ClInclude Include="Game\BulletFactory.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
+    <ClInclude Include="Net\ReliableUdpSessionRegistry.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini">

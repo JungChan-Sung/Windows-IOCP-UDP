@@ -210,6 +210,7 @@
     <ClCompile Include="Server\PasswordHashVerifierTests.cpp" />
     <ClCompile Include="Server\PeerSessionServiceTests.cpp" />
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp" />
+    <ClCompile Include="Server\ReliableUdpSessionRegistryTests.cpp" />
     <ClCompile Include="Server\ServerConfigTests.cpp" />
     <ClCompile Include="Server\ServerMetricsCollectorTests.cpp" />
     <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp" />
@@ -280,6 +281,7 @@
     <ClInclude Include="Server\PasswordHashVerifierTests.h" />
     <ClInclude Include="Server\PeerSessionServiceTests.h" />
     <ClInclude Include="Server\PlayerCommandServiceTests.h" />
+    <ClInclude Include="Server\ReliableUdpSessionRegistryTests.h" />
     <ClInclude Include="Server\ServerConfigTests.h" />
     <ClInclude Include="Server\ServerMetricsCollectorTests.h" />
     <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h" />

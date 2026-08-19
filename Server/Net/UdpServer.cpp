@@ -327,6 +327,7 @@ namespace server::net
 			}
 
 			authenticatedAccountRegistry_.Clear();
+			reliableUdpSessionRegistry_.Clear();
 			peerRoomManager_.Clear();
 			gameWorld_.Clear();
 		}
@@ -527,8 +528,7 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
-			if (peerState == nullptr)
+			if (peerRoomManager_.FindJoinedPeer(endpointKey) == nullptr)
 			{
 				serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
 
@@ -544,9 +544,16 @@ namespace server::net
 				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 			}
 
+			common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
+			if (reliableSession == nullptr)
+			{
+				serverMetricsCollector_.IncrementInvalidReliablePacketCount();
+				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
+			}
+
 			if (isAckOnlyPacket)
 			{
-				const bool ackProcessed = peerState->reliableSession.ProcessReceivedAck(packetView->reliableHeader);
+				const bool ackProcessed = reliableSession->ProcessReceivedAck(packetView->reliableHeader);
 				if (!ackProcessed)
 				{
 					serverMetricsCollector_.IncrementReliableInvalidAckPacketCount();
@@ -558,8 +565,8 @@ namespace server::net
 			{
 				serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
 
-				isNewReliablePacket = peerState->reliableSession.ProcessReceivedDataHeader(packetView->reliableHeader);
-				ackPacketBuffer = BuildReliableAckPacket(*peerState);
+				isNewReliablePacket = reliableSession->ProcessReceivedDataHeader(packetView->reliableHeader);
+				ackPacketBuffer = BuildReliableAckPacket(*reliableSession);
 			}
 		}
 
@@ -595,7 +602,7 @@ namespace server::net
 		return packetDispatcher_.Dispatch(remoteAddress, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(service::PeerState& peerState, common::packet::ConstPacketSpan serializedGamePacket)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(common::net::ReliableUdpSession& reliableSession, common::packet::ConstPacketSpan serializedGamePacket)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(
 			serializedGamePacket.data(),
@@ -627,8 +634,8 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		const common::net::ReliableSequence sequence = peerState.reliableSession.AllocateOutgoingSequence();
-		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingHeader(sequence);
+		const common::net::ReliableSequence sequence = reliableSession.AllocateOutgoingSequence();
+		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession.BuildOutgoingHeader(sequence);
 
 		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
 			common::net::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
@@ -639,7 +646,7 @@ namespace server::net
 		}
 
 		const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
-		if (!peerState.reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+		if (!reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
 		{
 			serverMetricsCollector_.IncrementReliableSendWindowFullCount();
 			return std::nullopt;
@@ -650,14 +657,13 @@ namespace server::net
 		return reliablePacketBuffer;
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(service::PeerState& peerState)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(common::net::ReliableUdpSession& reliableSession)
 	{
-		const common::net::ReliableUdpPacketHeader reliableHeader = peerState.reliableSession.BuildOutgoingAckHeader();
-
+		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession.BuildOutgoingAckHeader();
 		return common::net::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(service::PeerState& peerState, RoomId roomId, float spawnX, float spawnY)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(common::net::ReliableUdpSession& reliableSession, RoomId roomId, float spawnX, float spawnY)
 	{
 		common::packet::JoinRoomResponsePacket packet{};
 		packet.roomId = roomId;
@@ -670,7 +676,7 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		return BuildReliableGamePacket(peerState, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
+		return BuildReliableGamePacket(reliableSession, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet)
@@ -763,10 +769,15 @@ namespace server::net
 			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
 
 			peerRoomManager_.ForEachJoinedPeer(
-				[&resendTaskList, &giveUpPacketCount, currentTime](service::PeerState& peerState)
+				[this, &resendTaskList, &giveUpPacketCount, currentTime](service::PeerState& peerState)
 				{
-					common::net::ReliableUdpSession::ResendResult resendResult = peerState.reliableSession.ExtractResendResult(currentTime);
+					common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(peerState.endpointKey);
+					if (reliableSession == nullptr)
+					{
+						return;
+					}
 
+					common::net::ReliableUdpSession::ResendResult resendResult = reliableSession->ExtractResendResult(currentTime);
 					giveUpPacketCount += static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
 
 					for (common::net::ReliablePendingPacket& pendingPacket : resendResult.resendPacketList)
@@ -855,11 +866,7 @@ namespace server::net
 
 				if (joinResult.shouldBroadcastPlayerJoined)
 				{
-					service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
-					if (peerState != nullptr)
-					{
-						peerState->reliableSession.Configure(config_.reliableUdp);
-					}
+					static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp));
 
 					matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
 						joinResult.roomId,
@@ -989,6 +996,8 @@ namespace server::net
 			leaveResult = peerSessionService_.LeavePeer(endpointKey, peerRoomManager_, gameWorld_);
 			if (leaveResult.shouldBroadcastPlayerLeft)
 			{
+				static_cast<void>(reliableUdpSessionRegistry_.Remove(endpointKey));
+
 				matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
 					leaveResult.roomId,
 					leaveResult.persistentPlayerId,
@@ -1063,11 +1072,11 @@ namespace server::net
 					currentSystemTime
 				);
 
-				service::PeerState* peerState = peerRoomManager_.FindJoinedPeer(endpointKey);
-				if (peerState != nullptr)
+				common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
+				if (reliableSession != nullptr)
 				{
 					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(
-						*peerState,
+						*reliableSession,
 						roomChangeResult.nextRoomId,
 						roomChangeResult.spawnPosition.x,
 						roomChangeResult.spawnPosition.y
@@ -1338,6 +1347,8 @@ namespace server::net
 
 			for (const service::PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
 			{
+				static_cast<void>(reliableUdpSessionRegistry_.Remove(timedOutPeer.endpointKey));
+
 				const bool matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
 					timedOutPeer.roomId,
 					timedOutPeer.persistentPlayerId,
@@ -1520,9 +1531,15 @@ namespace server::net
 
 			std::size_t reliablePendingPacketCount = 0;
 			peerRoomManager_.ForEachJoinedPeer(
-				[&reliablePendingPacketCount](const service::PeerState& peerState)
+				[this, &reliablePendingPacketCount](const service::PeerState& peerState)
 				{
-					reliablePendingPacketCount += peerState.reliableSession.GetPendingPacketCount();
+					const common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(peerState.endpointKey);
+					if (reliableSession == nullptr)
+					{
+						return;
+					}
+
+					reliablePendingPacketCount += reliableSession->GetPendingPacketCount();
 				}
 			);
 

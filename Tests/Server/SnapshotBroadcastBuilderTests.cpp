@@ -9,10 +9,6 @@
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketConstants.h>
 
-#include <Server/Game/BulletState.h>
-#include <Server/Game/GameWorld.h>
-#include <Server/Game/ImpactEffectState.h>
-#include <Server/Game/PlayerState.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
 #include <Server/Protocol/SnapshotBroadcastContext.h>
 #include <Server/Protocol/SnapshotBroadcastTask.h>
@@ -23,8 +19,8 @@ namespace
 {
 	using EndpointKey = common::net::EndpointKey;
 	using EndpointKeyList = server::protocol::EndpointKeyList;
+	using SnapshotBroadcastContext = server::protocol::SnapshotBroadcastContext;
 	using SnapshotRoomContext = server::protocol::SnapshotRoomContext;
-	using SnapshotRoomContextList = server::protocol::SnapshotRoomContextList;
 
 	[[nodiscard]] constexpr EndpointKey MakeEndpointKey(std::uint32_t index) noexcept
 	{
@@ -71,15 +67,15 @@ namespace
 		return nullptr;
 	}
 
-	[[nodiscard]] SnapshotRoomContext& AddRoom(SnapshotRoomContextList& roomContextList, common::game::RoomId roomId)
+	[[nodiscard]] SnapshotRoomContext& AddRoom(SnapshotBroadcastContext& context, common::game::RoomId roomId)
 	{
-		roomContextList.push_back(
+		context.roomContextList.push_back(
 			SnapshotRoomContext{
 				.roomId = roomId,
 			}
 			);
 
-		return roomContextList.back();
+		return context.roomContextList.back();
 	}
 
 	void AddPeer(
@@ -99,7 +95,7 @@ namespace
 	}
 
 	void AddPlayer(
-		server::game::GameWorld& gameWorld,
+		SnapshotRoomContext& roomContext,
 		common::game::PlayerId playerId,
 		float x,
 		float y,
@@ -107,83 +103,74 @@ namespace
 		bool isDead
 	)
 	{
-		server::game::PlayerState playerState{};
-		playerState.playerId = playerId;
-		playerState.x = x;
-		playerState.y = y;
-		playerState.hp = hp;
-		playerState.isDead = isDead;
-		playerState.killCount = playerId * 10;
-		playerState.deathCount = playerId;
-		playerState.respawnRemainingSeconds = isDead ? 2.0F : 0.0F;
-		playerState.invincibilityRemainingSeconds = 1.0F;
-		playerState.hitFlashRemainingSeconds = 0.25F;
-
-		gameWorld.UpsertPlayer(playerState);
+		roomContext.playerStateContextList.push_back(
+			server::protocol::SnapshotPlayerStateContext{
+				.playerId = playerId,
+				.x = x,
+				.y = y,
+				.hp = hp,
+				.isDead = isDead,
+				.killCount = playerId * 10,
+				.deathCount = playerId,
+				.respawnRemainingSeconds = isDead ? 2.0F : 0.0F,
+				.invincibilityRemainingSeconds = 1.0F,
+				.hitFlashRemainingSeconds = 0.25F,
+			}
+			);
 	}
 
 	void AddBullet(
-		server::game::GameWorld& gameWorld,
+		SnapshotRoomContext& roomContext,
 		common::game::BulletId bulletId,
-		common::game::RoomId roomId,
 		float x,
 		float y
 	)
 	{
-		server::game::BulletState bulletState{};
-		bulletState.bulletId = bulletId;
-		bulletState.roomId = roomId;
-		bulletState.x = x;
-		bulletState.y = y;
-
-		gameWorld.AddBullet(bulletState);
+		roomContext.bulletStateContextList.push_back(
+			server::protocol::SnapshotBulletStateContext{
+				.bulletId = bulletId,
+				.x = x,
+				.y = y,
+			}
+			);
 	}
 
 	void AddImpactEffect(
-		server::game::GameWorld& gameWorld,
-		common::game::RoomId roomId,
+		SnapshotRoomContext& roomContext,
 		common::game::EffectType effectType,
 		float x,
 		float y
 	)
 	{
-		server::game::ImpactEffectState impactEffectState{};
-		impactEffectState.roomId = roomId;
-		impactEffectState.effectType = effectType;
-		impactEffectState.x = x;
-		impactEffectState.y = y;
-
-		gameWorld.AddPendingImpactEffect(impactEffectState);
-	}
-
-	void AdvanceServerTick(server::game::GameWorld& gameWorld, std::uint32_t tickCount)
-	{
-		for (std::uint32_t tick = 0; tick < tickCount; ++tick)
-		{
-			gameWorld.AdvanceServerTick();
-		}
+		roomContext.impactEffectContextList.push_back(
+			server::protocol::SnapshotImpactEffectContext{
+				.effectType = effectType,
+				.x = x,
+				.y = y,
+			}
+			);
 	}
 
 	void RunBuildPlayerSnapshotTasksTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
 
-		AdvanceServerTick(gameWorld, 10);
+		SnapshotBroadcastContext context{};
+		context.serverTick = 10;
 
 		const EndpointKey firstEndpointKey = MakeEndpointKey(1);
 		const EndpointKey secondEndpointKey = MakeEndpointKey(2);
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
+
 		AddPeer(roomContext, firstEndpointKey, 101, 1001);
 		AddPeer(roomContext, secondEndpointKey, 102, 1002);
 
-		AddPlayer(gameWorld, 101, 10.0F, 20.0F, 3, false);
-		AddPlayer(gameWorld, 102, 30.0F, 40.0F, 0, true);
+		AddPlayer(roomContext, 101, 10.0F, 20.0F, 3, false);
+		AddPlayer(roomContext, 102, 30.0F, 40.0F, 0, true);
 
 		const std::vector<server::protocol::PlayerSnapshotTask> taskList =
-			builder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildPlayerSnapshotTasks(context);
 
 		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: player task count");
 
@@ -207,12 +194,29 @@ namespace
 				tests::Expect(result, firstPlayerData->y == 20.0F, "SnapshotBroadcastBuilder: first player y");
 				tests::Expect(result, firstPlayerData->hp == 3, "SnapshotBroadcastBuilder: first player hp");
 				tests::Expect(result, firstPlayerData->isDead == 0, "SnapshotBroadcastBuilder: first player alive flag");
+				tests::Expect(result, firstPlayerData->killCount == 1010, "SnapshotBroadcastBuilder: first player kill count");
+				tests::Expect(result, firstPlayerData->deathCount == 101, "SnapshotBroadcastBuilder: first player death count");
+				tests::Expect(
+					result,
+					firstPlayerData->invincibilityRemainingSeconds == 1.0F,
+					"SnapshotBroadcastBuilder: first player invincibility time"
+				);
+				tests::Expect(
+					result,
+					firstPlayerData->hitFlashRemainingSeconds == 0.25F,
+					"SnapshotBroadcastBuilder: first player hit flash time"
+				);
 			}
 
 			if (secondPlayerData != nullptr)
 			{
 				tests::Expect(result, secondPlayerData->hp == 0, "SnapshotBroadcastBuilder: second player hp");
 				tests::Expect(result, secondPlayerData->isDead == 1, "SnapshotBroadcastBuilder: second player dead flag");
+				tests::Expect(
+					result,
+					secondPlayerData->respawnRemainingSeconds == 2.0F,
+					"SnapshotBroadcastBuilder: second player respawn time"
+				);
 			}
 
 			if (task.endpointKey == firstEndpointKey)
@@ -233,10 +237,9 @@ namespace
 	void RunBuildPlayerSnapshotMaxPlayerLimitTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotBroadcastContext context{};
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
 
 		for (std::size_t index = 0; index < common::packet::maxPlayersPerSnapshot + 3; ++index)
 		{
@@ -244,11 +247,11 @@ namespace
 			const common::game::PlayerId playerId = static_cast<common::game::PlayerId>(index + 1);
 
 			AddPeer(roomContext, endpointKey, playerId, static_cast<std::uint32_t>(index + 1));
-			AddPlayer(gameWorld, playerId, static_cast<float>(index), static_cast<float>(index), 3, false);
+			AddPlayer(roomContext, playerId, static_cast<float>(index), static_cast<float>(index), 3, false);
 		}
 
 		const std::vector<server::protocol::PlayerSnapshotTask> taskList =
-			builder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildPlayerSnapshotTasks(context);
 
 		tests::Expect(
 			result,
@@ -269,18 +272,17 @@ namespace
 	void RunBuildBulletSnapshotEmptyRoomCreatesEmptyChunkTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
 
-		AdvanceServerTick(gameWorld, 20);
+		SnapshotBroadcastContext context{};
+		context.serverTick = 20;
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
 		AddPeer(roomContext, endpointKey, 101, 1);
 
 		const std::vector<server::protocol::BulletSnapshotTask> taskList =
-			builder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildBulletSnapshotTasks(context);
 
 		tests::Expect(result, taskList.size() == 1, "SnapshotBroadcastBuilder: empty bullet room task count");
 
@@ -303,25 +305,23 @@ namespace
 	void RunBuildBulletSnapshotRoomFilterTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
+
+		SnapshotBroadcastContext context{};
+		context.roomContextList.reserve(2);
 
 		const EndpointKey roomOneEndpointKey = MakeEndpointKey(1);
 		const EndpointKey roomTwoEndpointKey = MakeEndpointKey(2);
 
-		roomContextList.reserve(2);
-
-		SnapshotRoomContext& roomOneContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomOneContext = AddRoom(context, 1);
 		AddPeer(roomOneContext, roomOneEndpointKey, 101, 1);
+		AddBullet(roomOneContext, 1001, 10.0F, 20.0F);
 
-		SnapshotRoomContext& roomTwoContext = AddRoom(roomContextList, 2);
+		SnapshotRoomContext& roomTwoContext = AddRoom(context, 2);
 		AddPeer(roomTwoContext, roomTwoEndpointKey, 201, 1);
-
-		AddBullet(gameWorld, 1001, 1, 10.0F, 20.0F);
-		AddBullet(gameWorld, 2001, 2, 30.0F, 40.0F);
+		AddBullet(roomTwoContext, 2001, 30.0F, 40.0F);
 
 		const std::vector<server::protocol::BulletSnapshotTask> taskList =
-			builder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildBulletSnapshotTasks(context);
 
 		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet room filter task count");
 
@@ -367,27 +367,26 @@ namespace
 	void RunBuildBulletSnapshotChunkSplitTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
+
+		SnapshotBroadcastContext context{};
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
 		AddPeer(roomContext, endpointKey, 101, 1);
 
 		for (std::size_t index = 0; index < common::packet::maxBulletsPerSnapshot + 1; ++index)
 		{
 			AddBullet(
-				gameWorld,
+				roomContext,
 				static_cast<common::game::BulletId>(index + 1),
-				1,
 				static_cast<float>(index),
 				static_cast<float>(index)
 			);
 		}
 
 		const std::vector<server::protocol::BulletSnapshotTask> taskList =
-			builder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildBulletSnapshotTasks(context);
 
 		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: bullet chunk split task count");
 
@@ -420,14 +419,14 @@ namespace
 	void RunBuildBulletSnapshotSkipsRoomWithoutPeerTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
 
-		static_cast<void>(AddRoom(roomContextList, 1));
-		AddBullet(gameWorld, 1, 1, 10.0F, 20.0F);
+		SnapshotBroadcastContext context{};
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
+
+		AddBullet(roomContext, 1, 10.0F, 20.0F);
 
 		const std::vector<server::protocol::BulletSnapshotTask> taskList =
-			builder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
+			builder.BuildBulletSnapshotTasks(context);
 
 		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: bullet room without peers skipped");
 	}
@@ -435,16 +434,16 @@ namespace
 	void RunBuildImpactEffectEmptyListCreatesNoTaskTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
+
+		SnapshotBroadcastContext context{};
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
 		AddPeer(roomContext, endpointKey, 101, 1);
 
 		const std::vector<server::protocol::ImpactEffectTask> taskList =
-			builder.BuildImpactEffectTasks(roomContextList, gameWorld);
+			builder.BuildImpactEffectTasks(context);
 
 		tests::Expect(result, taskList.empty(), "SnapshotBroadcastBuilder: empty impact list creates no task");
 	}
@@ -452,25 +451,23 @@ namespace
 	void RunBuildImpactEffectRoomFilterTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
+
+		SnapshotBroadcastContext context{};
+		context.roomContextList.reserve(2);
 
 		const EndpointKey roomOneEndpointKey = MakeEndpointKey(1);
 		const EndpointKey roomTwoEndpointKey = MakeEndpointKey(2);
 
-		roomContextList.reserve(2);
-
-		SnapshotRoomContext& roomOneContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomOneContext = AddRoom(context, 1);
 		AddPeer(roomOneContext, roomOneEndpointKey, 101, 1);
+		AddImpactEffect(roomOneContext, common::game::EffectType::Impact, 10.0F, 20.0F);
 
-		SnapshotRoomContext& roomTwoContext = AddRoom(roomContextList, 2);
+		SnapshotRoomContext& roomTwoContext = AddRoom(context, 2);
 		AddPeer(roomTwoContext, roomTwoEndpointKey, 201, 1);
-
-		AddImpactEffect(gameWorld, 1, common::game::EffectType::Impact, 10.0F, 20.0F);
-		AddImpactEffect(gameWorld, 2, common::game::EffectType::Spawn, 30.0F, 40.0F);
+		AddImpactEffect(roomTwoContext, common::game::EffectType::Spawn, 30.0F, 40.0F);
 
 		const std::vector<server::protocol::ImpactEffectTask> taskList =
-			builder.BuildImpactEffectTasks(roomContextList, gameWorld);
+			builder.BuildImpactEffectTasks(context);
 
 		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact room filter task count");
 
@@ -518,19 +515,18 @@ namespace
 	void RunBuildImpactEffectChunkSplitTest(tests::DebugTestResult& result)
 	{
 		server::protocol::SnapshotBroadcastBuilder builder;
-		server::game::GameWorld gameWorld;
-		SnapshotRoomContextList roomContextList;
+
+		SnapshotBroadcastContext context{};
 
 		const EndpointKey endpointKey = MakeEndpointKey(1);
 
-		SnapshotRoomContext& roomContext = AddRoom(roomContextList, 1);
+		SnapshotRoomContext& roomContext = AddRoom(context, 1);
 		AddPeer(roomContext, endpointKey, 101, 1);
 
 		for (std::size_t index = 0; index < common::packet::maxImpactEffectsPerPacket + 1; ++index)
 		{
 			AddImpactEffect(
-				gameWorld,
-				1,
+				roomContext,
 				common::game::EffectType::Impact,
 				static_cast<float>(index),
 				static_cast<float>(index)
@@ -538,7 +534,7 @@ namespace
 		}
 
 		const std::vector<server::protocol::ImpactEffectTask> taskList =
-			builder.BuildImpactEffectTasks(roomContextList, gameWorld);
+			builder.BuildImpactEffectTasks(context);
 
 		tests::Expect(result, taskList.size() == 2, "SnapshotBroadcastBuilder: impact chunk split task count");
 

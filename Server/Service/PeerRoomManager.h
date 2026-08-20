@@ -102,16 +102,6 @@ namespace server::service
 		[[nodiscard]] EndpointKeyList BuildRoomEndpointKeyList(RoomId roomId) const;
 
 	public:
-		[[nodiscard]] const PeerTable& GetPeerTable() const noexcept
-		{
-			return peerTable_;
-		}
-
-		[[nodiscard]] const RoomTable& GetRoomTable() const noexcept
-		{
-			return roomTable_;
-		}
-
 		[[nodiscard]] std::size_t GetRoomMemberCount(RoomId roomId) const noexcept
 		{
 			const RoomMemberSet* roomMemberSet = FindRoomMemberSet(roomId);

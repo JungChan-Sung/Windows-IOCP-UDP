@@ -140,7 +140,7 @@ namespace server::net
 		void UpdateGameTick();
 
 		[[nodiscard]] game::PlayerSimulationContextList BuildPlayerSimulationContextList() const;
-		[[nodiscard]] protocol::SnapshotRoomContextList BuildSnapshotRoomContextList() const;
+		[[nodiscard]] protocol::SnapshotBroadcastContext BuildSnapshotBroadcastContext() const;
 
 		void RegisterPacketHandlers();
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
@@ -173,9 +173,7 @@ namespace server::net
 		void ProcessJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet);
 		void ProcessAccountLoginResponses();
 
-		void BroadcastPlayerSnapshots();
-		void BroadcastBulletSnapshots();
-		void BroadcastImpactEffects();
+		void BroadcastSnapshots();
 
 		void BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y);
 		void BroadcastPlayerLeft(RoomId roomId, PlayerId playerId);

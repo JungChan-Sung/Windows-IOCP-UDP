@@ -417,9 +417,7 @@ namespace server::net
 		const std::size_t faultSimulationReleasedSendRequestCount = packetSender_.FlushFaultSimulationPackets();
 		serverMetricsCollector_.AddFaultSimulationReleasedSendRequestCount(static_cast<std::uint64_t>(faultSimulationReleasedSendRequestCount));
 
-		BroadcastPlayerSnapshots();
-		BroadcastBulletSnapshots();
-		BroadcastImpactEffects();
+		BroadcastSnapshots();
 
 		LogServerStatusIfDue();
 	}
@@ -428,7 +426,6 @@ namespace server::net
 	{
 		game::PlayerSimulationContextList playerContextList;
 		playerContextList.reserve(peerRoomManager_.GetJoinedPeerCount());
-
 		peerRoomManager_.ForEachJoinedPeer(
 			[&playerContextList](const service::PeerState& peerState)
 			{
@@ -443,36 +440,84 @@ namespace server::net
 		return playerContextList;
 	}
 
-	protocol::SnapshotRoomContextList UdpServer::BuildSnapshotRoomContextList() const
+	protocol::SnapshotBroadcastContext UdpServer::BuildSnapshotBroadcastContext() const
 	{
-		protocol::SnapshotRoomContextList roomContextList;
-		roomContextList.reserve(peerRoomManager_.GetRoomCount());
+		protocol::SnapshotBroadcastContext context{};
+		context.serverTick = gameWorld_.GetServerTick();
+		context.roomContextList.reserve(peerRoomManager_.GetRoomCount());
 
 		std::unordered_map<RoomId, std::size_t> roomIndexTable;
 		roomIndexTable.reserve(peerRoomManager_.GetRoomCount());
-
 		peerRoomManager_.ForEachJoinedPeer(
-			[&roomContextList, &roomIndexTable](const service::PeerState& peerState)
+			[this, &context, &roomIndexTable](const service::PeerState& peerState)
 			{
-				const auto [roomIterator, inserted] = roomIndexTable.try_emplace(peerState.roomId, roomContextList.size());
+				const auto [roomIterator, inserted] = roomIndexTable.try_emplace(peerState.roomId, context.roomContextList.size());
 				if (inserted)
 				{
-					protocol::SnapshotRoomContext roomContext{};
-					roomContext.roomId = peerState.roomId;
-
-					roomContextList.push_back(std::move(roomContext));
+					context.roomContextList.push_back(protocol::SnapshotRoomContext{
+						.roomId = peerState.roomId,
+						});
 				}
 
-				protocol::SnapshotRoomContext& roomContext = roomContextList[roomIterator->second];
+				protocol::SnapshotRoomContext& roomContext = context.roomContextList[roomIterator->second];
 				roomContext.peerContextList.push_back(protocol::SnapshotPeerContext{
-						.endpointKey = peerState.endpointKey,
-						.playerId = peerState.playerId,
-						.lastInputSequence = peerState.lastInputSequence,
+					.endpointKey = peerState.endpointKey,
+					.playerId = peerState.playerId,
+					.lastInputSequence = peerState.lastInputSequence,
+					});
+
+				const game::PlayerState* playerState = gameWorld_.FindPlayer(peerState.playerId);
+				if (playerState == nullptr)
+				{
+					return;
+				}
+
+				roomContext.playerStateContextList.push_back(protocol::SnapshotPlayerStateContext{
+					.playerId = playerState->playerId,
+					.x = playerState->x,
+					.y = playerState->y,
+					.hp = playerState->hp,
+					.isDead = playerState->isDead,
+					.killCount = playerState->killCount,
+					.deathCount = playerState->deathCount,
+					.respawnRemainingSeconds = playerState->respawnRemainingSeconds,
+					.invincibilityRemainingSeconds = playerState->invincibilityRemainingSeconds,
+					.hitFlashRemainingSeconds = playerState->hitFlashRemainingSeconds,
 					});
 			}
 		);
 
-		return roomContextList;
+		for (const game::BulletState& bulletState : gameWorld_.GetBulletStateList())
+		{
+			const auto roomIterator = roomIndexTable.find(bulletState.roomId);
+			if (roomIterator == roomIndexTable.end())
+			{
+				continue;
+			}
+
+			context.roomContextList[roomIterator->second].bulletStateContextList.push_back(protocol::SnapshotBulletStateContext{
+				.bulletId = bulletState.bulletId,
+				.x = bulletState.x,
+				.y = bulletState.y,
+				});
+		}
+
+		for (const game::ImpactEffectState& effectState : gameWorld_.GetPendingImpactEffectStateList())
+		{
+			const auto roomIterator = roomIndexTable.find(effectState.roomId);
+			if (roomIterator == roomIndexTable.end())
+			{
+				continue;
+			}
+
+			context.roomContextList[roomIterator->second].impactEffectContextList.push_back(protocol::SnapshotImpactEffectContext{
+				.effectType = effectState.effectType,
+				.x = effectState.x,
+				.y = effectState.y,
+				});
+		}
+
+		return context;
 	}
 
 	void UdpServer::RegisterPacketHandlers()
@@ -1264,56 +1309,28 @@ namespace server::net
 		}
 	}
 
-	void UdpServer::BroadcastPlayerSnapshots()
+	void UdpServer::BroadcastSnapshots()
 	{
-		std::vector<protocol::PlayerSnapshotTask> playerSnapshotTaskList;
+		protocol::SnapshotBroadcastContext context;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
-			playerSnapshotTaskList = snapshotBroadcastBuilder_.BuildPlayerSnapshotTasks(roomContextList, gameWorld_);
-		}
-
-		const std::size_t sentCount = packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
-		serverMetricsCollector_.AddPlayerSnapshotSendRequestCount(static_cast<std::uint64_t>(sentCount));
-	}
-
-	void UdpServer::BroadcastBulletSnapshots()
-	{
-		std::vector<protocol::BulletSnapshotTask> bulletSnapshotTaskList;
-
-		{
-			std::scoped_lock lock(stateMutex_);
-
-			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
-			bulletSnapshotTaskList = snapshotBroadcastBuilder_.BuildBulletSnapshotTasks(roomContextList, gameWorld_);
-		}
-
-		const std::size_t sentCount = packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
-		serverMetricsCollector_.AddBulletSnapshotSendRequestCount(static_cast<std::uint64_t>(sentCount));
-	}
-
-	void UdpServer::BroadcastImpactEffects()
-	{
-		std::vector<protocol::ImpactEffectTask> impactEffectTaskList;
-
-		{
-			std::scoped_lock lock(stateMutex_);
-
-			if (!gameWorld_.HasPendingImpactEffects())
-			{
-				return;
-			}
-
-			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
-			impactEffectTaskList = snapshotBroadcastBuilder_.BuildImpactEffectTasks(roomContextList, gameWorld_);
-
+			context = BuildSnapshotBroadcastContext();
 			gameWorld_.ClearPendingImpactEffects();
 		}
 
-		const std::size_t sentCount = packetSender_.SendImpactEffectTasks(impactEffectTaskList);
-		serverMetricsCollector_.AddImpactEffectSendRequestCount(static_cast<std::uint64_t>(sentCount));
+		const std::vector<protocol::PlayerSnapshotTask> playerTaskList = snapshotBroadcastBuilder_.BuildPlayerSnapshotTasks(context);
+		const std::vector<protocol::BulletSnapshotTask> bulletTaskList = snapshotBroadcastBuilder_.BuildBulletSnapshotTasks(context);
+		const std::vector<protocol::ImpactEffectTask> impactEffectTaskList = snapshotBroadcastBuilder_.BuildImpactEffectTasks(context);
+
+		const std::size_t playerSentCount = packetSender_.SendPlayerSnapshotTasks(playerTaskList);
+		const std::size_t bulletSentCount = packetSender_.SendBulletSnapshotTasks(bulletTaskList);
+		const std::size_t impactEffectSentCount = packetSender_.SendImpactEffectTasks(impactEffectTaskList);
+
+		serverMetricsCollector_.AddPlayerSnapshotSendRequestCount(static_cast<std::uint64_t>(playerSentCount));
+		serverMetricsCollector_.AddBulletSnapshotSendRequestCount(static_cast<std::uint64_t>(bulletSentCount));
+		serverMetricsCollector_.AddImpactEffectSendRequestCount(static_cast<std::uint64_t>(impactEffectSentCount));
 	}
 
 	void UdpServer::BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y)

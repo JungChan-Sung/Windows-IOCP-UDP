@@ -15,8 +15,10 @@
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Server/Game/BulletState.h>
 #include <Server/Game/GameSimulation.h>
 #include <Server/Game/GameWorld.h>
+#include <Server/Game/ImpactEffectState.h>
 #include <Server/Game/PlayerSimulationContext.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
@@ -113,31 +115,35 @@ namespace
 		return playerContextList;
 	}
 
-	[[nodiscard]] server::protocol::SnapshotRoomContextList BuildSnapshotRoomContextList(
-		const server::service::PeerRoomManager& peerRoomManager
+	[[nodiscard]] server::protocol::SnapshotBroadcastContext BuildSnapshotBroadcastContext(
+		const server::service::PeerRoomManager& peerRoomManager,
+		const server::game::GameWorld& gameWorld
 	)
 	{
-		server::protocol::SnapshotRoomContextList roomContextList;
-		roomContextList.reserve(peerRoomManager.GetRoomCount());
+		server::protocol::SnapshotBroadcastContext context{};
+		context.serverTick = gameWorld.GetServerTick();
+		context.roomContextList.reserve(peerRoomManager.GetRoomCount());
 
 		std::unordered_map<common::game::RoomId, std::size_t> roomIndexTable;
 		roomIndexTable.reserve(peerRoomManager.GetRoomCount());
 
 		peerRoomManager.ForEachJoinedPeer(
-			[&roomContextList, &roomIndexTable](const server::service::PeerState& peerState)
+			[&context, &roomIndexTable, &gameWorld](const server::service::PeerState& peerState)
 			{
-				const auto [roomIterator, inserted] = roomIndexTable.try_emplace(peerState.roomId, roomContextList.size());
+				const auto [roomIterator, inserted] =
+					roomIndexTable.try_emplace(peerState.roomId, context.roomContextList.size());
 
 				if (inserted)
 				{
-					roomContextList.push_back(
+					context.roomContextList.push_back(
 						server::protocol::SnapshotRoomContext{
 							.roomId = peerState.roomId,
 						}
 						);
 				}
 
-				server::protocol::SnapshotRoomContext& roomContext = roomContextList[roomIterator->second];
+				server::protocol::SnapshotRoomContext& roomContext =
+					context.roomContextList[roomIterator->second];
 
 				roomContext.peerContextList.push_back(
 					server::protocol::SnapshotPeerContext{
@@ -146,10 +152,65 @@ namespace
 						.lastInputSequence = peerState.lastInputSequence,
 					}
 					);
+
+				const server::game::PlayerState* playerState = gameWorld.FindPlayer(peerState.playerId);
+				if (playerState == nullptr)
+				{
+					return;
+				}
+
+				roomContext.playerStateContextList.push_back(
+					server::protocol::SnapshotPlayerStateContext{
+						.playerId = playerState->playerId,
+						.x = playerState->x,
+						.y = playerState->y,
+						.hp = playerState->hp,
+						.isDead = playerState->isDead,
+						.killCount = playerState->killCount,
+						.deathCount = playerState->deathCount,
+						.respawnRemainingSeconds = playerState->respawnRemainingSeconds,
+						.invincibilityRemainingSeconds = playerState->invincibilityRemainingSeconds,
+						.hitFlashRemainingSeconds = playerState->hitFlashRemainingSeconds,
+					}
+					);
 			}
 		);
 
-		return roomContextList;
+		for (const server::game::BulletState& bulletState : gameWorld.GetBulletStateList())
+		{
+			const auto roomIterator = roomIndexTable.find(bulletState.roomId);
+			if (roomIterator == roomIndexTable.end())
+			{
+				continue;
+			}
+
+			context.roomContextList[roomIterator->second].bulletStateContextList.push_back(
+				server::protocol::SnapshotBulletStateContext{
+					.bulletId = bulletState.bulletId,
+					.x = bulletState.x,
+					.y = bulletState.y,
+				}
+				);
+		}
+
+		for (const server::game::ImpactEffectState& effectState : gameWorld.GetPendingImpactEffectStateList())
+		{
+			const auto roomIterator = roomIndexTable.find(effectState.roomId);
+			if (roomIterator == roomIndexTable.end())
+			{
+				continue;
+			}
+
+			context.roomContextList[roomIterator->second].impactEffectContextList.push_back(
+				server::protocol::SnapshotImpactEffectContext{
+					.effectType = effectState.effectType,
+					.x = effectState.x,
+					.y = effectState.y,
+				}
+				);
+		}
+
+		return context;
 	}
 
 	[[nodiscard]] server::service::PeerSessionService::JoinResult JoinPeerForTest(
@@ -289,17 +350,20 @@ namespace
 		tests::Expect(result, fireSucceeded, "IntegrationSmoke: fire succeeds");
 		tests::Expect(result, gameWorld.GetBulletCount() == 1, "IntegrationSmoke: bullet count after fire");
 
-		const server::game::PlayerState* firstPlayerStateBeforeUpdate = gameWorld.FindPlayer(firstJoinResult.playerId);
+		const server::game::PlayerState* firstPlayerStateBeforeUpdate =
+			gameWorld.FindPlayer(firstJoinResult.playerId);
 
 		const float firstPlayerXBeforeUpdate =
 			(firstPlayerStateBeforeUpdate != nullptr) ? firstPlayerStateBeforeUpdate->x : 0.0F;
 
-		const server::game::PlayerSimulationContextList playerContextList = BuildPlayerSimulationContextList(peerRoomManager);
+		const server::game::PlayerSimulationContextList playerContextList =
+			BuildPlayerSimulationContextList(peerRoomManager);
 
 		gameSimulation.UpdatePlayers(0.05F, playerContextList, gameWorld);
 		gameWorld.AdvanceServerTick();
 
-		const server::game::PlayerState* firstPlayerStateAfterUpdate = gameWorld.FindPlayer(firstJoinResult.playerId);
+		const server::game::PlayerState* firstPlayerStateAfterUpdate =
+			gameWorld.FindPlayer(firstJoinResult.playerId);
 
 		tests::Expect(result, firstPlayerStateAfterUpdate != nullptr, "IntegrationSmoke: first player exists after update");
 
@@ -324,14 +388,17 @@ namespace
 			);
 		}
 
-		const server::protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList(peerRoomManager);
+		const server::protocol::SnapshotBroadcastContext snapshotContext =
+			BuildSnapshotBroadcastContext(peerRoomManager, gameWorld);
 
 		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
+			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(snapshotContext);
 
 		const std::vector<server::protocol::BulletSnapshotTask> bulletSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
+			snapshotBroadcastBuilder.BuildBulletSnapshotTasks(snapshotContext);
 
+		tests::Expect(result, snapshotContext.serverTick == gameWorld.GetServerTick(), "IntegrationSmoke: snapshot context tick");
+		tests::Expect(result, snapshotContext.roomContextList.size() == 1, "IntegrationSmoke: snapshot context room count");
 		tests::Expect(result, playerSnapshotTaskList.size() == 2, "IntegrationSmoke: player snapshot task count");
 		tests::Expect(result, bulletSnapshotTaskList.size() == 1, "IntegrationSmoke: bullet snapshot task count");
 
@@ -386,8 +453,11 @@ namespace
 
 		if (!bulletSnapshotTaskList.empty())
 		{
-			const server::protocol::BulletSnapshotTask& bulletSnapshotTask = bulletSnapshotTaskList.front();
-			const common::packet::BulletSnapshotPacket& packet = bulletSnapshotTask.snapshotPacket;
+			const server::protocol::BulletSnapshotTask& bulletSnapshotTask =
+				bulletSnapshotTaskList.front();
+
+			const common::packet::BulletSnapshotPacket& packet =
+				bulletSnapshotTask.snapshotPacket;
 
 			tests::Expect(result, packet.serverTick == gameWorld.GetServerTick(), "IntegrationSmoke: bullet snapshot tick");
 			tests::Expect(result, packet.roomId == roomId, "IntegrationSmoke: bullet snapshot room");
@@ -413,7 +483,8 @@ namespace
 				"IntegrationSmoke: bullet snapshot second endpoint"
 			);
 
-			const common::packet::BulletStateData* bulletData = FindBulletStateData(packet, 1);
+			const common::packet::BulletStateData* bulletData =
+				FindBulletStateData(packet, 1);
 
 			tests::Expect(result, bulletData != nullptr, "IntegrationSmoke: fired bullet in snapshot");
 
@@ -511,7 +582,8 @@ namespace
 			"IntegrationSmoke: second room member count"
 		);
 
-		const server::service::PeerState* firstPeerState = peerRoomManager.FindJoinedPeer(firstEndpointKey);
+		const server::service::PeerState* firstPeerState =
+			peerRoomManager.FindJoinedPeer(firstEndpointKey);
 
 		tests::Expect(
 			result,
@@ -522,10 +594,17 @@ namespace
 			"IntegrationSmoke: room change preserves persistent identity"
 		);
 
-		const server::protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList(peerRoomManager);
+		const server::protocol::SnapshotBroadcastContext snapshotContext =
+			BuildSnapshotBroadcastContext(peerRoomManager, gameWorld);
 
 		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
+			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(snapshotContext);
+
+		tests::Expect(
+			result,
+			snapshotContext.roomContextList.size() == 2,
+			"IntegrationSmoke: room split snapshot context room count"
+		);
 
 		tests::Expect(
 			result,
@@ -535,7 +614,8 @@ namespace
 
 		for (const server::protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
 		{
-			const common::packet::PlayerSnapshotPacket& packet = playerSnapshotTask.snapshotPacket;
+			const common::packet::PlayerSnapshotPacket& packet =
+				playerSnapshotTask.snapshotPacket;
 
 			if (packet.roomId == firstRoomId)
 			{
@@ -589,7 +669,11 @@ namespace
 			const std::optional<common::packet::PacketBuffer> serializedPlayerPacket =
 				common::packet::SerializePacket(packet);
 
-			tests::Expect(result, serializedPlayerPacket.has_value(), "IntegrationSmoke: room split player snapshot serializes");
+			tests::Expect(
+				result,
+				serializedPlayerPacket.has_value(),
+				"IntegrationSmoke: room split player snapshot serializes"
+			);
 		}
 	}
 }

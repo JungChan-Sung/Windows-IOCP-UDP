@@ -34,6 +34,7 @@
 #include <Server/Service/PeerSessionService.h>
 #include <Server/Service/PlayerCommandService.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
+#include <Server/Protocol/SnapshotBroadcastContext.h>
 #include <Server/Protocol/UdpPacketDispatcher.h>
 
 namespace common::log
@@ -139,6 +140,7 @@ namespace server::net
 		void UpdateGameTick();
 
 		[[nodiscard]] game::PlayerSimulationContextList BuildPlayerSimulationContextList() const;
+		[[nodiscard]] protocol::SnapshotRoomContextList BuildSnapshotRoomContextList() const;
 
 		void RegisterPacketHandlers();
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);

@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 #include <variant>
 
@@ -440,6 +441,38 @@ namespace server::net
 		);
 
 		return playerContextList;
+	}
+
+	protocol::SnapshotRoomContextList UdpServer::BuildSnapshotRoomContextList() const
+	{
+		protocol::SnapshotRoomContextList roomContextList;
+		roomContextList.reserve(peerRoomManager_.GetRoomCount());
+
+		std::unordered_map<RoomId, std::size_t> roomIndexTable;
+		roomIndexTable.reserve(peerRoomManager_.GetRoomCount());
+
+		peerRoomManager_.ForEachJoinedPeer(
+			[&roomContextList, &roomIndexTable](const service::PeerState& peerState)
+			{
+				const auto [roomIterator, inserted] = roomIndexTable.try_emplace(peerState.roomId, roomContextList.size());
+				if (inserted)
+				{
+					protocol::SnapshotRoomContext roomContext{};
+					roomContext.roomId = peerState.roomId;
+
+					roomContextList.push_back(std::move(roomContext));
+				}
+
+				protocol::SnapshotRoomContext& roomContext = roomContextList[roomIterator->second];
+				roomContext.peerContextList.push_back(protocol::SnapshotPeerContext{
+						.endpointKey = peerState.endpointKey,
+						.playerId = peerState.playerId,
+						.lastInputSequence = peerState.lastInputSequence,
+					});
+			}
+		);
+
+		return roomContextList;
 	}
 
 	void UdpServer::RegisterPacketHandlers()
@@ -1238,11 +1271,8 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			playerSnapshotTaskList = snapshotBroadcastBuilder_.BuildPlayerSnapshotTasks(
-				peerRoomManager_.GetRoomTable(),
-				peerRoomManager_.GetPeerTable(),
-				gameWorld_
-			);
+			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
+			playerSnapshotTaskList = snapshotBroadcastBuilder_.BuildPlayerSnapshotTasks(roomContextList, gameWorld_);
 		}
 
 		const std::size_t sentCount = packetSender_.SendPlayerSnapshotTasks(playerSnapshotTaskList);
@@ -1256,11 +1286,8 @@ namespace server::net
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			bulletSnapshotTaskList = snapshotBroadcastBuilder_.BuildBulletSnapshotTasks(
-				peerRoomManager_.GetRoomTable(),
-				peerRoomManager_.GetPeerTable(),
-				gameWorld_
-			);
+			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
+			bulletSnapshotTaskList = snapshotBroadcastBuilder_.BuildBulletSnapshotTasks(roomContextList, gameWorld_);
 		}
 
 		const std::size_t sentCount = packetSender_.SendBulletSnapshotTasks(bulletSnapshotTaskList);
@@ -1279,11 +1306,8 @@ namespace server::net
 				return;
 			}
 
-			impactEffectTaskList = snapshotBroadcastBuilder_.BuildImpactEffectTasks(
-				peerRoomManager_.GetRoomTable(),
-				peerRoomManager_.GetPeerTable(),
-				gameWorld_
-			);
+			const protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList();
+			impactEffectTaskList = snapshotBroadcastBuilder_.BuildImpactEffectTasks(roomContextList, gameWorld_);
 
 			gameWorld_.ClearPendingImpactEffects();
 		}

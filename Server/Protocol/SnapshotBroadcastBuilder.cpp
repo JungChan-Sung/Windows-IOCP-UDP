@@ -5,46 +5,31 @@
 
 namespace server::protocol
 {
-	std::vector<PlayerSnapshotTask> SnapshotBroadcastBuilder::BuildPlayerSnapshotTasks(
-		const RoomTable& roomTable,
-		const PeerTable& peerTable,
-		const game::GameWorld& gameWorld
-	) const
+	std::vector<PlayerSnapshotTask> SnapshotBroadcastBuilder::BuildPlayerSnapshotTasks(std::span<const SnapshotRoomContext> roomContextList, const game::GameWorld& gameWorld) const
 	{
 		std::vector<PlayerSnapshotTask> playerSnapshotTaskList;
+
 		const PlayerTable& playerTable = gameWorld.GetPlayerTable();
 		const std::uint32_t serverTick = gameWorld.GetServerTick();
 
-		for (const auto& [roomId, roomMemberSet] : roomTable)
+		for (const SnapshotRoomContext& roomContext : roomContextList)
 		{
 			common::packet::PlayerSnapshotPacket snapshotBase{};
+
 			FillPlayerSnapshotBase(
 				snapshotBase,
-				roomId,
-				roomMemberSet,
-				peerTable,
+				roomContext.roomId,
+				roomContext.peerContextList,
 				playerTable,
 				serverTick
 			);
 
-			for (const EndpointKey& endpointKey : roomMemberSet)
+			for (const SnapshotPeerContext& peerContext : roomContext.peerContextList)
 			{
-				auto peerIterator = peerTable.find(endpointKey);
-				if (peerIterator == peerTable.end())
-				{
-					continue;
-				}
-
-				const service::PeerState& peerState = peerIterator->second;
-				if (!peerState.isJoined)
-				{
-					continue;
-				}
-
 				PlayerSnapshotTask playerSnapshotTask{};
-				playerSnapshotTask.endpointKey = endpointKey;
+				playerSnapshotTask.endpointKey = peerContext.endpointKey;
 				playerSnapshotTask.snapshotPacket = snapshotBase;
-				playerSnapshotTask.snapshotPacket.lastProcessedInputSequence = peerState.lastInputSequence;
+				playerSnapshotTask.snapshotPacket.lastProcessedInputSequence = peerContext.lastInputSequence;
 
 				playerSnapshotTaskList.push_back(std::move(playerSnapshotTask));
 			}
@@ -53,38 +38,31 @@ namespace server::protocol
 		return playerSnapshotTaskList;
 	}
 
-	std::vector<BulletSnapshotTask> SnapshotBroadcastBuilder::BuildBulletSnapshotTasks(
-		const RoomTable& roomTable,
-		const PeerTable& peerTable,
-		const game::GameWorld& gameWorld
-	) const
+	std::vector<BulletSnapshotTask> SnapshotBroadcastBuilder::BuildBulletSnapshotTasks(std::span<const SnapshotRoomContext> roomContextList, const game::GameWorld& gameWorld) const
 	{
 		std::vector<BulletSnapshotTask> bulletSnapshotTaskList;
+
 		const BulletStateList& bulletStateList = gameWorld.GetBulletStateList();
 		const std::uint32_t serverTick = gameWorld.GetServerTick();
 
-		for (const auto& [roomId, roomMemberSet] : roomTable)
+		for (const SnapshotRoomContext& roomContext : roomContextList)
 		{
-			const EndpointKeyList endpointKeyList = BuildRoomEndpointKeyList(roomMemberSet, peerTable);
-			if (endpointKeyList.empty())
+			if (roomContext.peerContextList.empty())
 			{
 				continue;
 			}
 
-			const BulletStateDataList bulletStateDataList = BuildRoomBulletStateDataList(roomId, bulletStateList);
+			const EndpointKeyList endpointKeyList = BuildEndpointKeyList(roomContext.peerContextList);
+			const BulletStateDataList bulletStateDataList = BuildRoomBulletStateDataList(roomContext.roomId, bulletStateList);
 
 			const std::size_t maxBulletPerChunk = common::packet::maxBulletsPerSnapshot;
-			const std::size_t chunkCount = std::max(
-				1ULL,
-				(bulletStateDataList.size() + maxBulletPerChunk - 1) / maxBulletPerChunk
-			);
-
+			const std::size_t chunkCount = std::max(1ULL, (bulletStateDataList.size() + maxBulletPerChunk - 1) / maxBulletPerChunk);
 			for (std::size_t chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
 			{
 				BulletSnapshotTask bulletSnapshotTask{};
 				bulletSnapshotTask.endpointKeyList = endpointKeyList;
 				bulletSnapshotTask.snapshotPacket.serverTick = serverTick;
-				bulletSnapshotTask.snapshotPacket.roomId = roomId;
+				bulletSnapshotTask.snapshotPacket.roomId = roomContext.roomId;
 				bulletSnapshotTask.snapshotPacket.chunkIndex = static_cast<std::uint16_t>(chunkIndex);
 				bulletSnapshotTask.snapshotPacket.chunkCount = static_cast<std::uint16_t>(chunkCount);
 
@@ -93,8 +71,7 @@ namespace server::protocol
 
 				for (std::size_t index = beginIndex; index < endIndex; ++index)
 				{
-					bulletSnapshotTask.snapshotPacket.bullets[bulletSnapshotTask.snapshotPacket.bulletCount]
-						= bulletStateDataList[index];
+					bulletSnapshotTask.snapshotPacket.bullets[bulletSnapshotTask.snapshotPacket.bulletCount] = bulletStateDataList[index];
 					++bulletSnapshotTask.snapshotPacket.bulletCount;
 				}
 
@@ -105,25 +82,22 @@ namespace server::protocol
 		return bulletSnapshotTaskList;
 	}
 
-	std::vector<ImpactEffectTask> SnapshotBroadcastBuilder::BuildImpactEffectTasks(
-		const RoomTable& roomTable,
-		const PeerTable& peerTable,
-		const game::GameWorld& gameWorld
-	) const
+	std::vector<ImpactEffectTask> SnapshotBroadcastBuilder::BuildImpactEffectTasks(std::span<const SnapshotRoomContext> roomContextList, const game::GameWorld& gameWorld) const
 	{
 		std::vector<ImpactEffectTask> impactEffectTaskList;
+
 		const ImpactEffectStateList& impactEffectStateList = gameWorld.GetPendingImpactEffectStateList();
 		const std::uint32_t serverTick = gameWorld.GetServerTick();
 
-		for (const auto& [roomId, roomMemberSet] : roomTable)
+		for (const SnapshotRoomContext& roomContext : roomContextList)
 		{
-			const EndpointKeyList endpointKeyList = BuildRoomEndpointKeyList(roomMemberSet, peerTable);
-			if (endpointKeyList.empty())
+			if (roomContext.peerContextList.empty())
 			{
 				continue;
 			}
 
-			const ImpactEffectDataList impactEffectDataList = BuildRoomImpactEffectDataList(roomId, impactEffectStateList);
+			const EndpointKeyList endpointKeyList = BuildEndpointKeyList(roomContext.peerContextList);
+			const ImpactEffectDataList impactEffectDataList = BuildRoomImpactEffectDataList(roomContext.roomId, impactEffectStateList);
 			if (impactEffectDataList.empty())
 			{
 				continue;
@@ -131,13 +105,12 @@ namespace server::protocol
 
 			const std::size_t maxEffectsPerChunk = common::packet::maxImpactEffectsPerPacket;
 			const std::size_t chunkCount = (impactEffectDataList.size() + maxEffectsPerChunk - 1) / maxEffectsPerChunk;
-
 			for (std::size_t chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
 			{
 				ImpactEffectTask impactEffectTask{};
 				impactEffectTask.endpointKeyList = endpointKeyList;
 				impactEffectTask.effectPacket.serverTick = serverTick;
-				impactEffectTask.effectPacket.roomId = roomId;
+				impactEffectTask.effectPacket.roomId = roomContext.roomId;
 				impactEffectTask.effectPacket.chunkIndex = static_cast<std::uint16_t>(chunkIndex);
 				impactEffectTask.effectPacket.chunkCount = static_cast<std::uint16_t>(chunkCount);
 
@@ -146,8 +119,7 @@ namespace server::protocol
 
 				for (std::size_t index = beginIndex; index < endIndex; ++index)
 				{
-					impactEffectTask.effectPacket.effects[impactEffectTask.effectPacket.effectCount]
-						= impactEffectDataList[index];
+					impactEffectTask.effectPacket.effects[impactEffectTask.effectPacket.effectCount] = impactEffectDataList[index];
 					++impactEffectTask.effectPacket.effectCount;
 				}
 
@@ -158,45 +130,27 @@ namespace server::protocol
 		return impactEffectTaskList;
 	}
 
-	EndpointKeyList SnapshotBroadcastBuilder::BuildRoomEndpointKeyList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const
+	EndpointKeyList SnapshotBroadcastBuilder::BuildEndpointKeyList(const SnapshotPeerContextList& peerContextList) const
 	{
 		EndpointKeyList endpointKeyList;
-		endpointKeyList.reserve(roomMemberSet.size());
+		endpointKeyList.reserve(peerContextList.size());
 
-		for (const EndpointKey& endpointKey : roomMemberSet)
+		for (const SnapshotPeerContext& peerContext : peerContextList)
 		{
-			const auto peerIterator = peerTable.find(endpointKey);
-			if (peerIterator == peerTable.end() || !peerIterator->second.isJoined)
-			{
-				continue;
-			}
-
-			endpointKeyList.push_back(endpointKey);
+			endpointKeyList.push_back(peerContext.endpointKey);
 		}
 
 		return endpointKeyList;
 	}
 
-	void SnapshotBroadcastBuilder::FillPlayerSnapshotBase(common::packet::PlayerSnapshotPacket& snapshotPacket, RoomId roomId, const RoomMemberSet& roomMemberSet, const PeerTable& peerTable, const PlayerTable& playerTable, std::uint32_t serverTick) const
+	void SnapshotBroadcastBuilder::FillPlayerSnapshotBase(common::packet::PlayerSnapshotPacket& snapshotPacket, RoomId roomId, const SnapshotPeerContextList& peerContextList, const PlayerTable& playerTable, std::uint32_t serverTick) const
 	{
 		snapshotPacket.serverTick = serverTick;
 		snapshotPacket.roomId = roomId;
 
-		for (const EndpointKey& endpointKey : roomMemberSet)
+		for (const SnapshotPeerContext& peerContext : peerContextList)
 		{
-			const auto peerIterator = peerTable.find(endpointKey);
-			if (peerIterator == peerTable.end())
-			{
-				continue;
-			}
-
-			const service::PeerState& peerState = peerIterator->second;
-			if (!peerState.isJoined)
-			{
-				continue;
-			}
-
-			const auto playerIterator = playerTable.find(peerState.playerId);
+			const auto playerIterator = playerTable.find(peerContext.playerId);
 			if (playerIterator == playerTable.end())
 			{
 				continue;
@@ -220,6 +174,7 @@ namespace server::protocol
 			playerStateData.respawnRemainingSeconds = playerState.respawnRemainingSeconds;
 			playerStateData.invincibilityRemainingSeconds = playerState.invincibilityRemainingSeconds;
 			playerStateData.hitFlashRemainingSeconds = playerState.hitFlashRemainingSeconds;
+
 			++snapshotPacket.playerCount;
 		}
 	}
@@ -263,6 +218,7 @@ namespace server::protocol
 			impactEffectData.effectType = impactEffectState.effectType;
 			impactEffectData.x = impactEffectState.x;
 			impactEffectData.y = impactEffectState.y;
+
 			impactEffectDataList.push_back(impactEffectData);
 		}
 

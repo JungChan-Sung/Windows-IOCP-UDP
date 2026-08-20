@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 #include <Common/Game/GameRules.h>
@@ -19,6 +20,7 @@
 #include <Server/Game/PlayerSimulationContext.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Protocol/SnapshotBroadcastBuilder.h>
+#include <Server/Protocol/SnapshotBroadcastContext.h>
 #include <Server/Protocol/SnapshotBroadcastTask.h>
 #include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/PeerSessionService.h>
@@ -111,6 +113,45 @@ namespace
 		return playerContextList;
 	}
 
+	[[nodiscard]] server::protocol::SnapshotRoomContextList BuildSnapshotRoomContextList(
+		const server::service::PeerRoomManager& peerRoomManager
+	)
+	{
+		server::protocol::SnapshotRoomContextList roomContextList;
+		roomContextList.reserve(peerRoomManager.GetRoomCount());
+
+		std::unordered_map<common::game::RoomId, std::size_t> roomIndexTable;
+		roomIndexTable.reserve(peerRoomManager.GetRoomCount());
+
+		peerRoomManager.ForEachJoinedPeer(
+			[&roomContextList, &roomIndexTable](const server::service::PeerState& peerState)
+			{
+				const auto [roomIterator, inserted] = roomIndexTable.try_emplace(peerState.roomId, roomContextList.size());
+
+				if (inserted)
+				{
+					roomContextList.push_back(
+						server::protocol::SnapshotRoomContext{
+							.roomId = peerState.roomId,
+						}
+						);
+				}
+
+				server::protocol::SnapshotRoomContext& roomContext = roomContextList[roomIterator->second];
+
+				roomContext.peerContextList.push_back(
+					server::protocol::SnapshotPeerContext{
+						.endpointKey = peerState.endpointKey,
+						.playerId = peerState.playerId,
+						.lastInputSequence = peerState.lastInputSequence,
+					}
+					);
+			}
+		);
+
+		return roomContextList;
+	}
+
 	[[nodiscard]] server::service::PeerSessionService::JoinResult JoinPeerForTest(
 		const server::service::PeerSessionService& peerSessionService,
 		const common::net::EndpointKey& endpointKey,
@@ -198,7 +239,6 @@ namespace
 		tests::Expect(result, firstJoinResult.shouldBroadcastPlayerJoined, "IntegrationSmoke: first join broadcasts");
 		tests::Expect(result, secondJoinResult.shouldSendResponse, "IntegrationSmoke: second join sends response");
 		tests::Expect(result, secondJoinResult.shouldBroadcastPlayerJoined, "IntegrationSmoke: second join broadcasts");
-
 		tests::Expect(result, peerRoomManager.GetPeerCount() == 2, "IntegrationSmoke: peer count after join");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(roomId) == 2, "IntegrationSmoke: room member count after join");
 		tests::Expect(result, gameWorld.GetPlayerCount() == 2, "IntegrationSmoke: player count after join");
@@ -254,8 +294,7 @@ namespace
 		const float firstPlayerXBeforeUpdate =
 			(firstPlayerStateBeforeUpdate != nullptr) ? firstPlayerStateBeforeUpdate->x : 0.0F;
 
-		const server::game::PlayerSimulationContextList playerContextList =
-			BuildPlayerSimulationContextList(peerRoomManager);
+		const server::game::PlayerSimulationContextList playerContextList = BuildPlayerSimulationContextList(peerRoomManager);
 
 		gameSimulation.UpdatePlayers(0.05F, playerContextList, gameWorld);
 		gameWorld.AdvanceServerTick();
@@ -285,19 +324,13 @@ namespace
 			);
 		}
 
+		const server::protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList(peerRoomManager);
+
 		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
-				peerRoomManager.GetRoomTable(),
-				peerRoomManager.GetPeerTable(),
-				gameWorld
-			);
+			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
 
 		const std::vector<server::protocol::BulletSnapshotTask> bulletSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildBulletSnapshotTasks(
-				peerRoomManager.GetRoomTable(),
-				peerRoomManager.GetPeerTable(),
-				gameWorld
-			);
+			snapshotBroadcastBuilder.BuildBulletSnapshotTasks(roomContextList, gameWorld);
 
 		tests::Expect(result, playerSnapshotTaskList.size() == 2, "IntegrationSmoke: player snapshot task count");
 		tests::Expect(result, bulletSnapshotTaskList.size() == 1, "IntegrationSmoke: bullet snapshot task count");
@@ -393,11 +426,7 @@ namespace
 			const std::optional<common::packet::PacketBuffer> serializedBulletPacket =
 				common::packet::SerializePacket(packet);
 
-			tests::Expect(
-				result,
-				serializedBulletPacket.has_value(),
-				"IntegrationSmoke: bullet snapshot serializes"
-			);
+			tests::Expect(result, serializedBulletPacket.has_value(), "IntegrationSmoke: bullet snapshot serializes");
 		}
 	}
 
@@ -460,11 +489,13 @@ namespace
 
 		tests::Expect(result, roomChangeResult.changed, "IntegrationSmoke: room change succeeds");
 		tests::Expect(result, roomChangeResult.playerId == firstJoinResult.playerId, "IntegrationSmoke: room change player id");
+
 		tests::Expect(
 			result,
 			roomChangeResult.persistentPlayerId == firstPersistentPlayerId,
 			"IntegrationSmoke: room change persistent player id"
 		);
+
 		tests::Expect(result, roomChangeResult.previousRoomId == firstRoomId, "IntegrationSmoke: room change previous room");
 		tests::Expect(result, roomChangeResult.nextRoomId == secondRoomId, "IntegrationSmoke: room change next room");
 
@@ -491,12 +522,10 @@ namespace
 			"IntegrationSmoke: room change preserves persistent identity"
 		);
 
+		const server::protocol::SnapshotRoomContextList roomContextList = BuildSnapshotRoomContextList(peerRoomManager);
+
 		const std::vector<server::protocol::PlayerSnapshotTask> playerSnapshotTaskList =
-			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(
-				peerRoomManager.GetRoomTable(),
-				peerRoomManager.GetPeerTable(),
-				gameWorld
-			);
+			snapshotBroadcastBuilder.BuildPlayerSnapshotTasks(roomContextList, gameWorld);
 
 		tests::Expect(
 			result,
@@ -560,11 +589,7 @@ namespace
 			const std::optional<common::packet::PacketBuffer> serializedPlayerPacket =
 				common::packet::SerializePacket(packet);
 
-			tests::Expect(
-				result,
-				serializedPlayerPacket.has_value(),
-				"IntegrationSmoke: room split player snapshot serializes"
-			);
+			tests::Expect(result, serializedPlayerPacket.has_value(), "IntegrationSmoke: room split player snapshot serializes");
 		}
 	}
 }

@@ -290,6 +290,9 @@
     <ClInclude Include="Net\ReliableUdpSessionRegistry.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Protocol\SnapshotBroadcastContext.h">
+      <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Server.ini">

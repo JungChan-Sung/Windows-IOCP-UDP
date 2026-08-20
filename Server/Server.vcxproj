@@ -209,6 +209,7 @@
     <ClInclude Include="Protocol\AccountPacketMapper.h" />
     <ClInclude Include="Protocol\PacketPayloadValidator.h" />
     <ClInclude Include="Protocol\SnapshotBroadcastBuilder.h" />
+    <ClInclude Include="Protocol\SnapshotBroadcastContext.h" />
     <ClInclude Include="Protocol\SnapshotBroadcastTask.h" />
     <ClInclude Include="Protocol\UdpPacketDispatcher.h" />
     <ClInclude Include="Service\AccountLoginAdmissionService.h" />

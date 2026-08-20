@@ -11,12 +11,8 @@
 
 namespace
 {
-	template <typename TPacket>
-	[[nodiscard]] bool SendSerializedPacket(
-		server::net::UdpPacketSender& packetSender,
-		const sockaddr_in& remoteAddress,
-		const TPacket& packet
-	)
+	template <typename TAddress, typename TPacket>
+	[[nodiscard]] bool SendSerializedPacket(server::net::UdpPacketSender& packetSender, const TAddress& address, const TPacket& packet)
 	{
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
 		if (!packetBuffer.has_value())
@@ -24,17 +20,13 @@ namespace
 			return false;
 		}
 
-		return packetSender.SendPacket(
-			remoteAddress,
-			packetBuffer->data(),
-			static_cast<int>(packetBuffer->size())
-		);
+		return packetSender.SendPacket(address, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	template <typename TPacket>
 	[[nodiscard]] std::size_t BroadcastSerializedPacket(
 		server::net::UdpPacketSender& packetSender,
-		std::span<const sockaddr_in> remoteAddressList,
+		std::span<const common::net::EndpointKey> endpointKeyList,
 		const TPacket& packet
 	)
 	{
@@ -44,11 +36,7 @@ namespace
 			return 0;
 		}
 
-		return packetSender.BroadcastPacket(
-			remoteAddressList,
-			packetBuffer->data(),
-			static_cast<int>(packetBuffer->size())
-		);
+		return packetSender.BroadcastPacket(endpointKeyList, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 }
 
@@ -161,17 +149,17 @@ namespace server::net
 		return SendSerializedPacket(*this, remoteAddress, packet);
 	}
 
-	bool UdpPacketSender::SendJoinRoomResponse(const sockaddr_in& remoteAddress, RoomId roomId, float spawnX, float spawnY)
+	bool UdpPacketSender::SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY)
 	{
 		common::packet::JoinRoomResponsePacket packet{};
 		packet.roomId = roomId;
 		packet.spawnX = spawnX;
 		packet.spawnY = spawnY;
-
-		return SendSerializedPacket(*this, remoteAddress, packet);
+		
+		return SendSerializedPacket(*this, endpointKey, packet);
 	}
 
-	std::size_t UdpPacketSender::BroadcastPlayerJoined(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId, float x, float y)
+	std::size_t UdpPacketSender::BroadcastPlayerJoined(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId, float x, float y)
 	{
 		common::packet::PlayerJoinedPacket packet{};
 		packet.playerId = playerId;
@@ -179,16 +167,16 @@ namespace server::net
 		packet.x = x;
 		packet.y = y;
 
-		return BroadcastSerializedPacket(*this, remoteAddressList, packet);
+		return BroadcastSerializedPacket(*this, endpointKeyList, packet);
 	}
 
-	std::size_t UdpPacketSender::BroadcastPlayerLeft(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId)
+	std::size_t UdpPacketSender::BroadcastPlayerLeft(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId)
 	{
 		common::packet::PlayerLeftPacket packet{};
 		packet.playerId = playerId;
 		packet.roomId = roomId;
 
-		return BroadcastSerializedPacket(*this, remoteAddressList, packet);
+		return BroadcastSerializedPacket(*this, endpointKeyList, packet);
 	}
 
 	std::size_t UdpPacketSender::SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList)

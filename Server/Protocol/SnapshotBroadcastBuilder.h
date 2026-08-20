@@ -1,14 +1,12 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include <Common/Game/GameTypes.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Packet/Game/GamePacket.h>
 
 #include <Server/Game/GameWorld.h>
@@ -63,10 +61,7 @@ namespace server::protocol
 		) const;
 
 	private:
-		[[nodiscard]] EndpointKeyList BuildRoomRemoteAddressList(
-			const RoomMemberSet& roomMemberSet,
-			const PeerTable& peerTable
-		) const;
+		[[nodiscard]] EndpointKeyList BuildRoomEndpointKeyList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const;
 
 		void FillPlayerSnapshotBase(
 			common::packet::PlayerSnapshotPacket& snapshotPacket,

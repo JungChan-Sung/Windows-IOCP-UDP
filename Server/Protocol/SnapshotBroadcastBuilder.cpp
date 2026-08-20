@@ -65,7 +65,7 @@ namespace server::protocol
 
 		for (const auto& [roomId, roomMemberSet] : roomTable)
 		{
-			const EndpointKeyList endpointKeyList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
+			const EndpointKeyList endpointKeyList = BuildRoomEndpointKeyList(roomMemberSet, peerTable);
 			if (endpointKeyList.empty())
 			{
 				continue;
@@ -117,7 +117,7 @@ namespace server::protocol
 
 		for (const auto& [roomId, roomMemberSet] : roomTable)
 		{
-			const EndpointKeyList endpointKeyList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
+			const EndpointKeyList endpointKeyList = BuildRoomEndpointKeyList(roomMemberSet, peerTable);
 			if (endpointKeyList.empty())
 			{
 				continue;
@@ -158,7 +158,7 @@ namespace server::protocol
 		return impactEffectTaskList;
 	}
 
-	EndpointKeyList SnapshotBroadcastBuilder::BuildRoomRemoteAddressList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const
+	EndpointKeyList SnapshotBroadcastBuilder::BuildRoomEndpointKeyList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const
 	{
 		EndpointKeyList endpointKeyList;
 		endpointKeyList.reserve(roomMemberSet.size());

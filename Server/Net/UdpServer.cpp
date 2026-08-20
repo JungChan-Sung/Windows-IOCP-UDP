@@ -913,7 +913,7 @@ namespace server::net
 		if (!responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response send failed. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
+			stream << "Join response send failed. Endpoint=" << FormatEndpoint(remoteAddress)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
 
@@ -924,7 +924,7 @@ namespace server::net
 		{
 			{
 				std::ostringstream stream;
-				stream << "Peer joined. Endpoint=" << FormatEndpoint(joinResult.remoteAddress)
+				stream << "Peer joined. Endpoint=" << FormatEndpoint(remoteAddress)
 					<< ", PlayerId=" << joinResult.playerId
 					<< ", RoomId=" << joinResult.roomId;
 
@@ -1130,7 +1130,7 @@ namespace server::net
 
 		{
 			std::ostringstream stream;
-			stream << "Peer changed room. Endpoint=" << FormatEndpoint(roomChangeResult.remoteAddress)
+			stream << "Peer changed room. Endpoint=" << FormatEndpoint(common::net::MakeSocketAddress(endpointKey))
 				<< ", PlayerId=" << roomChangeResult.playerId
 				<< ", PreviousRoomId=" << roomChangeResult.previousRoomId
 				<< ", NextRoomId=" << roomChangeResult.nextRoomId;

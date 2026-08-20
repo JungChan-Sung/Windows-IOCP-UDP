@@ -6,6 +6,7 @@
 #include <span>
 
 #include <Common/Game/GameTypes.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Net/Fault/UdpFaultSimulator.h>
 
 #include <Server/Protocol/SnapshotBroadcastTask.h>
@@ -50,9 +51,9 @@ namespace server::net
 
 		[[nodiscard]] bool SendAccountLoginResponse(const sockaddr_in& remoteAddress, const common::packet::AccountLoginResponsePacket& packet);
 		[[nodiscard]] bool SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY);
-		[[nodiscard]] bool SendJoinRoomResponse(const sockaddr_in& remoteAddress, RoomId roomId, float spawnX, float spawnY);
-		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId, float x, float y);
-		[[nodiscard]] std::size_t BroadcastPlayerLeft(std::span<const sockaddr_in> remoteAddressList, RoomId roomId, PlayerId playerId);
+		[[nodiscard]] bool SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY);
+		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId, float x, float y);
+		[[nodiscard]] std::size_t BroadcastPlayerLeft(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId);
 
 		[[nodiscard]] std::size_t SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList);
 		[[nodiscard]] std::size_t SendBulletSnapshotTasks(std::span<const protocol::BulletSnapshotTask> bulletSnapshotTaskList);

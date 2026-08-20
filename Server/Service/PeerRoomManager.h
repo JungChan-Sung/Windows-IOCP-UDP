@@ -1,7 +1,5 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <cstdint>
 #include <functional>
 #include <unordered_map>

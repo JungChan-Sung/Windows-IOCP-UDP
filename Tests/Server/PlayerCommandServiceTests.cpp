@@ -1,14 +1,12 @@
 #include "PlayerCommandServiceTests.h"
 
-#include <WinSock2.h>
-
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
@@ -23,62 +21,32 @@ namespace
 	using Clock = std::chrono::steady_clock;
 	using TimePoint = Clock::time_point;
 
-	using PeerRoomManager =
-		server::service::PeerRoomManager;
+	using PeerRoomManager = server::service::PeerRoomManager;
+	using PeerState = server::service::PeerState;
+	using PlayerCommandService = server::service::PlayerCommandService;
 
-	using PeerState =
-		server::service::PeerState;
-
-	using PlayerCommandService =
-		server::service::PlayerCommandService;
-
-	[[nodiscard]] bool IsNearlyEqual(
-		float lhs,
-		float rhs,
-		float epsilon = 0.001F
-	) noexcept
+	[[nodiscard]] bool IsNearlyEqual(float lhs, float rhs, float epsilon = 0.001F) noexcept
 	{
 		return std::fabs(lhs - rhs) <= epsilon;
 	}
 
-	[[nodiscard]] common::net::EndpointKey MakeEndpointKey(
-		std::uint32_t index
-	) noexcept
+	[[nodiscard]] constexpr common::net::EndpointKey MakeEndpointKey(std::uint32_t index) noexcept
 	{
-		common::net::EndpointKey endpointKey{};
-		endpointKey.address = 0x7F000001 + index;
-		endpointKey.port =
-			static_cast<std::uint16_t>(10000 + index);
-		return endpointKey;
+		return common::net::EndpointKey{
+			.address = 0x7F000001 + index,
+			.port = static_cast<std::uint16_t>(10000 + index),
+		};
 	}
 
-	[[nodiscard]] sockaddr_in MakeRemoteAddress(
-		const common::net::EndpointKey& endpointKey
-	) noexcept
-	{
-		sockaddr_in remoteAddress{};
-		remoteAddress.sin_family = AF_INET;
-		remoteAddress.sin_addr.S_un.S_addr =
-			endpointKey.address;
-		remoteAddress.sin_port = endpointKey.port;
-		return remoteAddress;
-	}
-
-	[[nodiscard]] server::game::PlayerState MakePlayer(
-		common::game::PlayerId playerId,
-		float x,
-		float y
-	)
+	[[nodiscard]] server::game::PlayerState MakePlayer(common::game::PlayerId playerId, float x, float y)
 	{
 		server::game::PlayerState playerState{};
 		playerState.playerId = playerId;
 		playerState.x = x;
 		playerState.y = y;
-		playerState.hp =
-			common::game::defaultInitialPlayerHp;
+		playerState.hp = common::game::defaultInitialPlayerHp;
 		playerState.isDead = false;
-		playerState.weaponType =
-			common::game::WeaponType::Basic;
+		playerState.weaponType = common::game::WeaponType::Basic;
 		playerState.lastMoveDirectionX = 1.0F;
 		playerState.lastMoveDirectionY = 0.0F;
 		return playerState;
@@ -93,170 +61,66 @@ namespace
 		TimePoint currentTime
 	)
 	{
-		const sockaddr_in remoteAddress =
-			MakeRemoteAddress(endpointKey);
+		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(endpointKey, playerId, roomId, currentTime);
+		peerState.persistentPlayerId = static_cast<std::int64_t>(5000 + playerId);
 
-		PeerState& peerState =
-			peerRoomManager.UpsertJoinedPeer(
-				remoteAddress,
-				endpointKey,
-				playerId,
-				roomId,
-				currentTime
-			);
-
-		peerState.persistentPlayerId =
-			static_cast<std::int64_t>(5000 + playerId);
-
-		gameWorld.UpsertPlayer(
-			MakePlayer(
-				playerId,
-				100.0F,
-				100.0F
-			)
-		);
+		gameWorld.UpsertPlayer(MakePlayer(playerId, 100.0F, 100.0F));
 	}
 
-	void RunApplyInputCommandSuccessTest(
-		tests::DebugTestResult& result
-	)
+	void RunApplyInputCommandSuccessTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(1);
-
-		constexpr common::game::PlayerId playerId = 1;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(1);
 		const TimePoint joinTime = Clock::now();
-		const TimePoint commandTime =
-			joinTime + std::chrono::seconds(1);
+		const TimePoint commandTime = joinTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 1, 1, joinTime);
 
-		constexpr std::uint32_t inputSequence = 1;
 		const common::game::InputFlags inputFlags = common::game::InputFlags::Right | common::game::InputFlags::Up;
+		const bool applied = service.ApplyInputCommand(endpointKey, 1, inputFlags, peerRoomManager, gameWorld, commandTime);
 
-		const bool applied = service.ApplyInputCommand(endpointKey, inputSequence, inputFlags, peerRoomManager, gameWorld, commandTime);
+		tests::Expect(result, applied, "PlayerCommandService: input command applied");
 
-		tests::Expect(
-			result,
-			applied,
-			"PlayerCommandService: input command applied"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const server::game::PlayerState* playerState = gameWorld.FindPlayer(1);
 
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		const server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
-
-		tests::Expect(
-			result,
-			peerState != nullptr,
-			"PlayerCommandService: input peer exists"
-		);
-
-		tests::Expect(
-			result,
-			playerState != nullptr,
-			"PlayerCommandService: input player exists"
-		);
+		tests::Expect(result, peerState != nullptr, "PlayerCommandService: input peer exists");
+		tests::Expect(result, playerState != nullptr, "PlayerCommandService: input player exists");
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastInputSequence == 1,
-				"PlayerCommandService: input sequence updated"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == commandTime,
-				"PlayerCommandService: input recv time updated"
-			);
+			tests::Expect(result, peerState->lastInputSequence == 1, "PlayerCommandService: input sequence updated");
+			tests::Expect(result, peerState->lastRecvTime == commandTime, "PlayerCommandService: input recv time updated");
 		}
 
 		if (playerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				playerState->inputFlags == inputFlags,
-				"PlayerCommandService: input flags updated"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					playerState->lastMoveDirectionX,
-					0.707106F
-				),
-				"PlayerCommandService: input direction x updated"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					playerState->lastMoveDirectionY,
-					-0.707106F
-				),
-				"PlayerCommandService: input direction y updated"
-			);
+			tests::Expect(result, playerState->inputFlags == inputFlags, "PlayerCommandService: input flags updated");
+			tests::Expect(result, IsNearlyEqual(playerState->lastMoveDirectionX, 0.707106F), "PlayerCommandService: input direction x updated");
+			tests::Expect(result, IsNearlyEqual(playerState->lastMoveDirectionY, -0.707106F), "PlayerCommandService: input direction y updated");
 		}
 	}
 
-	void RunApplyInputCommandStaleSequenceRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunApplyInputCommandStaleSequenceRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(2);
-
-		constexpr common::game::PlayerId playerId = 2;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(2);
 		const TimePoint joinTime = Clock::now();
+		const TimePoint firstCommandTime = joinTime + std::chrono::seconds(1);
+		const TimePoint staleCommandTime = firstCommandTime + std::chrono::seconds(1);
 
-		const TimePoint firstCommandTime =
-			joinTime + std::chrono::seconds(1);
-
-		const TimePoint staleCommandTime =
-			firstCommandTime + std::chrono::seconds(1);
-
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
-
-		constexpr std::uint32_t firstInputSequence = 10;
-		constexpr common::game::InputFlags firstInputFlags = common::game::InputFlags::Right;
-
-		constexpr std::uint32_t staleInputSequence = 10;
-		constexpr common::game::InputFlags staleInputFlags = common::game::InputFlags::Left;
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 2, 1, joinTime);
 
 		const bool firstApplied = service.ApplyInputCommand(
 			endpointKey,
-			firstInputSequence,
-			firstInputFlags,
+			10,
+			common::game::InputFlags::Right,
 			peerRoomManager,
 			gameWorld,
 			firstCommandTime
@@ -264,210 +128,101 @@ namespace
 
 		const bool staleApplied = service.ApplyInputCommand(
 			endpointKey,
-			staleInputSequence,
-			staleInputFlags,
+			10,
+			common::game::InputFlags::Left,
 			peerRoomManager,
 			gameWorld,
 			staleCommandTime
 		);
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
 
-		const server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
+		tests::Expect(result, firstApplied, "PlayerCommandService: stale base input applied");
+		tests::Expect(result, !staleApplied, "PlayerCommandService: stale input rejected");
 
-		tests::Expect(
-			result,
-			firstApplied,
-			"PlayerCommandService: stale base input applied"
-		);
-
-		tests::Expect(
-			result,
-			!staleApplied,
-			"PlayerCommandService: stale input rejected"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		const server::game::PlayerState* playerState = gameWorld.FindPlayer(2);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastInputSequence == 10,
-				"PlayerCommandService: stale sequence unchanged"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == firstCommandTime,
-				"PlayerCommandService: stale recv time unchanged"
-			);
+			tests::Expect(result, peerState->lastInputSequence == 10, "PlayerCommandService: stale sequence unchanged");
+			tests::Expect(result, peerState->lastRecvTime == firstCommandTime, "PlayerCommandService: stale recv time unchanged");
 		}
 
 		if (playerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				playerState->inputFlags
-				== common::game::InputFlags::Right,
-				"PlayerCommandService: stale input flags unchanged"
-			);
+			tests::Expect(result, playerState->inputFlags == common::game::InputFlags::Right, "PlayerCommandService: stale input flags unchanged");
 		}
 	}
 
-	void RunApplyInputCommandDeadPlayerRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunApplyInputCommandDeadPlayerRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(3);
-
-		constexpr common::game::PlayerId playerId = 3;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(3);
 		const TimePoint joinTime = Clock::now();
+		const TimePoint commandTime = joinTime + std::chrono::seconds(1);
 
-		const TimePoint commandTime =
-			joinTime + std::chrono::seconds(1);
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 3, 1, joinTime);
 
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
-
-		server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
-
+		server::game::PlayerState* playerState = gameWorld.FindPlayer(3);
 		if (playerState != nullptr)
 		{
 			playerState->isDead = true;
 		}
 
-		constexpr std::uint32_t inputSequence = 1;
-		constexpr common::game::InputFlags inputFlags = common::game::InputFlags::Down;
-
 		const bool applied =
-			service.ApplyInputCommand(
-				endpointKey,
-				inputSequence,
-				inputFlags,
-				peerRoomManager,
-				gameWorld,
-				commandTime
-			);
+			service.ApplyInputCommand(endpointKey, 1, common::game::InputFlags::Down, peerRoomManager, gameWorld, commandTime);
 
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, !applied, "PlayerCommandService: dead player input rejected");
 
-		tests::Expect(
-			result,
-			!applied,
-			"PlayerCommandService: dead player input rejected"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastInputSequence == 0,
-				"PlayerCommandService: dead input sequence unchanged"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == joinTime,
-				"PlayerCommandService: dead input recv time unchanged"
-			);
+			tests::Expect(result, peerState->lastInputSequence == 0, "PlayerCommandService: dead input sequence unchanged");
+			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: dead input recv time unchanged");
 		}
 	}
 
-	void RunApplyInputCommandUnknownPeerRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunApplyInputCommandUnknownPeerRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(4);
-
-		const TimePoint commandTime = Clock::now();
-
-		constexpr std::uint32_t inputSequence = 1;
-		constexpr common::game::InputFlags inputFlags = common::game::InputFlags::Right;
-
-		const bool applied =
-			service.ApplyInputCommand(
-				endpointKey,
-				inputSequence,
-				inputFlags,
-				peerRoomManager,
-				gameWorld,
-				commandTime
-			);
-
-		tests::Expect(
-			result,
-			!applied,
-			"PlayerCommandService: unknown peer input rejected"
+		const bool applied = service.ApplyInputCommand(
+			MakeEndpointKey(4),
+			1,
+			common::game::InputFlags::Right,
+			peerRoomManager,
+			gameWorld,
+			Clock::now()
 		);
 
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PlayerCommandService: unknown input peer count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PlayerCommandService: unknown input player count"
-		);
+		tests::Expect(result, !applied, "PlayerCommandService: unknown peer input rejected");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PlayerCommandService: unknown input peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PlayerCommandService: unknown input player count");
 	}
 
-	void RunFireBulletSuccessTest(
-		tests::DebugTestResult& result
-	)
+	void RunFireBulletSuccessTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(5);
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(5);
+		const TimePoint joinTime = Clock::now();
+		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
 		constexpr common::game::PlayerId playerId = 5;
 		constexpr common::game::RoomId roomId = 2;
+		constexpr std::int64_t persistentPlayerId = 5000 + playerId;
 
-		const TimePoint joinTime = Clock::now();
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, playerId, roomId, joinTime);
 
-		const TimePoint fireTime =
-			joinTime + std::chrono::seconds(1);
-
-		constexpr std::int64_t persistentPlayerId =
-			5000 + playerId;
-
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
-
-		server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
-
+		server::game::PlayerState* playerState = gameWorld.FindPlayer(playerId);
 		if (playerState != nullptr)
 		{
 			playerState->x = 50.0F;
@@ -476,397 +231,162 @@ namespace
 			playerState->lastMoveDirectionY = 1.0F;
 		}
 
-		const bool fired =
-			service.FireBullet(
-				endpointKey,
-				peerRoomManager,
-				gameWorld,
-				weaponRuleConfig,
-				fireTime
-			);
+		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
 
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, fired, "PlayerCommandService: fire succeeds");
+		tests::Expect(result, gameWorld.GetBulletCount() == 1, "PlayerCommandService: fire creates bullet");
 
-		const server::game::PlayerState* updatedPlayerState =
-			gameWorld.FindPlayer(playerId);
-
-		const server::game::GameWorld::BulletStateList&
-			bulletStateList =
-			gameWorld.GetBulletStateList();
-
-		tests::Expect(
-			result,
-			fired,
-			"PlayerCommandService: fire succeeds"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetBulletCount() == 1,
-			"PlayerCommandService: fire creates bullet"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == fireTime,
-				"PlayerCommandService: fire recv time updated"
-			);
+			tests::Expect(result, peerState->lastRecvTime == fireTime, "PlayerCommandService: fire recv time updated");
 		}
+
+		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(playerId);
 
 		if (updatedPlayerState != nullptr)
 		{
 			tests::Expect(
 				result,
-				updatedPlayerState->fireCooldownRemainingSeconds
-				== weaponRuleConfig.basicWeaponRule
-				.fireCooldownSeconds,
+				updatedPlayerState->fireCooldownRemainingSeconds == weaponRuleConfig.basicWeaponRule.fireCooldownSeconds,
 				"PlayerCommandService: fire cooldown set"
 			);
 		}
 
+		const server::game::GameWorld::BulletStateList& bulletStateList = gameWorld.GetBulletStateList();
+
 		if (!bulletStateList.empty())
 		{
-			const server::game::BulletState& bulletState =
-				bulletStateList.front();
+			const server::game::BulletState& bulletState = bulletStateList.front();
 
+			tests::Expect(result, bulletState.bulletId == 1, "PlayerCommandService: fire bullet id");
+			tests::Expect(result, bulletState.ownerPlayerId == playerId, "PlayerCommandService: fire owner id");
+			tests::Expect(result, bulletState.ownerPersistentPlayerId == persistentPlayerId, "PlayerCommandService: fire persistent owner id");
+			tests::Expect(result, bulletState.roomId == roomId, "PlayerCommandService: fire room id");
+			tests::Expect(result, IsNearlyEqual(bulletState.x, 50.0F), "PlayerCommandService: fire bullet x");
+			tests::Expect(result, IsNearlyEqual(bulletState.y, 60.0F), "PlayerCommandService: fire bullet y");
+			tests::Expect(result, IsNearlyEqual(bulletState.velocityX, 0.0F), "PlayerCommandService: fire velocity x");
 			tests::Expect(
 				result,
-				bulletState.bulletId == 1,
-				"PlayerCommandService: fire bullet id"
-			);
-
-			tests::Expect(
-				result,
-				bulletState.ownerPlayerId == playerId,
-				"PlayerCommandService: fire owner id"
-			);
-
-			tests::Expect(
-				result,
-				bulletState.ownerPersistentPlayerId
-				== persistentPlayerId,
-				"PlayerCommandService: fire persistent owner id"
-			);
-
-			tests::Expect(
-				result,
-				bulletState.roomId == roomId,
-				"PlayerCommandService: fire room id"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					bulletState.x,
-					50.0F
-				),
-				"PlayerCommandService: fire bullet x"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					bulletState.y,
-					60.0F
-				),
-				"PlayerCommandService: fire bullet y"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					bulletState.velocityX,
-					0.0F
-				),
-				"PlayerCommandService: fire velocity x"
-			);
-
-			tests::Expect(
-				result,
-				IsNearlyEqual(
-					bulletState.velocityY,
-					weaponRuleConfig.basicWeaponRule
-					.bulletSpeed
-				),
+				IsNearlyEqual(bulletState.velocityY, weaponRuleConfig.basicWeaponRule.bulletSpeed),
 				"PlayerCommandService: fire velocity y"
 			);
-
-			tests::Expect(
-				result,
-				bulletState.damage
-				== weaponRuleConfig.basicWeaponRule
-				.bulletDamage,
-				"PlayerCommandService: fire damage"
-			);
-
-			tests::Expect(
-				result,
-				bulletState.radius
-				== weaponRuleConfig.basicWeaponRule
-				.bulletRadius,
-				"PlayerCommandService: fire radius"
-			);
+			tests::Expect(result, bulletState.damage == weaponRuleConfig.basicWeaponRule.bulletDamage, "PlayerCommandService: fire damage");
+			tests::Expect(result, bulletState.radius == weaponRuleConfig.basicWeaponRule.bulletRadius, "PlayerCommandService: fire radius");
 		}
 	}
 
-	void RunFireBulletCooldownRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunFireBulletCooldownRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(6);
-
-		constexpr common::game::PlayerId playerId = 6;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(6);
 		const TimePoint joinTime = Clock::now();
+		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		const TimePoint fireTime =
-			joinTime + std::chrono::seconds(1);
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 6, 1, joinTime);
 
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
-
-		server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
-
+		server::game::PlayerState* playerState = gameWorld.FindPlayer(6);
 		if (playerState != nullptr)
 		{
 			playerState->fireCooldownRemainingSeconds = 1.0F;
 		}
 
-		const bool fired =
-			service.FireBullet(
-				endpointKey,
-				peerRoomManager,
-				gameWorld,
-				weaponRuleConfig,
-				fireTime
-			);
+		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
 
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, !fired, "PlayerCommandService: cooldown fire rejected");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: cooldown creates no bullet");
 
-		tests::Expect(
-			result,
-			!fired,
-			"PlayerCommandService: cooldown fire rejected"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetBulletCount() == 0,
-			"PlayerCommandService: cooldown creates no bullet"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == fireTime,
-				"PlayerCommandService: cooldown still refreshes recv time"
-			);
+			tests::Expect(result, peerState->lastRecvTime == fireTime, "PlayerCommandService: cooldown still refreshes recv time");
 		}
 	}
 
-	void RunFireBulletDeadPlayerRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunFireBulletDeadPlayerRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(7);
-
-		constexpr common::game::PlayerId playerId = 7;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(7);
 		const TimePoint joinTime = Clock::now();
+		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		const TimePoint fireTime =
-			joinTime + std::chrono::seconds(1);
+		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 7, 1, joinTime);
 
-		AddJoinedPeerAndPlayer(
-			peerRoomManager,
-			gameWorld,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
-
-		server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(playerId);
-
+		server::game::PlayerState* playerState = gameWorld.FindPlayer(7);
 		if (playerState != nullptr)
 		{
 			playerState->isDead = true;
 		}
 
-		const bool fired =
-			service.FireBullet(
-				endpointKey,
-				peerRoomManager,
-				gameWorld,
-				weaponRuleConfig,
-				fireTime
-			);
+		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
 
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
+		tests::Expect(result, !fired, "PlayerCommandService: dead player fire rejected");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: dead player creates no bullet");
 
-		tests::Expect(
-			result,
-			!fired,
-			"PlayerCommandService: dead player fire rejected"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetBulletCount() == 0,
-			"PlayerCommandService: dead player creates no bullet"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == joinTime,
-				"PlayerCommandService: dead fire recv time unchanged"
-			);
+			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: dead fire recv time unchanged");
 		}
 	}
 
-	void RunFireBulletUnknownPeerRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunFireBulletUnknownPeerRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(8);
+		const bool fired = service.FireBullet(MakeEndpointKey(8), peerRoomManager, gameWorld, weaponRuleConfig, Clock::now());
 
-		const TimePoint fireTime = Clock::now();
-
-		const bool fired =
-			service.FireBullet(
-				endpointKey,
-				peerRoomManager,
-				gameWorld,
-				weaponRuleConfig,
-				fireTime
-			);
-
-		tests::Expect(
-			result,
-			!fired,
-			"PlayerCommandService: unknown peer fire rejected"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PlayerCommandService: unknown fire peer count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetBulletCount() == 0,
-			"PlayerCommandService: unknown fire bullet count"
-		);
+		tests::Expect(result, !fired, "PlayerCommandService: unknown peer fire rejected");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PlayerCommandService: unknown fire peer count");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: unknown fire bullet count");
 	}
 
-	void RunFireBulletMissingPlayerRejectedTest(
-		tests::DebugTestResult& result
-	)
+	void RunFireBulletMissingPlayerRejectedTest(tests::DebugTestResult& result)
 	{
 		PlayerCommandService service;
 		PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(9);
-
-		constexpr common::game::PlayerId playerId = 9;
-		constexpr common::game::RoomId roomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(9);
 		const TimePoint joinTime = Clock::now();
+		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		const TimePoint fireTime =
-			joinTime + std::chrono::seconds(1);
+		static_cast<void>(peerRoomManager.UpsertJoinedPeer(endpointKey, 9, 1, joinTime));
 
-		const sockaddr_in remoteAddress =
-			MakeRemoteAddress(endpointKey);
+		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
 
-		peerRoomManager.UpsertJoinedPeer(
-			remoteAddress,
-			endpointKey,
-			playerId,
-			roomId,
-			joinTime
-		);
+		tests::Expect(result, !fired, "PlayerCommandService: missing player fire rejected");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: missing player bullet count");
 
-		const bool fired =
-			service.FireBullet(
-				endpointKey,
-				peerRoomManager,
-				gameWorld,
-				weaponRuleConfig,
-				fireTime
-			);
-
-		const PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			!fired,
-			"PlayerCommandService: missing player fire rejected"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetBulletCount() == 0,
-			"PlayerCommandService: missing player bullet count"
-		);
+		const PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == joinTime,
-				"PlayerCommandService: missing player recv time unchanged"
-			);
+			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: missing player recv time unchanged");
 		}
 	}
 }
 
 namespace tests::server
 {
-	tests::DebugTestResult RunPlayerCommandServiceTests()
+	DebugTestResult RunPlayerCommandServiceTests()
 	{
-		tests::DebugTestResult result{};
+		DebugTestResult result{};
 
 		RunApplyInputCommandSuccessTest(result);
 		RunApplyInputCommandStaleSequenceRejectedTest(result);

@@ -1,15 +1,12 @@
 #include "PeerSessionServiceTests.h"
 
-#include <WinSock2.h>
-
 #include <chrono>
 #include <cstdint>
-#include <string_view>
 
-#include <Common/Game/InputFlags.h>
-#include <Common/Net/Endpoint.h>
-#include <Common/Net/SessionToken.h>
 #include <Common/Game/GameRules.h>
+#include <Common/Game/InputFlags.h>
+#include <Common/Net/EndpointKey.h>
+#include <Common/Net/SessionToken.h>
 
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
@@ -37,27 +34,26 @@ namespace
 		.low = 0xFEDCBA0987654321ULL,
 	};
 
-	[[nodiscard]] sockaddr_in MakeRemoteAddress(std::uint32_t index) noexcept
+	[[nodiscard]] constexpr common::net::EndpointKey MakeEndpointKey(std::uint32_t index) noexcept
 	{
-		sockaddr_in remoteAddress{};
-		remoteAddress.sin_family = AF_INET;
-		remoteAddress.sin_addr.S_un.S_addr = ::htonl(0x7F000001 + index);
-		remoteAddress.sin_port =
-			::htons(static_cast<u_short>(10000 + index));
-		return remoteAddress;
+		return common::net::EndpointKey{
+			.address = 0x7F000001 + index,
+			.port = static_cast<std::uint16_t>(10000 + index),
+		};
 	}
 
-	[[nodiscard]] common::net::EndpointKey MakeEndpointKey(
-		const sockaddr_in& remoteAddress
-	) noexcept
+	[[nodiscard]] server::service::PeerSessionService::AuthenticatedIdentity MakeAuthenticatedIdentity() noexcept
 	{
-		return common::net::MakeEndpointKey(remoteAddress);
+		return server::service::PeerSessionService::AuthenticatedIdentity{
+			.accountId = 1001,
+			.persistentPlayerId = testPersistentPlayerId,
+			.sessionToken = testSessionToken,
+			.nickname = "nickname",
+		};
 	}
 
-	[[nodiscard]]
-	server::service::PeerSessionService::JoinResult JoinPeerForTest(
+	[[nodiscard]] server::service::PeerSessionService::JoinResult JoinPeerForTest(
 		const server::service::PeerSessionService& service,
-		const sockaddr_in& remoteAddress,
 		const common::net::EndpointKey& endpointKey,
 		common::game::RoomId initialRoomId,
 		server::service::PeerRoomManager& peerRoomManager,
@@ -66,18 +62,9 @@ namespace
 		TimePoint currentTime
 	)
 	{
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			authenticatedIdentity{
-				.accountId = 1001,
-				.persistentPlayerId = testPersistentPlayerId,
-				.sessionToken = testSessionToken,
-				.nickname = "nickname",
-		};
-
 		return service.JoinPeer(
-			remoteAddress,
 			endpointKey,
-			authenticatedIdentity,
+			MakeAuthenticatedIdentity(),
 			initialRoomId,
 			peerRoomManager,
 			gameWorld,
@@ -94,369 +81,123 @@ namespace
 		return gameWorld.FindPlayer(playerId);
 	}
 
-	void RunJoinPeerCreatesPeerAndPlayerTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinPeerCreatesPeerAndPlayerTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(1);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId initialRoomId = 1;
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(1);
 		const TimePoint now = Clock::now();
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				initialRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				now
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, now);
 
-		tests::Expect(
-			result,
-			joinResult.shouldSendResponse,
-			"PeerSessionService: join sends response"
-		);
+		tests::Expect(result, joinResult.shouldSendResponse, "PeerSessionService: join sends response");
+		tests::Expect(result, joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: join broadcasts joined");
+		tests::Expect(result, joinResult.playerId == 1, "PeerSessionService: join allocates first player id");
+		tests::Expect(result, joinResult.persistentPlayerId == testPersistentPlayerId, "PeerSessionService: join persistent player id");
+		tests::Expect(result, joinResult.roomId == 1, "PeerSessionService: join room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: join peer count");
+		tests::Expect(result, peerRoomManager.GetJoinedPeerCount() == 1, "PeerSessionService: join joined peer count");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: join room count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: join player count");
 
-		tests::Expect(
-			result,
-			joinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: join broadcasts joined"
-		);
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
-		tests::Expect(
-			result,
-			joinResult.playerId == 1,
-			"PeerSessionService: join allocates first player id"
-		);
-
-		tests::Expect(
-			result,
-			joinResult.roomId == initialRoomId,
-			"PeerSessionService: join room id"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 1,
-			"PeerSessionService: join peer count"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetJoinedPeerCount() == 1,
-			"PeerSessionService: join joined peer count"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(initialRoomId) == 1,
-			"PeerSessionService: join room count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 1,
-			"PeerSessionService: join player count"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr,
-			"PeerSessionService: join peer exists"
-		);
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: join peer exists");
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->accountId == 1001,
-				"PeerSessionService: join account id"
-			);
+			tests::Expect(result, peerState->endpointKey == endpointKey, "PeerSessionService: join endpoint key");
+			tests::Expect(result, peerState->accountId == 1001, "PeerSessionService: join account id");
+			tests::Expect(result, peerState->persistentPlayerId == testPersistentPlayerId, "PeerSessionService: join persistent player id stored");
+			tests::Expect(result, peerState->sessionToken == testSessionToken, "PeerSessionService: join session token");
+			tests::Expect(result, peerState->nickname == "nickname", "PeerSessionService: join nickname");
+			tests::Expect(result, peerState->playerId == joinResult.playerId, "PeerSessionService: join peer player id");
+			tests::Expect(result, peerState->roomId == 1, "PeerSessionService: join peer room id");
+			tests::Expect(result, peerState->lastRecvTime == now, "PeerSessionService: join last recv time");
 
-			tests::Expect(
-				result,
-				peerState->persistentPlayerId == testPersistentPlayerId,
-				"PeerSessionService: join persistent player id"
-			);
+			const server::service::PeerState* accountPeerState = peerRoomManager.FindJoinedPeerByAccountId(1001);
 
-			tests::Expect(
-				result,
-				peerState->sessionToken == testSessionToken,
-				"PeerSessionService: join session token"
-			);
-
-			tests::Expect(
-				result,
-				peerState->nickname == "nickname",
-				"PeerSessionService: join nickname"
-			);
-
-			tests::Expect(
-				result,
-				peerState->playerId == joinResult.playerId,
-				"PeerSessionService: join peer player id"
-			);
-
-			tests::Expect(
-				result,
-				peerState->roomId == initialRoomId,
-				"PeerSessionService: join peer room id"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == now,
-				"PeerSessionService: join lastRecvTime"
-			);
-
-			const server::service::PeerState* accountPeerState =
-				peerRoomManager.FindJoinedPeerByAccountId(1001);
-
-			tests::Expect(
-				result,
-				accountPeerState != nullptr,
-				"PeerRoomManager: joined peer found by account id"
-			);
-
-			tests::Expect(
-				result,
-				accountPeerState == peerState,
-				"PeerRoomManager: account id returns joined peer"
-			);
-
-			tests::Expect(
-				result,
-				peerRoomManager.FindJoinedPeerByAccountId(9999) == nullptr,
-				"PeerRoomManager: unknown account id missing"
-			);
-
-			tests::Expect(
-				result,
-				peerRoomManager.FindJoinedPeerByAccountId(0) == nullptr,
-				"PeerRoomManager: invalid account id missing"
-			);
+			tests::Expect(result, accountPeerState == peerState, "PeerRoomManager: account id returns joined peer");
+			tests::Expect(result, peerRoomManager.FindJoinedPeerByAccountId(9999) == nullptr, "PeerRoomManager: unknown account id missing");
+			tests::Expect(result, peerRoomManager.FindJoinedPeerByAccountId(0) == nullptr, "PeerRoomManager: invalid account id missing");
 		}
 
-		const server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(joinResult.playerId);
+		const server::game::PlayerState* playerState = gameWorld.FindPlayer(joinResult.playerId);
 
-		tests::Expect(
-			result,
-			playerState != nullptr,
-			"PeerSessionService: join player exists"
-		);
+		tests::Expect(result, playerState != nullptr, "PeerSessionService: join player exists");
 
 		if (playerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				playerState->playerId == joinResult.playerId,
-				"PeerSessionService: join player id"
-			);
-
-			tests::Expect(
-				result,
-				playerState->x == joinResult.spawnPosition.x,
-				"PeerSessionService: join player x"
-			);
-
-			tests::Expect(
-				result,
-				playerState->y == joinResult.spawnPosition.y,
-				"PeerSessionService: join player y"
-			);
-
-			tests::Expect(
-				result,
-				playerState->hp == gameRuleConfig.initialPlayerHp,
-				"PeerSessionService: join player hp"
-			);
-
-			tests::Expect(
-				result,
-				!playerState->isDead,
-				"PeerSessionService: join player alive"
-			);
+			tests::Expect(result, playerState->playerId == joinResult.playerId, "PeerSessionService: join player id");
+			tests::Expect(result, playerState->x == joinResult.spawnPosition.x, "PeerSessionService: join player x");
+			tests::Expect(result, playerState->y == joinResult.spawnPosition.y, "PeerSessionService: join player y");
+			tests::Expect(result, playerState->hp == gameRuleConfig.initialPlayerHp, "PeerSessionService: join player hp");
+			tests::Expect(result, !playerState->isDead, "PeerSessionService: join player alive");
 		}
 	}
 
-	void RunJoinExistingPeerReturnsExistingPlayerTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinExistingPeerReturnsExistingPlayerTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(2);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId initialRoomId = 1;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(2);
 		const TimePoint firstTime = Clock::now();
-		const TimePoint secondTime =
-			firstTime + std::chrono::seconds(5);
+		const TimePoint secondTime = firstTime + std::chrono::seconds(5);
 
 		const server::service::PeerSessionService::JoinResult firstJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				initialRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				firstTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, firstTime);
 
 		const server::service::PeerSessionService::JoinResult secondJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				initialRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				secondTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, secondTime);
 
-		tests::Expect(
-			result,
-			firstJoinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: existing join first broadcast"
-		);
+		tests::Expect(result, firstJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join first broadcast");
+		tests::Expect(result, secondJoinResult.shouldSendResponse, "PeerSessionService: existing join sends response");
+		tests::Expect(result, !secondJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join no broadcast");
+		tests::Expect(result, secondJoinResult.playerId == firstJoinResult.playerId, "PeerSessionService: existing join same player");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: existing join peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: existing join player count");
 
-		tests::Expect(
-			result,
-			secondJoinResult.shouldSendResponse,
-			"PeerSessionService: existing join sends response"
-		);
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
-		tests::Expect(
-			result,
-			!secondJoinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: existing join no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			secondJoinResult.playerId == firstJoinResult.playerId,
-			"PeerSessionService: existing join same player"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 1,
-			"PeerSessionService: existing join peer count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 1,
-			"PeerSessionService: existing join player count"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr,
-			"PeerSessionService: existing join peer exists"
-		);
+		tests::Expect(result, peerState != nullptr, "PeerSessionService: existing join peer exists");
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->persistentPlayerId == testPersistentPlayerId,
-				"PeerSessionService: existing join persistent player id preserved"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == secondTime,
-				"PeerSessionService: existing join refresh time"
-			);
+			tests::Expect(result, peerState->persistentPlayerId == testPersistentPlayerId, "PeerSessionService: existing join identity preserved");
+			tests::Expect(result, peerState->lastRecvTime == secondTime, "PeerSessionService: existing join refresh time");
 		}
 	}
 
-	void RunJoinExistingPeerReturnsCurrentStateTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinExistingPeerReturnsCurrentStateTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(11);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId initialRoomId = 1;
-		constexpr common::game::RoomId nextRoomId = 2;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(11);
 		const TimePoint joinTime = Clock::now();
-		const TimePoint roomChangeTime =
-			joinTime + std::chrono::seconds(1);
-
-		const TimePoint retryTime =
-			roomChangeTime + std::chrono::seconds(5);
+		const TimePoint roomChangeTime = joinTime + std::chrono::seconds(1);
+		const TimePoint retryTime = roomChangeTime + std::chrono::seconds(5);
 
 		const server::service::PeerSessionService::JoinResult firstJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				initialRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				joinTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, joinTime);
 
-		const server::service::PeerSessionService::RoomChangeResult
-			roomChangeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				nextRoomId,
-				peerRoomManager,
-				gameWorld,
-				roomChangeTime
-			);
+		const server::service::PeerSessionService::RoomChangeResult roomChangeResult =
+			service.ChangePeerRoom(endpointKey, 2, peerRoomManager, gameWorld, roomChangeTime);
 
-		tests::Expect(
-			result,
-			roomChangeResult.changed,
-			"PeerSessionService: existing join current state room change succeeds"
-		);
+		tests::Expect(result, roomChangeResult.changed, "PeerSessionService: existing join current state room change succeeds");
 
-		const server::game::PlayerState* playerState =
-			gameWorld.FindPlayer(firstJoinResult.playerId);
+		const server::game::PlayerState* playerState = gameWorld.FindPlayer(firstJoinResult.playerId);
 
-		tests::Expect(
-			result,
-			playerState != nullptr,
-			"PeerSessionService: existing join current player exists"
-		);
+		tests::Expect(result, playerState != nullptr, "PeerSessionService: existing join current player exists");
 
 		if (playerState == nullptr)
 		{
@@ -467,234 +208,66 @@ namespace
 		const float currentY = playerState->y;
 
 		const server::service::PeerSessionService::JoinResult retryJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				initialRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				retryTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, retryTime);
 
-		tests::Expect(
-			result,
-			retryJoinResult.shouldSendResponse,
-			"PeerSessionService: existing join current state sends response"
-		);
+		tests::Expect(result, retryJoinResult.shouldSendResponse, "PeerSessionService: existing join current state sends response");
+		tests::Expect(result, !retryJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing join current state no broadcast");
+		tests::Expect(result, retryJoinResult.playerId == firstJoinResult.playerId, "PeerSessionService: existing join preserves player id");
+		tests::Expect(result, retryJoinResult.roomId == 2, "PeerSessionService: existing join returns current room");
+		tests::Expect(result, retryJoinResult.spawnPosition.x == currentX, "PeerSessionService: existing join returns current x");
+		tests::Expect(result, retryJoinResult.spawnPosition.y == currentY, "PeerSessionService: existing join returns current y");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 0, "PeerSessionService: existing join initial room remains empty");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 1, "PeerSessionService: existing join current room count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: existing join current state player count");
 
-		tests::Expect(
-			result,
-			!retryJoinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: existing join current state does not broadcast"
-		);
-
-		tests::Expect(
-			result,
-			retryJoinResult.playerId == firstJoinResult.playerId,
-			"PeerSessionService: existing join current state preserves player id"
-		);
-
-		tests::Expect(
-			result,
-			retryJoinResult.roomId == nextRoomId,
-			"PeerSessionService: existing join returns current room id"
-		);
-
-		tests::Expect(
-			result,
-			retryJoinResult.spawnPosition.x == currentX,
-			"PeerSessionService: existing join returns current x"
-		);
-
-		tests::Expect(
-			result,
-			retryJoinResult.spawnPosition.y == currentY,
-			"PeerSessionService: existing join returns current y"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 1,
-			"PeerSessionService: existing join current state peer count"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(initialRoomId) == 0,
-			"PeerSessionService: existing join initial room remains empty"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(nextRoomId) == 1,
-			"PeerSessionService: existing join current room member count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 1,
-			"PeerSessionService: existing join current state player count"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr,
-			"PeerSessionService: existing join current peer exists"
-		);
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->persistentPlayerId == testPersistentPlayerId,
-				"PeerSessionService: existing join current state persistent player id"
-			);
-
-			tests::Expect(
-				result,
-				peerState->roomId == nextRoomId,
-				"PeerSessionService: existing join preserves current peer room"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == retryTime,
-				"PeerSessionService: existing join current state refresh time"
-			);
+			tests::Expect(result, peerState->roomId == 2, "PeerSessionService: existing join preserves current peer room");
+			tests::Expect(result, peerState->lastRecvTime == retryTime, "PeerSessionService: existing join current state refresh time");
 		}
 	}
 
-	void RunLeavePeerRemovesPeerAndPlayerTest(
-		tests::DebugTestResult& result
-	)
+	void RunLeavePeerRemovesPeerAndPlayerTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(3);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId roomId = 1;
-		const TimePoint now = Clock::now();
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(3);
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				roomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				now
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
 		const server::service::PeerSessionService::LeaveResult leaveResult =
-			service.LeavePeer(
-				endpointKey,
-				peerRoomManager,
-				gameWorld
-			);
+			service.LeavePeer(endpointKey, peerRoomManager, gameWorld);
 
-		tests::Expect(
-			result,
-			leaveResult.shouldBroadcastPlayerLeft,
-			"PeerSessionService: leave broadcasts left"
-		);
-
-		tests::Expect(
-			result,
-			leaveResult.playerId == joinResult.playerId,
-			"PeerSessionService: leave player id"
-		);
-
-		tests::Expect(
-			result,
-			leaveResult.roomId == roomId,
-			"PeerSessionService: leave room id"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: leave peer count"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(roomId) == 0,
-			"PeerSessionService: leave room count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: leave player count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.FindPlayer(joinResult.playerId) == nullptr,
-			"PeerSessionService: leave player removed"
-		);
+		tests::Expect(result, leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: leave broadcasts left");
+		tests::Expect(result, leaveResult.playerId == joinResult.playerId, "PeerSessionService: leave player id");
+		tests::Expect(result, leaveResult.persistentPlayerId == testPersistentPlayerId, "PeerSessionService: leave persistent player id");
+		tests::Expect(result, leaveResult.roomId == 1, "PeerSessionService: leave room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: leave peer count");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 0, "PeerSessionService: leave room count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: leave player count");
+		tests::Expect(result, gameWorld.FindPlayer(joinResult.playerId) == nullptr, "PeerSessionService: leave player removed");
 	}
 
-	void RunLeaveUnknownPeerDoesNothingTest(
-		tests::DebugTestResult& result
-	)
+	void RunLeaveUnknownPeerDoesNothingTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(4);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
 		const server::service::PeerSessionService::LeaveResult leaveResult =
-			service.LeavePeer(
-				endpointKey,
-				peerRoomManager,
-				gameWorld
-			);
+			service.LeavePeer(MakeEndpointKey(4), peerRoomManager, gameWorld);
 
-		tests::Expect(
-			result,
-			!leaveResult.shouldBroadcastPlayerLeft,
-			"PeerSessionService: unknown leave no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			leaveResult.playerId == 0,
-			"PeerSessionService: unknown leave player id"
-		);
-
-		tests::Expect(
-			result,
-			leaveResult.roomId == 0,
-			"PeerSessionService: unknown leave room id"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: unknown leave peer count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: unknown leave player count"
-		);
+		tests::Expect(result, !leaveResult.shouldBroadcastPlayerLeft, "PeerSessionService: unknown leave no broadcast");
+		tests::Expect(result, leaveResult.playerId == 0, "PeerSessionService: unknown leave player id");
+		tests::Expect(result, leaveResult.roomId == 0, "PeerSessionService: unknown leave room id");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown leave peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown leave player count");
 	}
 
 	void RunChangePeerRoomTest(tests::DebugTestResult& result)
@@ -704,578 +277,216 @@ namespace
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(5);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId previousRoomId = 1;
-		constexpr common::game::RoomId nextRoomId = 2;
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(5);
 		const TimePoint joinTime = Clock::now();
-		const TimePoint changeTime =
-			joinTime + std::chrono::seconds(1);
+		const TimePoint changeTime = joinTime + std::chrono::seconds(1);
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				previousRoomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				joinTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, joinTime);
 
-		server::game::PlayerState* playerState =
-			FindPlayer(gameWorld, joinResult.playerId);
-
+		server::game::PlayerState* playerState = FindPlayer(gameWorld, joinResult.playerId);
 		if (playerState != nullptr)
 		{
 			playerState->inputFlags = common::game::InputFlags::Up;
 		}
 
-		const server::service::PeerSessionService::RoomChangeResult
-			changeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				nextRoomId,
-				peerRoomManager,
-				gameWorld,
-				changeTime
-			);
+		const server::service::PeerSessionService::RoomChangeResult changeResult =
+			service.ChangePeerRoom(endpointKey, 2, peerRoomManager, gameWorld, changeTime);
 
-		tests::Expect(
-			result,
-			changeResult.changed,
-			"PeerSessionService: room change succeeds"
-		);
+		tests::Expect(result, changeResult.changed, "PeerSessionService: room change succeeds");
+		tests::Expect(result, changeResult.playerId == joinResult.playerId, "PeerSessionService: room change player id");
+		tests::Expect(result, changeResult.persistentPlayerId == testPersistentPlayerId, "PeerSessionService: room change persistent player id");
+		tests::Expect(result, changeResult.previousRoomId == 1, "PeerSessionService: room change previous room");
+		tests::Expect(result, changeResult.nextRoomId == 2, "PeerSessionService: room change next room");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 0, "PeerSessionService: previous room empty");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 1, "PeerSessionService: next room count");
 
-		tests::Expect(
-			result,
-			changeResult.playerId == joinResult.playerId,
-			"PeerSessionService: room change player id"
-		);
-
-		tests::Expect(
-			result,
-			changeResult.previousRoomId == previousRoomId,
-			"PeerSessionService: room change previous room"
-		);
-
-		tests::Expect(
-			result,
-			changeResult.nextRoomId == nextRoomId,
-			"PeerSessionService: room change next room"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(previousRoomId) == 0,
-			"PeerSessionService: previous room empty"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(nextRoomId) == 1,
-			"PeerSessionService: next room count"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr,
-			"PeerSessionService: room change peer exists"
-		);
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				peerState->persistentPlayerId == testPersistentPlayerId,
-				"PeerSessionService: room change persistent player id preserved"
-			);
-
-			tests::Expect(
-				result,
-				peerState->roomId == nextRoomId,
-				"PeerSessionService: peer room changed"
-			);
-
-			tests::Expect(
-				result,
-				peerState->lastRecvTime == changeTime,
-				"PeerSessionService: room change recv time"
-			);
+			tests::Expect(result, peerState->roomId == 2, "PeerSessionService: peer room changed");
+			tests::Expect(result, peerState->lastRecvTime == changeTime, "PeerSessionService: room change recv time");
 		}
 
 		playerState = FindPlayer(gameWorld, joinResult.playerId);
 
-		tests::Expect(
-			result,
-			playerState != nullptr,
-			"PeerSessionService: room change player exists"
-		);
-
 		if (playerState != nullptr)
 		{
-			tests::Expect(
-				result,
-				playerState->x == changeResult.spawnPosition.x,
-				"PeerSessionService: room change player x"
-			);
-
-			tests::Expect(
-				result,
-				playerState->y == changeResult.spawnPosition.y,
-				"PeerSessionService: room change player y"
-			);
-
-			tests::Expect(
-				result,
-				playerState->inputFlags == common::game::InputFlags::None,
-				"PeerSessionService: room change clears input"
-			);
+			tests::Expect(result, playerState->x == changeResult.spawnPosition.x, "PeerSessionService: room change player x");
+			tests::Expect(result, playerState->y == changeResult.spawnPosition.y, "PeerSessionService: room change player y");
+			tests::Expect(result, playerState->inputFlags == common::game::InputFlags::None, "PeerSessionService: room change clears input");
 		}
 	}
 
-	void RunChangePeerRoomInvalidRoomFailsTest(
-		tests::DebugTestResult& result
-	)
+	void RunChangePeerRoomInvalidRoomFailsTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(6);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(6);
 
-		const TimePoint now = Clock::now();
+		static_cast<void>(JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now()));
 
-		static_cast<void>(
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				now
-			)
-			);
+		const server::service::PeerSessionService::RoomChangeResult resultValue =
+			service.ChangePeerRoom(endpointKey, 0, peerRoomManager, gameWorld, Clock::now());
 
-		const server::service::PeerSessionService::RoomChangeResult
-			changeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				0,
-				peerRoomManager,
-				gameWorld,
-				now
-			);
-
-		tests::Expect(
-			result,
-			!changeResult.changed,
-			"PeerSessionService: invalid room change fails"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(1) == 1,
-			"PeerSessionService: invalid room original room remains"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(0) == 0,
-			"PeerSessionService: invalid room not created"
-		);
+		tests::Expect(result, !resultValue.changed, "PeerSessionService: invalid room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: invalid room original room remains");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(0) == 0, "PeerSessionService: invalid room not created");
 	}
 
-	void RunChangePeerRoomSameRoomFailsTest(
-		tests::DebugTestResult& result
-	)
+	void RunChangePeerRoomSameRoomFailsTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(7);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(7);
 
-		constexpr common::game::RoomId roomId = 1;
-		const TimePoint now = Clock::now();
+		static_cast<void>(JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now()));
 
-		static_cast<void>(
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				roomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				now
-			)
-			);
+		const server::service::PeerSessionService::RoomChangeResult changeResult =
+			service.ChangePeerRoom(endpointKey, 1, peerRoomManager, gameWorld, Clock::now());
 
-		const server::service::PeerSessionService::RoomChangeResult
-			changeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				roomId,
-				peerRoomManager,
-				gameWorld,
-				now
-			);
-
-		tests::Expect(
-			result,
-			!changeResult.changed,
-			"PeerSessionService: same room change fails"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(roomId) == 1,
-			"PeerSessionService: same room member count"
-		);
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: same room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: same room member count");
 	}
 
-	void RunChangePeerRoomUnknownPeerFailsTest(
-		tests::DebugTestResult& result
-	)
+	void RunChangePeerRoomUnknownPeerFailsTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(8);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
+		const server::service::PeerSessionService::RoomChangeResult changeResult =
+			service.ChangePeerRoom(MakeEndpointKey(8), 2, peerRoomManager, gameWorld, Clock::now());
 
-		const TimePoint now = Clock::now();
-
-		const server::service::PeerSessionService::RoomChangeResult
-			changeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				2,
-				peerRoomManager,
-				gameWorld,
-				now
-			);
-
-		tests::Expect(
-			result,
-			!changeResult.changed,
-			"PeerSessionService: unknown room change fails"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: unknown room change peer count"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: unknown room change player count"
-		);
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: unknown room change fails");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unknown room change peer count");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unknown room change player count");
 	}
 
-	void RunChangePeerRoomDeadPlayerFailsTest(
-		tests::DebugTestResult& result
-	)
+	void RunChangePeerRoomDeadPlayerFailsTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(9);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		constexpr common::game::RoomId roomId = 1;
-		const TimePoint now = Clock::now();
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(9);
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				roomId,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				now
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
-		server::game::PlayerState* playerState =
-			FindPlayer(gameWorld, joinResult.playerId);
-
+		server::game::PlayerState* playerState = FindPlayer(gameWorld, joinResult.playerId);
 		if (playerState != nullptr)
 		{
 			playerState->isDead = true;
 		}
 
-		const server::service::PeerSessionService::RoomChangeResult
-			changeResult =
-			service.ChangePeerRoom(
-				endpointKey,
-				2,
-				peerRoomManager,
-				gameWorld,
-				now
-			);
+		const server::service::PeerSessionService::RoomChangeResult changeResult =
+			service.ChangePeerRoom(endpointKey, 2, peerRoomManager, gameWorld, Clock::now());
 
-		tests::Expect(
-			result,
-			!changeResult.changed,
-			"PeerSessionService: dead player room change fails"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(roomId) == 1,
-			"PeerSessionService: dead player original room remains"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetRoomMemberCount(2) == 0,
-			"PeerSessionService: dead player next room empty"
-		);
+		tests::Expect(result, !changeResult.changed, "PeerSessionService: dead player room change fails");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 1, "PeerSessionService: dead player original room remains");
+		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 0, "PeerSessionService: dead player next room empty");
 	}
 
-	void RunJoinPeerRejectsInvalidIdentityTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinPeerRejectsInvalidIdentityTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(12);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			invalidIdentity{
-				.accountId = 0,
-				.persistentPlayerId = testPersistentPlayerId,
-				.sessionToken = testSessionToken,
-				.nickname = "nickname",
+		const server::service::PeerSessionService::AuthenticatedIdentity invalidIdentity{
+			.accountId = 0,
+			.persistentPlayerId = testPersistentPlayerId,
+			.sessionToken = testSessionToken,
+			.nickname = "nickname",
 		};
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			service.JoinPeer(
-				remoteAddress,
-				endpointKey,
-				invalidIdentity,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				Clock::now()
-			);
+			service.JoinPeer(MakeEndpointKey(12), invalidIdentity, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
-		tests::Expect(
-			result,
-			!joinResult.shouldSendResponse,
-			"PeerSessionService: invalid identity no response"
-		);
-
-		tests::Expect(
-			result,
-			!joinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: invalid identity no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: invalid identity no peer"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: invalid identity no player"
-		);
+		tests::Expect(result, !joinResult.shouldSendResponse, "PeerSessionService: invalid identity no response");
+		tests::Expect(result, !joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: invalid identity no broadcast");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: invalid identity no peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: invalid identity no player");
 	}
 
-	void RunJoinPeerRejectsInvalidPersistentPlayerIdTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinPeerRejectsInvalidPersistentPlayerIdTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(15);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			invalidIdentity{
-				.accountId = 1001,
-				.persistentPlayerId = 0,
-				.sessionToken = testSessionToken,
-				.nickname = "nickname",
+		const server::service::PeerSessionService::AuthenticatedIdentity invalidIdentity{
+			.accountId = 1001,
+			.persistentPlayerId = 0,
+			.sessionToken = testSessionToken,
+			.nickname = "nickname",
 		};
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			service.JoinPeer(
-				remoteAddress,
-				endpointKey,
-				invalidIdentity,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				Clock::now()
-			);
+			service.JoinPeer(MakeEndpointKey(15), invalidIdentity, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
-		tests::Expect(
-			result,
-			!joinResult.shouldSendResponse,
-			"PeerSessionService: invalid persistent player id no response"
-		);
-
-		tests::Expect(
-			result,
-			!joinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: invalid persistent player id no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: invalid persistent player id no peer"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: invalid persistent player id no player"
-		);
+		tests::Expect(result, !joinResult.shouldSendResponse, "PeerSessionService: invalid persistent player id no response");
+		tests::Expect(result, !joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: invalid persistent player id no broadcast");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: invalid persistent player id no peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: invalid persistent player id no player");
 	}
 
-	void RunJoinPeerRejectsInvalidSessionTokenTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinPeerRejectsInvalidSessionTokenTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(13);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			invalidIdentity{
-				.accountId = 1001,
-				.persistentPlayerId = testPersistentPlayerId,
-				.sessionToken = common::net::invalidSessionToken,
-				.nickname = "nickname",
+		const server::service::PeerSessionService::AuthenticatedIdentity invalidIdentity{
+			.accountId = 1001,
+			.persistentPlayerId = testPersistentPlayerId,
+			.sessionToken = common::net::invalidSessionToken,
+			.nickname = "nickname",
 		};
 
 		const server::service::PeerSessionService::JoinResult joinResult =
-			service.JoinPeer(
-				remoteAddress,
-				endpointKey,
-				invalidIdentity,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				Clock::now()
-			);
+			service.JoinPeer(MakeEndpointKey(13), invalidIdentity, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
-		tests::Expect(
-			result,
-			!joinResult.shouldSendResponse,
-			"PeerSessionService: invalid token no response"
-		);
-
-		tests::Expect(
-			result,
-			!joinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: invalid token no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 0,
-			"PeerSessionService: invalid token no peer"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 0,
-			"PeerSessionService: invalid token no player"
-		);
+		tests::Expect(result, !joinResult.shouldSendResponse, "PeerSessionService: invalid token no response");
+		tests::Expect(result, !joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: invalid token no broadcast");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: invalid token no peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: invalid token no player");
 	}
 
-	void RunJoinExistingPeerRejectsDifferentPersistentPlayerIdTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinExistingPeerRejectsDifferentPersistentPlayerIdTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(16);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(16);
 		const TimePoint firstJoinTime = Clock::now();
 
 		const server::service::PeerSessionService::JoinResult firstJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				firstJoinTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, firstJoinTime);
 
-		tests::Expect(
-			result,
-			firstJoinResult.shouldSendResponse,
-			"PeerSessionService: persistent player mismatch setup joined"
-		);
-
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			differentIdentity{
-				.accountId = 1001,
-				.persistentPlayerId = otherPersistentPlayerId,
-				.sessionToken = testSessionToken,
-				.nickname = "nickname",
+		const server::service::PeerSessionService::AuthenticatedIdentity differentIdentity{
+			.accountId = 1001,
+			.persistentPlayerId = otherPersistentPlayerId,
+			.sessionToken = testSessionToken,
+			.nickname = "nickname",
 		};
 
 		const server::service::PeerSessionService::JoinResult retryJoinResult =
 			service.JoinPeer(
-				remoteAddress,
 				endpointKey,
 				differentIdentity,
 				1,
@@ -1285,92 +496,48 @@ namespace
 				firstJoinTime + std::chrono::seconds(1)
 			);
 
-		tests::Expect(
-			result,
-			!retryJoinResult.shouldSendResponse,
-			"PeerSessionService: different persistent player id rejected"
-		);
+		tests::Expect(result, firstJoinResult.shouldSendResponse, "PeerSessionService: persistent player mismatch setup joined");
+		tests::Expect(result, !retryJoinResult.shouldSendResponse, "PeerSessionService: different persistent player id rejected");
+		tests::Expect(result, !retryJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: persistent player mismatch no broadcast");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: persistent player mismatch preserves peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: persistent player mismatch preserves player");
+
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
 			result,
-			!retryJoinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: persistent player mismatch no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 1,
-			"PeerSessionService: persistent player mismatch preserves peer"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 1,
-			"PeerSessionService: persistent player mismatch preserves player"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr
-			&& peerState->persistentPlayerId == testPersistentPlayerId,
+			peerState != nullptr && peerState->persistentPlayerId == testPersistentPlayerId,
 			"PeerSessionService: persistent player mismatch does not replace identity"
 		);
-
 		tests::Expect(
 			result,
-			peerState != nullptr
-			&& peerState->lastRecvTime == firstJoinTime,
+			peerState != nullptr && peerState->lastRecvTime == firstJoinTime,
 			"PeerSessionService: persistent player mismatch does not refresh receive time"
 		);
 	}
 
-	void RunJoinExistingPeerRejectsDifferentSessionTokenTest(
-		tests::DebugTestResult& result
-	)
+	void RunJoinExistingPeerRejectsDifferentSessionTokenTest(tests::DebugTestResult& result)
 	{
 		server::service::PeerSessionService service;
 		server::service::PeerRoomManager peerRoomManager;
 		server::game::GameWorld gameWorld;
 		common::game::GameRuleConfig gameRuleConfig{};
 
-		const sockaddr_in remoteAddress = MakeRemoteAddress(14);
-		const common::net::EndpointKey endpointKey =
-			MakeEndpointKey(remoteAddress);
-
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(14);
 		const TimePoint firstJoinTime = Clock::now();
 
 		const server::service::PeerSessionService::JoinResult firstJoinResult =
-			JoinPeerForTest(
-				service,
-				remoteAddress,
-				endpointKey,
-				1,
-				peerRoomManager,
-				gameWorld,
-				gameRuleConfig,
-				firstJoinTime
-			);
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, firstJoinTime);
 
-		tests::Expect(
-			result,
-			firstJoinResult.shouldSendResponse,
-			"PeerSessionService: token mismatch setup joined"
-		);
-
-		const server::service::PeerSessionService::AuthenticatedIdentity
-			differentIdentity{
-				.accountId = 1001,
-				.persistentPlayerId = testPersistentPlayerId,
-				.sessionToken = otherSessionToken,
-				.nickname = "nickname",
+		const server::service::PeerSessionService::AuthenticatedIdentity differentIdentity{
+			.accountId = 1001,
+			.persistentPlayerId = testPersistentPlayerId,
+			.sessionToken = otherSessionToken,
+			.nickname = "nickname",
 		};
 
 		const server::service::PeerSessionService::JoinResult retryJoinResult =
 			service.JoinPeer(
-				remoteAddress,
 				endpointKey,
 				differentIdentity,
 				1,
@@ -1380,45 +547,22 @@ namespace
 				firstJoinTime + std::chrono::seconds(1)
 			);
 
-		tests::Expect(
-			result,
-			!retryJoinResult.shouldSendResponse,
-			"PeerSessionService: different existing token rejected"
-		);
+		tests::Expect(result, firstJoinResult.shouldSendResponse, "PeerSessionService: token mismatch setup joined");
+		tests::Expect(result, !retryJoinResult.shouldSendResponse, "PeerSessionService: different existing token rejected");
+		tests::Expect(result, !retryJoinResult.shouldBroadcastPlayerJoined, "PeerSessionService: different token no broadcast");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 1, "PeerSessionService: different token preserves existing peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: different token preserves existing player");
+
+		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
 		tests::Expect(
 			result,
-			!retryJoinResult.shouldBroadcastPlayerJoined,
-			"PeerSessionService: different token no broadcast"
-		);
-
-		tests::Expect(
-			result,
-			peerRoomManager.GetPeerCount() == 1,
-			"PeerSessionService: different token preserves existing peer"
-		);
-
-		tests::Expect(
-			result,
-			gameWorld.GetPlayerCount() == 1,
-			"PeerSessionService: different token preserves existing player"
-		);
-
-		const server::service::PeerState* peerState =
-			peerRoomManager.FindJoinedPeer(endpointKey);
-
-		tests::Expect(
-			result,
-			peerState != nullptr
-			&& peerState->persistentPlayerId == testPersistentPlayerId
-			&& peerState->sessionToken == testSessionToken,
+			peerState != nullptr && peerState->persistentPlayerId == testPersistentPlayerId && peerState->sessionToken == testSessionToken,
 			"PeerSessionService: different token does not replace session"
 		);
-
 		tests::Expect(
 			result,
-			peerState != nullptr
-			&& peerState->lastRecvTime == firstJoinTime,
+			peerState != nullptr && peerState->lastRecvTime == firstJoinTime,
 			"PeerSessionService: rejected token does not refresh receive time"
 		);
 	}

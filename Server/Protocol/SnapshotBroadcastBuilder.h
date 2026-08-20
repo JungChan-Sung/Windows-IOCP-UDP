@@ -63,7 +63,7 @@ namespace server::protocol
 		) const;
 
 	private:
-		[[nodiscard]] RemoteAddressList BuildRoomRemoteAddressList(
+		[[nodiscard]] EndpointKeyList BuildRoomRemoteAddressList(
 			const RoomMemberSet& roomMemberSet,
 			const PeerTable& peerTable
 		) const;

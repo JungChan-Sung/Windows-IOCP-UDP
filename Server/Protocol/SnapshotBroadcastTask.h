@@ -1,33 +1,32 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <vector>
 
+#include <Common/Net/EndpointKey.h>
 #include <Common/Packet/Game/GamePacket.h>
 
 namespace server::protocol
 {
-	using RemoteAddressList = std::vector<sockaddr_in>;
+	using EndpointKeyList = std::vector<common::net::EndpointKey>;
 
 	struct PlayerSnapshotTask
 	{
 	public:
-		sockaddr_in remoteAddress{};
+		common::net::EndpointKey endpointKey{};
 		common::packet::PlayerSnapshotPacket snapshotPacket{};
 	};
 
 	struct BulletSnapshotTask
 	{
 	public:
-		RemoteAddressList remoteAddressList;
+		EndpointKeyList endpointKeyList;
 		common::packet::BulletSnapshotPacket snapshotPacket{};
 	};
 
 	struct ImpactEffectTask
 	{
 	public:
-		RemoteAddressList remoteAddressList;
+		EndpointKeyList endpointKeyList;
 		common::packet::ImpactEffectPacket effectPacket{};
 	};
 }

@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include <Common/Identity/IdentityTypes.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 

@@ -10,7 +10,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Identity/IdentityTypes.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Service/PeerState.h>
@@ -44,14 +44,13 @@ namespace server::service
 			PlayerId playerId = 0;
 			RoomId previousRoomId = 0;
 			RoomId nextRoomId = 0;
-			sockaddr_in remoteAddress{};
 		};
 
 	public:
 		using PeerTable = std::unordered_map<EndpointKey, PeerState, common::net::EndpointKeyHasher>;
 		using RoomMemberSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
 		using RoomTable = std::unordered_map<RoomId, RoomMemberSet>;
-		using RemoteAddressList = std::vector<sockaddr_in>;
+		using EndpointKeyList = std::vector<EndpointKey>;
 		using TimedOutPeerList = std::vector<TimedOutPeer>;
 
 	private:
@@ -80,7 +79,6 @@ namespace server::service
 		[[nodiscard]] const RoomMemberSet* FindRoomMemberSet(RoomId roomId) const noexcept;
 
 		[[nodiscard]] PeerState& UpsertJoinedPeer(
-			const sockaddr_in& remoteAddress,
 			const EndpointKey& endpointKey,
 			PlayerId playerId,
 			RoomId roomId,
@@ -103,7 +101,7 @@ namespace server::service
 
 		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(TimePoint currentTime, Duration timeout) noexcept;
 
-		[[nodiscard]] RemoteAddressList BuildRoomRemoteAddressList(RoomId roomId) const;
+		[[nodiscard]] EndpointKeyList BuildRoomEndpointKeyList(RoomId roomId) const;
 
 	public:
 		[[nodiscard]] const PeerTable& GetPeerTable() const noexcept

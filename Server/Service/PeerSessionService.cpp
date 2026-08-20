@@ -9,10 +9,9 @@
 
 namespace server::service
 {
-	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
+	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};
-		joinResult.remoteAddress = remoteAddress;
 
 		if (authenticatedIdentity.accountId <= 0 
 			|| authenticatedIdentity.persistentPlayerId <= 0 
@@ -57,13 +56,7 @@ namespace server::service
 
 		const PlayerId playerId = gameWorld.AllocatePlayerId();
 
-		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
-			remoteAddress,
-			endpointKey,
-			playerId,
-			initialRoomId,
-			currentTime
-		);
+		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(endpointKey, playerId, initialRoomId, currentTime);
 		peerState.accountId = authenticatedIdentity.accountId;
 		peerState.persistentPlayerId = authenticatedIdentity.persistentPlayerId;
 		peerState.sessionToken = authenticatedIdentity.sessionToken;
@@ -168,7 +161,6 @@ namespace server::service
 		changeResult.persistentPlayerId = peerState->persistentPlayerId;
 		changeResult.previousRoomId = roomChangeResult.previousRoomId;
 		changeResult.nextRoomId = roomChangeResult.nextRoomId;
-		changeResult.remoteAddress = roomChangeResult.remoteAddress;
 		changeResult.spawnPosition = spawnPosition;
 		return changeResult;
 	}

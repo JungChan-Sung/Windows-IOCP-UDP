@@ -4,7 +4,7 @@
 
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/WeaponRules.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Game/GameWorld.h>

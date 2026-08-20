@@ -1,6 +1,5 @@
 #pragma once
 
-#include <WinSock2.h>
 
 #include <cstdint>
 #include <string_view>
@@ -9,7 +8,7 @@
 #include <Common/Game/GameRules.h>
 #include <Common/Game/RoomLayout.h>
 #include <Common/Identity/IdentityTypes.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -42,7 +41,6 @@ namespace server::service
 			bool shouldSendResponse = false;
 			bool shouldBroadcastPlayerJoined = false;
 
-			sockaddr_in remoteAddress{};
 			PlayerId playerId = 0;
 			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
@@ -68,7 +66,6 @@ namespace server::service
 			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId previousRoomId = 0;
 			RoomId nextRoomId = 0;
-			sockaddr_in remoteAddress{};
 			common::game::SpawnPoint spawnPosition{};
 		};
 
@@ -84,7 +81,6 @@ namespace server::service
 
 	public:
 		[[nodiscard]] JoinResult JoinPeer(
-			const sockaddr_in& remoteAddress,
 			const EndpointKey& endpointKey,
 			const AuthenticatedIdentity& authenticatedIdentity,
 			RoomId initialRoomId,

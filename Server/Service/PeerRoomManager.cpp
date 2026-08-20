@@ -119,10 +119,9 @@ namespace server::service
 		return &roomIterator->second;
 	}
 
-	PeerState& PeerRoomManager::UpsertJoinedPeer(const sockaddr_in& remoteAddress, const EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, TimePoint currentTime)
+	PeerState& PeerRoomManager::UpsertJoinedPeer(const EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, TimePoint currentTime)
 	{
 		PeerState& peerState = peerTable_[endpointKey];
-		peerState.remoteAddress = remoteAddress;
 		peerState.endpointKey = endpointKey;
 		peerState.playerId = playerId;
 		peerState.roomId = roomId;
@@ -219,7 +218,6 @@ namespace server::service
 		roomChangeResult.playerId = peerState->playerId;
 		roomChangeResult.previousRoomId = peerState->roomId;
 		roomChangeResult.nextRoomId = nextRoomId;
-		roomChangeResult.remoteAddress = peerState->remoteAddress;
 
 		auto previousRoomIterator = roomTable_.find(peerState->roomId);
 		if (previousRoomIterator != roomTable_.end())
@@ -278,30 +276,29 @@ namespace server::service
 		return timedOutPeerList;
 	}
 
-	PeerRoomManager::RemoteAddressList PeerRoomManager::BuildRoomRemoteAddressList(RoomId roomId) const
+	PeerRoomManager::EndpointKeyList PeerRoomManager::BuildRoomEndpointKeyList(RoomId roomId) const
 	{
-		RemoteAddressList remoteAddressList;
+		EndpointKeyList endpointKeyList;
 
 		const RoomMemberSet* roomMemberSet = FindRoomMemberSet(roomId);
 		if (roomMemberSet == nullptr)
 		{
-			return remoteAddressList;
+			return endpointKeyList;
 		}
 
-		remoteAddressList.reserve(roomMemberSet->size());
+		endpointKeyList.reserve(roomMemberSet->size());
 
 		for (const EndpointKey& endpointKey : *roomMemberSet)
 		{
-			const PeerState* peerState = FindPeer(endpointKey);
-			if (peerState == nullptr || !peerState->isJoined)
+			if (FindJoinedPeer(endpointKey) == nullptr)
 			{
 				continue;
 			}
 
-			remoteAddressList.push_back(peerState->remoteAddress);
+			endpointKeyList.push_back(endpointKey);
 		}
 
-		return remoteAddressList;
+		return endpointKeyList;
 	}
 
 	std::size_t PeerRoomManager::GetJoinedPeerCount() const noexcept

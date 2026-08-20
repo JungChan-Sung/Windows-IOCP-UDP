@@ -41,6 +41,7 @@
     <ClInclude Include="Log\LogRecord.h" />
     <ClInclude Include="Log\NullLogger.h" />
     <ClInclude Include="Net\Endpoint.h" />
+    <ClInclude Include="Net\EndpointKey.h" />
     <ClInclude Include="Net\Fault\UdpFaultDecisionGenerator.h" />
     <ClInclude Include="Net\Fault\UdpFaultPacketScheduler.h" />
     <ClInclude Include="Net\Fault\UdpFaultSimulationConfig.h" />

@@ -2,36 +2,24 @@
 
 #include <WinSock2.h>
 
-#include <cstdint>
-#include <functional>
+#include <Common/Net/EndpointKey.h>
 
 namespace common::net
 {
-	struct EndpointKey
-	{
-	public:
-		std::uint32_t address = 0;
-		std::uint16_t port = 0;
-
-	public:
-		bool operator==(const EndpointKey& other) const = default;
-	};
-
-	struct EndpointKeyHasher
-	{
-		[[nodiscard]] std::size_t operator()(const EndpointKey& key) const noexcept
-		{
-			const std::uint64_t combined = (static_cast<std::uint64_t>(key.address) << 16) | key.port;
-
-			return std::hash<std::uint64_t>{}(combined);
-		}
-	};
-
 	[[nodiscard]] inline EndpointKey MakeEndpointKey(const sockaddr_in& address) noexcept
 	{
 		EndpointKey key{};
 		key.address = address.sin_addr.S_un.S_addr;
 		key.port = ::ntohs(address.sin_port);
 		return key;
+	}
+
+	[[nodiscard]] inline sockaddr_in MakeSocketAddress(const EndpointKey& endpointKey) noexcept
+	{
+		sockaddr_in address{};
+		address.sin_family = AF_INET;
+		address.sin_addr.S_un.S_addr = endpointKey.address;
+		address.sin_port = ::htons(endpointKey.port);
+		return address;
 	}
 }

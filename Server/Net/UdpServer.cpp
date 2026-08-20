@@ -756,7 +756,7 @@ namespace server::net
 		struct ReliableResendTask
 		{
 		public:
-			sockaddr_in remoteAddress{};
+			EndpointKey endpointKey{};
 			common::packet::PacketBuffer packetBuffer;
 		};
 
@@ -783,7 +783,7 @@ namespace server::net
 					for (common::net::ReliablePendingPacket& pendingPacket : resendResult.resendPacketList)
 					{
 						ReliableResendTask resendTask{};
-						resendTask.remoteAddress = peerState.remoteAddress;
+						resendTask.endpointKey = peerState.endpointKey;
 						resendTask.packetBuffer = std::move(pendingPacket.packetBuffer);
 
 						resendTaskList.push_back(std::move(resendTask));
@@ -795,7 +795,7 @@ namespace server::net
 		for (const ReliableResendTask& resendTask : resendTaskList)
 		{
 			packetSender_.SendPacket(
-				resendTask.remoteAddress,
+				resendTask.endpointKey,
 				resendTask.packetBuffer.data(),
 				static_cast<int>(resendTask.packetBuffer.size())
 			);
@@ -854,7 +854,6 @@ namespace server::net
 			if (hasAuthenticatedIdentity)
 			{
 				joinResult = peerSessionService_.JoinPeer(
-					remoteAddress,
 					endpointKey,
 					authenticatedIdentity,
 					config_.session.initialRoomId,
@@ -905,7 +904,7 @@ namespace server::net
 		}
 
 		const bool responseSent = packetSender_.SendJoinResponse(
-			joinResult.remoteAddress,
+			remoteAddress,
 			joinResult.playerId,
 			joinResult.roomId,
 			joinResult.spawnPosition.x,
@@ -946,7 +945,7 @@ namespace server::net
 		{
 			std::ostringstream stream;
 			stream << "Join response sent to existing peer. Endpoint="
-				<< FormatEndpoint(joinResult.remoteAddress)
+				<< FormatEndpoint(remoteAddress)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
 
@@ -1114,7 +1113,7 @@ namespace server::net
 		if (reliableResponsePacketBuffer.has_value())
 		{
 			packetSender_.SendPacket(
-				roomChangeResult.remoteAddress,
+				endpointKey,
 				reliableResponsePacketBuffer->data(),
 				static_cast<int>(reliableResponsePacketBuffer->size())
 			);
@@ -1122,7 +1121,7 @@ namespace server::net
 		else
 		{
 			packetSender_.SendJoinRoomResponse(
-				roomChangeResult.remoteAddress,
+				endpointKey,
 				roomChangeResult.nextRoomId,
 				roomChangeResult.spawnPosition.x,
 				roomChangeResult.spawnPosition.y
@@ -1295,24 +1294,24 @@ namespace server::net
 
 	void UdpServer::BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y)
 	{
-		std::vector<sockaddr_in> remoteAddressList = [&]()
+		service::PeerRoomManager::EndpointKeyList endpointKeyList = [&]()
 			{
 				std::scoped_lock lock(stateMutex_);
-				return peerRoomManager_.BuildRoomRemoteAddressList(roomId);
+				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		packetSender_.BroadcastPlayerJoined(remoteAddressList, roomId, playerId, x, y);
+		packetSender_.BroadcastPlayerJoined(endpointKeyList, roomId, playerId, x, y);
 	}
 
 	void UdpServer::BroadcastPlayerLeft(RoomId roomId, PlayerId playerId)
 	{
-		std::vector<sockaddr_in> remoteAddressList = [&]()
+		service::PeerRoomManager::EndpointKeyList endpointKeyList = [&]()
 			{
 				std::scoped_lock lock(stateMutex_);
-				return peerRoomManager_.BuildRoomRemoteAddressList(roomId);
+				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		packetSender_.BroadcastPlayerLeft(remoteAddressList, roomId, playerId);
+		packetSender_.BroadcastPlayerLeft(endpointKeyList, roomId, playerId);
 	}
 
 	void UdpServer::RemoveTimedOutPeers()

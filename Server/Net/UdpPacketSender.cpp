@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <Common/Net/Endpoint.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
@@ -63,6 +64,11 @@ namespace server::net
 		udpTransport_ = nullptr;
 	}
 
+	bool UdpPacketSender::SendPacket(const common::net::EndpointKey& endpointKey, const void* packetData, int packetSize)
+	{
+		return SendPacket(common::net::MakeSocketAddress(endpointKey), packetData, packetSize);
+	}
+
 	bool UdpPacketSender::SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize)
 	{
 		if (udpTransport_ == nullptr || packetData == nullptr || packetSize <= 0)
@@ -107,6 +113,21 @@ namespace server::net
 		}
 
 		return allSent;
+	}
+
+	std::size_t UdpPacketSender::BroadcastPacket(std::span<const common::net::EndpointKey> endpointKeyList, const void* packetData, int packetSize)
+	{
+		std::size_t sentCount = 0;
+
+		for (const common::net::EndpointKey& endpointKey : endpointKeyList)
+		{
+			if (SendPacket(endpointKey, packetData, packetSize))
+			{
+				++sentCount;
+			}
+		}
+
+		return sentCount;
 	}
 
 	std::size_t UdpPacketSender::BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize)
@@ -176,7 +197,7 @@ namespace server::net
 
 		for (const protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
 		{
-			if (SendSerializedPacket(*this, playerSnapshotTask.remoteAddress, playerSnapshotTask.snapshotPacket))
+			if (SendSerializedPacket(*this, playerSnapshotTask.endpointKey, playerSnapshotTask.snapshotPacket))
 			{
 				++sentCount;
 			}
@@ -193,7 +214,7 @@ namespace server::net
 		{
 			sentCount += BroadcastSerializedPacket(
 				*this,
-				bulletSnapshotTask.remoteAddressList,
+				bulletSnapshotTask.endpointKeyList,
 				bulletSnapshotTask.snapshotPacket
 			);
 		}
@@ -209,7 +230,7 @@ namespace server::net
 		{
 			sentCount += BroadcastSerializedPacket(
 				*this,
-				impactEffectTask.remoteAddressList,
+				impactEffectTask.endpointKeyList,
 				impactEffectTask.effectPacket
 			);
 		}

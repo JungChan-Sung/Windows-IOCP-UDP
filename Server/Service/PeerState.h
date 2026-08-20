@@ -1,11 +1,9 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <cstdint>
 #include <string>
 
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Identity/IdentityTypes.h>
@@ -16,7 +14,6 @@ namespace server::service
 	struct PeerState
 	{
 	public:
-		sockaddr_in remoteAddress{};
 		common::net::EndpointKey endpointKey{};
 
 		common::identity::AccountId accountId = 0;

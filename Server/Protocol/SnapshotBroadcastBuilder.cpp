@@ -42,7 +42,7 @@ namespace server::protocol
 				}
 
 				PlayerSnapshotTask playerSnapshotTask{};
-				playerSnapshotTask.remoteAddress = peerState.remoteAddress;
+				playerSnapshotTask.endpointKey = endpointKey;
 				playerSnapshotTask.snapshotPacket = snapshotBase;
 				playerSnapshotTask.snapshotPacket.lastProcessedInputSequence = peerState.lastInputSequence;
 
@@ -65,8 +65,8 @@ namespace server::protocol
 
 		for (const auto& [roomId, roomMemberSet] : roomTable)
 		{
-			const RemoteAddressList remoteAddressList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
-			if (remoteAddressList.empty())
+			const EndpointKeyList endpointKeyList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
+			if (endpointKeyList.empty())
 			{
 				continue;
 			}
@@ -82,7 +82,7 @@ namespace server::protocol
 			for (std::size_t chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
 			{
 				BulletSnapshotTask bulletSnapshotTask{};
-				bulletSnapshotTask.remoteAddressList = remoteAddressList;
+				bulletSnapshotTask.endpointKeyList = endpointKeyList;
 				bulletSnapshotTask.snapshotPacket.serverTick = serverTick;
 				bulletSnapshotTask.snapshotPacket.roomId = roomId;
 				bulletSnapshotTask.snapshotPacket.chunkIndex = static_cast<std::uint16_t>(chunkIndex);
@@ -117,8 +117,8 @@ namespace server::protocol
 
 		for (const auto& [roomId, roomMemberSet] : roomTable)
 		{
-			const RemoteAddressList remoteAddressList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
-			if (remoteAddressList.empty())
+			const EndpointKeyList endpointKeyList = BuildRoomRemoteAddressList(roomMemberSet, peerTable);
+			if (endpointKeyList.empty())
 			{
 				continue;
 			}
@@ -135,7 +135,7 @@ namespace server::protocol
 			for (std::size_t chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex)
 			{
 				ImpactEffectTask impactEffectTask{};
-				impactEffectTask.remoteAddressList = remoteAddressList;
+				impactEffectTask.endpointKeyList = endpointKeyList;
 				impactEffectTask.effectPacket.serverTick = serverTick;
 				impactEffectTask.effectPacket.roomId = roomId;
 				impactEffectTask.effectPacket.chunkIndex = static_cast<std::uint16_t>(chunkIndex);
@@ -158,28 +158,23 @@ namespace server::protocol
 		return impactEffectTaskList;
 	}
 
-	RemoteAddressList SnapshotBroadcastBuilder::BuildRoomRemoteAddressList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const
+	EndpointKeyList SnapshotBroadcastBuilder::BuildRoomRemoteAddressList(const RoomMemberSet& roomMemberSet, const PeerTable& peerTable) const
 	{
-		RemoteAddressList remoteAddressList;
-		remoteAddressList.reserve(roomMemberSet.size());
+		EndpointKeyList endpointKeyList;
+		endpointKeyList.reserve(roomMemberSet.size());
 
 		for (const EndpointKey& endpointKey : roomMemberSet)
 		{
 			const auto peerIterator = peerTable.find(endpointKey);
-			if (peerIterator == peerTable.end())
+			if (peerIterator == peerTable.end() || !peerIterator->second.isJoined)
 			{
 				continue;
 			}
 
-			if (!peerIterator->second.isJoined)
-			{
-				continue;
-			}
-
-			remoteAddressList.push_back(peerIterator->second.remoteAddress);
+			endpointKeyList.push_back(endpointKey);
 		}
 
-		return remoteAddressList;
+		return endpointKeyList;
 	}
 
 	void SnapshotBroadcastBuilder::FillPlayerSnapshotBase(common::packet::PlayerSnapshotPacket& snapshotPacket, RoomId roomId, const RoomMemberSet& roomMemberSet, const PeerTable& peerTable, const PlayerTable& playerTable, std::uint32_t serverTick) const

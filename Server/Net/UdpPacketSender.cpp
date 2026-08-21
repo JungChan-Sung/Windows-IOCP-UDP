@@ -1,44 +1,8 @@
 #include "UdpPacketSender.h"
 
-#include <optional>
-
 #include <Common/Net/Endpoint.h>
-#include <Common/Packet/Account/AccountPacket.h>
-#include <Common/Packet/Game/GamePacket.h>
-#include <Common/Packet/PacketSerialization.h>
 
 #include <Server/Net/UdpIocpTransport.h>
-
-namespace
-{
-	template <typename TAddress, typename TPacket>
-	[[nodiscard]] bool SendSerializedPacket(server::net::UdpPacketSender& packetSender, const TAddress& address, const TPacket& packet)
-	{
-		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
-		if (!packetBuffer.has_value())
-		{
-			return false;
-		}
-
-		return packetSender.SendPacket(address, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
-	}
-
-	template <typename TPacket>
-	[[nodiscard]] std::size_t BroadcastSerializedPacket(
-		server::net::UdpPacketSender& packetSender,
-		std::span<const common::net::EndpointKey> endpointKeyList,
-		const TPacket& packet
-	)
-	{
-		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
-		if (!packetBuffer.has_value())
-		{
-			return 0;
-		}
-
-		return packetSender.BroadcastPacket(endpointKeyList, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
-	}
-}
 
 namespace server::net
 {
@@ -128,99 +92,6 @@ namespace server::net
 			{
 				++sentCount;
 			}
-		}
-
-		return sentCount;
-	}
-
-	bool UdpPacketSender::SendAccountLoginResponse(const common::net::EndpointKey& endpointKey, const common::packet::AccountLoginResponsePacket& packet)
-	{
-		return SendSerializedPacket(*this, endpointKey, packet);
-	}
-
-	bool UdpPacketSender::SendJoinResponse(const common::net::EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, float spawnX, float spawnY)
-	{
-		common::packet::JoinResponsePacket packet{};
-		packet.playerId = playerId;
-		packet.roomId = roomId;
-		packet.spawnX = spawnX;
-		packet.spawnY = spawnY;
-
-		return SendSerializedPacket(*this, endpointKey, packet);
-	}
-
-	bool UdpPacketSender::SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY)
-	{
-		common::packet::JoinRoomResponsePacket packet{};
-		packet.roomId = roomId;
-		packet.spawnX = spawnX;
-		packet.spawnY = spawnY;
-		
-		return SendSerializedPacket(*this, endpointKey, packet);
-	}
-
-	std::size_t UdpPacketSender::BroadcastPlayerJoined(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId, float x, float y)
-	{
-		common::packet::PlayerJoinedPacket packet{};
-		packet.playerId = playerId;
-		packet.roomId = roomId;
-		packet.x = x;
-		packet.y = y;
-
-		return BroadcastSerializedPacket(*this, endpointKeyList, packet);
-	}
-
-	std::size_t UdpPacketSender::BroadcastPlayerLeft(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId)
-	{
-		common::packet::PlayerLeftPacket packet{};
-		packet.playerId = playerId;
-		packet.roomId = roomId;
-
-		return BroadcastSerializedPacket(*this, endpointKeyList, packet);
-	}
-
-	std::size_t UdpPacketSender::SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList)
-	{
-		std::size_t sentCount = 0;
-
-		for (const protocol::PlayerSnapshotTask& playerSnapshotTask : playerSnapshotTaskList)
-		{
-			if (SendSerializedPacket(*this, playerSnapshotTask.endpointKey, playerSnapshotTask.snapshotPacket))
-			{
-				++sentCount;
-			}
-		}
-
-		return sentCount;
-	}
-
-	std::size_t UdpPacketSender::SendBulletSnapshotTasks(std::span<const protocol::BulletSnapshotTask> bulletSnapshotTaskList)
-	{
-		std::size_t sentCount = 0;
-
-		for (const protocol::BulletSnapshotTask& bulletSnapshotTask : bulletSnapshotTaskList)
-		{
-			sentCount += BroadcastSerializedPacket(
-				*this,
-				bulletSnapshotTask.endpointKeyList,
-				bulletSnapshotTask.snapshotPacket
-			);
-		}
-
-		return sentCount;
-	}
-
-	std::size_t UdpPacketSender::SendImpactEffectTasks(std::span<const protocol::ImpactEffectTask> impactEffectTaskList)
-	{
-		std::size_t sentCount = 0;
-
-		for (const protocol::ImpactEffectTask& impactEffectTask : impactEffectTaskList)
-		{
-			sentCount += BroadcastSerializedPacket(
-				*this,
-				impactEffectTask.endpointKeyList,
-				impactEffectTask.effectPacket
-			);
 		}
 
 		return sentCount;

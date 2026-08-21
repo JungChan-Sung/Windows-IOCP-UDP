@@ -8,6 +8,7 @@
 #include <expected>
 #include <functional>
 #include <optional>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -128,6 +129,38 @@ namespace
 				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
 			}
 		);
+	}
+
+	template <typename TPacket>
+	[[nodiscard]] bool SendSerializedPacket(
+		server::net::UdpPacketSender& packetSender,
+		const common::net::EndpointKey& endpointKey,
+		const TPacket& packet
+	)
+	{
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		if (!packetBuffer.has_value())
+		{
+			return false;
+		}
+
+		return packetSender.SendPacket(endpointKey, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
+	}
+
+	template <typename TPacket>
+	[[nodiscard]] std::size_t BroadcastSerializedPacket(
+		server::net::UdpPacketSender& packetSender,
+		std::span<const common::net::EndpointKey> endpointKeyList,
+		const TPacket& packet
+	)
+	{
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		if (!packetBuffer.has_value())
+		{
+			return 0;
+		}
+
+		return packetSender.BroadcastPacket(endpointKeyList, packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
 	[[nodiscard]] std::string FormatEndpoint(const sockaddr_in& remoteAddress)
@@ -818,7 +851,7 @@ namespace server::net
 		common::packet::AccountLoginResponsePacket responsePacket{};
 		responsePacket.requestId = packet.requestId;
 		responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
-		if (!packetSender_.SendAccountLoginResponse(endpointKey, responsePacket))
+		if (!SendSerializedPacket(packetSender_, endpointKey, responsePacket))
 		{
 			LogWarning("Failed to send account login server error response.");
 		}
@@ -974,13 +1007,13 @@ namespace server::net
 			return;
 		}
 
-		const bool responseSent = packetSender_.SendJoinResponse(
-			endpointKey,
-			joinResult.playerId,
-			joinResult.roomId,
-			joinResult.spawnPosition.x,
-			joinResult.spawnPosition.y
-		);
+		common::packet::JoinResponsePacket responsePacket{};
+		responsePacket.playerId = joinResult.playerId;
+		responsePacket.roomId = joinResult.roomId;
+		responsePacket.spawnX = joinResult.spawnPosition.x;
+		responsePacket.spawnY = joinResult.spawnPosition.y;
+
+		const bool responseSent = SendSerializedPacket(packetSender_, endpointKey, responsePacket);
 		if (!responseSent)
 		{
 			std::ostringstream stream;
@@ -1191,12 +1224,12 @@ namespace server::net
 		}
 		else
 		{
-			packetSender_.SendJoinRoomResponse(
-				endpointKey,
-				roomChangeResult.nextRoomId,
-				roomChangeResult.spawnPosition.x,
-				roomChangeResult.spawnPosition.y
-			);
+			common::packet::JoinRoomResponsePacket responsePacket{};
+			responsePacket.roomId = roomChangeResult.nextRoomId;
+			responsePacket.spawnX = roomChangeResult.spawnPosition.x;
+			responsePacket.spawnY = roomChangeResult.spawnPosition.y;
+
+			static_cast<void>(SendSerializedPacket(packetSender_, endpointKey, responsePacket));
 		}
 
 		{
@@ -1293,7 +1326,7 @@ namespace server::net
 				}
 			}
 
-			if (packetSender_.SendAccountLoginResponse(responseTask.endpointKey, responseTask.responsePacket))
+			if (SendSerializedPacket(packetSender_, responseTask.endpointKey, responseTask.responsePacket))
 			{
 				continue;
 			}
@@ -1317,9 +1350,37 @@ namespace server::net
 		const std::vector<protocol::BulletSnapshotTask> bulletTaskList = snapshotBroadcastBuilder_.BuildBulletSnapshotTasks(context);
 		const std::vector<protocol::ImpactEffectTask> impactEffectTaskList = snapshotBroadcastBuilder_.BuildImpactEffectTasks(context);
 
-		const std::size_t playerSentCount = packetSender_.SendPlayerSnapshotTasks(playerTaskList);
-		const std::size_t bulletSentCount = packetSender_.SendBulletSnapshotTasks(bulletTaskList);
-		const std::size_t impactEffectSentCount = packetSender_.SendImpactEffectTasks(impactEffectTaskList);
+		std::size_t playerSentCount = 0;
+
+		for (const protocol::PlayerSnapshotTask& task : playerTaskList)
+		{
+			if (SendSerializedPacket(packetSender_, task.endpointKey, task.snapshotPacket))
+			{
+				++playerSentCount;
+			}
+		}
+
+		std::size_t bulletSentCount = 0;
+
+		for (const protocol::BulletSnapshotTask& task : bulletTaskList)
+		{
+			bulletSentCount += BroadcastSerializedPacket(
+				packetSender_,
+				task.endpointKeyList,
+				task.snapshotPacket
+			);
+		}
+
+		std::size_t impactEffectSentCount = 0;
+
+		for (const protocol::ImpactEffectTask& task : impactEffectTaskList)
+		{
+			impactEffectSentCount += BroadcastSerializedPacket(
+				packetSender_,
+				task.endpointKeyList,
+				task.effectPacket
+			);
+		}
 
 		serverMetricsCollector_.AddPlayerSnapshotSendRequestCount(static_cast<std::uint64_t>(playerSentCount));
 		serverMetricsCollector_.AddBulletSnapshotSendRequestCount(static_cast<std::uint64_t>(bulletSentCount));
@@ -1334,7 +1395,13 @@ namespace server::net
 				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		packetSender_.BroadcastPlayerJoined(endpointKeyList, roomId, playerId, x, y);
+		common::packet::PlayerJoinedPacket packet{};
+		packet.playerId = playerId;
+		packet.roomId = roomId;
+		packet.x = x;
+		packet.y = y;
+
+		static_cast<void>(BroadcastSerializedPacket(packetSender_, endpointKeyList, packet));
 	}
 
 	void UdpServer::BroadcastPlayerLeft(RoomId roomId, PlayerId playerId)
@@ -1345,7 +1412,11 @@ namespace server::net
 				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		packetSender_.BroadcastPlayerLeft(endpointKeyList, roomId, playerId);
+		common::packet::PlayerLeftPacket packet{};
+		packet.playerId = playerId;
+		packet.roomId = roomId;
+
+		static_cast<void>(BroadcastSerializedPacket(packetSender_, endpointKeyList, packet));
 	}
 
 	void UdpServer::RemoveTimedOutPeers()

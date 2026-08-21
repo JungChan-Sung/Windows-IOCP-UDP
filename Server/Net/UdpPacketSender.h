@@ -2,19 +2,10 @@
 
 #include <WinSock2.h>
 
-#include <cstdint>
 #include <span>
 
-#include <Common/Game/GameTypes.h>
 #include <Common/Net/EndpointKey.h>
 #include <Common/Net/Fault/UdpFaultSimulator.h>
-
-#include <Server/Protocol/SnapshotBroadcastTask.h>
-
-namespace common::packet
-{
-	struct AccountLoginResponsePacket;
-}
 
 namespace server::net
 {
@@ -22,10 +13,6 @@ namespace server::net
 
 	class UdpPacketSender
 	{
-	public:
-		using PlayerId = common::game::PlayerId;
-		using RoomId = common::game::RoomId;
-
 	private:
 		UdpIocpTransport* udpTransport_ = nullptr;
 		common::net::UdpFaultSimulator faultSimulator_;
@@ -46,18 +33,9 @@ namespace server::net
 
 		[[nodiscard]] bool SendPacket(const common::net::EndpointKey& endpointKey, const void* packetData, int packetSize);
 		[[nodiscard]] bool SendPacket(const sockaddr_in& remoteAddress, const void* packetData, int packetSize);
+
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const common::net::EndpointKey> endpointKeyList, const void* packetData, int packetSize);
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize);
-
-		[[nodiscard]] bool SendAccountLoginResponse(const common::net::EndpointKey& endpointKey, const common::packet::AccountLoginResponsePacket& packet);
-		[[nodiscard]] bool SendJoinResponse(const common::net::EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, float spawnX, float spawnY);
-		[[nodiscard]] bool SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY);
-		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId, float x, float y);
-		[[nodiscard]] std::size_t BroadcastPlayerLeft(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId);
-
-		[[nodiscard]] std::size_t SendPlayerSnapshotTasks(std::span<const protocol::PlayerSnapshotTask> playerSnapshotTaskList);
-		[[nodiscard]] std::size_t SendBulletSnapshotTasks(std::span<const protocol::BulletSnapshotTask> bulletSnapshotTaskList);
-		[[nodiscard]] std::size_t SendImpactEffectTasks(std::span<const protocol::ImpactEffectTask> impactEffectTaskList);
 
 		void SetFaultSimulationConfig(const common::net::UdpFaultSimulationConfig& config);
 		void ResetFaultSimulation();

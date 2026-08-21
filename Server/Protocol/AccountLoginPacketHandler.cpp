@@ -11,10 +11,8 @@ namespace server::protocol
 		: taskProcessor_(taskProcessor)
 	{}
 
-	AccountLoginPacketHandler::EnqueueStatus AccountLoginPacketHandler::Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime)
+	AccountLoginPacketHandler::EnqueueStatus AccountLoginPacketHandler::Enqueue(const common::net::EndpointKey& endpointKey, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime)
 	{
-		const common::net::EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
-
 		const RequestKey requestKey{
 			.endpointKey = endpointKey,
 			.requestId = packet.requestId,
@@ -33,7 +31,7 @@ namespace server::protocol
 			if (cachedResponseIterator != responseCache_.end())
 			{
 				readyResponseQueue_.push(ResponseTask{
-						.remoteAddress = remoteAddress,
+						.endpointKey = endpointKey,
 						.responsePacket = cachedResponseIterator->second.responsePacket,
 						.taskId = invalidTaskId,
 						.isLatestRequest = false,
@@ -52,7 +50,6 @@ namespace server::protocol
 			const bool pendingRequestInserted = pendingRequestTable_.emplace(
 				taskId,
 				PendingRequest{
-					.remoteAddress = remoteAddress,
 					.requestKey = requestKey,
 				}).second;
 			const bool pendingTaskInserted = pendingTaskTable_.emplace(requestKey, taskId).second;
@@ -145,7 +142,7 @@ namespace server::protocol
 				common::packet::AccountLoginResponsePacket responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, std::move(completion.loginResult));
 
 				responseTaskList.push_back(ResponseTask{
-					.remoteAddress = pendingRequest.remoteAddress,
+					.endpointKey = pendingRequest.requestKey.endpointKey,
 					.responsePacket = std::move(responsePacket),
 					.persistentPlayerId = persistentPlayerId,
 					.taskId = completion.taskId,

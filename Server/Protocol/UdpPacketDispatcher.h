@@ -1,13 +1,12 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
 #include <optional>
 
+#include <Common/Net/EndpointKey.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketHeader.h>
 
@@ -51,7 +50,8 @@ namespace server::protocol
 		};
 
 	public:
-		using PacketProcessor = std::function<PacketProcessResult(const sockaddr_in&, const char*, int)>;
+		using EndpointKey = common::net::EndpointKey;
+		using PacketProcessor = std::function<PacketProcessResult(const EndpointKey&, const char*, int)>;
 
 	private:
 		struct PacketTypeHasher
@@ -91,6 +91,6 @@ namespace server::protocol
 
 		void RegisterHandler(common::packet::PacketType packetType,	int expectedPacketSize,	PacketProcessor packetProcessor);
 
-		DispatchResult Dispatch(const sockaddr_in& remoteAddress, const char* packetData, int packetSize) const;
+		DispatchResult Dispatch(const EndpointKey& endpointKey, const char* packetData, int packetSize) const;
 	};
 }

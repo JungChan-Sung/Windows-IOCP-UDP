@@ -133,12 +133,12 @@ namespace server::net
 		return sentCount;
 	}
 
-	bool UdpPacketSender::SendAccountLoginResponse(const sockaddr_in& remoteAddress, const common::packet::AccountLoginResponsePacket& packet)
+	bool UdpPacketSender::SendAccountLoginResponse(const common::net::EndpointKey& endpointKey, const common::packet::AccountLoginResponsePacket& packet)
 	{
-		return SendSerializedPacket(*this, remoteAddress, packet);
+		return SendSerializedPacket(*this, endpointKey, packet);
 	}
 
-	bool UdpPacketSender::SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY)
+	bool UdpPacketSender::SendJoinResponse(const common::net::EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, float spawnX, float spawnY)
 	{
 		common::packet::JoinResponsePacket packet{};
 		packet.playerId = playerId;
@@ -146,7 +146,7 @@ namespace server::net
 		packet.spawnX = spawnX;
 		packet.spawnY = spawnY;
 
-		return SendSerializedPacket(*this, remoteAddress, packet);
+		return SendSerializedPacket(*this, endpointKey, packet);
 	}
 
 	bool UdpPacketSender::SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY)

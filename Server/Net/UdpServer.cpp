@@ -33,18 +33,18 @@
 namespace
 {
 	template <typename TObject>
-	using AddressOnlyPacketHandler = void (TObject::*)(const sockaddr_in&);
+	using EndpointOnlyPacketHandler = void (TObject::*)(const common::net::EndpointKey&);
 
 	template <typename TObject, typename TPacket>
-	using AddressTypedPacketHandler = void (TObject::*)(const sockaddr_in&, const TPacket&);
+	using EndpointTypedPacketHandler = void (TObject::*)(const common::net::EndpointKey&, const TPacket&);
 
 	template <typename TObject>
-	void RegisterAddressOnlyPacketHandler(
+	void RegisterEndpointOnlyPacketHandler(
 		server::protocol::UdpPacketDispatcher& packetDispatcher,
 		common::packet::PacketType packetType,
 		TObject& object,
 		int expectedPacketSize,
-		AddressOnlyPacketHandler<TObject> handler
+		EndpointOnlyPacketHandler<TObject> handler
 	)
 	{
 		using DispatchStatus = server::protocol::UdpPacketDispatcher::DispatchStatus;
@@ -53,9 +53,9 @@ namespace
 		packetDispatcher.RegisterHandler(
 			packetType,
 			expectedPacketSize,
-			[&object, handler](const sockaddr_in& remoteAddress, const char*, int)
+			[&object, handler](const common::net::EndpointKey& endpointKey, const char*, int)
 			{
-				std::invoke(handler, object, remoteAddress);
+				std::invoke(handler, object, endpointKey);
 				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
 			}
 		);
@@ -66,7 +66,7 @@ namespace
 		server::protocol::UdpPacketDispatcher& packetDispatcher,
 		common::packet::PacketType packetType,
 		TObject& object,
-		AddressTypedPacketHandler<TObject, TPacket> handler
+		EndpointTypedPacketHandler<TObject, TPacket> handler
 	)
 	{
 		using Packet = std::remove_cvref_t<TPacket>;
@@ -76,7 +76,7 @@ namespace
 		packetDispatcher.RegisterHandler(
 			packetType,
 			common::packet::packetExpectedSize<Packet>,
-			[&object, handler](const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+			[&object, handler](const common::net::EndpointKey& endpointKey, const char* packetData, int packetSize)
 			{
 				std::optional<Packet> packet = common::packet::DeserializePacket<Packet>(packetData, packetSize);
 				if (!packet.has_value())
@@ -84,8 +84,7 @@ namespace
 					return PacketProcessResult{ DispatchStatus::InvalidPacketPayload, 0 };
 				}
 
-				std::invoke(handler, object, remoteAddress, *packet);
-
+				std::invoke(handler, object, endpointKey, *packet);
 				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
 			}
 		);
@@ -97,7 +96,7 @@ namespace
 		common::packet::PacketType packetType,
 		TObject& object,
 		TValidator validator,
-		AddressTypedPacketHandler<TObject, TPacket> handler
+		EndpointTypedPacketHandler<TObject, TPacket> handler
 	)
 	{
 		using Packet = std::remove_cvref_t<TPacket>;
@@ -108,7 +107,7 @@ namespace
 		packetDispatcher.RegisterHandler(
 			packetType,
 			common::packet::packetExpectedSize<Packet>,
-			[&object, validator, handler](const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+			[&object, validator, handler](const common::net::EndpointKey& endpointKey, const char* packetData, int packetSize)
 			{
 				std::optional<Packet> packet = common::packet::DeserializePacket<Packet>(packetData, packetSize);
 				if (!packet.has_value())
@@ -125,7 +124,7 @@ namespace
 					};
 				}
 
-				std::invoke(handler, object, remoteAddress, *packet);
+				std::invoke(handler, object, endpointKey, *packet);
 				return PacketProcessResult{ DispatchStatus::Succeeded, 0 };
 			}
 		);
@@ -148,6 +147,11 @@ namespace
 			<< ::ntohs(remoteAddress.sin_port);
 
 		return stream.str();
+	}
+
+	[[nodiscard]] std::string FormatEndpoint(const common::net::EndpointKey& endpointKey)
+	{
+		return FormatEndpoint(common::net::MakeSocketAddress(endpointKey));
 	}
 }
 
@@ -246,16 +250,16 @@ namespace server::net
 
 				serverMetricsCollector_.IncrementReceivedPacketCount();
 
+				const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 				const protocol::UdpPacketDispatcher::DispatchResult dispatchResult = DispatchPacket(
-					remoteAddress,
+					endpointKey,
 					packetData,
 					packetSize
 				);
-
 				if (dispatchResult.status != protocol::UdpPacketDispatcher::DispatchStatus::Succeeded)
 				{
 					serverMetricsCollector_.IncrementInvalidPacketDropCount();
-					LogInvalidPacket(remoteAddress, dispatchResult);
+					LogInvalidPacket(endpointKey, dispatchResult);
 				}
 			}
 		);
@@ -549,7 +553,7 @@ namespace server::net
 			&UdpServer::HandleInputCommand
 		);
 
-		RegisterAddressOnlyPacketHandler(
+		RegisterEndpointOnlyPacketHandler(
 			packetDispatcher_,
 			common::packet::PacketType::FireRequest,
 			*this,
@@ -557,7 +561,7 @@ namespace server::net
 			&UdpServer::HandleFireRequest
 		);
 
-		RegisterAddressOnlyPacketHandler(
+		RegisterEndpointOnlyPacketHandler(
 			packetDispatcher_,
 			common::packet::PacketType::LeaveRequest,
 			*this,
@@ -574,18 +578,18 @@ namespace server::net
 		);
 	}
 
-	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const EndpointKey& endpointKey, const char* packetData, int packetSize)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
 		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
 		{
-			return DispatchReliablePacket(remoteAddress, packetData, packetSize);
+			return DispatchReliablePacket(endpointKey, packetData, packetSize);
 		}
 
-		return packetDispatcher_.Dispatch(remoteAddress, packetData, packetSize);
+		return packetDispatcher_.Dispatch(endpointKey, packetData, packetSize);
 	}
 
-	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize)
+	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const EndpointKey& endpointKey, const char* packetData, int packetSize)
 	{
 		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
 		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
@@ -597,7 +601,6 @@ namespace server::net
 			return DispatchResult{ DispatchStatus::InvalidPacketHeader, std::nullopt, packetSize };
 		}
 
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
 
 		bool isNewReliablePacket = false;
@@ -656,7 +659,7 @@ namespace server::net
 		if (ackPacketBuffer.has_value())
 		{
 			packetSender_.SendPacket(
-				remoteAddress,
+				endpointKey,
 				ackPacketBuffer->data(),
 				static_cast<int>(ackPacketBuffer->size())
 			);
@@ -677,7 +680,7 @@ namespace server::net
 			return DispatchResult{ DispatchStatus::InvalidPacketPayload, packetView->packetHeader.type, packetSize };
 		}
 
-		return packetDispatcher_.Dispatch(remoteAddress, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
+		return packetDispatcher_.Dispatch(endpointKey, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
 	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(common::net::ReliableUdpSession& reliableSession, common::packet::ConstPacketSpan serializedGamePacket)
@@ -757,45 +760,37 @@ namespace server::net
 		return BuildReliableGamePacket(reliableSession, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
-	void UdpServer::HandleJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet)
+	void UdpServer::HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet)
 	{
 		serverMetricsCollector_.IncrementJoinRequestCount();
-		ProcessJoinRequest(remoteAddress, packet);
+		ProcessJoinRequest(endpointKey, packet);
 	}
 
-	void UdpServer::HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet)
+	void UdpServer::HandleInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet)
 	{
 		serverMetricsCollector_.IncrementInputCommandCount();
-
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessInputCommand(endpointKey, packet);
 	}
 
-	void UdpServer::HandleFireRequest(const sockaddr_in& remoteAddress)
+	void UdpServer::HandleFireRequest(const EndpointKey& endpointKey)
 	{
 		serverMetricsCollector_.IncrementFireRequestCount();
-
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessFireRequest(endpointKey);
 	}
 
-	void UdpServer::HandleLeaveRequest(const sockaddr_in& remoteAddress)
+	void UdpServer::HandleLeaveRequest(const EndpointKey& endpointKey)
 	{
 		serverMetricsCollector_.IncrementLeaveRequestCount();
-
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessLeaveRequest(endpointKey);
 	}
 
-	void UdpServer::HandleJoinRoomRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRoomRequestPacket& packet)
+	void UdpServer::HandleJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet)
 	{
 		serverMetricsCollector_.IncrementJoinRoomRequestCount();
-
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
 		ProcessJoinRoomRequest(endpointKey, packet);
 	}
 
-	void UdpServer::HandleAccountLoginRequest(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet)
+	void UdpServer::HandleAccountLoginRequest(const EndpointKey& endpointKey, const common::packet::AccountLoginRequestPacket& packet)
 	{
 		if (accountLoginPacketHandler_ == nullptr)
 		{
@@ -803,7 +798,7 @@ namespace server::net
 		}
 
 		const protocol::AccountLoginPacketHandler::EnqueueStatus enqueueStatus = accountLoginPacketHandler_->Enqueue(
-			remoteAddress,
+			endpointKey,
 			packet,
 			common::time::Clock::now()
 		);
@@ -823,7 +818,7 @@ namespace server::net
 		common::packet::AccountLoginResponsePacket responsePacket{};
 		responsePacket.requestId = packet.requestId;
 		responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
-		if (!packetSender_.SendAccountLoginResponse(remoteAddress, responsePacket))
+		if (!packetSender_.SendAccountLoginResponse(endpointKey, responsePacket))
 		{
 			LogWarning("Failed to send account login server error response.");
 		}
@@ -890,10 +885,8 @@ namespace server::net
 		}
 	}
 
-	void UdpServer::ProcessJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet)
+	void UdpServer::ProcessJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet)
 	{
-		const EndpointKey endpointKey = common::net::MakeEndpointKey(remoteAddress);
-
 		service::PeerSessionService::JoinResult joinResult{};
 		bool hasAuthenticatedIdentity = false;
 		bool matchHistoryEntered = true;
@@ -965,7 +958,7 @@ namespace server::net
 		{
 			std::ostringstream stream;
 			stream << "Unauthenticated join request ignored. Endpoint="
-				<< FormatEndpoint(remoteAddress);
+				<< FormatEndpoint(endpointKey);
 
 			LogWarning(stream.str());
 			return;
@@ -975,14 +968,14 @@ namespace server::net
 		{
 			std::ostringstream stream;
 			stream << "Join request rejected because the session identity did not match. Endpoint="
-				<< FormatEndpoint(remoteAddress);
+				<< FormatEndpoint(endpointKey);
 
 			LogWarning(stream.str());
 			return;
 		}
 
 		const bool responseSent = packetSender_.SendJoinResponse(
-			remoteAddress,
+			endpointKey,
 			joinResult.playerId,
 			joinResult.roomId,
 			joinResult.spawnPosition.x,
@@ -991,7 +984,7 @@ namespace server::net
 		if (!responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response send failed. Endpoint=" << FormatEndpoint(remoteAddress)
+			stream << "Join response send failed. Endpoint=" << FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
 
@@ -1002,7 +995,7 @@ namespace server::net
 		{
 			{
 				std::ostringstream stream;
-				stream << "Peer joined. Endpoint=" << FormatEndpoint(remoteAddress)
+				stream << "Peer joined. Endpoint=" << FormatEndpoint(endpointKey)
 					<< ", PlayerId=" << joinResult.playerId
 					<< ", RoomId=" << joinResult.roomId;
 
@@ -1023,7 +1016,7 @@ namespace server::net
 		{
 			std::ostringstream stream;
 			stream << "Join response sent to existing peer. Endpoint="
-				<< FormatEndpoint(remoteAddress)
+				<< FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
 
@@ -1208,7 +1201,7 @@ namespace server::net
 
 		{
 			std::ostringstream stream;
-			stream << "Peer changed room. Endpoint=" << FormatEndpoint(common::net::MakeSocketAddress(endpointKey))
+			stream << "Peer changed room. Endpoint=" << FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << roomChangeResult.playerId
 				<< ", PreviousRoomId=" << roomChangeResult.previousRoomId
 				<< ", NextRoomId=" << roomChangeResult.nextRoomId;
@@ -1247,7 +1240,7 @@ namespace server::net
 					if (responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded)
 					{
 						const service::AccountLoginAdmissionService::Request admissionRequest{
-							.endpointKey = common::net::MakeEndpointKey(responseTask.remoteAddress),
+							.endpointKey = responseTask.endpointKey,
 							.accountId = responseTask.responsePacket.accountId,
 							.persistentPlayerId = responseTask.persistentPlayerId,
 							.nickname = responseTask.responsePacket.nickname,
@@ -1300,7 +1293,7 @@ namespace server::net
 				}
 			}
 
-			if (packetSender_.SendAccountLoginResponse(responseTask.remoteAddress, responseTask.responsePacket))
+			if (packetSender_.SendAccountLoginResponse(responseTask.endpointKey, responseTask.responsePacket))
 			{
 				continue;
 			}
@@ -1485,7 +1478,7 @@ namespace server::net
 		logger_->Error(message);
 	}
 
-	void UdpServer::LogInvalidPacket(const sockaddr_in& remoteAddress, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult)
+	void UdpServer::LogInvalidPacket(const EndpointKey& endpointKey, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult)
 	{
 		const diagnostics::InvalidPacketLogLimiter::LogDecision logDecision = invalidPacketLogLimiter_.Record(
 			dispatchResult.status,
@@ -1499,7 +1492,7 @@ namespace server::net
 
 		std::ostringstream stream;
 		stream << "Invalid UDP packet dropped. "
-			<< "Endpoint=" << FormatEndpoint(remoteAddress)
+			<< "Endpoint=" << FormatEndpoint(endpointKey)
 			<< ", Reason=" << protocol::UdpPacketDispatcher::ToString(dispatchResult.status)
 			<< ", ActualSize=" << dispatchResult.actualPacketSize;
 

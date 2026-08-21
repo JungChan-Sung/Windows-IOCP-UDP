@@ -1,15 +1,15 @@
 #include "AccountLoginPersistenceIntegrationTests.h"
 
-#include <WinSock2.h>
 #include <Windows.h>
 
+#include <cstdint>
 #include <expected>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
 
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Net/SessionToken.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
@@ -23,34 +23,26 @@
 
 #include <Server/Account/AccountLoginTaskProcessor.h>
 #include <Server/Account/AccountService.h>
-#include <Server/Service/PeerRoomManager.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
 #include <Server/Protocol/AccountPacketMapper.h>
 #include <Server/Service/AccountLoginAdmissionService.h>
 #include <Server/Service/AuthenticatedAccountRegistry.h>
+#include <Server/Service/PeerRoomManager.h>
 
 #include <Tests/DebugTestResult.h>
 
 namespace
 {
-	inline constexpr std::string_view
-		databaseConnectionStringEnvironmentName =
+	inline constexpr std::string_view databaseConnectionStringEnvironmentName =
 		"WINDOWS_IOCP_UDP_TEST_DB_CONNECTION_STRING";
 
-	inline constexpr std::string_view testLoginName =
-		"account_login_persistence_integration_test";
+	inline constexpr std::string_view testLoginName = "account_login_persistence_integration_test";
+	inline constexpr std::string_view testPasswordHash = "account_login_persistence_hash";
+	inline constexpr std::string_view testNickname = "PersistenceLogin";
 
-	inline constexpr std::string_view testPasswordHash =
-		"account_login_persistence_hash";
+	using DeleteAccountResult = std::expected<void, persistence::core::DatabaseError>;
 
-	inline constexpr std::string_view testNickname =
-		"PersistenceLogin";
-
-	using DeleteAccountResult =
-		std::expected<void, persistence::core::DatabaseError>;
-
-	[[nodiscard]]
-	std::optional<std::string> ReadDatabaseConnectionString()
+	[[nodiscard]] std::optional<std::string> ReadDatabaseConnectionString()
 	{
 		const DWORD requiredSize = ::GetEnvironmentVariableA(
 			databaseConnectionStringEnvironmentName.data(),
@@ -80,13 +72,12 @@ namespace
 		return value;
 	}
 
-	[[nodiscard]] sockaddr_in MakeRemoteAddress() noexcept
+	[[nodiscard]] constexpr common::net::EndpointKey MakeEndpointKey() noexcept
 	{
-		sockaddr_in remoteAddress{};
-		remoteAddress.sin_family = AF_INET;
-		remoteAddress.sin_addr.S_un.S_addr = ::htonl(0x7F000001);
-		remoteAddress.sin_port = ::htons(45000);
-		return remoteAddress;
+		return common::net::EndpointKey{
+			.address = 0x7F000001,
+			.port = 45000,
+		};
 	}
 
 	void AddDatabaseFailure(
@@ -109,8 +100,7 @@ namespace
 	{
 		persistence::odbc::OdbcStatement statement;
 
-		const persistence::odbc::OdbcStatement::ExecuteResult
-			prepareResult =
+		const persistence::odbc::OdbcStatement::ExecuteResult prepareResult =
 			statement.Prepare(
 				connection,
 				R"sql(
@@ -125,19 +115,14 @@ WHERE login_name = ?;
 		}
 
 		const persistence::odbc::OdbcStatement::BindResult bindResult =
-			statement.BindInputString(
-				1,
-				loginName
-			);
+			statement.BindInputString(1, loginName);
 
 		if (!bindResult.has_value())
 		{
 			return std::unexpected(bindResult.error());
 		}
 
-		const persistence::odbc::OdbcStatement::ExecuteResult
-			executeResult =
-			statement.Execute();
+		const persistence::odbc::OdbcStatement::ExecuteResult executeResult = statement.Execute();
 
 		if (!executeResult.has_value())
 		{
@@ -154,10 +139,7 @@ WHERE login_name = ?;
 	)
 	{
 		const DeleteAccountResult initialDeleteResult =
-			DeleteAccountByLoginName(
-				cleanupConnection,
-				testLoginName
-			);
+			DeleteAccountByLoginName(cleanupConnection, testLoginName);
 
 		if (!initialDeleteResult.has_value())
 		{
@@ -170,8 +152,7 @@ WHERE login_name = ?;
 			return;
 		}
 
-		const persistence::PersistenceRuntime::CreateAccountResult
-			createAccountResult =
+		const persistence::PersistenceRuntime::CreateAccountResult createAccountResult =
 			persistenceRuntime.CreateAccount(
 				persistence::account::AccountCreateRequest{
 					.loginName = testLoginName,
@@ -191,14 +172,10 @@ WHERE login_name = ?;
 			return;
 		}
 
-		const std::int64_t accountId =
-			createAccountResult->accountId;
+		const std::int64_t accountId = createAccountResult->accountId;
 
-		const persistence::PersistenceRuntime::FindPlayerResult
-			playerBeforeLoginResult =
-			persistenceRuntime.FindPlayerByAccountId(
-				accountId
-			);
+		const persistence::PersistenceRuntime::FindPlayerResult playerBeforeLoginResult =
+			persistenceRuntime.FindPlayerByAccountId(accountId);
 
 		if (!playerBeforeLoginResult.has_value())
 		{
@@ -217,21 +194,11 @@ WHERE login_name = ?;
 			"AccountLoginPersistenceIntegration: player missing before first login"
 		);
 
-		server::account::AccountService accountService(
-			persistenceRuntime
-		);
+		server::account::AccountService accountService(persistenceRuntime);
+		server::account::AccountLoginTaskProcessor taskProcessor(accountService);
+		server::protocol::AccountLoginPacketHandler packetHandler(taskProcessor);
 
-		server::account::AccountLoginTaskProcessor taskProcessor(
-			accountService
-		);
-
-		server::protocol::AccountLoginPacketHandler packetHandler(
-			taskProcessor
-		);
-
-		const server::account::AccountLoginTaskProcessor::StartResult
-			processorStartResult =
-			taskProcessor.Start(1);
+		const server::account::AccountLoginTaskProcessor::StartResult processorStartResult = taskProcessor.Start(1);
 
 		tests::Expect(
 			result,
@@ -241,65 +208,38 @@ WHERE login_name = ?;
 
 		if (!processorStartResult.has_value())
 		{
-			static_cast<void>(
-				DeleteAccountByLoginName(
-					cleanupConnection,
-					testLoginName
-				)
-				);
-
+			static_cast<void>(DeleteAccountByLoginName(cleanupConnection, testLoginName));
 			return;
 		}
 
-		const sockaddr_in remoteAddress =
-			MakeRemoteAddress();
-
-		const common::net::EndpointKey endpointKey =
-			common::net::MakeEndpointKey(remoteAddress);
-
-		const common::time::TimePoint requestTime =
-			common::time::Clock::now();
+		const common::net::EndpointKey endpointKey = MakeEndpointKey();
+		const common::time::TimePoint requestTime = common::time::Clock::now();
 
 		common::packet::AccountLoginRequestPacket requestPacket{};
 		requestPacket.requestId = 3001;
 		requestPacket.loginName = testLoginName;
 		requestPacket.passwordHash = testPasswordHash;
 
-		const server::protocol::AccountLoginPacketHandler::EnqueueStatus
-			enqueueStatus =
-			packetHandler.Enqueue(
-				remoteAddress,
-				requestPacket,
-				requestTime
-			);
+		const server::protocol::AccountLoginPacketHandler::EnqueueStatus enqueueStatus =
+			packetHandler.Enqueue(endpointKey, requestPacket, requestTime);
 
 		tests::Expect(
 			result,
-			enqueueStatus
-			== server::protocol::AccountLoginPacketHandler::EnqueueStatus::Enqueued,
+			enqueueStatus == server::protocol::AccountLoginPacketHandler::EnqueueStatus::Enqueued,
 			"AccountLoginPersistenceIntegration: login request enqueued"
 		);
 
 		taskProcessor.StopAfterDrain();
 
-		if (enqueueStatus
-			!= server::protocol::AccountLoginPacketHandler::EnqueueStatus::Enqueued)
+		if (enqueueStatus != server::protocol::AccountLoginPacketHandler::EnqueueStatus::Enqueued)
 		{
-			static_cast<void>(
-				DeleteAccountByLoginName(
-					cleanupConnection,
-					testLoginName
-				)
-				);
-
+			static_cast<void>(DeleteAccountByLoginName(cleanupConnection, testLoginName));
 			return;
 		}
 
-		const common::time::TimePoint completionTime =
-			requestTime + common::time::Seconds(1);
+		const common::time::TimePoint completionTime = requestTime + common::time::Seconds(1);
 
-		server::protocol::AccountLoginPacketHandler::ResponseTaskList
-			responseTaskList =
+		server::protocol::AccountLoginPacketHandler::ResponseTaskList responseTaskList =
 			packetHandler.ExtractResponseTaskList(completionTime);
 
 		tests::Expect(
@@ -310,14 +250,12 @@ WHERE login_name = ?;
 
 		if (responseTaskList.size() == 1)
 		{
-			server::protocol::AccountLoginPacketHandler::ResponseTask&
-				responseTask =
+			server::protocol::AccountLoginPacketHandler::ResponseTask& responseTask =
 				responseTaskList.front();
 
 			tests::Expect(
 				result,
-				responseTask.taskId
-				!= server::protocol::AccountLoginPacketHandler::invalidTaskId,
+				responseTask.taskId != server::protocol::AccountLoginPacketHandler::invalidTaskId,
 				"AccountLoginPersistenceIntegration: response has task id"
 			);
 
@@ -329,8 +267,13 @@ WHERE login_name = ?;
 
 			tests::Expect(
 				result,
-				responseTask.responsePacket.status
-				== common::packet::AccountLoginResponseStatus::Succeeded,
+				responseTask.endpointKey == endpointKey,
+				"AccountLoginPersistenceIntegration: response endpoint preserved"
+			);
+
+			tests::Expect(
+				result,
+				responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded,
 				"AccountLoginPersistenceIntegration: account login succeeds"
 			);
 
@@ -342,8 +285,7 @@ WHERE login_name = ?;
 
 			tests::Expect(
 				result,
-				responseTask.responsePacket.sessionToken
-				== common::net::invalidSessionToken,
+				responseTask.responsePacket.sessionToken == common::net::invalidSessionToken,
 				"AccountLoginPersistenceIntegration: mapper does not issue session token"
 			);
 
@@ -359,11 +301,8 @@ WHERE login_name = ?;
 				"AccountLoginPersistenceIntegration: persistent player id propagated"
 			);
 
-			const persistence::PersistenceRuntime::FindPlayerResult
-				playerResult =
-				persistenceRuntime.FindPlayerByAccountId(
-					accountId
-				);
+			const persistence::PersistenceRuntime::FindPlayerResult playerResult =
+				persistenceRuntime.FindPlayerByAccountId(accountId);
 
 			if (!playerResult.has_value())
 			{
@@ -385,8 +324,7 @@ WHERE login_name = ?;
 				{
 					tests::Expect(
 						result,
-						(**playerResult).playerId
-						== responseTask.persistentPlayerId,
+						(**playerResult).playerId == responseTask.persistentPlayerId,
 						"AccountLoginPersistenceIntegration: response task player id matches database"
 					);
 
@@ -398,26 +336,19 @@ WHERE login_name = ?;
 				}
 			}
 
-			server::service::AccountLoginAdmissionService
-				admissionService;
-
-			server::service::AuthenticatedAccountRegistry
-				authenticatedAccountRegistry;
-
+			server::service::AccountLoginAdmissionService admissionService;
+			server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
 			server::service::PeerRoomManager peerRoomManager;
 
-			const server::service::AccountLoginAdmissionService::Request
-				admissionRequest{
-					.endpointKey = endpointKey,
-					.accountId = responseTask.responsePacket.accountId,
-					.persistentPlayerId =
-						responseTask.persistentPlayerId,
-					.nickname = responseTask.responsePacket.nickname,
-					.currentTime = completionTime,
+			const server::service::AccountLoginAdmissionService::Request admissionRequest{
+				.endpointKey = endpointKey,
+				.accountId = responseTask.responsePacket.accountId,
+				.persistentPlayerId = responseTask.persistentPlayerId,
+				.nickname = responseTask.responsePacket.nickname,
+				.currentTime = completionTime,
 			};
 
-			const server::service::AccountLoginAdmissionService::Result
-				admissionResult =
+			const server::service::AccountLoginAdmissionService::Result admissionResult =
 				admissionService.Apply(
 					admissionRequest,
 					authenticatedAccountRegistry,
@@ -431,22 +362,17 @@ WHERE login_name = ?;
 
 			tests::Expect(
 				result,
-				admissionResult.status
-				== server::service::AccountLoginAdmissionService
-				::Status::Authenticated,
+				admissionResult.status == server::service::AccountLoginAdmissionService::Status::Authenticated,
 				"AccountLoginPersistenceIntegration: login admitted"
 			);
 
 			tests::Expect(
 				result,
-				common::net::IsValidSessionToken(
-					responseTask.responsePacket.sessionToken
-				),
+				common::net::IsValidSessionToken(responseTask.responsePacket.sessionToken),
 				"AccountLoginPersistenceIntegration: session token issued after admission"
 			);
 
-			const server::service::AuthenticatedAccount*
-				authenticatedAccount =
+			const server::service::AuthenticatedAccount* authenticatedAccount =
 				authenticatedAccountRegistry.Find(endpointKey);
 
 			tests::Expect(
@@ -465,15 +391,13 @@ WHERE login_name = ?;
 
 				tests::Expect(
 					result,
-					authenticatedAccount->persistentPlayerId
-					== responseTask.persistentPlayerId,
+					authenticatedAccount->persistentPlayerId == responseTask.persistentPlayerId,
 					"AccountLoginPersistenceIntegration: registry persistent player id matches"
 				);
 
 				tests::Expect(
 					result,
-					authenticatedAccount->sessionToken
-					== responseTask.responsePacket.sessionToken,
+					authenticatedAccount->sessionToken == responseTask.responsePacket.sessionToken,
 					"AccountLoginPersistenceIntegration: registry session token matches response"
 				);
 			}
@@ -493,28 +417,22 @@ WHERE login_name = ?;
 
 			if (finalized)
 			{
-				const server::protocol::AccountLoginPacketHandler
-					::EnqueueStatus cachedEnqueueStatus =
+				const server::protocol::AccountLoginPacketHandler::EnqueueStatus cachedEnqueueStatus =
 					packetHandler.Enqueue(
-						remoteAddress,
+						endpointKey,
 						requestPacket,
-						completionTime
-						+ common::time::Milliseconds(1)
+						completionTime + common::time::Milliseconds(1)
 					);
 
 				tests::Expect(
 					result,
-					cachedEnqueueStatus
-					== server::protocol::AccountLoginPacketHandler
-					::EnqueueStatus::CachedResponseQueued,
+					cachedEnqueueStatus == server::protocol::AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued,
 					"AccountLoginPersistenceIntegration: duplicate request uses cached response"
 				);
 
-				server::protocol::AccountLoginPacketHandler
-					::ResponseTaskList cachedResponseTaskList =
+				server::protocol::AccountLoginPacketHandler::ResponseTaskList cachedResponseTaskList =
 					packetHandler.ExtractResponseTaskList(
-						completionTime
-						+ common::time::Milliseconds(1)
+						completionTime + common::time::Milliseconds(1)
 					);
 
 				tests::Expect(
@@ -525,16 +443,19 @@ WHERE login_name = ?;
 
 				if (cachedResponseTaskList.size() == 1)
 				{
-					const server::protocol::AccountLoginPacketHandler
-						::ResponseTask& cachedResponseTask =
+					const server::protocol::AccountLoginPacketHandler::ResponseTask& cachedResponseTask =
 						cachedResponseTaskList.front();
 
 					tests::Expect(
 						result,
-						cachedResponseTask.taskId
-						== server::protocol::AccountLoginPacketHandler
-						::invalidTaskId,
+						cachedResponseTask.taskId == server::protocol::AccountLoginPacketHandler::invalidTaskId,
 						"AccountLoginPersistenceIntegration: cached response has no task id"
+					);
+
+					tests::Expect(
+						result,
+						cachedResponseTask.endpointKey == endpointKey,
+						"AccountLoginPersistenceIntegration: cached response endpoint preserved"
 					);
 
 					tests::Expect(
@@ -545,8 +466,7 @@ WHERE login_name = ?;
 
 					tests::Expect(
 						result,
-						cachedResponseTask.responsePacket.sessionToken
-						== responseTask.responsePacket.sessionToken,
+						cachedResponseTask.responsePacket.sessionToken == responseTask.responsePacket.sessionToken,
 						"AccountLoginPersistenceIntegration: cached response preserves session token"
 					);
 				}
@@ -554,10 +474,7 @@ WHERE login_name = ?;
 		}
 
 		const DeleteAccountResult finalDeleteResult =
-			DeleteAccountByLoginName(
-				cleanupConnection,
-				testLoginName
-			);
+			DeleteAccountByLoginName(cleanupConnection, testLoginName);
 
 		if (!finalDeleteResult.has_value())
 		{
@@ -570,11 +487,8 @@ WHERE login_name = ?;
 			return;
 		}
 
-		const persistence::PersistenceRuntime::FindPlayerResult
-			playerAfterDeleteResult =
-			persistenceRuntime.FindPlayerByAccountId(
-				accountId
-			);
+		const persistence::PersistenceRuntime::FindPlayerResult playerAfterDeleteResult =
+			persistenceRuntime.FindPlayerByAccountId(accountId);
 
 		if (!playerAfterDeleteResult.has_value())
 		{
@@ -601,8 +515,7 @@ namespace tests::server
 	{
 		DebugTestResult result{};
 
-		const std::optional<std::string> connectionString =
-			ReadDatabaseConnectionString();
+		const std::optional<std::string> connectionString = ReadDatabaseConnectionString();
 
 		if (!connectionString.has_value())
 		{
@@ -616,8 +529,7 @@ namespace tests::server
 
 		persistence::PersistenceRuntime persistenceRuntime;
 
-		const persistence::PersistenceRuntime::StartResult
-			startResult =
+		const persistence::PersistenceRuntime::StartResult startResult =
 			persistenceRuntime.Start(
 				persistence::PersistenceRuntimeStartConfig{
 					.enabled = true,
@@ -639,8 +551,7 @@ namespace tests::server
 
 		persistence::odbc::OdbcEnvironment cleanupEnvironment;
 
-		const persistence::odbc::OdbcEnvironment::InitializeResult
-			initializeResult =
+		const persistence::odbc::OdbcEnvironment::InitializeResult initializeResult =
 			cleanupEnvironment.Initialize();
 
 		if (!initializeResult.has_value())
@@ -657,8 +568,7 @@ namespace tests::server
 
 		persistence::odbc::OdbcConnection cleanupConnection;
 
-		const persistence::odbc::OdbcConnection::OpenResult
-			openResult =
+		const persistence::odbc::OdbcConnection::OpenResult openResult =
 			cleanupConnection.Open(
 				cleanupEnvironment,
 				persistence::odbc::OdbcConnectionOpenConfig{

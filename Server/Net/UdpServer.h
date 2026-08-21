@@ -143,8 +143,8 @@ namespace server::net
 		[[nodiscard]] protocol::SnapshotBroadcastContext BuildSnapshotBroadcastContext() const;
 
 		void RegisterPacketHandlers();
-		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
-		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const sockaddr_in& remoteAddress, const char* packetData, int packetSize);
+		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const EndpointKey& endpointKey, const char* packetData, int packetSize);
+		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const EndpointKey& endpointKey, const char* packetData, int packetSize);
 
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableGamePacket(
 			common::net::ReliableUdpSession& reliableSession,
@@ -158,15 +158,15 @@ namespace server::net
 			float spawnY
 		);
 
-		void HandleJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet);
-		void HandleInputCommand(const sockaddr_in& remoteAddress, const common::packet::InputCommandPacket& packet);
-		void HandleFireRequest(const sockaddr_in& remoteAddress);
-		void HandleLeaveRequest(const sockaddr_in& remoteAddress);
-		void HandleJoinRoomRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRoomRequestPacket& packet);
-		void HandleAccountLoginRequest(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet);
+		void HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);
+		void HandleInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
+		void HandleFireRequest(const EndpointKey& endpointKey);
+		void HandleLeaveRequest(const EndpointKey& endpointKey);
+		void HandleJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet);
+		void HandleAccountLoginRequest(const EndpointKey& endpointKey, const common::packet::AccountLoginRequestPacket& packet);
 
 		void ProcessReliableResends();
-		void ProcessJoinRequest(const sockaddr_in& remoteAddress, const common::packet::JoinRequestPacket& packet);
+		void ProcessJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);
 		void ProcessInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
 		void ProcessFireRequest(const EndpointKey& endpointKey);
 		void ProcessLeaveRequest(const EndpointKey& endpointKey);
@@ -184,7 +184,7 @@ namespace server::net
 		void LogInfo(std::string_view message) const;
 		void LogWarning(std::string_view message) const;
 		void LogError(std::string_view message) const;
-		void LogInvalidPacket(const sockaddr_in& remoteAddress, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult);
+		void LogInvalidPacket(const EndpointKey& endpointKey, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult);
 		void LogServerStatusIfDue();
 
 		[[nodiscard]] diagnostics::ServerStatusSnapshot BuildServerStatusSnapshot() const;

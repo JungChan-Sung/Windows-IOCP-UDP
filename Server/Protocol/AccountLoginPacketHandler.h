@@ -1,7 +1,5 @@
 #pragma once
 
-#include <WinSock2.h>
-
 #include <atomic>
 #include <cstddef>
 #include <functional>
@@ -11,7 +9,7 @@
 #include <vector>
 
 #include <Common/Identity/IdentityTypes.h>
-#include <Common/Net/Endpoint.h>
+#include <Common/Net/EndpointKey.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -39,7 +37,7 @@ namespace server::protocol
 		struct ResponseTask
 		{
 		public:
-			sockaddr_in remoteAddress{};
+			common::net::EndpointKey endpointKey{};
 			common::packet::AccountLoginResponsePacket responsePacket;
 			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			TaskId taskId = invalidTaskId;
@@ -71,7 +69,6 @@ namespace server::protocol
 		struct PendingRequest
 		{
 		public:
-			sockaddr_in remoteAddress{};
 			RequestKey requestKey{};
 		};
 
@@ -129,7 +126,11 @@ namespace server::protocol
 		AccountLoginPacketHandler& operator=(AccountLoginPacketHandler&&) = delete;
 
 	public:
-		[[nodiscard]] EnqueueStatus Enqueue(const sockaddr_in& remoteAddress, const common::packet::AccountLoginRequestPacket& packet, TimePoint currentTime);
+		[[nodiscard]] EnqueueStatus Enqueue(
+			const common::net::EndpointKey& endpointKey,
+			const common::packet::AccountLoginRequestPacket& packet,
+			TimePoint currentTime
+		);
 
 		[[nodiscard]] ResponseTaskList ExtractResponseTaskList(TimePoint currentTime);
 

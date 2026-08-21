@@ -49,8 +49,8 @@ namespace server::net
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const common::net::EndpointKey> endpointKeyList, const void* packetData, int packetSize);
 		[[nodiscard]] std::size_t BroadcastPacket(std::span<const sockaddr_in> remoteAddressList, const void* packetData, int packetSize);
 
-		[[nodiscard]] bool SendAccountLoginResponse(const sockaddr_in& remoteAddress, const common::packet::AccountLoginResponsePacket& packet);
-		[[nodiscard]] bool SendJoinResponse(const sockaddr_in& remoteAddress, PlayerId playerId, RoomId roomId, float spawnX, float spawnY);
+		[[nodiscard]] bool SendAccountLoginResponse(const common::net::EndpointKey& endpointKey, const common::packet::AccountLoginResponsePacket& packet);
+		[[nodiscard]] bool SendJoinResponse(const common::net::EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, float spawnX, float spawnY);
 		[[nodiscard]] bool SendJoinRoomResponse(const common::net::EndpointKey& endpointKey, RoomId roomId, float spawnX, float spawnY);
 		[[nodiscard]] std::size_t BroadcastPlayerJoined(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId, float x, float y);
 		[[nodiscard]] std::size_t BroadcastPlayerLeft(std::span<const common::net::EndpointKey> endpointKeyList, RoomId roomId, PlayerId playerId);

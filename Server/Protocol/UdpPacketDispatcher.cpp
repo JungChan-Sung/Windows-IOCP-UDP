@@ -66,7 +66,7 @@ namespace server::protocol
 		handlerTable_.insert_or_assign(packetType, std::move(handlerEntry));
 	}
 
-	UdpPacketDispatcher::DispatchResult UdpPacketDispatcher::Dispatch(const sockaddr_in& remoteAddress, const char* packetData, int packetSize) const
+	UdpPacketDispatcher::DispatchResult UdpPacketDispatcher::Dispatch(const EndpointKey& endpointKey, const char* packetData, int packetSize) const
 	{
 		DispatchResult dispatchResult{};
 		dispatchResult.actualPacketSize = packetSize;
@@ -130,14 +130,10 @@ namespace server::protocol
 			return dispatchResult;
 		}
 
-		const PacketProcessResult processResult = handlerEntry.packetProcessor(
-			remoteAddress,
-			packetData,
-			packetSize
-		);
-
+		const PacketProcessResult processResult = handlerEntry.packetProcessor(endpointKey, packetData, packetSize);
 		dispatchResult.status = processResult.status;
 		dispatchResult.detailCode = processResult.detailCode;
+
 		return dispatchResult;
 	}
 }

@@ -854,61 +854,29 @@ namespace server::net
 
 	void UdpServer::ProcessReliableResends()
 	{
-		struct ReliableResendTask
-		{
-		public:
-			EndpointKey endpointKey{};
-			common::packet::PacketBuffer packetBuffer;
-		};
-
-		std::vector<ReliableResendTask> resendTaskList;
-		std::uint64_t giveUpPacketCount = 0;
+		ReliableUdpSessionRegistry::ResendBatch resendBatch{};
 
 		{
 			std::scoped_lock lock(stateMutex_);
-
-			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
-
-			peerRoomManager_.ForEachJoinedPeer(
-				[this, &resendTaskList, &giveUpPacketCount, currentTime](service::PeerState& peerState)
-				{
-					common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(peerState.endpointKey);
-					if (reliableSession == nullptr)
-					{
-						return;
-					}
-
-					common::net::ReliableUdpSession::ResendResult resendResult = reliableSession->ExtractResendResult(currentTime);
-					giveUpPacketCount += static_cast<std::uint64_t>(resendResult.giveUpPacketList.size());
-
-					for (common::net::ReliablePendingPacket& pendingPacket : resendResult.resendPacketList)
-					{
-						ReliableResendTask resendTask{};
-						resendTask.endpointKey = peerState.endpointKey;
-						resendTask.packetBuffer = std::move(pendingPacket.packetBuffer);
-
-						resendTaskList.push_back(std::move(resendTask));
-					}
-				}
-			);
+			resendBatch = reliableUdpSessionRegistry_.ExtractResendBatch(common::time::Clock::now());
 		}
 
-		for (const ReliableResendTask& resendTask : resendTaskList)
+		for (const ReliableUdpSessionRegistry::ResendTask& resendTask : resendBatch.taskList)
 		{
-			packetSender_.SendPacket(
+			static_cast<void>(packetSender_.SendPacket(
 				resendTask.endpointKey,
 				resendTask.packetBuffer.data(),
 				static_cast<int>(resendTask.packetBuffer.size())
-			);
+			));
 		}
 
-		serverMetricsCollector_.AddReliableResendPacketCount(static_cast<std::uint64_t>(resendTaskList.size()));
-		serverMetricsCollector_.AddReliableResendGiveUpPacketCount(giveUpPacketCount);
+		serverMetricsCollector_.AddReliableResendPacketCount(static_cast<std::uint64_t>(resendBatch.taskList.size()));
+		serverMetricsCollector_.AddReliableResendGiveUpPacketCount(static_cast<std::uint64_t>(resendBatch.giveUpPacketCount));
 
-		if (giveUpPacketCount > 0)
+		if (resendBatch.giveUpPacketCount > 0)
 		{
 			std::ostringstream stream;
-			stream << "Reliable resend give-up packets detected. Count=" << giveUpPacketCount;
+			stream << "Reliable resend give-up packets detected. Count=" << resendBatch.giveUpPacketCount;
 			LogWarning(stream.str());
 		}
 	}

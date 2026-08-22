@@ -2,10 +2,14 @@
 
 #include <cstddef>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Packet/PacketBuffer.h>
+#include <Common/Time/TimeTypes.h>
 
 namespace server::net
 {
@@ -13,6 +17,22 @@ namespace server::net
 	{
 	public:
 		using EndpointKey = common::net::EndpointKey;
+
+		struct ResendTask
+		{
+		public:
+			EndpointKey endpointKey{};
+			common::packet::PacketBuffer packetBuffer;
+		};
+
+		using ResendTaskList = std::vector<ResendTask>;
+
+		struct ResendBatch
+		{
+		public:
+			ResendTaskList taskList;
+			std::size_t giveUpPacketCount = 0;
+		};
 
 	private:
 		using SessionTable = std::unordered_map<EndpointKey, common::net::ReliableUdpSession, common::net::EndpointKeyHasher>;
@@ -63,6 +83,27 @@ namespace server::net
 		void Clear() noexcept
 		{
 			sessionTable_.clear();
+		}
+
+		[[nodiscard]] ResendBatch ExtractResendBatch(common::time::TimePoint currentTime)
+		{
+			ResendBatch batch{};
+
+			for (auto& [endpointKey, session] : sessionTable_)
+			{
+				common::net::ReliableUdpSession::ResendResult resendResult = session.ExtractResendResult(currentTime);
+				batch.giveUpPacketCount += resendResult.giveUpPacketList.size();
+
+				for (common::net::ReliablePendingPacket& pendingPacket : resendResult.resendPacketList)
+				{
+					batch.taskList.push_back(ResendTask{
+						.endpointKey = endpointKey,
+						.packetBuffer = std::move(pendingPacket.packetBuffer),
+						});
+				}
+			}
+
+			return batch;
 		}
 
 	public:

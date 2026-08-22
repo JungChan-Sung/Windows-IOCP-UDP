@@ -195,6 +195,58 @@ namespace
 		tests::Expect(result, registry.Find(firstEndpointKey) == nullptr, "ReliableUdpSessionRegistry: first session missing after clear");
 		tests::Expect(result, registry.Find(secondEndpointKey) == nullptr, "ReliableUdpSessionRegistry: second session missing after clear");
 	}
+
+	void RunExtractResendBatchTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(11, 11000);
+
+		common::net::ReliableUdpConfig config{};
+		config.maxPendingPacketCount = 2;
+		config.maxResendCount = 1;
+		config.resendInterval = common::time::Milliseconds(100);
+
+		common::net::ReliableUdpSession& session = registry.Upsert(endpointKey, config);
+
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+		const bool registered = session.RegisterSentPacket(sequence, common::packet::PacketBuffer{ 'A', 'B' }, now);
+
+		tests::Expect(result, registered, "ReliableUdpSessionRegistry: resend packet registered");
+
+		const ReliableUdpSessionRegistry::ResendBatch earlyBatch =
+			registry.ExtractResendBatch(now + common::time::Milliseconds(99));
+
+		tests::Expect(result, earlyBatch.taskList.empty(), "ReliableUdpSessionRegistry: early resend batch empty");
+		tests::Expect(result, earlyBatch.giveUpPacketCount == 0, "ReliableUdpSessionRegistry: early give-up count");
+
+		const ReliableUdpSessionRegistry::ResendBatch resendBatch =
+			registry.ExtractResendBatch(now + common::time::Milliseconds(100));
+
+		tests::Expect(result, resendBatch.taskList.size() == 1, "ReliableUdpSessionRegistry: resend task extracted");
+		tests::Expect(result, resendBatch.giveUpPacketCount == 0, "ReliableUdpSessionRegistry: resend has no give-up");
+
+		if (!resendBatch.taskList.empty())
+		{
+			const ReliableUdpSessionRegistry::ResendTask& task = resendBatch.taskList.front();
+
+			tests::Expect(result, task.endpointKey == endpointKey, "ReliableUdpSessionRegistry: resend endpoint");
+			tests::Expect(
+				result,
+				task.packetBuffer.size() == 2 && task.packetBuffer[0] == 'A' && task.packetBuffer[1] == 'B',
+				"ReliableUdpSessionRegistry: resend packet buffer"
+			);
+		}
+
+		const ReliableUdpSessionRegistry::ResendBatch giveUpBatch =
+			registry.ExtractResendBatch(now + common::time::Milliseconds(200));
+
+		tests::Expect(result, giveUpBatch.taskList.empty(), "ReliableUdpSessionRegistry: give-up batch has no resend");
+		tests::Expect(result, giveUpBatch.giveUpPacketCount == 1, "ReliableUdpSessionRegistry: give-up packet counted");
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: give-up removes pending packet");
+	}
 }
 
 namespace tests::server
@@ -210,6 +262,7 @@ namespace tests::server
 		RunMultipleSessionTest(result);
 		RunRemoveTest(result);
 		RunClearTest(result);
+		RunExtractResendBatchTest(result);
 
 		return result;
 	}

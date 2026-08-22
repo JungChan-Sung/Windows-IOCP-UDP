@@ -239,6 +239,65 @@ namespace tests::net::reliableUdpSessionTest
 			tests::Expect(result, packetView->reliableHeader.sequence == 1, "ReliableUdpSession: outgoing reliable sequence");
 		}
 	}
+
+	void RunProcessReceivedPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		common::net::ReliableUdpPacketView dataPacketView{};
+		dataPacketView.packetHeader.type = common::packet::PacketType::JoinRoomRequest;
+		dataPacketView.reliableHeader.sequence = 10;
+
+		const common::net::ReliableUdpSession::ProcessReceivedPacketResult firstDataResult =
+			session.ProcessReceivedPacket(dataPacketView);
+
+		tests::Expect(
+			result,
+			firstDataResult.status == common::net::ReliableUdpSession::ProcessReceivedPacketStatus::DataReceived,
+			"ReliableUdpSession: received packet reports new data"
+		);
+
+		tests::Expect(result, firstDataResult.ackPacketBuffer.has_value(), "ReliableUdpSession: received data builds ack packet");
+		tests::Expect(result, session.HasReceivedSequence(10), "ReliableUdpSession: received packet updates ack state");
+
+		const common::net::ReliableUdpSession::ProcessReceivedPacketResult duplicateResult =
+			session.ProcessReceivedPacket(dataPacketView);
+
+		tests::Expect(
+			result,
+			duplicateResult.status == common::net::ReliableUdpSession::ProcessReceivedPacketStatus::DuplicateData,
+			"ReliableUdpSession: duplicate packet detected"
+		);
+
+		tests::Expect(result, duplicateResult.ackPacketBuffer.has_value(), "ReliableUdpSession: duplicate packet still builds ack");
+	}
+
+	void RunProcessReceivedAckOnlyPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::time::TimePoint currentTime = common::time::Clock::now();
+		const common::net::ReliableSequence sequence = session.AllocateOutgoingSequence();
+
+		const bool registered = session.RegisterSentPacket(sequence, MakePacketBuffer('A'), currentTime);
+		tests::Expect(result, registered, "ReliableUdpSession: ack-only test packet registered");
+
+		common::net::ReliableUdpPacketView packetView{};
+		packetView.packetHeader.type = common::packet::PacketType::None;
+		packetView.reliableHeader.ackSequence = sequence;
+
+		const common::net::ReliableUdpSession::ProcessReceivedPacketResult processResult =
+			session.ProcessReceivedPacket(packetView);
+
+		tests::Expect(
+			result,
+			processResult.status == common::net::ReliableUdpSession::ProcessReceivedPacketStatus::AckOnlyProcessed,
+			"ReliableUdpSession: ack-only packet processed"
+		);
+
+		tests::Expect(result, !processResult.ackPacketBuffer.has_value(), "ReliableUdpSession: ack-only packet does not build another ack");
+		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSession: ack-only packet removes pending packet");
+	}
 }
 
 namespace tests::net
@@ -256,6 +315,8 @@ namespace tests::net
 		reliableUdpSessionTest::RunResetTest(result);
 		reliableUdpSessionTest::RunConfigureTest(result);
 		reliableUdpSessionTest::RunBuildOutgoingPacketTest(result);
+		reliableUdpSessionTest::RunProcessReceivedPacketTest(result);
+		reliableUdpSessionTest::RunProcessReceivedAckOnlyPacketTest(result);
 
 		return result;
 	}

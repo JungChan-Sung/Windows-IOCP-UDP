@@ -627,6 +627,7 @@ namespace server::net
 	{
 		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
 		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
+		using ProcessStatus = common::net::ReliableUdpSession::ProcessReceivedPacketStatus;
 
 		const std::optional<common::net::ReliableUdpPacketView> packetView = common::net::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
@@ -637,13 +638,13 @@ namespace server::net
 
 		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
 
-		bool isNewReliablePacket = false;
-		std::optional<common::packet::PacketBuffer> ackPacketBuffer;
+		common::net::ReliableUdpSession::ProcessReceivedPacketResult processResult{};
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			if (peerRoomManager_.FindJoinedPeer(endpointKey) == nullptr)
+			common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
+			if (reliableSession == nullptr)
 			{
 				serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
 
@@ -659,56 +660,44 @@ namespace server::net
 				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 			}
 
-			common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
-			if (reliableSession == nullptr)
-			{
-				serverMetricsCollector_.IncrementInvalidReliablePacketCount();
-				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
-			}
-
-			if (isAckOnlyPacket)
-			{
-				const bool ackProcessed = reliableSession->ProcessReceivedAck(packetView->reliableHeader);
-				if (!ackProcessed)
-				{
-					serverMetricsCollector_.IncrementReliableInvalidAckPacketCount();
-				}
-
-				serverMetricsCollector_.IncrementReliableAckOnlyReceivePacketCount();
-			}
-			else
-			{
-				serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
-
-				isNewReliablePacket = reliableSession->ProcessReceivedDataHeader(packetView->reliableHeader);
-				ackPacketBuffer = reliableSession->BuildAckPacket();
-			}
+			processResult = reliableSession->ProcessReceivedPacket(*packetView);
 		}
 
-		if (isAckOnlyPacket)
+		switch (processResult.status)
 		{
+		case ProcessStatus::AckOnlyProcessed:
+			serverMetricsCollector_.IncrementReliableAckOnlyReceivePacketCount();
 			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
+
+		case ProcessStatus::InvalidAck:
+			serverMetricsCollector_.IncrementReliableInvalidAckPacketCount();
+			serverMetricsCollector_.IncrementReliableAckOnlyReceivePacketCount();
+			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
+
+		case ProcessStatus::DataReceived:
+		case ProcessStatus::DuplicateData:
+			serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
+			break;
 		}
 
-		if (ackPacketBuffer.has_value())
+		if (processResult.ackPacketBuffer.has_value())
 		{
-			packetSender_.SendPacket(
+			static_cast<void>(packetSender_.SendPacket(
 				endpointKey,
-				ackPacketBuffer->data(),
-				static_cast<int>(ackPacketBuffer->size())
-			);
+				processResult.ackPacketBuffer->data(),
+				static_cast<int>(processResult.ackPacketBuffer->size())
+			));
 
 			serverMetricsCollector_.IncrementReliableAckOnlySendPacketCount();
 		}
 
-		if (!isNewReliablePacket)
+		if (processResult.status == ProcessStatus::DuplicateData)
 		{
 			serverMetricsCollector_.IncrementReliableDuplicateDropPacketCount();
 			return DispatchResult{ DispatchStatus::Succeeded, packetView->packetHeader.type, packetSize };
 		}
 
-		const std::optional<common::packet::PacketBuffer> gamePacketBuffer =
-			common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
+		const std::optional<common::packet::PacketBuffer> gamePacketBuffer = common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
 		if (!gamePacketBuffer.has_value())
 		{
 			return DispatchResult{ DispatchStatus::InvalidPacketPayload, packetView->packetHeader.type, packetSize };

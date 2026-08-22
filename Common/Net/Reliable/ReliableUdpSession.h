@@ -28,6 +28,21 @@ namespace common::net
 			SendWindowFull,
 		};
 
+		enum class ProcessReceivedPacketStatus
+		{
+			AckOnlyProcessed,
+			InvalidAck,
+			DataReceived,
+			DuplicateData,
+		};
+
+		struct ProcessReceivedPacketResult
+		{
+		public:
+			ProcessReceivedPacketStatus status = ProcessReceivedPacketStatus::AckOnlyProcessed;
+			std::optional<packet::PacketBuffer> ackPacketBuffer;
+		};
+
 	public:
 		using Clock = time::Clock;
 		using TimePoint = time::TimePoint;
@@ -116,10 +131,34 @@ namespace common::net
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
 		}
 
+		[[nodiscard]] ProcessReceivedPacketResult ProcessReceivedPacket(const ReliableUdpPacketView& packetView)
+		{
+			if (packetView.packetHeader.type == packet::PacketType::None)
+			{
+				if (!ProcessReceivedAck(packetView.reliableHeader))
+				{
+					return ProcessReceivedPacketResult{
+						.status = ProcessReceivedPacketStatus::InvalidAck,
+					};
+				}
+
+				return ProcessReceivedPacketResult{
+					.status = ProcessReceivedPacketStatus::AckOnlyProcessed,
+				};
+			}
+
+			const bool isNewPacket = ProcessReceivedDataHeader(packetView.reliableHeader);
+			return ProcessReceivedPacketResult{
+				.status = isNewPacket ? ProcessReceivedPacketStatus::DataReceived : ProcessReceivedPacketStatus::DuplicateData,
+				.ackPacketBuffer = BuildAckPacket(),
+			};
+		}
+
 		[[nodiscard]] bool ProcessReceivedAck(const ReliableUdpPacketHeader& reliableHeader)
 		{
 			return sendWindow_.ProcessAck(reliableHeader.ackSequence, reliableHeader.ackBitfield);
 		}
+
 		[[nodiscard]] bool ProcessReceivedDataHeader(const ReliableUdpPacketHeader& reliableHeader)
 		{
 			const bool isAlreadyReceived = ackTracker_.IsSequenceAcked(reliableHeader.sequence);

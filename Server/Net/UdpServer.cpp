@@ -627,7 +627,7 @@ namespace server::net
 	{
 		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
 		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
-		using ProcessStatus = common::net::ReliableUdpSession::ProcessReceivedPacketStatus;
+		using ProcessStatus = ReliableUdpSessionRegistry::ProcessReceivedPacketStatus;
 
 		const std::optional<common::net::ReliableUdpPacketView> packetView = common::net::ParseReliableUdpPacket(packetData, packetSize);
 		if (!packetView.has_value())
@@ -638,29 +638,27 @@ namespace server::net
 
 		const bool isAckOnlyPacket = packetView->packetHeader.type == common::packet::PacketType::None;
 
-		common::net::ReliableUdpSession::ProcessReceivedPacketResult processResult{};
+		ReliableUdpSessionRegistry::ProcessReceivedPacketResult processResult{};
 
 		{
 			std::scoped_lock lock(stateMutex_);
+			processResult = reliableUdpSessionRegistry_.ProcessReceivedPacket(endpointKey, *packetView);
+		}
 
-			common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
-			if (reliableSession == nullptr)
+		if (processResult.status == ProcessStatus::SessionNotFound)
+		{
+			serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
+
+			if (isAckOnlyPacket)
 			{
-				serverMetricsCollector_.IncrementReliableUnknownPeerPacketCount();
-
-				if (isAckOnlyPacket)
-				{
-					serverMetricsCollector_.IncrementReliableUnknownPeerAckOnlyPacketCount();
-				}
-				else
-				{
-					serverMetricsCollector_.IncrementReliableUnknownPeerDataPacketCount();
-				}
-
-				return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
+				serverMetricsCollector_.IncrementReliableUnknownPeerAckOnlyPacketCount();
+			}
+			else
+			{
+				serverMetricsCollector_.IncrementReliableUnknownPeerDataPacketCount();
 			}
 
-			processResult = reliableSession->ProcessReceivedPacket(*packetView);
+			return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetView->packetHeader.type, packetSize };
 		}
 
 		switch (processResult.status)
@@ -677,6 +675,9 @@ namespace server::net
 		case ProcessStatus::DataReceived:
 		case ProcessStatus::DuplicateData:
 			serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
+			break;
+
+		case ProcessStatus::SessionNotFound:
 			break;
 		}
 
@@ -708,12 +709,6 @@ namespace server::net
 
 	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(const EndpointKey& endpointKey, const service::PeerSessionService::RoomChangeResult& roomChangeResult)
 	{
-		common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
-		if (reliableSession == nullptr)
-		{
-			return std::nullopt;
-		}
-
 		const common::packet::JoinRoomResponsePacket responsePacket = protocol::BuildJoinRoomResponse(roomChangeResult);
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(responsePacket);
 		if (!packetBuffer.has_value())
@@ -721,13 +716,14 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		common::net::ReliableUdpSession::BuildOutgoingPacketResult buildResult = reliableSession->BuildOutgoingPacket(
+		ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult = reliableUdpSessionRegistry_.BuildOutgoingPacket(
+			endpointKey,
 			common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()),
 			common::time::Clock::now()
 		);
 		if (!buildResult.has_value())
 		{
-			if (buildResult.error() == common::net::ReliableUdpSession::BuildOutgoingPacketFailure::SendWindowFull)
+			if (buildResult.error() == ReliableUdpSessionRegistry::BuildOutgoingPacketFailure::SendWindowFull)
 			{
 				serverMetricsCollector_.IncrementReliableSendWindowFullCount();
 			}

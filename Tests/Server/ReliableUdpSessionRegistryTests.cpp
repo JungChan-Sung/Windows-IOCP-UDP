@@ -247,6 +247,49 @@ namespace
 		tests::Expect(result, giveUpBatch.giveUpPacketCount == 1, "ReliableUdpSessionRegistry: give-up packet counted");
 		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: give-up removes pending packet");
 	}
+
+	void RunProcessReceivedPacketTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(12, 12000);
+		const common::net::EndpointKey unknownEndpointKey = MakeEndpointKey(13, 13000);
+
+		static_cast<void>(registry.Upsert(endpointKey, common::net::ReliableUdpConfig{}));
+
+		common::net::ReliableUdpPacketView packetView{};
+		packetView.packetHeader.type = common::packet::PacketType::JoinRoomRequest;
+		packetView.reliableHeader.sequence = 10;
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult firstResult =
+			registry.ProcessReceivedPacket(endpointKey, packetView);
+
+		tests::Expect(
+			result,
+			firstResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::DataReceived,
+			"ReliableUdpSessionRegistry: received packet routed"
+		);
+
+		tests::Expect(result, firstResult.ackPacketBuffer.has_value(), "ReliableUdpSessionRegistry: received packet ack built");
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult duplicateResult =
+			registry.ProcessReceivedPacket(endpointKey, packetView);
+
+		tests::Expect(
+			result,
+			duplicateResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::DuplicateData,
+			"ReliableUdpSessionRegistry: duplicate packet routed"
+		);
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult unknownResult =
+			registry.ProcessReceivedPacket(unknownEndpointKey, packetView);
+
+		tests::Expect(
+			result,
+			unknownResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::SessionNotFound,
+			"ReliableUdpSessionRegistry: unknown endpoint rejected"
+		);
+	}
 }
 
 namespace tests::server
@@ -263,6 +306,7 @@ namespace tests::server
 		RunRemoveTest(result);
 		RunClearTest(result);
 		RunExtractResendBatchTest(result);
+		RunProcessReceivedPacketTest(result);
 
 		return result;
 	}

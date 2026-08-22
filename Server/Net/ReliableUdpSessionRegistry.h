@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <expected>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -17,6 +19,31 @@ namespace server::net
 	{
 	public:
 		using EndpointKey = common::net::EndpointKey;
+
+		enum class ProcessReceivedPacketStatus
+		{
+			SessionNotFound,
+			AckOnlyProcessed,
+			InvalidAck,
+			DataReceived,
+			DuplicateData,
+		};
+
+		struct ProcessReceivedPacketResult
+		{
+		public:
+			ProcessReceivedPacketStatus status = ProcessReceivedPacketStatus::SessionNotFound;
+			std::optional<common::packet::PacketBuffer> ackPacketBuffer;
+		};
+
+		enum class BuildOutgoingPacketFailure
+		{
+			SessionNotFound,
+			InvalidGamePacket,
+			SendWindowFull,
+		};
+
+		using BuildOutgoingPacketResult = std::expected<common::packet::PacketBuffer, BuildOutgoingPacketFailure>;
 
 		struct ResendTask
 		{
@@ -73,6 +100,82 @@ namespace server::net
 		{
 			const auto sessionIterator = sessionTable_.find(endpointKey);
 			return (sessionIterator != sessionTable_.end()) ? &sessionIterator->second : nullptr;
+		}
+
+		[[nodiscard]] ProcessReceivedPacketResult ProcessReceivedPacket(
+			const EndpointKey& endpointKey,
+			const common::net::ReliableUdpPacketView& packetView
+		)
+		{
+			common::net::ReliableUdpSession* session = Find(endpointKey);
+			if (session == nullptr)
+			{
+				return ProcessReceivedPacketResult{
+					.status = ProcessReceivedPacketStatus::SessionNotFound,
+				};
+			}
+
+			common::net::ReliableUdpSession::ProcessReceivedPacketResult sessionResult = session->ProcessReceivedPacket(packetView);
+
+			ProcessReceivedPacketStatus status = ProcessReceivedPacketStatus::SessionNotFound;
+
+			using SessionStatus = common::net::ReliableUdpSession::ProcessReceivedPacketStatus;
+
+			switch (sessionResult.status)
+			{
+			case SessionStatus::AckOnlyProcessed:
+				status = ProcessReceivedPacketStatus::AckOnlyProcessed;
+				break;
+
+			case SessionStatus::InvalidAck:
+				status = ProcessReceivedPacketStatus::InvalidAck;
+				break;
+
+			case SessionStatus::DataReceived:
+				status = ProcessReceivedPacketStatus::DataReceived;
+				break;
+
+			case SessionStatus::DuplicateData:
+				status = ProcessReceivedPacketStatus::DuplicateData;
+				break;
+			}
+
+			return ProcessReceivedPacketResult{
+				.status = status,
+				.ackPacketBuffer = std::move(sessionResult.ackPacketBuffer),
+			};
+		}
+
+		[[nodiscard]] BuildOutgoingPacketResult BuildOutgoingPacket(
+			const EndpointKey& endpointKey,
+			common::packet::ConstPacketSpan serializedGamePacket,
+			common::time::TimePoint currentTime
+		)
+		{
+			common::net::ReliableUdpSession* session = Find(endpointKey);
+			if (session == nullptr)
+			{
+				return std::unexpected(BuildOutgoingPacketFailure::SessionNotFound);
+			}
+
+			common::net::ReliableUdpSession::BuildOutgoingPacketResult buildResult = session->BuildOutgoingPacket(serializedGamePacket, currentTime);
+			if (buildResult.has_value())
+			{
+				return std::move(*buildResult);
+			}
+
+			using SessionFailure = common::net::ReliableUdpSession::BuildOutgoingPacketFailure;
+
+			switch (buildResult.error())
+			{
+			case SessionFailure::InvalidGamePacket:
+				return std::unexpected(BuildOutgoingPacketFailure::InvalidGamePacket);
+
+			case SessionFailure::SendWindowFull:
+				return std::unexpected(BuildOutgoingPacketFailure::SendWindowFull);
+			}
+
+			return std::unexpected(BuildOutgoingPacketFailure::InvalidGamePacket);
 		}
 
 		[[nodiscard]] bool Remove(const EndpointKey& endpointKey)

@@ -17,6 +17,8 @@
 
 namespace server::service
 {
+	class AuthenticatedAccountRegistry;
+
 	class PeerSessionService
 	{
 	public:
@@ -39,6 +41,14 @@ namespace server::service
 			std::string_view nickname;
 		};
 
+		enum class JoinAuthenticatedPeerStatus
+		{
+			Joined,
+			ExistingPeer,
+			Unauthenticated,
+			Rejected,
+		};
+
 		struct JoinResult
 		{
 		public:
@@ -49,6 +59,13 @@ namespace server::service
 			common::identity::PersistentPlayerId persistentPlayerId = 0;
 			RoomId roomId = 0;
 			common::game::SpawnPoint spawnPosition{};
+		};
+
+		struct JoinAuthenticatedPeerResult
+		{
+		public:
+			JoinAuthenticatedPeerStatus status = JoinAuthenticatedPeerStatus::Unauthenticated;
+			JoinResult joinResult{};
 		};
 
 		struct LeaveResult
@@ -84,6 +101,16 @@ namespace server::service
 		PeerSessionService& operator=(PeerSessionService&&) = delete;
 
 	public:
+		[[nodiscard]] JoinAuthenticatedPeerResult JoinAuthenticatedPeer(
+			const EndpointKey& endpointKey,
+			common::net::SessionToken sessionToken,
+			RoomId initialRoomId,
+			AuthenticatedAccountRegistry& authenticatedAccountRegistry,
+			PeerRoomManager& peerRoomManager,
+			game::GameWorld& gameWorld,
+			const common::game::GameRuleConfig& gameRuleConfig,
+			TimePoint currentTime
+		) const;
 		[[nodiscard]] JoinResult JoinPeer(
 			const EndpointKey& endpointKey,
 			const AuthenticatedIdentity& authenticatedIdentity,

@@ -829,65 +829,35 @@ namespace server::net
 
 	void UdpServer::ProcessJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet)
 	{
-		service::PeerSessionService::JoinResult joinResult{};
-		bool hasAuthenticatedIdentity = false;
+		using JoinStatus = service::PeerSessionService::JoinAuthenticatedPeerStatus;
+
+		service::PeerSessionService::JoinAuthenticatedPeerResult authenticatedJoinResult{};
 		bool matchHistoryEntered = true;
 
 		{
 			std::scoped_lock lock(stateMutex_);
 
-			service::PeerSessionService::AuthenticatedIdentity authenticatedIdentity{};
-
-			const service::PeerState* existingPeerState = peerRoomManager_.FindJoinedPeer(endpointKey);
-			if (existingPeerState != nullptr)
+			authenticatedJoinResult = peerSessionService_.JoinAuthenticatedPeer(
+				endpointKey,
+				packet.sessionToken,
+				config_.session.initialRoomId,
+				authenticatedAccountRegistry_,
+				peerRoomManager_,
+				gameWorld_,
+				config_.gameRule,
+				common::time::Clock::now()
+			);
+			if (authenticatedJoinResult.status == JoinStatus::Joined)
 			{
-				// JoinResponse 유실로 인한 기존 참가자의 재요청.
-				// 패킷 토큰은 JoinPeer()에서 PeerState 토큰과 비교한다.
-				authenticatedIdentity.accountId = existingPeerState->accountId;
-				authenticatedIdentity.persistentPlayerId = existingPeerState->persistentPlayerId;
-				authenticatedIdentity.sessionToken = packet.sessionToken;
-				authenticatedIdentity.nickname = existingPeerState->nickname;
+				const service::PeerSessionService::JoinResult& joinResult = authenticatedJoinResult.joinResult;
 
-				hasAuthenticatedIdentity = true;
-			}
-			else
-			{
-				const service::AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry_.Find(endpointKey, packet.sessionToken);
-				if (authenticatedAccount != nullptr)
-				{
-					authenticatedIdentity.accountId = authenticatedAccount->accountId;
-					authenticatedIdentity.persistentPlayerId = authenticatedAccount->persistentPlayerId;
-					authenticatedIdentity.sessionToken = authenticatedAccount->sessionToken;
-					authenticatedIdentity.nickname = authenticatedAccount->nickname;
+				static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp));
 
-					hasAuthenticatedIdentity = true;
-				}
-			}
-
-			if (hasAuthenticatedIdentity)
-			{
-				joinResult = peerSessionService_.JoinPeer(
-					endpointKey,
-					authenticatedIdentity,
-					config_.session.initialRoomId,
-					peerRoomManager_,
-					gameWorld_,
-					config_.gameRule,
-					common::time::Clock::now()
+				matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
+					joinResult.roomId,
+					joinResult.persistentPlayerId,
+					common::time::SystemClock::now()
 				);
-
-				if (joinResult.shouldBroadcastPlayerJoined)
-				{
-					static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp));
-
-					matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
-						joinResult.roomId,
-						joinResult.persistentPlayerId,
-						common::time::SystemClock::now()
-					);
-
-					static_cast<void>(authenticatedAccountRegistry_.Remove(endpointKey));
-				}
 			}
 		}
 
@@ -896,26 +866,23 @@ namespace server::net
 			LogError("Failed to enter player into match history.");
 		}
 
-		if (!hasAuthenticatedIdentity)
+		if (authenticatedJoinResult.status == JoinStatus::Unauthenticated)
 		{
 			std::ostringstream stream;
-			stream << "Unauthenticated join request ignored. Endpoint="
-				<< FormatEndpoint(endpointKey);
-
+			stream << "Unauthenticated join request ignored. Endpoint=" << FormatEndpoint(endpointKey);
 			LogWarning(stream.str());
 			return;
 		}
 
-		if (!joinResult.shouldSendResponse)
+		if (authenticatedJoinResult.status == JoinStatus::Rejected)
 		{
 			std::ostringstream stream;
-			stream << "Join request rejected because the session identity did not match. Endpoint="
-				<< FormatEndpoint(endpointKey);
-
+			stream << "Join request rejected because the session identity did not match. Endpoint=" << FormatEndpoint(endpointKey);
 			LogWarning(stream.str());
 			return;
 		}
 
+		const service::PeerSessionService::JoinResult& joinResult = authenticatedJoinResult.joinResult;
 		const common::packet::JoinResponsePacket responsePacket = protocol::BuildJoinResponse(joinResult);
 		const bool responseSent = SendSerializedPacket(packetSender_, endpointKey, responsePacket);
 		if (!responseSent)
@@ -928,7 +895,7 @@ namespace server::net
 			LogWarning(stream.str());
 		}
 
-		if (joinResult.shouldBroadcastPlayerJoined)
+		if (authenticatedJoinResult.status == JoinStatus::Joined)
 		{
 			{
 				std::ostringstream stream;
@@ -939,21 +906,14 @@ namespace server::net
 				LogInfo(stream.str());
 			}
 
-			BroadcastPlayerJoined(
-				joinResult.roomId,
-				joinResult.playerId,
-				joinResult.spawnPosition.x,
-				joinResult.spawnPosition.y
-			);
-
+			BroadcastPlayerJoined(joinResult.roomId, joinResult.playerId, joinResult.spawnPosition.x, joinResult.spawnPosition.y);
 			return;
 		}
 
 		if (responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response sent to existing peer. Endpoint="
-				<< FormatEndpoint(endpointKey)
+			stream << "Join response sent to existing peer. Endpoint=" << FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
 

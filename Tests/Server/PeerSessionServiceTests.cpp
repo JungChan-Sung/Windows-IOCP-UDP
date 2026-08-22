@@ -11,6 +11,7 @@
 #include <Server/Game/BulletState.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
+#include <Server/Service/AuthenticatedAccountRegistry.h>
 #include <Server/Service/PeerRoomManager.h>
 #include <Server/Service/PeerSessionService.h>
 #include <Server/Service/PeerState.h>
@@ -619,6 +620,193 @@ namespace
 			tests::Expect(result, timedOutPeerList.front().roomId == 1, "PeerSessionService: timeout room id");
 		}
 	}
+
+	void RunJoinAuthenticatedPeerTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(21);
+		const TimePoint now = Clock::now();
+
+		const bool registered = authenticatedAccountRegistry.Upsert(
+			endpointKey,
+			1001,
+			testPersistentPlayerId,
+			testSessionToken,
+			"nickname",
+			now
+		);
+
+		tests::Expect(result, registered, "PeerSessionService: authenticated account registered");
+
+		const server::service::PeerSessionService::JoinAuthenticatedPeerResult joinResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				now
+			);
+
+		tests::Expect(
+			result,
+			joinResult.status == server::service::PeerSessionService::JoinAuthenticatedPeerStatus::Joined,
+			"PeerSessionService: authenticated peer joined"
+		);
+
+		tests::Expect(result, joinResult.joinResult.shouldSendResponse, "PeerSessionService: authenticated join sends response");
+		tests::Expect(result, joinResult.joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: authenticated join broadcasts");
+		tests::Expect(result, authenticatedAccountRegistry.GetCount() == 0, "PeerSessionService: authenticated account consumed");
+		tests::Expect(result, peerRoomManager.GetJoinedPeerCount() == 1, "PeerSessionService: authenticated join creates peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 1, "PeerSessionService: authenticated join creates player");
+	}
+
+	void RunJoinAuthenticatedExistingPeerTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(22);
+		const TimePoint now = Clock::now();
+
+		static_cast<void>(authenticatedAccountRegistry.Upsert(
+			endpointKey,
+			1001,
+			testPersistentPlayerId,
+			testSessionToken,
+			"nickname",
+			now
+		));
+
+		const server::service::PeerSessionService::JoinAuthenticatedPeerResult firstResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				now
+			);
+
+		const server::service::PeerSessionService::JoinAuthenticatedPeerResult retryResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				now + std::chrono::seconds(1)
+			);
+
+		tests::Expect(
+			result,
+			firstResult.status == server::service::PeerSessionService::JoinAuthenticatedPeerStatus::Joined,
+			"PeerSessionService: authenticated existing setup joined"
+		);
+
+		tests::Expect(
+			result,
+			retryResult.status == server::service::PeerSessionService::JoinAuthenticatedPeerStatus::ExistingPeer,
+			"PeerSessionService: authenticated existing peer detected"
+		);
+
+		tests::Expect(result, retryResult.joinResult.shouldSendResponse, "PeerSessionService: existing peer retry sends response");
+		tests::Expect(result, !retryResult.joinResult.shouldBroadcastPlayerJoined, "PeerSessionService: existing peer retry no broadcast");
+	}
+
+	void RunJoinAuthenticatedPeerRejectsUnauthenticatedTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const server::service::PeerSessionService::JoinAuthenticatedPeerResult joinResult =
+			service.JoinAuthenticatedPeer(
+				MakeEndpointKey(23),
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			joinResult.status == server::service::PeerSessionService::JoinAuthenticatedPeerStatus::Unauthenticated,
+			"PeerSessionService: unauthenticated peer rejected"
+		);
+
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: unauthenticated join creates no peer");
+		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: unauthenticated join creates no player");
+	}
+
+	void RunJoinAuthenticatedExistingPeerRejectsTokenMismatchTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(24);
+		const TimePoint now = Clock::now();
+
+		static_cast<void>(authenticatedAccountRegistry.Upsert(
+			endpointKey,
+			1001,
+			testPersistentPlayerId,
+			testSessionToken,
+			"nickname",
+			now
+		));
+
+		static_cast<void>(service.JoinAuthenticatedPeer(
+			endpointKey,
+			testSessionToken,
+			1,
+			authenticatedAccountRegistry,
+			peerRoomManager,
+			gameWorld,
+			gameRuleConfig,
+			now
+		));
+
+		const server::service::PeerSessionService::JoinAuthenticatedPeerResult retryResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				otherSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				now + std::chrono::seconds(1)
+			);
+
+		tests::Expect(
+			result,
+			retryResult.status == server::service::PeerSessionService::JoinAuthenticatedPeerStatus::Rejected,
+			"PeerSessionService: existing peer token mismatch rejected"
+		);
+	}
 }
 
 namespace tests::server
@@ -643,6 +831,10 @@ namespace tests::server
 		RunChangePeerRoomUnknownPeerFailsTest(result);
 		RunChangePeerRoomDeadPlayerFailsTest(result);
 		RunRemoveTimedOutPeersTest(result);
+		RunJoinAuthenticatedPeerTest(result);
+		RunJoinAuthenticatedExistingPeerTest(result);
+		RunJoinAuthenticatedPeerRejectsUnauthenticatedTest(result);
+		RunJoinAuthenticatedExistingPeerRejectsTokenMismatchTest(result);
 
 		return result;
 	}

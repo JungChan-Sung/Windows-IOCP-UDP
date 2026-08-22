@@ -7,8 +7,74 @@
 #include <Common/Game/WeaponRules.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Server/Service/AuthenticatedAccountRegistry.h>
+
 namespace server::service
 {
+	PeerSessionService::JoinAuthenticatedPeerResult PeerSessionService::JoinAuthenticatedPeer(const EndpointKey& endpointKey, common::net::SessionToken sessionToken, RoomId initialRoomId, AuthenticatedAccountRegistry& authenticatedAccountRegistry, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
+	{
+		AuthenticatedIdentity authenticatedIdentity{};
+
+		const PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
+		if (existingPeerState != nullptr)
+		{
+			// JoinResponse 유실 등에 의한 기존 peer의 재요청.
+			// 요청 token은 JoinPeer()에서 기존 PeerState token과 비교한다.
+			authenticatedIdentity.accountId = existingPeerState->accountId;
+			authenticatedIdentity.persistentPlayerId = existingPeerState->persistentPlayerId;
+			authenticatedIdentity.sessionToken = sessionToken;
+			authenticatedIdentity.nickname = existingPeerState->nickname;
+		}
+		else
+		{
+			const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry.Find(endpointKey, sessionToken);
+			if (authenticatedAccount == nullptr)
+			{
+				return JoinAuthenticatedPeerResult{
+					.status = JoinAuthenticatedPeerStatus::Unauthenticated,
+				};
+			}
+
+			authenticatedIdentity.accountId = authenticatedAccount->accountId;
+			authenticatedIdentity.persistentPlayerId = authenticatedAccount->persistentPlayerId;
+			authenticatedIdentity.sessionToken = authenticatedAccount->sessionToken;
+			authenticatedIdentity.nickname = authenticatedAccount->nickname;
+		}
+
+		JoinResult joinResult = JoinPeer(
+			endpointKey,
+			authenticatedIdentity,
+			initialRoomId,
+			peerRoomManager,
+			gameWorld,
+			gameRuleConfig,
+			currentTime
+		);
+
+		if (!joinResult.shouldSendResponse)
+		{
+			return JoinAuthenticatedPeerResult{
+				.status = JoinAuthenticatedPeerStatus::Rejected,
+				.joinResult = joinResult,
+			};
+		}
+
+		if (!joinResult.shouldBroadcastPlayerJoined)
+		{
+			return JoinAuthenticatedPeerResult{
+				.status = JoinAuthenticatedPeerStatus::ExistingPeer,
+				.joinResult = joinResult,
+			};
+		}
+
+		static_cast<void>(authenticatedAccountRegistry.Remove(endpointKey));
+
+		return JoinAuthenticatedPeerResult{
+			.status = JoinAuthenticatedPeerStatus::Joined,
+			.joinResult = joinResult,
+		};
+	}
+
 	PeerSessionService::JoinResult PeerSessionService::JoinPeer(const EndpointKey& endpointKey, const AuthenticatedIdentity& authenticatedIdentity, RoomId initialRoomId, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld, const common::game::GameRuleConfig& gameRuleConfig, TimePoint currentTime) const
 	{
 		JoinResult joinResult{};

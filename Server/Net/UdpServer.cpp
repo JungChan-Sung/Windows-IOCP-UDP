@@ -681,7 +681,7 @@ namespace server::net
 				serverMetricsCollector_.IncrementReliableDataReceivePacketCount();
 
 				isNewReliablePacket = reliableSession->ProcessReceivedDataHeader(packetView->reliableHeader);
-				ackPacketBuffer = BuildReliableAckPacket(*reliableSession);
+				ackPacketBuffer = reliableSession->BuildAckPacket();
 			}
 		}
 
@@ -717,69 +717,14 @@ namespace server::net
 		return packetDispatcher_.Dispatch(endpointKey, gamePacketBuffer->data(), static_cast<int>(gamePacketBuffer->size()));
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableGamePacket(common::net::ReliableUdpSession& reliableSession, common::packet::ConstPacketSpan serializedGamePacket)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(const EndpointKey& endpointKey, const service::PeerSessionService::RoomChangeResult& roomChangeResult)
 	{
-		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(
-			serializedGamePacket.data(),
-			static_cast<int>(serializedGamePacket.size())
-		);
-
-		if (!packetHeader.has_value())
+		common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
+		if (reliableSession == nullptr)
 		{
 			return std::nullopt;
 		}
 
-		if (common::packet::IsReliablePacketHeader(*packetHeader))
-		{
-			return std::nullopt;
-		}
-
-		if (common::packet::GetPacketHeaderProtocolVersion(*packetHeader) != common::packet::protocolVersion)
-		{
-			return std::nullopt;
-		}
-
-		if (static_cast<std::size_t>(packetHeader->size) != serializedGamePacket.size())
-		{
-			return std::nullopt;
-		}
-
-		if (!common::packet::IsReliablePacketType(packetHeader->type))
-		{
-			return std::nullopt;
-		}
-
-		const common::net::ReliableSequence sequence = reliableSession.AllocateOutgoingSequence();
-		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession.BuildOutgoingHeader(sequence);
-
-		const std::optional<common::packet::PacketBuffer> reliablePacketBuffer =
-			common::net::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
-
-		if (!reliablePacketBuffer.has_value())
-		{
-			return std::nullopt;
-		}
-
-		const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
-		if (!reliableSession.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
-		{
-			serverMetricsCollector_.IncrementReliableSendWindowFullCount();
-			return std::nullopt;
-		}
-
-		serverMetricsCollector_.IncrementReliableDataSendPacketCount();
-
-		return reliablePacketBuffer;
-	}
-
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableAckPacket(common::net::ReliableUdpSession& reliableSession)
-	{
-		const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession.BuildOutgoingAckHeader();
-		return common::net::BuildReliableUdpAckPacket(reliableHeader);
-	}
-
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(common::net::ReliableUdpSession& reliableSession, const service::PeerSessionService::RoomChangeResult& roomChangeResult)
-	{
 		const common::packet::JoinRoomResponsePacket responsePacket = protocol::BuildJoinRoomResponse(roomChangeResult);
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(responsePacket);
 		if (!packetBuffer.has_value())
@@ -787,7 +732,23 @@ namespace server::net
 			return std::nullopt;
 		}
 
-		return BuildReliableGamePacket(reliableSession, common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
+		common::net::ReliableUdpSession::BuildOutgoingPacketResult buildResult = reliableSession->BuildOutgoingPacket(
+			common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()),
+			common::time::Clock::now()
+		);
+		if (!buildResult.has_value())
+		{
+			if (buildResult.error() == common::net::ReliableUdpSession::BuildOutgoingPacketFailure::SendWindowFull)
+			{
+				serverMetricsCollector_.IncrementReliableSendWindowFullCount();
+			}
+
+			return std::nullopt;
+		}
+
+		serverMetricsCollector_.IncrementReliableDataSendPacketCount();
+
+		return std::move(*buildResult);
 	}
 
 	void UdpServer::HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet)
@@ -1133,11 +1094,7 @@ namespace server::net
 					currentSystemTime
 				);
 
-				common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
-				if (reliableSession != nullptr)
-				{
-					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(*reliableSession, roomChangeResult);
-				}
+				reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(endpointKey, roomChangeResult);
 			}
 		}
 

@@ -2,13 +2,19 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <expected>
+#include <optional>
 #include <utility>
 
+
+#include <Common/Packet/PacketReliability.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Net/Reliable/ReliableUdpProtocol.h>
 #include <Common/Net/Reliable/ReliableUdpSendWindow.h>
 #include <Common/Packet/PacketBuffer.h>
+#include <Common/Packet/Serialization/PacketSerializationCore.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace common::net
@@ -16,11 +22,19 @@ namespace common::net
 	class ReliableUdpSession
 	{
 	public:
+		enum class BuildOutgoingPacketFailure
+		{
+			InvalidGamePacket,
+			SendWindowFull,
+		};
+
+	public:
 		using Clock = time::Clock;
 		using TimePoint = time::TimePoint;
 		using Duration = time::Duration;
 		using ResendPacketList = ReliableUdpSendWindow::ResendPacketList;
 		using ResendResult = ReliableUdpSendWindow::ResendResult;
+		using BuildOutgoingPacketResult = std::expected<packet::PacketBuffer, BuildOutgoingPacketFailure>;
 
 	private:
 		ReliableAckTracker ackTracker_;
@@ -69,6 +83,34 @@ namespace common::net
 			return reliableHeader;
 		}
 
+		[[nodiscard]] BuildOutgoingPacketResult BuildOutgoingPacket(packet::ConstPacketSpan serializedGamePacket, TimePoint currentTime)
+		{
+			const std::optional<packet::PacketHeader> packetHeader = packet::DeserializePacketHeader(serializedGamePacket.data(), static_cast<int>(serializedGamePacket.size()));
+			if (!packetHeader.has_value()
+				|| packet::IsReliablePacketHeader(*packetHeader)
+				|| packet::GetPacketHeaderProtocolVersion(*packetHeader) != packet::protocolVersion
+				|| static_cast<std::size_t>(packetHeader->size) != serializedGamePacket.size()
+				|| !packet::IsReliablePacketType(packetHeader->type))
+			{
+				return std::unexpected(BuildOutgoingPacketFailure::InvalidGamePacket);
+			}
+
+			const ReliableSequence sequence = AllocateOutgoingSequence();
+			const ReliableUdpPacketHeader reliableHeader = BuildOutgoingHeader(sequence);
+			std::optional<packet::PacketBuffer> reliablePacketBuffer = BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+			if (!reliablePacketBuffer.has_value())
+			{
+				return std::unexpected(BuildOutgoingPacketFailure::InvalidGamePacket);
+			}
+
+			if (!RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+			{
+				return std::unexpected(BuildOutgoingPacketFailure::SendWindowFull);
+			}
+
+			return std::move(*reliablePacketBuffer);
+		}
+
 		[[nodiscard]] bool RegisterSentPacket(ReliableSequence sequence, packet::PacketBuffer packetBuffer, TimePoint sentTime)
 		{
 			return sendWindow_.RegisterSentPacket(sequence, std::move(packetBuffer), sentTime);
@@ -99,6 +141,11 @@ namespace common::net
 			}
 
 			return reliableHeader;
+		}
+
+		[[nodiscard]] std::optional<packet::PacketBuffer> BuildAckPacket() const
+		{
+			return BuildReliableUdpAckPacket(BuildOutgoingAckHeader());
 		}
 
 		[[nodiscard]] ResendResult ExtractResendResult(TimePoint currentTime)

@@ -5,7 +5,10 @@
 
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketBuffer.h>
+#include <Common/Packet/PacketSerialization.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -192,6 +195,50 @@ namespace tests::net::reliableUdpSessionTest
 		const common::net::ReliableUdpSession::ResendResult resendResult = session.ExtractResendResult(now + common::time::Milliseconds(150));
 		tests::Expect(result, resendResult.resendPacketList.size() == 3, "ReliableUdpSession: configured resend interval");
 	}
+
+	void RunBuildOutgoingPacketTest(tests::DebugTestResult& result)
+	{
+		common::net::ReliableUdpSession session;
+
+		const common::packet::JoinRoomResponsePacket packet{
+			.roomId = 1,
+			.spawnX = 10.0F,
+			.spawnY = 20.0F,
+		};
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		tests::Expect(result, packetBuffer.has_value(), "ReliableUdpSession: outgoing game packet serialized");
+
+		if (!packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const common::time::TimePoint currentTime = common::time::Clock::now();
+
+		const common::net::ReliableUdpSession::BuildOutgoingPacketResult buildResult =
+			session.BuildOutgoingPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()), currentTime);
+
+		tests::Expect(result, buildResult.has_value(), "ReliableUdpSession: outgoing reliable packet built");
+		tests::Expect(result, session.GetPendingPacketCount() == 1, "ReliableUdpSession: outgoing packet registered in send window");
+
+		if (!buildResult.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(buildResult->data(), static_cast<int>(buildResult->size()));
+
+		tests::Expect(result, packetView.has_value(), "ReliableUdpSession: outgoing reliable packet parsed");
+
+		if (packetView.has_value())
+		{
+			tests::Expect(result, packetView->packetHeader.type == common::packet::PacketType::JoinRoomResponse,
+				"ReliableUdpSession: outgoing reliable packet type");
+			tests::Expect(result, packetView->reliableHeader.sequence == 1, "ReliableUdpSession: outgoing reliable sequence");
+		}
+	}
 }
 
 namespace tests::net
@@ -208,6 +255,7 @@ namespace tests::net
 		reliableUdpSessionTest::RunExtractResendPacketsTest(result);
 		reliableUdpSessionTest::RunResetTest(result);
 		reliableUdpSessionTest::RunConfigureTest(result);
+		reliableUdpSessionTest::RunBuildOutgoingPacketTest(result);
 
 		return result;
 	}

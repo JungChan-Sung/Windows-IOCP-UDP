@@ -13,7 +13,6 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/Endpoint.h>
-#include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/PacketBuffer.h>
 
 #include <Server/Config/ServerConfig.h>
@@ -146,13 +145,8 @@ namespace server::net
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchPacket(const EndpointKey& endpointKey, const char* packetData, int packetSize);
 		[[nodiscard]] protocol::UdpPacketDispatcher::DispatchResult DispatchReliablePacket(const EndpointKey& endpointKey, const char* packetData, int packetSize);
 
-		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableGamePacket(
-			common::net::ReliableUdpSession& reliableSession,
-			common::packet::ConstPacketSpan serializedGamePacket
-		);
-		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(common::net::ReliableUdpSession& reliableSession);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(
-			common::net::ReliableUdpSession& reliableSession,
+			const EndpointKey& endpointKey,
 			const service::PeerSessionService::RoomChangeResult& roomChangeResult
 		);
 

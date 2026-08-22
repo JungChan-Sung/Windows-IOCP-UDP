@@ -29,6 +29,7 @@
 #include <Server/Config/ServerConfigValidator.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
 #include <Server/Protocol/AccountPacketMapper.h>
+#include <Server/Protocol/GamePacketMapper.h>
 #include <Server/Protocol/PacketPayloadValidator.h>
 
 namespace
@@ -777,14 +778,10 @@ namespace server::net
 		return common::net::BuildReliableUdpAckPacket(reliableHeader);
 	}
 
-	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(common::net::ReliableUdpSession& reliableSession, RoomId roomId, float spawnX, float spawnY)
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableJoinRoomResponse(common::net::ReliableUdpSession& reliableSession, const service::PeerSessionService::RoomChangeResult& roomChangeResult)
 	{
-		common::packet::JoinRoomResponsePacket packet{};
-		packet.roomId = roomId;
-		packet.spawnX = spawnX;
-		packet.spawnY = spawnY;
-
-		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		const common::packet::JoinRoomResponsePacket responsePacket = protocol::BuildJoinRoomResponse(roomChangeResult);
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(responsePacket);
 		if (!packetBuffer.has_value())
 		{
 			return std::nullopt;
@@ -1007,12 +1004,7 @@ namespace server::net
 			return;
 		}
 
-		common::packet::JoinResponsePacket responsePacket{};
-		responsePacket.playerId = joinResult.playerId;
-		responsePacket.roomId = joinResult.roomId;
-		responsePacket.spawnX = joinResult.spawnPosition.x;
-		responsePacket.spawnY = joinResult.spawnPosition.y;
-
+		const common::packet::JoinResponsePacket responsePacket = protocol::BuildJoinResponse(joinResult);
 		const bool responseSent = SendSerializedPacket(packetSender_, endpointKey, responsePacket);
 		if (!responseSent)
 		{
@@ -1178,12 +1170,7 @@ namespace server::net
 				common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(endpointKey);
 				if (reliableSession != nullptr)
 				{
-					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(
-						*reliableSession,
-						roomChangeResult.nextRoomId,
-						roomChangeResult.spawnPosition.x,
-						roomChangeResult.spawnPosition.y
-					);
+					reliableResponsePacketBuffer = BuildReliableJoinRoomResponse(*reliableSession, roomChangeResult);
 				}
 			}
 		}
@@ -1224,11 +1211,7 @@ namespace server::net
 		}
 		else
 		{
-			common::packet::JoinRoomResponsePacket responsePacket{};
-			responsePacket.roomId = roomChangeResult.nextRoomId;
-			responsePacket.spawnX = roomChangeResult.spawnPosition.x;
-			responsePacket.spawnY = roomChangeResult.spawnPosition.y;
-
+			const common::packet::JoinRoomResponsePacket responsePacket = protocol::BuildJoinRoomResponse(roomChangeResult);
 			static_cast<void>(SendSerializedPacket(packetSender_, endpointKey, responsePacket));
 		}
 
@@ -1395,12 +1378,7 @@ namespace server::net
 				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		common::packet::PlayerJoinedPacket packet{};
-		packet.playerId = playerId;
-		packet.roomId = roomId;
-		packet.x = x;
-		packet.y = y;
-
+		const common::packet::PlayerJoinedPacket packet = protocol::BuildPlayerJoined(playerId, roomId, x, y);
 		static_cast<void>(BroadcastSerializedPacket(packetSender_, endpointKeyList, packet));
 	}
 
@@ -1412,10 +1390,7 @@ namespace server::net
 				return peerRoomManager_.BuildRoomEndpointKeyList(roomId);
 			}();
 
-		common::packet::PlayerLeftPacket packet{};
-		packet.playerId = playerId;
-		packet.roomId = roomId;
-
+		const common::packet::PlayerLeftPacket packet = protocol::BuildPlayerLeft(playerId, roomId);
 		static_cast<void>(BroadcastSerializedPacket(packetSender_, endpointKeyList, packet));
 	}
 

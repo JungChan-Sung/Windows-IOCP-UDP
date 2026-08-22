@@ -153,9 +153,7 @@ namespace server::net
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableAckPacket(common::net::ReliableUdpSession& reliableSession);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableJoinRoomResponse(
 			common::net::ReliableUdpSession& reliableSession,
-			RoomId roomId,
-			float spawnX,
-			float spawnY
+			const service::PeerSessionService::RoomChangeResult& roomChangeResult
 		);
 
 		void HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);

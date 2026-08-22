@@ -159,6 +159,9 @@
     <ClCompile Include="Service\PeerRoomManager.cpp">
       <Filter>소스 파일\Service</Filter>
     </ClCompile>
+    <ClCompile Include="Protocol\GamePacketMapper.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\UdpServer.h">
@@ -292,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="Protocol\SnapshotBroadcastContext.h">
       <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\GamePacketMapper.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

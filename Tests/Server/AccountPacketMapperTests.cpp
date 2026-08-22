@@ -153,6 +153,19 @@ namespace tests::server
 			requestId = 1001;
 
 		{
+			const common::packet::AccountLoginResponsePacket response =
+				::server::protocol::BuildAccountLoginServerErrorResponse(requestId);
+
+			ExpectFailureResponse(
+				result,
+				response,
+				requestId,
+				common::packet::AccountLoginResponseStatus::ServerError,
+				"AccountPacketMapper: explicit server error"
+			);
+		}
+
+		{
 			::server::account::LoginAccountResult loginResult =
 				::server::account::AccountLoginRecord{
 					.accountId = 1001,

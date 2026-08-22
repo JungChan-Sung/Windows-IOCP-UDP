@@ -49,7 +49,17 @@ namespace server::protocol
 			return response;
 		}
 
+		return BuildAccountLoginServerErrorResponse(requestId);
+	}
+
+	common::packet::AccountLoginResponsePacket BuildAccountLoginServerErrorResponse(common::packet::AccountLoginRequestId requestId)
+	{
+		common::packet::AccountLoginResponsePacket response{};
+		response.requestId = requestId;
 		response.status = common::packet::AccountLoginResponseStatus::ServerError;
+
+		ClearAccountLoginResponseData(response);
+
 		return response;
 	}
 

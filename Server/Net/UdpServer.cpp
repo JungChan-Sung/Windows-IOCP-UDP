@@ -845,9 +845,7 @@ namespace server::net
 			break;
 		}
 
-		common::packet::AccountLoginResponsePacket responsePacket{};
-		responsePacket.requestId = packet.requestId;
-		responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
+		const common::packet::AccountLoginResponsePacket responsePacket = protocol::BuildAccountLoginServerErrorResponse(packet.requestId);
 		if (!SendSerializedPacket(packetSender_, endpointKey, responsePacket))
 		{
 			LogWarning("Failed to send account login server error response.");
@@ -1301,10 +1299,7 @@ namespace server::net
 				{
 					LogError("Failed to finalize account login response.");
 
-					responseTask.responsePacket.status = common::packet::AccountLoginResponseStatus::ServerError;
-					responseTask.responsePacket.accountId = 0;
-					responseTask.responsePacket.sessionToken = common::net::invalidSessionToken;
-					responseTask.responsePacket.nickname.clear();
+					responseTask.responsePacket = protocol::BuildAccountLoginServerErrorResponse(responseTask.responsePacket.requestId);
 					responseTask.persistentPlayerId = 0;
 				}
 			}

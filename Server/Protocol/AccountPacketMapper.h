@@ -11,6 +11,7 @@ namespace server::protocol
 		common::packet::AccountLoginRequestId requestId, 
 		account::LoginAccountResult loginResult
 	);
+	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginServerErrorResponse(common::packet::AccountLoginRequestId requestId);
 
 	void ApplyAccountLoginAdmissionResult(
 		const service::AccountLoginAdmissionService::Result&

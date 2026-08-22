@@ -290,6 +290,54 @@ namespace
 			"ReliableUdpSessionRegistry: unknown endpoint rejected"
 		);
 	}
+
+	void RunPendingPacketCountTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey firstEndpointKey = MakeEndpointKey(14, 14000);
+		const common::net::EndpointKey secondEndpointKey = MakeEndpointKey(15, 15000);
+
+		const common::net::ReliableUdpConfig config{};
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		common::net::ReliableUdpSession& firstSession = registry.Upsert(firstEndpointKey, config);
+		common::net::ReliableUdpSession& secondSession = registry.Upsert(secondEndpointKey, config);
+
+		const bool firstRegistered = firstSession.RegisterSentPacket(
+			firstSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'A' },
+			now
+		);
+
+		const bool secondRegistered = firstSession.RegisterSentPacket(
+			firstSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'B' },
+			now
+		);
+
+		const bool thirdRegistered = secondSession.RegisterSentPacket(
+			secondSession.AllocateOutgoingSequence(),
+			common::packet::PacketBuffer{ 'C' },
+			now
+		);
+
+		tests::Expect(result, firstRegistered && secondRegistered && thirdRegistered,
+			"ReliableUdpSessionRegistry: pending packets registered");
+
+		tests::Expect(result, registry.GetPendingPacketCount() == 3,
+			"ReliableUdpSessionRegistry: pending packet count aggregated");
+
+		static_cast<void>(registry.Remove(firstEndpointKey));
+
+		tests::Expect(result, registry.GetPendingPacketCount() == 1,
+			"ReliableUdpSessionRegistry: pending packet count updated after remove");
+
+		registry.Clear();
+
+		tests::Expect(result, registry.GetPendingPacketCount() == 0,
+			"ReliableUdpSessionRegistry: pending packet count cleared");
+	}
 }
 
 namespace tests::server
@@ -307,6 +355,7 @@ namespace tests::server
 		RunClearTest(result);
 		RunExtractResendBatchTest(result);
 		RunProcessReceivedPacketTest(result);
+		RunPendingPacketCountTest(result);
 
 		return result;
 	}

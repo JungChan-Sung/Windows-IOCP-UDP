@@ -210,6 +210,18 @@ namespace server::net
 		}
 
 	public:
+		[[nodiscard]] std::size_t GetPendingPacketCount() const noexcept
+		{
+			std::size_t pendingPacketCount = 0;
+
+			for (const auto& [_, session] : sessionTable_)
+			{
+				pendingPacketCount += session.GetPendingPacketCount();
+			}
+
+			return pendingPacketCount;
+		}
+
 		[[nodiscard]] std::size_t GetCount() const noexcept
 		{
 			return sessionTable_.size();

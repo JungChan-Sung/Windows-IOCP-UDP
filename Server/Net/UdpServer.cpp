@@ -1513,21 +1513,7 @@ namespace server::net
 			snapshot.bulletCount = gameWorld_.GetBulletCount();
 			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
 
-			std::size_t reliablePendingPacketCount = 0;
-			peerRoomManager_.ForEachJoinedPeer(
-				[this, &reliablePendingPacketCount](const service::PeerState& peerState)
-				{
-					const common::net::ReliableUdpSession* reliableSession = reliableUdpSessionRegistry_.Find(peerState.endpointKey);
-					if (reliableSession == nullptr)
-					{
-						return;
-					}
-
-					reliablePendingPacketCount += reliableSession->GetPendingPacketCount();
-				}
-			);
-
-			snapshot.reliablePendingPacketCount = reliablePendingPacketCount;
+			snapshot.reliablePendingPacketCount = reliableUdpSessionRegistry_.GetPendingPacketCount();
 		}
 
 		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();

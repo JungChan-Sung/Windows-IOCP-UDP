@@ -8,6 +8,7 @@
 #include <Common/Net/EndpointKey.h>
 #include <Common/Net/SessionToken.h>
 
+#include <Server/Game/BulletState.h>
 #include <Server/Game/GameWorld.h>
 #include <Server/Game/PlayerState.h>
 #include <Server/Service/PeerRoomManager.h>
@@ -241,6 +242,11 @@ namespace
 		const server::service::PeerSessionService::JoinResult joinResult =
 			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, Clock::now());
 
+		gameWorld.AddBullet(server::game::BulletState{
+			.bulletId = gameWorld.AllocateBulletId(),
+			.roomId = 1,
+			});
+
 		const server::service::PeerSessionService::LeaveResult leaveResult =
 			service.LeavePeer(endpointKey, peerRoomManager, gameWorld);
 
@@ -252,6 +258,7 @@ namespace
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 0, "PeerSessionService: leave room count");
 		tests::Expect(result, gameWorld.GetPlayerCount() == 0, "PeerSessionService: leave player count");
 		tests::Expect(result, gameWorld.FindPlayer(joinResult.playerId) == nullptr, "PeerSessionService: leave player removed");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PeerSessionService: leave clears empty room transient state");
 	}
 
 	void RunLeaveUnknownPeerDoesNothingTest(tests::DebugTestResult& result)
@@ -290,6 +297,11 @@ namespace
 			playerState->inputFlags = common::game::InputFlags::Up;
 		}
 
+		gameWorld.AddBullet(server::game::BulletState{
+			.bulletId = gameWorld.AllocateBulletId(),
+			.roomId = 1,
+			});
+
 		const server::service::PeerSessionService::RoomChangeResult changeResult =
 			service.ChangePeerRoom(endpointKey, 2, peerRoomManager, gameWorld, changeTime);
 
@@ -300,6 +312,7 @@ namespace
 		tests::Expect(result, changeResult.nextRoomId == 2, "PeerSessionService: room change next room");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(1) == 0, "PeerSessionService: previous room empty");
 		tests::Expect(result, peerRoomManager.GetRoomMemberCount(2) == 1, "PeerSessionService: next room count");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PeerSessionService: room change clears previous empty room transient state");
 
 		const server::service::PeerState* peerState = peerRoomManager.FindJoinedPeer(endpointKey);
 
@@ -566,6 +579,46 @@ namespace
 			"PeerSessionService: rejected token does not refresh receive time"
 		);
 	}
+
+	void RunRemoveTimedOutPeersTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerSessionService service;
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(20);
+		const TimePoint joinTime = Clock::now();
+
+		const server::service::PeerSessionService::JoinResult joinResult =
+			JoinPeerForTest(service, endpointKey, 1, peerRoomManager, gameWorld, gameRuleConfig, joinTime);
+
+		gameWorld.AddBullet(server::game::BulletState{
+			.bulletId = gameWorld.AllocateBulletId(),
+			.roomId = 1,
+			});
+
+		const server::service::PeerSessionService::TimedOutPeerList timedOutPeerList = service.RemoveTimedOutPeers(
+			joinTime + std::chrono::seconds(10),
+			std::chrono::seconds(5),
+			peerRoomManager,
+			gameWorld
+		);
+
+		tests::Expect(result, timedOutPeerList.size() == 1, "PeerSessionService: timed out peer removed");
+		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PeerSessionService: timeout removes peer");
+		tests::Expect(result, gameWorld.FindPlayer(joinResult.playerId) == nullptr, "PeerSessionService: timeout removes player");
+		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PeerSessionService: timeout clears empty room transient state");
+
+		if (!timedOutPeerList.empty())
+		{
+			tests::Expect(result, timedOutPeerList.front().endpointKey == endpointKey, "PeerSessionService: timeout endpoint");
+			tests::Expect(result, timedOutPeerList.front().playerId == joinResult.playerId, "PeerSessionService: timeout player id");
+			tests::Expect(result, timedOutPeerList.front().persistentPlayerId == testPersistentPlayerId,
+				"PeerSessionService: timeout persistent player id");
+			tests::Expect(result, timedOutPeerList.front().roomId == 1, "PeerSessionService: timeout room id");
+		}
+	}
 }
 
 namespace tests::server
@@ -589,6 +642,7 @@ namespace tests::server
 		RunChangePeerRoomSameRoomFailsTest(result);
 		RunChangePeerRoomUnknownPeerFailsTest(result);
 		RunChangePeerRoomDeadPlayerFailsTest(result);
+		RunRemoveTimedOutPeersTest(result);
 
 		return result;
 	}

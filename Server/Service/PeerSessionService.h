@@ -24,6 +24,10 @@ namespace server::service
 		using RoomId = common::game::RoomId;
 		using EndpointKey = common::net::EndpointKey;
 		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
+
+		using TimedOutPeer = PeerRoomManager::TimedOutPeer;
+		using TimedOutPeerList = PeerRoomManager::TimedOutPeerList;
 
 	public:
 		struct AuthenticatedIdentity
@@ -89,17 +93,19 @@ namespace server::service
 			const common::game::GameRuleConfig& gameRuleConfig,
 			TimePoint currentTime
 		) const;
-		[[nodiscard]] LeaveResult LeavePeer(
-			const EndpointKey& endpointKey,
-			PeerRoomManager& peerRoomManager,
-			game::GameWorld& gameWorld
-		) const;
+		[[nodiscard]] LeaveResult LeavePeer(const EndpointKey& endpointKey, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const;
 		[[nodiscard]] RoomChangeResult ChangePeerRoom(
 			const EndpointKey& endpointKey,
 			RoomId nextRoomId,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld,
 			TimePoint currentTime
+		) const;
+		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(
+			TimePoint currentTime,
+			Duration timeout,
+			PeerRoomManager& peerRoomManager,
+			game::GameWorld& gameWorld
 		) const;
 
 	private:

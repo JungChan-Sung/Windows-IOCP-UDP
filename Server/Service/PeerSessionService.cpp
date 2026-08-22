@@ -96,6 +96,11 @@ namespace server::service
 
 		gameWorld.RemovePlayer(playerId);
 
+		if (peerRoomManager.GetRoomMemberCount(roomId) == 0)
+		{
+			gameWorld.ClearRoomTransientState(roomId);
+		}
+
 		leaveResult.shouldBroadcastPlayerLeft = true;
 		leaveResult.playerId = playerId;
 		leaveResult.persistentPlayerId = persistentPlayerId;
@@ -147,6 +152,11 @@ namespace server::service
 			return changeResult;
 		}
 
+		if (peerRoomManager.GetRoomMemberCount(roomChangeResult.previousRoomId) == 0)
+		{
+			gameWorld.ClearRoomTransientState(roomChangeResult.previousRoomId);
+		}
+
 		const std::size_t joinedRoomMemberCount = peerRoomManager.GetRoomMemberCount(nextRoomId);
 		const std::size_t spawnIndex = (joinedRoomMemberCount > 0) ? joinedRoomMemberCount - 1 : 0;
 
@@ -163,6 +173,22 @@ namespace server::service
 		changeResult.nextRoomId = roomChangeResult.nextRoomId;
 		changeResult.spawnPosition = spawnPosition;
 		return changeResult;
+	}
+
+	PeerSessionService::TimedOutPeerList PeerSessionService::RemoveTimedOutPeers(TimePoint currentTime, Duration timeout, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
+	{
+		TimedOutPeerList timedOutPeerList = peerRoomManager.RemoveTimedOutPeers(currentTime, timeout);
+		for (const TimedOutPeer& timedOutPeer : timedOutPeerList)
+		{
+			gameWorld.RemovePlayer(timedOutPeer.playerId);
+
+			if (peerRoomManager.GetRoomMemberCount(timedOutPeer.roomId) == 0)
+			{
+				gameWorld.ClearRoomTransientState(timedOutPeer.roomId);
+			}
+		}
+
+		return timedOutPeerList;
 	}
 
 	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const common::game::SpawnPoint& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept

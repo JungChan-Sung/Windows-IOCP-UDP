@@ -1010,11 +1010,6 @@ namespace server::net
 					leaveResult.persistentPlayerId,
 					common::time::SystemClock::now()
 				);
-
-				if (peerRoomManager_.GetRoomMemberCount(leaveResult.roomId) == 0)
-				{
-					gameWorld_.ClearRoomTransientState(leaveResult.roomId);
-				}
 			}
 		}
 
@@ -1067,11 +1062,6 @@ namespace server::net
 					roomChangeResult.persistentPlayerId,
 					currentSystemTime
 				);
-
-				if (peerRoomManager_.GetRoomMemberCount(roomChangeResult.previousRoomId) == 0)
-				{
-					gameWorld_.ClearRoomTransientState(roomChangeResult.previousRoomId);
-				}
 
 				nextMatchEntered = matchHistoryTracker_.EnterPlayer(
 					roomChangeResult.nextRoomId,
@@ -1316,9 +1306,11 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			const common::time::TimePoint currentTime = common::time::Clock::now();
-			const std::vector<service::PeerRoomManager::TimedOutPeer> timedOutPeerList = peerRoomManager_.RemoveTimedOutPeers(
+			const service::PeerSessionService::TimedOutPeerList timedOutPeerList = peerSessionService_.RemoveTimedOutPeers(
 				currentTime,
-				config_.session.peerTimeout
+				config_.session.peerTimeout,
+				peerRoomManager_,
+				gameWorld_
 			);
 
 			expiredAuthenticatedAccountCount = authenticatedAccountRegistry_.RemoveExpired(currentTime, config_.session.peerTimeout);
@@ -1342,11 +1334,6 @@ namespace server::net
 				if (!matchHistoryLeft)
 				{
 					++matchHistoryLeaveFailureCount;
-				}
-
-				if (peerRoomManager_.GetRoomMemberCount(timedOutPeer.roomId) == 0)
-				{
-					gameWorld_.ClearRoomTransientState(timedOutPeer.roomId);
 				}
 
 				gameWorld_.RemovePlayer(timedOutPeer.playerId);

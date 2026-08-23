@@ -16,19 +16,19 @@ namespace
 namespace server::protocol
 {
 	common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(
-		common::packet::AccountLoginRequestId requestId, 
-		account::LoginAccountResult loginResult
+		common::packet::AccountLoginRequestId requestId,
+		const account::LoginAccountResult& loginResult
 	)
 	{
 		if (loginResult.has_value())
 		{
-			account::AccountLoginRecord accountLoginRecord = std::move(*loginResult);
+			const account::AccountLoginRecord& accountLoginRecord = *loginResult;
 
 			return common::packet::AccountLoginResponsePacket{
 				.requestId = requestId,
 				.status = common::packet::AccountLoginResponseStatus::Succeeded,
 				.accountId = accountLoginRecord.accountId,
-				.nickname = std::move(accountLoginRecord.nickname),
+				.nickname = accountLoginRecord.nickname,
 			};
 		}
 

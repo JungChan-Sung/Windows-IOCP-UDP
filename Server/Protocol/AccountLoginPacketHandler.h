@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -39,7 +40,7 @@ namespace server::protocol
 		public:
 			common::net::EndpointKey endpointKey{};
 			common::packet::AccountLoginResponsePacket responsePacket;
-			common::identity::PersistentPlayerId persistentPlayerId = 0;
+			std::optional<account::AccountLoginRecord> accountLoginRecord;
 			TaskId taskId = invalidTaskId;
 			bool isLatestRequest = false;
 		};

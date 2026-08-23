@@ -1111,13 +1111,14 @@ namespace server::net
 			{
 				if (responseTask.isLatestRequest)
 				{
-					if (responseTask.responsePacket.status == common::packet::AccountLoginResponseStatus::Succeeded)
+					if (responseTask.accountLoginRecord.has_value())
 					{
+						const account::AccountLoginRecord& accountLoginRecord = *responseTask.accountLoginRecord;
 						const service::AccountLoginAdmissionService::Request admissionRequest{
 							.endpointKey = responseTask.endpointKey,
-							.accountId = responseTask.responsePacket.accountId,
-							.persistentPlayerId = responseTask.persistentPlayerId,
-							.nickname = responseTask.responsePacket.nickname,
+							.accountId = accountLoginRecord.accountId,
+							.persistentPlayerId = accountLoginRecord.persistentPlayerId,
+							.nickname = accountLoginRecord.nickname,
 							.currentTime = currentTime,
 						};
 
@@ -1160,7 +1161,7 @@ namespace server::net
 					LogError("Failed to finalize account login response.");
 
 					responseTask.responsePacket = protocol::BuildAccountLoginServerErrorResponse(responseTask.responsePacket.requestId);
-					responseTask.persistentPlayerId = 0;
+					responseTask.accountLoginRecord.reset();
 				}
 			}
 

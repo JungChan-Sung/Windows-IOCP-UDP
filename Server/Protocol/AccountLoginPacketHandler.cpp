@@ -137,14 +137,18 @@ namespace server::protocol
 				const PendingRequest& pendingRequest = pendingRequestIterator->second;
 				const auto latestRequestIterator = latestRequestTable_.find(pendingRequest.requestKey.endpointKey);
 				const bool isLatestRequest = (latestRequestIterator != latestRequestTable_.end()) && (latestRequestIterator->second.taskId == completion.taskId);
-				const std::int64_t persistentPlayerId = completion.loginResult.has_value() ? completion.loginResult->persistentPlayerId : 0;
+				common::packet::AccountLoginResponsePacket responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, completion.loginResult);
 
-				common::packet::AccountLoginResponsePacket responsePacket = BuildAccountLoginResponse(pendingRequest.requestKey.requestId, std::move(completion.loginResult));
+				std::optional<account::AccountLoginRecord> accountLoginRecord;
+				if (completion.loginResult.has_value())
+				{
+					accountLoginRecord = std::move(*completion.loginResult);
+				}
 
 				responseTaskList.push_back(ResponseTask{
 					.endpointKey = pendingRequest.requestKey.endpointKey,
 					.responsePacket = std::move(responsePacket),
-					.persistentPlayerId = persistentPlayerId,
+					.accountLoginRecord = std::move(accountLoginRecord),
 					.taskId = completion.taskId,
 					.isLatestRequest = isLatestRequest,
 					});

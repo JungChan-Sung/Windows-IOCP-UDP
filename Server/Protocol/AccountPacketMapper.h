@@ -8,8 +8,8 @@
 namespace server::protocol
 {
 	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginResponse(
-		common::packet::AccountLoginRequestId requestId, 
-		account::LoginAccountResult loginResult
+		common::packet::AccountLoginRequestId requestId,
+		const account::LoginAccountResult& loginResult
 	);
 	[[nodiscard]] common::packet::AccountLoginResponsePacket BuildAccountLoginServerErrorResponse(common::packet::AccountLoginRequestId requestId);
 

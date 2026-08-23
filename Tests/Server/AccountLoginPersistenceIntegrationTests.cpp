@@ -250,8 +250,7 @@ WHERE login_name = ?;
 
 		if (responseTaskList.size() == 1)
 		{
-			server::protocol::AccountLoginPacketHandler::ResponseTask& responseTask =
-				responseTaskList.front();
+			server::protocol::AccountLoginPacketHandler::ResponseTask& responseTask = responseTaskList.front();
 
 			tests::Expect(
 				result,
@@ -297,8 +296,8 @@ WHERE login_name = ?;
 
 			tests::Expect(
 				result,
-				responseTask.persistentPlayerId > 0,
-				"AccountLoginPersistenceIntegration: persistent player id propagated"
+				responseTask.accountLoginRecord.has_value(),
+				"AccountLoginPersistenceIntegration: account login record propagated"
 			);
 
 			const persistence::PersistenceRuntime::FindPlayerResult playerResult =
@@ -320,155 +319,180 @@ WHERE login_name = ?;
 					"AccountLoginPersistenceIntegration: persistent player created"
 				);
 
-				if (playerResult->has_value())
+				if (playerResult->has_value() && responseTask.accountLoginRecord.has_value())
 				{
+					const server::account::AccountLoginRecord& accountLoginRecord = *responseTask.accountLoginRecord;
+
 					tests::Expect(
 						result,
-						(**playerResult).playerId == responseTask.persistentPlayerId,
-						"AccountLoginPersistenceIntegration: response task player id matches database"
+						(**playerResult).playerId == accountLoginRecord.persistentPlayerId,
+						"AccountLoginPersistenceIntegration: login record player id matches database"
 					);
 
 					tests::Expect(
 						result,
-						(**playerResult).accountId == accountId,
+						(**playerResult).accountId == accountLoginRecord.accountId,
 						"AccountLoginPersistenceIntegration: persistent player account id matches"
 					);
 				}
 			}
 
-			server::service::AccountLoginAdmissionService admissionService;
-			server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
-			server::service::PeerRoomManager peerRoomManager;
-
-			const server::service::AccountLoginAdmissionService::Request admissionRequest{
-				.endpointKey = endpointKey,
-				.accountId = responseTask.responsePacket.accountId,
-				.persistentPlayerId = responseTask.persistentPlayerId,
-				.nickname = responseTask.responsePacket.nickname,
-				.currentTime = completionTime,
-			};
-
-			const server::service::AccountLoginAdmissionService::Result admissionResult =
-				admissionService.Apply(
-					admissionRequest,
-					authenticatedAccountRegistry,
-					peerRoomManager
-				);
-
-			server::protocol::ApplyAccountLoginAdmissionResult(
-				admissionResult,
-				responseTask.responsePacket
-			);
-
-			tests::Expect(
-				result,
-				admissionResult.status == server::service::AccountLoginAdmissionService::Status::Authenticated,
-				"AccountLoginPersistenceIntegration: login admitted"
-			);
-
-			tests::Expect(
-				result,
-				common::net::IsValidSessionToken(responseTask.responsePacket.sessionToken),
-				"AccountLoginPersistenceIntegration: session token issued after admission"
-			);
-
-			const server::service::AuthenticatedAccount* authenticatedAccount =
-				authenticatedAccountRegistry.Find(endpointKey);
-
-			tests::Expect(
-				result,
-				authenticatedAccount != nullptr,
-				"AccountLoginPersistenceIntegration: authenticated account registered"
-			);
-
-			if (authenticatedAccount != nullptr)
+			if (responseTask.accountLoginRecord.has_value())
 			{
-				tests::Expect(
-					result,
-					authenticatedAccount->accountId == accountId,
-					"AccountLoginPersistenceIntegration: registry account id matches"
-				);
+				const server::account::AccountLoginRecord& accountLoginRecord = *responseTask.accountLoginRecord;
 
 				tests::Expect(
 					result,
-					authenticatedAccount->persistentPlayerId == responseTask.persistentPlayerId,
-					"AccountLoginPersistenceIntegration: registry persistent player id matches"
+					accountLoginRecord.accountId == accountId,
+					"AccountLoginPersistenceIntegration: login record account id matches"
 				);
 
 				tests::Expect(
 					result,
-					authenticatedAccount->sessionToken == responseTask.responsePacket.sessionToken,
-					"AccountLoginPersistenceIntegration: registry session token matches response"
-				);
-			}
-
-			const bool finalized =
-				packetHandler.FinalizeResponse(
-					responseTask.taskId,
-					responseTask.responsePacket,
-					completionTime
+					accountLoginRecord.persistentPlayerId > 0,
+					"AccountLoginPersistenceIntegration: persistent player id propagated"
 				);
 
-			tests::Expect(
-				result,
-				finalized,
-				"AccountLoginPersistenceIntegration: response finalized"
-			);
+				tests::Expect(
+					result,
+					accountLoginRecord.nickname == testNickname,
+					"AccountLoginPersistenceIntegration: login record nickname matches"
+				);
 
-			if (finalized)
-			{
-				const server::protocol::AccountLoginPacketHandler::EnqueueStatus cachedEnqueueStatus =
-					packetHandler.Enqueue(
-						endpointKey,
-						requestPacket,
-						completionTime + common::time::Milliseconds(1)
+				server::service::AccountLoginAdmissionService admissionService;
+				server::service::AuthenticatedAccountRegistry authenticatedAccountRegistry;
+				server::service::PeerRoomManager peerRoomManager;
+
+				const server::service::AccountLoginAdmissionService::Request admissionRequest{
+					.endpointKey = endpointKey,
+					.accountId = accountLoginRecord.accountId,
+					.persistentPlayerId = accountLoginRecord.persistentPlayerId,
+					.nickname = accountLoginRecord.nickname,
+					.currentTime = completionTime,
+				};
+
+				const server::service::AccountLoginAdmissionService::Result admissionResult =
+					admissionService.Apply(
+						admissionRequest,
+						authenticatedAccountRegistry,
+						peerRoomManager
 					);
 
-				tests::Expect(
-					result,
-					cachedEnqueueStatus == server::protocol::AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued,
-					"AccountLoginPersistenceIntegration: duplicate request uses cached response"
+				server::protocol::ApplyAccountLoginAdmissionResult(
+					admissionResult,
+					responseTask.responsePacket
 				);
-
-				server::protocol::AccountLoginPacketHandler::ResponseTaskList cachedResponseTaskList =
-					packetHandler.ExtractResponseTaskList(
-						completionTime + common::time::Milliseconds(1)
-					);
 
 				tests::Expect(
 					result,
-					cachedResponseTaskList.size() == 1,
-					"AccountLoginPersistenceIntegration: cached response extracted"
+					admissionResult.status == server::service::AccountLoginAdmissionService::Status::Authenticated,
+					"AccountLoginPersistenceIntegration: login admitted"
 				);
 
-				if (cachedResponseTaskList.size() == 1)
+				tests::Expect(
+					result,
+					common::net::IsValidSessionToken(responseTask.responsePacket.sessionToken),
+					"AccountLoginPersistenceIntegration: session token issued after admission"
+				);
+
+				const server::service::AuthenticatedAccount* authenticatedAccount =
+					authenticatedAccountRegistry.Find(endpointKey);
+
+				tests::Expect(
+					result,
+					authenticatedAccount != nullptr,
+					"AccountLoginPersistenceIntegration: authenticated account registered"
+				);
+
+				if (authenticatedAccount != nullptr)
 				{
-					const server::protocol::AccountLoginPacketHandler::ResponseTask& cachedResponseTask =
-						cachedResponseTaskList.front();
-
 					tests::Expect(
 						result,
-						cachedResponseTask.taskId == server::protocol::AccountLoginPacketHandler::invalidTaskId,
-						"AccountLoginPersistenceIntegration: cached response has no task id"
+						authenticatedAccount->accountId == accountLoginRecord.accountId,
+						"AccountLoginPersistenceIntegration: registry account id matches"
 					);
 
 					tests::Expect(
 						result,
-						cachedResponseTask.endpointKey == endpointKey,
-						"AccountLoginPersistenceIntegration: cached response endpoint preserved"
+						authenticatedAccount->persistentPlayerId == accountLoginRecord.persistentPlayerId,
+						"AccountLoginPersistenceIntegration: registry persistent player id matches"
 					);
 
 					tests::Expect(
 						result,
-						cachedResponseTask.persistentPlayerId == 0,
-						"AccountLoginPersistenceIntegration: cached response does not repeat server-only player id"
+						authenticatedAccount->sessionToken == responseTask.responsePacket.sessionToken,
+						"AccountLoginPersistenceIntegration: registry session token matches response"
 					);
+				}
+
+				const bool finalized =
+					packetHandler.FinalizeResponse(
+						responseTask.taskId,
+						responseTask.responsePacket,
+						completionTime
+					);
+
+				tests::Expect(
+					result,
+					finalized,
+					"AccountLoginPersistenceIntegration: response finalized"
+				);
+
+				if (finalized)
+				{
+					const server::protocol::AccountLoginPacketHandler::EnqueueStatus cachedEnqueueStatus =
+						packetHandler.Enqueue(
+							endpointKey,
+							requestPacket,
+							completionTime + common::time::Milliseconds(1)
+						);
 
 					tests::Expect(
 						result,
-						cachedResponseTask.responsePacket.sessionToken == responseTask.responsePacket.sessionToken,
-						"AccountLoginPersistenceIntegration: cached response preserves session token"
+						cachedEnqueueStatus == server::protocol::AccountLoginPacketHandler::EnqueueStatus::CachedResponseQueued,
+						"AccountLoginPersistenceIntegration: duplicate request uses cached response"
 					);
+
+					server::protocol::AccountLoginPacketHandler::ResponseTaskList cachedResponseTaskList =
+						packetHandler.ExtractResponseTaskList(
+							completionTime + common::time::Milliseconds(1)
+						);
+
+					tests::Expect(
+						result,
+						cachedResponseTaskList.size() == 1,
+						"AccountLoginPersistenceIntegration: cached response extracted"
+					);
+
+					if (cachedResponseTaskList.size() == 1)
+					{
+						const server::protocol::AccountLoginPacketHandler::ResponseTask& cachedResponseTask =
+							cachedResponseTaskList.front();
+
+						tests::Expect(
+							result,
+							cachedResponseTask.taskId == server::protocol::AccountLoginPacketHandler::invalidTaskId,
+							"AccountLoginPersistenceIntegration: cached response has no task id"
+						);
+
+						tests::Expect(
+							result,
+							cachedResponseTask.endpointKey == endpointKey,
+							"AccountLoginPersistenceIntegration: cached response endpoint preserved"
+						);
+
+						tests::Expect(
+							result,
+							!cachedResponseTask.accountLoginRecord.has_value(),
+							"AccountLoginPersistenceIntegration: cached response does not repeat server-only login record"
+						);
+
+						tests::Expect(
+							result,
+							cachedResponseTask.responsePacket.sessionToken == responseTask.responsePacket.sessionToken,
+							"AccountLoginPersistenceIntegration: cached response preserves session token"
+						);
+					}
 				}
 			}
 		}

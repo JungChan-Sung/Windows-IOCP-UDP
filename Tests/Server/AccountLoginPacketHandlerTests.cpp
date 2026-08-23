@@ -106,7 +106,7 @@ namespace
 
 		tests::Expect(
 			result,
-			responseTask->persistentPlayerId == 0,
+			!responseTask->accountLoginRecord.has_value(),
 			"AccountLoginPacketHandler: invalid request persistent player id cleared"
 		);
 	}
@@ -145,7 +145,7 @@ namespace
 
 		tests::Expect(
 			result,
-			responseTask->persistentPlayerId == 0,
+			!responseTask->accountLoginRecord.has_value(),
 			"AccountLoginPacketHandler: database failure persistent player id cleared"
 		);
 	}

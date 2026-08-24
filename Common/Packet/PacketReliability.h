@@ -28,4 +28,14 @@ namespace common::packet
 	{
 		return GetPacketReliability(packetType) == PacketReliability::Reliable;
 	}
+
+	[[nodiscard]] inline bool IsPacketTransportReliabilityValid(PacketType packetType, bool isReliable) noexcept
+	{
+		if (packetType == PacketType::None)
+		{
+			return isReliable;
+		}
+
+		return IsReliablePacketType(packetType) == isReliable;
+	}
 }

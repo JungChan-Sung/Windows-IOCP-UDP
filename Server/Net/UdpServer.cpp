@@ -614,8 +614,22 @@ namespace server::net
 
 	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchPacket(const EndpointKey& endpointKey, const char* packetData, int packetSize)
 	{
+		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
+		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
+
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
-		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
+		if (!packetHeader.has_value())
+		{
+			return packetDispatcher_.Dispatch(endpointKey, packetData, packetSize);
+		}
+
+		const bool isReliable = common::packet::IsReliablePacketHeader(*packetHeader);
+		if (!common::packet::IsPacketTransportReliabilityValid(packetHeader->type, isReliable))
+		{
+			return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetHeader->type, packetSize };
+		}
+
+		if (isReliable)
 		{
 			return DispatchReliablePacket(endpointKey, packetData, packetSize);
 		}

@@ -159,14 +159,12 @@ namespace common::net
 			return std::nullopt;
 		}
 
-		if (packetHeader.type == packet::PacketType::None)
+		if (!packet::IsPacketTransportReliabilityValid(packetHeader.type, true))
 		{
-			if (packetSize != static_cast<int>(reliableUdpPayloadOffset))
-			{
-				return std::nullopt;
-			}
+			return std::nullopt;
 		}
-		else if (!packet::IsReliablePacketType(packetHeader.type))
+
+		if (packetHeader.type == packet::PacketType::None && packetSize != static_cast<int>(reliableUdpPayloadOffset))
 		{
 			return std::nullopt;
 		}

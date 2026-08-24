@@ -26,6 +26,7 @@
 #include <Common/String/StringFormat.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Server/Account/AccountService.h>
 #include <Server/Config/ServerConfigValidator.h>
 #include <Server/Protocol/AccountLoginPacketHandler.h>
 #include <Server/Protocol/AccountPacketMapper.h>

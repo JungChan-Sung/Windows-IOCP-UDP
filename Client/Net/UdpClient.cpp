@@ -108,6 +108,7 @@ namespace client::net
 
 		world_ = &world;
 		inputSequence_ = 0;
+		leaveResponseReceived_.store(false);
 
 		accountLoginState_.Reset();
 
@@ -152,6 +153,7 @@ namespace client::net
 		if (!isRunning_.exchange(false))
 		{
 			accountLoginState_.Reset();
+			leaveResponseReceived_.store(false);
 			return;
 		}
 
@@ -166,6 +168,7 @@ namespace client::net
 		}
 
 		accountLoginState_.Reset();
+		leaveResponseReceived_.store(false);
 
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();
@@ -275,6 +278,8 @@ namespace client::net
 
 	bool UdpClient::SendLeaveRequest()
 	{
+		leaveResponseReceived_.store(false);
+
 		common::packet::LeaveRequestPacket packet{};
 
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
@@ -500,6 +505,13 @@ namespace client::net
 
 		RegisterTypedPacketHandler(
 			packetDispatcher_,
+			common::packet::PacketType::LeaveResponse,
+			*this,
+			&UdpClient::HandleLeaveResponse
+		);
+
+		RegisterTypedPacketHandler(
+			packetDispatcher_,
 			common::packet::PacketType::JoinRoomResponse,
 			*this,
 			&UdpClient::HandleJoinRoomResponse
@@ -666,6 +678,12 @@ namespace client::net
 		playerJoinedEvent.y = packet.spawnY;
 
 		world_->ApplyPlayerJoinedEvent(playerJoinedEvent);
+	}
+
+	void UdpClient::HandleLeaveResponse(const common::packet::LeaveResponsePacket& packet)
+	{
+		leaveResponseReceived_.store(true);
+		LogInfo("Leave completed by server.");
 	}
 
 	void UdpClient::HandleJoinRoomResponse(const common::packet::JoinRoomResponsePacket& packet)

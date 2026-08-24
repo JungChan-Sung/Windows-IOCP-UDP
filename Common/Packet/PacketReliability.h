@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+
 #include <Common/Packet/PacketType.h>
 
 namespace common::packet
@@ -10,18 +13,44 @@ namespace common::packet
 		Reliable,
 	};
 
+	inline constexpr auto packetReliabilityTable = std::to_array<PacketReliability>({
+		PacketReliability::Unreliable,	// None
+
+		PacketReliability::Unreliable,	// JoinRequest
+		PacketReliability::Unreliable,	// JoinResponse
+
+		PacketReliability::Unreliable,	// InputCommand
+		PacketReliability::Unreliable,	// FireRequest
+
+		PacketReliability::Reliable,	// LeaveRequest
+
+		PacketReliability::Reliable,	// JoinRoomRequest
+		PacketReliability::Reliable,	// JoinRoomResponse
+
+		PacketReliability::Unreliable,	// PlayerJoined
+		PacketReliability::Unreliable,	// PlayerLeft
+
+		PacketReliability::Unreliable,	// PlayerSnapshot
+		PacketReliability::Unreliable,	// BulletSnapshot
+		PacketReliability::Unreliable,	// ImpactEffect
+
+		PacketReliability::Unreliable,	// AccountLoginRequest
+		PacketReliability::Unreliable,	// AccountLoginResponse
+
+		PacketReliability::Reliable,	// LeaveResponse
+		});
+
+	static_assert(packetReliabilityTable.size() == static_cast<std::size_t>(PacketType::Count));
+
 	[[nodiscard]] inline PacketReliability GetPacketReliability(PacketType packetType) noexcept
 	{
-		switch (packetType)
+		const std::size_t index = static_cast<std::size_t>(packetType);
+		if (index >= packetReliabilityTable.size())
 		{
-		case PacketType::JoinRoomRequest:
-		case PacketType::JoinRoomResponse:
-		case PacketType::LeaveRequest:
-			return PacketReliability::Reliable;
-
-		default:
 			return PacketReliability::Unreliable;
 		}
+
+		return packetReliabilityTable[index];
 	}
 
 	[[nodiscard]] inline bool IsReliablePacketType(PacketType packetType) noexcept

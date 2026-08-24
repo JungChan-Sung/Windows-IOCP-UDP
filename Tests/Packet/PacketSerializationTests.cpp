@@ -214,10 +214,16 @@ namespace
 		}
 
 		tests::Expect(result, deserializedPacket->header.size == expectedSize, std::string(testName) + ": header size");
-		tests::Expect(result, deserializedPacket->header.type == common::packet::PacketCodec<TPacket>::packetType,
-			std::string(testName) + ": header type");
-		tests::Expect(result, deserializedPacket->header.version == common::packet::protocolVersion,
-			std::string(testName) + ": header version");
+		tests::Expect(
+			result,
+			deserializedPacket->header.type == common::packet::PacketCodec<TPacket>::packetType,
+			std::string(testName) + ": header type"
+		);
+		tests::Expect(
+			result,
+			deserializedPacket->header.version == common::packet::protocolVersion,
+			std::string(testName) + ": header version"
+		);
 
 		return deserializedPacket;
 	}
@@ -230,36 +236,20 @@ namespace
 			packet.loginName = "한글계정";
 			packet.passwordHash = "password_hash";
 
-			const std::optional<common::packet::AccountLoginRequestPacket> roundTripPacket
-				= RoundTrip(result, packet, "AccountLoginRequest");
+			const std::optional<common::packet::AccountLoginRequestPacket> roundTripPacket = RoundTrip(result, packet, "AccountLoginRequest");
 
 			if (roundTripPacket.has_value())
 			{
-				tests::Expect(
-					result,
-					roundTripPacket->requestId == packet.requestId,
-					"AccountLoginRequest: requestId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->loginName == packet.loginName,
-					"AccountLoginRequest: loginName"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->passwordHash == packet.passwordHash,
-					"AccountLoginRequest: passwordHash"
-				);
+				tests::Expect(result, roundTripPacket->requestId == packet.requestId, "AccountLoginRequest: requestId");
+				tests::Expect(result, roundTripPacket->loginName == packet.loginName, "AccountLoginRequest: loginName");
+				tests::Expect(result, roundTripPacket->passwordHash == packet.passwordHash, "AccountLoginRequest: passwordHash");
 			}
 		}
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
 			packet.requestId = 1002;
-			packet.status
-				= common::packet::AccountLoginResponseStatus::Succeeded;
+			packet.status = common::packet::AccountLoginResponseStatus::Succeeded;
 			packet.accountId = 1234567890123;
 			packet.sessionToken = {
 				.high = 0x1122334455667788ULL,
@@ -267,104 +257,52 @@ namespace
 			};
 			packet.nickname = "한글별명";
 
-			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket
-				= RoundTrip(result, packet, "AccountLoginResponse");
+			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket = RoundTrip(result, packet, "AccountLoginResponse");
 
 			if (roundTripPacket.has_value())
 			{
-				tests::Expect(
-					result,
-					roundTripPacket->requestId == packet.requestId,
-					"AccountLoginResponse: requestId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->status == packet.status,
-					"AccountLoginResponse: status"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->accountId == packet.accountId,
-					"AccountLoginResponse: accountId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->sessionToken == packet.sessionToken,
-					"AccountLoginResponse: sessionToken"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->nickname == packet.nickname,
-					"AccountLoginResponse: nickname"
-				);
+				tests::Expect(result, roundTripPacket->requestId == packet.requestId, "AccountLoginResponse: requestId");
+				tests::Expect(result, roundTripPacket->status == packet.status, "AccountLoginResponse: status");
+				tests::Expect(result, roundTripPacket->accountId == packet.accountId, "AccountLoginResponse: accountId");
+				tests::Expect(result, roundTripPacket->sessionToken == packet.sessionToken, "AccountLoginResponse: sessionToken");
+				tests::Expect(result, roundTripPacket->nickname == packet.nickname, "AccountLoginResponse: nickname");
 			}
 		}
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
 			packet.requestId = 1003;
-			packet.status
-				= common::packet::AccountLoginResponseStatus
-				::InvalidCredentials;
+			packet.status = common::packet::AccountLoginResponseStatus::InvalidCredentials;
 
-			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket
-				= RoundTrip(
-					result,
-					packet,
-					"AccountLoginInvalidCredentialsResponse"
-				);
+			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket =
+				RoundTrip(result, packet, "AccountLoginInvalidCredentialsResponse");
 
 			if (roundTripPacket.has_value())
 			{
+				tests::Expect(result, roundTripPacket->requestId == packet.requestId, "AccountLoginResponse: invalid credentials requestId");
 				tests::Expect(
 					result,
-					roundTripPacket->requestId == packet.requestId,
-					"AccountLoginResponse: invalid credentials requestId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->status
-					== common::packet::AccountLoginResponseStatus
-					::InvalidCredentials,
+					roundTripPacket->status == common::packet::AccountLoginResponseStatus::InvalidCredentials,
 					"AccountLoginResponse: invalid credentials status"
 				);
-
+				tests::Expect(result, roundTripPacket->accountId == 0, "AccountLoginResponse: failed accountId");
 				tests::Expect(
 					result,
-					roundTripPacket->accountId == 0,
-					"AccountLoginResponse: failed accountId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->sessionToken
-					== common::net::invalidSessionToken,
+					roundTripPacket->sessionToken == common::net::invalidSessionToken,
 					"AccountLoginResponse: invalid credentials session token"
 				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->nickname.empty(),
-					"AccountLoginResponse: failed nickname"
-				);
+				tests::Expect(result, roundTripPacket->nickname.empty(), "AccountLoginResponse: failed nickname");
 			}
 		}
 
 		{
 			common::packet::AccountLoginResponsePacket packet{};
 			packet.requestId = 1004;
-			packet.status
-				= common::packet::AccountLoginResponseStatus::Succeeded;
+			packet.status = common::packet::AccountLoginResponseStatus::Succeeded;
 			packet.accountId = 1;
 			packet.nickname = "nickname";
 
-			const std::optional<common::packet::PacketBuffer> serializedPacket
-				= common::packet::SerializePacket(packet);
+			const std::optional<common::packet::PacketBuffer> serializedPacket = common::packet::SerializePacket(packet);
 
 			tests::Expect(
 				result,
@@ -375,18 +313,12 @@ namespace
 			if (serializedPacket.has_value())
 			{
 				common::packet::PacketBuffer invalidPacket = *serializedPacket;
+				const std::size_t statusOffset = common::packet::serializedPacketHeaderSize + common::packet::uint64WireSize;
 
-				const std::size_t statusOffset
-					= common::packet::serializedPacketHeaderSize
-					+ common::packet::uint64WireSize;
+				invalidPacket[statusOffset] = static_cast<char>(0xFF);
 
-				invalidPacket[statusOffset]
-					= static_cast<char>(0xFF);
-
-				const std::optional<common::packet::AccountLoginResponsePacket> deserializedPacket
-					= common::packet::DeserializePacket<
-					common::packet::AccountLoginResponsePacket
-					>(
+				const std::optional<common::packet::AccountLoginResponsePacket> deserializedPacket =
+					common::packet::DeserializePacket<common::packet::AccountLoginResponsePacket>(
 						invalidPacket.data(),
 						static_cast<int>(invalidPacket.size())
 					);
@@ -402,18 +334,10 @@ namespace
 		{
 			common::packet::AccountLoginResponsePacket packet{};
 			packet.requestId = 1005;
-			packet.status
-				= common::packet::AccountLoginResponseStatus
-				::AlreadyLoggedIn;
+			packet.status = common::packet::AccountLoginResponseStatus::AlreadyLoggedIn;
 
-			const std::optional<
-				common::packet::AccountLoginResponsePacket
-			> roundTripPacket
-				= RoundTrip(
-					result,
-					packet,
-					"AccountLoginAlreadyLoggedInResponse"
-				);
+			const std::optional<common::packet::AccountLoginResponsePacket> roundTripPacket =
+				RoundTrip(result, packet, "AccountLoginAlreadyLoggedInResponse");
 
 			tests::Expect(
 				result,
@@ -423,40 +347,19 @@ namespace
 
 			if (roundTripPacket.has_value())
 			{
+				tests::Expect(result, roundTripPacket->requestId == packet.requestId, "AccountLoginResponse: already logged in requestId");
 				tests::Expect(
 					result,
-					roundTripPacket->requestId
-					== packet.requestId,
-					"AccountLoginResponse: already logged in requestId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->status
-					== common::packet::
-					AccountLoginResponseStatus
-					::AlreadyLoggedIn,
+					roundTripPacket->status == common::packet::AccountLoginResponseStatus::AlreadyLoggedIn,
 					"AccountLoginResponse: already logged in status"
 				);
-
+				tests::Expect(result, roundTripPacket->accountId == 0, "AccountLoginResponse: already logged in accountId");
 				tests::Expect(
 					result,
-					roundTripPacket->accountId == 0,
-					"AccountLoginResponse: already logged in accountId"
-				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->sessionToken
-					== common::net::invalidSessionToken,
+					roundTripPacket->sessionToken == common::net::invalidSessionToken,
 					"AccountLoginResponse: already logged in session token"
 				);
-
-				tests::Expect(
-					result,
-					roundTripPacket->nickname.empty(),
-					"AccountLoginResponse: already logged in nickname"
-				);
+				tests::Expect(result, roundTripPacket->nickname.empty(), "AccountLoginResponse: already logged in nickname");
 			}
 		}
 	}
@@ -469,16 +372,13 @@ namespace
 				.high = 0x1234567890ABCDEFULL,
 				.low = 0xFEDCBA0987654321ULL,
 			};
+
 			const std::optional<common::packet::JoinRequestPacket> roundTripPacket = RoundTrip(result, packet, "JoinRequest");
 			tests::Expect(result, roundTripPacket.has_value(), "JoinRequest: roundtrip");
 
 			if (roundTripPacket.has_value())
 			{
-				tests::Expect(
-					result,
-					roundTripPacket->sessionToken == packet.sessionToken,
-					"JoinRequest: sessionToken"
-				);
+				tests::Expect(result, roundTripPacket->sessionToken == packet.sessionToken, "JoinRequest: sessionToken");
 			}
 		}
 
@@ -490,6 +390,7 @@ namespace
 			packet.spawnY = 240.25F;
 
 			const std::optional<common::packet::JoinResponsePacket> roundTripPacket = RoundTrip(result, packet, "JoinResponse");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "JoinResponse: playerId");
@@ -505,6 +406,7 @@ namespace
 			packet.inputFlags = common::game::InputFlags::Up | common::game::InputFlags::Left;
 
 			const std::optional<common::packet::InputCommandPacket> roundTripPacket = RoundTrip(result, packet, "InputCommand");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->inputSequence == packet.inputSequence, "InputCommand: inputSequence");
@@ -514,14 +416,23 @@ namespace
 
 		{
 			common::packet::FireRequestPacket packet{};
+
 			const std::optional<common::packet::FireRequestPacket> roundTripPacket = RoundTrip(result, packet, "FireRequest");
 			tests::Expect(result, roundTripPacket.has_value(), "FireRequest: roundtrip");
 		}
 
 		{
 			common::packet::LeaveRequestPacket packet{};
+
 			const std::optional<common::packet::LeaveRequestPacket> roundTripPacket = RoundTrip(result, packet, "LeaveRequest");
 			tests::Expect(result, roundTripPacket.has_value(), "LeaveRequest: roundtrip");
+		}
+
+		{
+			common::packet::LeaveResponsePacket packet{};
+
+			const std::optional<common::packet::LeaveResponsePacket> roundTripPacket = RoundTrip(result, packet, "LeaveResponse");
+			tests::Expect(result, roundTripPacket.has_value(), "LeaveResponse: roundtrip");
 		}
 
 		{
@@ -529,6 +440,7 @@ namespace
 			packet.roomId = 3;
 
 			const std::optional<common::packet::JoinRoomRequestPacket> roundTripPacket = RoundTrip(result, packet, "JoinRoomRequest");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomRequest: roomId");
@@ -542,6 +454,7 @@ namespace
 			packet.spawnY = 400.0F;
 
 			const std::optional<common::packet::JoinRoomResponsePacket> roundTripPacket = RoundTrip(result, packet, "JoinRoomResponse");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->roomId == packet.roomId, "JoinRoomResponse: roomId");
@@ -558,6 +471,7 @@ namespace
 			packet.y = 20.0F;
 
 			const std::optional<common::packet::PlayerJoinedPacket> roundTripPacket = RoundTrip(result, packet, "PlayerJoined");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerJoined: playerId");
@@ -573,6 +487,7 @@ namespace
 			packet.roomId = 2;
 
 			const std::optional<common::packet::PlayerLeftPacket> roundTripPacket = RoundTrip(result, packet, "PlayerLeft");
+
 			if (roundTripPacket.has_value())
 			{
 				tests::Expect(result, roundTripPacket->playerId == packet.playerId, "PlayerLeft: playerId");
@@ -612,6 +527,7 @@ namespace
 		packet.players[1].deathCount = 5;
 
 		const std::optional<common::packet::PlayerSnapshotPacket> roundTripPacket = RoundTrip(result, packet, "PlayerSnapshot");
+
 		if (!roundTripPacket.has_value())
 		{
 			return;
@@ -619,19 +535,20 @@ namespace
 
 		tests::Expect(result, roundTripPacket->serverTick == packet.serverTick, "PlayerSnapshot: serverTick");
 		tests::Expect(result, roundTripPacket->roomId == packet.roomId, "PlayerSnapshot: roomId");
-		tests::Expect(result, roundTripPacket->lastProcessedInputSequence == packet.lastProcessedInputSequence,
-			"PlayerSnapshot: lastProcessedInputSequence");
+		tests::Expect(
+			result,
+			roundTripPacket->lastProcessedInputSequence == packet.lastProcessedInputSequence,
+			"PlayerSnapshot: lastProcessedInputSequence"
+		);
 		tests::Expect(result, roundTripPacket->playerCount == packet.playerCount, "PlayerSnapshot: playerCount");
 
 		for (std::size_t index = 0; index < packet.playerCount; ++index)
 		{
-			tests::Expect(result, roundTripPacket->players[index].playerId == packet.players[index].playerId,
-				"PlayerSnapshot: playerId");
+			tests::Expect(result, roundTripPacket->players[index].playerId == packet.players[index].playerId, "PlayerSnapshot: playerId");
 			tests::Expect(result, roundTripPacket->players[index].x == packet.players[index].x, "PlayerSnapshot: x");
 			tests::Expect(result, roundTripPacket->players[index].y == packet.players[index].y, "PlayerSnapshot: y");
 			tests::Expect(result, roundTripPacket->players[index].hp == packet.players[index].hp, "PlayerSnapshot: hp");
-			tests::Expect(result, roundTripPacket->players[index].isDead == packet.players[index].isDead,
-				"PlayerSnapshot: isDead");
+			tests::Expect(result, roundTripPacket->players[index].isDead == packet.players[index].isDead, "PlayerSnapshot: isDead");
 		}
 	}
 
@@ -653,6 +570,7 @@ namespace
 		packet.bullets[1].y = 44.0F;
 
 		const std::optional<common::packet::BulletSnapshotPacket> roundTripPacket = RoundTrip(result, packet, "BulletSnapshot");
+
 		if (!roundTripPacket.has_value())
 		{
 			return;
@@ -685,6 +603,7 @@ namespace
 		packet.effects[1].y = 88.0F;
 
 		const std::optional<common::packet::ImpactEffectPacket> roundTripPacket = RoundTrip(result, packet, "ImpactEffect");
+
 		if (!roundTripPacket.has_value())
 		{
 			return;
@@ -718,8 +637,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			buffer.pop_back();
 
-			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::JoinResponsePacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: truncated rejected");
 		}
@@ -728,8 +647,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			WriteUInt16ToBuffer(buffer, 0, static_cast<std::uint16_t>(buffer.size() + 1));
 
-			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::JoinResponsePacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong size rejected");
 		}
@@ -738,8 +657,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			WriteUInt16ToBuffer(buffer, 2, static_cast<std::uint16_t>(common::packet::PacketType::FireRequest));
 
-			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::JoinResponsePacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong type rejected");
 		}
@@ -748,8 +667,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			WriteUInt16ToBuffer(buffer, 4, common::packet::protocolVersion + 1);
 
-			const std::optional<common::packet::JoinResponsePacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::JoinResponsePacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::JoinResponsePacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidPacket: wrong version rejected");
 		}
@@ -783,8 +702,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			WriteUInt16ToBuffer(buffer, playerCountOffset, static_cast<std::uint16_t>(common::packet::maxPlayersPerSnapshot + 1));
 
-			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count over max rejected");
 		}
@@ -793,8 +712,8 @@ namespace
 			common::packet::PacketBuffer buffer = *serializedPacket;
 			WriteUInt16ToBuffer(buffer, playerCountOffset, 0);
 
-			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket
-				= common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
+			const std::optional<common::packet::PlayerSnapshotPacket> deserializedPacket =
+				common::packet::DeserializePacket<common::packet::PlayerSnapshotPacket>(buffer.data(), static_cast<int>(buffer.size()));
 
 			tests::Expect(result, !deserializedPacket.has_value(), "InvalidVariablePacket: count size mismatch rejected");
 		}
@@ -806,8 +725,7 @@ namespace
 		packet.inputSequence = 0x01020304;
 		packet.inputFlags = common::game::InputFlags::Up | common::game::InputFlags::Left;
 
-		const std::optional<common::packet::PacketBuffer> serializedPacket
-			= common::packet::SerializePacket(packet);
+		const std::optional<common::packet::PacketBuffer> serializedPacket = common::packet::SerializePacket(packet);
 
 		tests::Expect(
 			result,
@@ -861,7 +779,6 @@ namespace tests::packet
 		RunInvalidPacketTests(result);
 		RunInvalidVariablePacketTests(result);
 		RunInputCommandWireFormatRegressionTest(result);
-
 
 		return result;
 	}

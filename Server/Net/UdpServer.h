@@ -149,6 +149,7 @@ namespace server::net
 			const EndpointKey& endpointKey,
 			const service::PeerSessionService::RoomChangeResult& roomChangeResult
 		);
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableLeaveResponse(const EndpointKey& endpointKey);
 
 		void HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);
 		void HandleInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);

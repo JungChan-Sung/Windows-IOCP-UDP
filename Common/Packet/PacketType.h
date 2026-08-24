@@ -28,5 +28,9 @@ namespace common::packet
 
 		AccountLoginRequest = 13,
 		AccountLoginResponse = 14,
+
+		LeaveResponse = 15,
+
+		Count,
 	};
 }

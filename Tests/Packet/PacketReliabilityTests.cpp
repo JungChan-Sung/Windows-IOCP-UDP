@@ -12,6 +12,7 @@ namespace tests::packet::packetReliabilityTest
 	inline constexpr std::array reliablePacketTypes
 	{
 		common::packet::PacketType::LeaveRequest,
+		common::packet::PacketType::LeaveResponse,
 		common::packet::PacketType::JoinRoomRequest,
 		common::packet::PacketType::JoinRoomResponse,
 	};
@@ -27,6 +28,8 @@ namespace tests::packet::packetReliabilityTest
 		common::packet::PacketType::PlayerSnapshot,
 		common::packet::PacketType::BulletSnapshot,
 		common::packet::PacketType::ImpactEffect,
+		common::packet::PacketType::AccountLoginRequest,
+		common::packet::PacketType::AccountLoginResponse,
 	};
 
 	void RunReliablePacketTypeTests(tests::DebugTestResult& result)

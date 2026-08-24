@@ -1,10 +1,16 @@
 #include "ReliableUdpSessionRegistryTests.h"
 
+#include <cstdint>
+#include <optional>
+
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketBuffer.h>
+#include <Common/Packet/PacketSerialization.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Net/ReliableUdpSessionRegistry.h>
@@ -26,9 +32,11 @@ namespace
 	void RunInitialStateTest(tests::DebugTestResult& result)
 	{
 		const ReliableUdpSessionRegistry registry;
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(1, 1000);
 
 		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: initially empty");
-		tests::Expect(result, registry.Find(MakeEndpointKey(1, 1000)) == nullptr, "ReliableUdpSessionRegistry: missing endpoint");
+		tests::Expect(result, registry.Find(endpointKey) == nullptr, "ReliableUdpSessionRegistry: missing endpoint");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: missing endpoint is not closing");
 	}
 
 	void RunUpsertAndFindTest(tests::DebugTestResult& result)
@@ -44,6 +52,7 @@ namespace
 		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: upsert count");
 		tests::Expect(result, foundSession != nullptr, "ReliableUdpSessionRegistry: inserted session found");
 		tests::Expect(result, foundSession == &insertedSession, "ReliableUdpSessionRegistry: found session matches inserted session");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: inserted session is not closing");
 
 		const ReliableUdpSessionRegistry& constRegistry = registry;
 		const common::net::ReliableUdpSession* constFoundSession = constRegistry.Find(endpointKey);
@@ -117,6 +126,11 @@ namespace
 		tests::Expect(result, firstSession.GetNextSequence() == 2, "ReliableUdpSessionRegistry: outgoing sequence advanced before reset");
 		tests::Expect(result, firstSession.HasReceivedAnySequence(), "ReliableUdpSessionRegistry: received sequence exists before reset");
 
+		const bool beginCloseResult = registry.BeginClose(endpointKey);
+
+		tests::Expect(result, beginCloseResult, "ReliableUdpSessionRegistry: existing session begins close before upsert");
+		tests::Expect(result, registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: session closing before upsert reset");
+
 		common::net::ReliableUdpConfig secondConfig{};
 		secondConfig.maxPendingPacketCount = 2;
 		secondConfig.maxResendCount = 7;
@@ -129,6 +143,7 @@ namespace
 		tests::Expect(result, resetSession.GetNextSequence() == 1, "ReliableUdpSessionRegistry: existing upsert resets outgoing sequence");
 		tests::Expect(result, !resetSession.HasReceivedAnySequence(), "ReliableUdpSessionRegistry: existing upsert resets received sequence");
 		tests::Expect(result, resetSession.GetMaxResendCount() == 7, "ReliableUdpSessionRegistry: existing upsert applies new config");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: existing upsert clears closing state");
 	}
 
 	void RunMultipleSessionTest(tests::DebugTestResult& result)
@@ -165,6 +180,9 @@ namespace
 		static_cast<void>(registry.Upsert(firstEndpointKey, config));
 		static_cast<void>(registry.Upsert(secondEndpointKey, config));
 
+		tests::Expect(result, registry.BeginClose(firstEndpointKey), "ReliableUdpSessionRegistry: removed session can enter closing state");
+		tests::Expect(result, registry.IsClosing(firstEndpointKey), "ReliableUdpSessionRegistry: removed session closing before remove");
+
 		const bool firstRemoved = registry.Remove(firstEndpointKey);
 		const bool unknownRemoved = registry.Remove(unknownEndpointKey);
 
@@ -173,6 +191,7 @@ namespace
 		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: remove count");
 		tests::Expect(result, registry.Find(firstEndpointKey) == nullptr, "ReliableUdpSessionRegistry: removed session missing");
 		tests::Expect(result, registry.Find(secondEndpointKey) != nullptr, "ReliableUdpSessionRegistry: other session preserved");
+		tests::Expect(result, !registry.IsClosing(firstEndpointKey), "ReliableUdpSessionRegistry: remove clears closing state");
 	}
 
 	void RunClearTest(tests::DebugTestResult& result)
@@ -186,14 +205,20 @@ namespace
 
 		static_cast<void>(registry.Upsert(firstEndpointKey, config));
 		static_cast<void>(registry.Upsert(secondEndpointKey, config));
+		static_cast<void>(registry.BeginClose(firstEndpointKey));
+		static_cast<void>(registry.BeginClose(secondEndpointKey));
 
 		tests::Expect(result, registry.GetCount() == 2, "ReliableUdpSessionRegistry: sessions exist before clear");
+		tests::Expect(result, registry.IsClosing(firstEndpointKey), "ReliableUdpSessionRegistry: first session closing before clear");
+		tests::Expect(result, registry.IsClosing(secondEndpointKey), "ReliableUdpSessionRegistry: second session closing before clear");
 
 		registry.Clear();
 
 		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: clear removes all sessions");
 		tests::Expect(result, registry.Find(firstEndpointKey) == nullptr, "ReliableUdpSessionRegistry: first session missing after clear");
 		tests::Expect(result, registry.Find(secondEndpointKey) == nullptr, "ReliableUdpSessionRegistry: second session missing after clear");
+		tests::Expect(result, !registry.IsClosing(firstEndpointKey), "ReliableUdpSessionRegistry: clear removes first closing state");
+		tests::Expect(result, !registry.IsClosing(secondEndpointKey), "ReliableUdpSessionRegistry: clear removes second closing state");
 	}
 
 	void RunExtractResendBatchTest(tests::DebugTestResult& result)
@@ -322,21 +347,164 @@ namespace
 			now
 		);
 
-		tests::Expect(result, firstRegistered && secondRegistered && thirdRegistered,
-			"ReliableUdpSessionRegistry: pending packets registered");
-
-		tests::Expect(result, registry.GetPendingPacketCount() == 3,
-			"ReliableUdpSessionRegistry: pending packet count aggregated");
+		tests::Expect(result, firstRegistered && secondRegistered && thirdRegistered, "ReliableUdpSessionRegistry: pending packets registered");
+		tests::Expect(result, registry.GetPendingPacketCount() == 3, "ReliableUdpSessionRegistry: pending packet count aggregated");
 
 		static_cast<void>(registry.Remove(firstEndpointKey));
 
-		tests::Expect(result, registry.GetPendingPacketCount() == 1,
-			"ReliableUdpSessionRegistry: pending packet count updated after remove");
+		tests::Expect(result, registry.GetPendingPacketCount() == 1, "ReliableUdpSessionRegistry: pending packet count updated after remove");
 
 		registry.Clear();
 
-		tests::Expect(result, registry.GetPendingPacketCount() == 0,
-			"ReliableUdpSessionRegistry: pending packet count cleared");
+		tests::Expect(result, registry.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: pending packet count cleared");
+	}
+
+	void RunBeginCloseUnknownSessionTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(16, 16000);
+
+		const bool beginCloseResult = registry.BeginClose(endpointKey);
+
+		tests::Expect(result, !beginCloseResult, "ReliableUdpSessionRegistry: unknown session cannot begin close");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: unknown session remains not closing");
+		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: unknown close does not create session");
+	}
+
+	void RunClosingSessionRemovedAfterAckTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(17, 17000);
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		static_cast<void>(registry.Upsert(endpointKey, common::net::ReliableUdpConfig{}));
+
+		common::packet::LeaveResponsePacket leaveResponsePacket{};
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(leaveResponsePacket);
+
+		tests::Expect(result, serializedPacket.has_value(), "ReliableUdpSessionRegistry: serialize leave response");
+
+		if (!serializedPacket.has_value())
+		{
+			return;
+		}
+
+		ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult =
+			registry.BuildOutgoingPacket(
+				endpointKey,
+				common::packet::ConstPacketSpan(serializedPacket->data(), serializedPacket->size()),
+				now
+			);
+
+		tests::Expect(result, buildResult.has_value(), "ReliableUdpSessionRegistry: build reliable leave response");
+
+		if (!buildResult.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> leaveResponseView =
+			common::net::ParseReliableUdpPacket(buildResult->data(), static_cast<int>(buildResult->size()));
+
+		tests::Expect(result, leaveResponseView.has_value(), "ReliableUdpSessionRegistry: parse reliable leave response");
+
+		if (!leaveResponseView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(result, registry.GetPendingPacketCount() == 1, "ReliableUdpSessionRegistry: leave response pending before close");
+
+		const bool beginCloseResult = registry.BeginClose(endpointKey);
+
+		tests::Expect(result, beginCloseResult, "ReliableUdpSessionRegistry: begin close");
+		tests::Expect(result, registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: session marked closing");
+		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: closing session retained before ack");
+
+		common::net::ReliableUdpPacketView ackPacketView{};
+		ackPacketView.packetHeader.type = common::packet::PacketType::None;
+		ackPacketView.reliableHeader.ackSequence = leaveResponseView->reliableHeader.sequence;
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult processResult =
+			registry.ProcessReceivedPacket(endpointKey, ackPacketView);
+
+		tests::Expect(
+			result,
+			processResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::AckOnlyProcessed,
+			"ReliableUdpSessionRegistry: closing ack processed"
+		);
+
+		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: closing session removed after ack");
+		tests::Expect(result, registry.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: no pending packet after closing ack");
+		tests::Expect(result, registry.Find(endpointKey) == nullptr, "ReliableUdpSessionRegistry: closed session no longer found");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: closing marker removed after ack");
+	}
+
+	void RunClosingSessionRemovedAfterGiveUpTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(18, 18000);
+
+		common::net::ReliableUdpConfig config{};
+		config.maxPendingPacketCount = 1;
+		config.maxResendCount = 0;
+		config.resendInterval = common::time::Milliseconds(100);
+
+		static_cast<void>(registry.Upsert(endpointKey, config));
+
+		common::packet::LeaveResponsePacket leaveResponsePacket{};
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(leaveResponsePacket);
+
+		tests::Expect(result, serializedPacket.has_value(), "ReliableUdpSessionRegistry: serialize closing give-up packet");
+
+		if (!serializedPacket.has_value())
+		{
+			return;
+		}
+
+		const common::time::TimePoint now = common::time::Clock::now();
+
+		const ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult =
+			registry.BuildOutgoingPacket(
+				endpointKey,
+				common::packet::ConstPacketSpan(serializedPacket->data(), serializedPacket->size()),
+				now
+			);
+
+		tests::Expect(result, buildResult.has_value(), "ReliableUdpSessionRegistry: build closing give-up packet");
+
+		if (!buildResult.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(result, registry.GetPendingPacketCount() == 1, "ReliableUdpSessionRegistry: closing give-up packet pending");
+		tests::Expect(result, registry.BeginClose(endpointKey), "ReliableUdpSessionRegistry: begin close before give-up");
+		tests::Expect(result, registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: closing before give-up");
+
+		const ReliableUdpSessionRegistry::ResendBatch earlyBatch =
+			registry.ExtractResendBatch(now + common::time::Milliseconds(99));
+
+		tests::Expect(result, earlyBatch.taskList.empty(), "ReliableUdpSessionRegistry: closing packet not resent early");
+		tests::Expect(result, earlyBatch.giveUpPacketCount == 0, "ReliableUdpSessionRegistry: closing packet not given up early");
+		tests::Expect(result, registry.GetCount() == 1, "ReliableUdpSessionRegistry: closing session retained before give-up");
+
+		const ReliableUdpSessionRegistry::ResendBatch giveUpBatch =
+			registry.ExtractResendBatch(now + common::time::Milliseconds(100));
+
+		tests::Expect(result, giveUpBatch.taskList.empty(), "ReliableUdpSessionRegistry: closing give-up has no resend task");
+		tests::Expect(result, giveUpBatch.giveUpPacketCount == 1, "ReliableUdpSessionRegistry: closing packet give-up counted");
+		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: closing session removed after give-up");
+		tests::Expect(result, registry.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: closing pending packet removed after give-up");
+		tests::Expect(result, registry.Find(endpointKey) == nullptr, "ReliableUdpSessionRegistry: give-up session no longer found");
+		tests::Expect(result, !registry.IsClosing(endpointKey), "ReliableUdpSessionRegistry: closing marker removed after give-up");
 	}
 }
 
@@ -356,6 +524,10 @@ namespace tests::server
 		RunExtractResendBatchTest(result);
 		RunProcessReceivedPacketTest(result);
 		RunPendingPacketCountTest(result);
+
+		RunBeginCloseUnknownSessionTest(result);
+		RunClosingSessionRemovedAfterAckTest(result);
+		RunClosingSessionRemovedAfterGiveUpTest(result);
 
 		return result;
 	}

@@ -4,6 +4,7 @@
 #include <expected>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -63,9 +64,11 @@ namespace server::net
 
 	private:
 		using SessionTable = std::unordered_map<EndpointKey, common::net::ReliableUdpSession, common::net::EndpointKeyHasher>;
+		using ClosingEndpointSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
 
 	private:
 		SessionTable sessionTable_;
+		ClosingEndpointSet closingEndpointSet_;
 
 	public:
 		ReliableUdpSessionRegistry() = default;
@@ -85,6 +88,8 @@ namespace server::net
 			{
 				sessionIterator->second.Reset();
 			}
+
+			closingEndpointSet_.erase(endpointKey);
 
 			sessionIterator->second.Configure(config);
 			return sessionIterator->second;
@@ -140,6 +145,13 @@ namespace server::net
 				break;
 			}
 
+			const bool shouldCloseSession = closingEndpointSet_.contains(endpointKey) && session->GetPendingPacketCount() == 0;
+			if (shouldCloseSession)
+			{
+				closingEndpointSet_.erase(endpointKey);
+				sessionTable_.erase(endpointKey);
+			}
+
 			return ProcessReceivedPacketResult{
 				.status = status,
 				.ackPacketBuffer = std::move(sessionResult.ackPacketBuffer),
@@ -180,20 +192,36 @@ namespace server::net
 
 		[[nodiscard]] bool Remove(const EndpointKey& endpointKey)
 		{
+			closingEndpointSet_.erase(endpointKey);
 			return sessionTable_.erase(endpointKey) > 0;
 		}
 
 		void Clear() noexcept
 		{
+			closingEndpointSet_.clear();
 			sessionTable_.clear();
+		}
+
+		[[nodiscard]] bool BeginClose(const EndpointKey& endpointKey)
+		{
+			if (!sessionTable_.contains(endpointKey))
+			{
+				return false;
+			}
+
+			closingEndpointSet_.insert(endpointKey);
+			return true;
 		}
 
 		[[nodiscard]] ResendBatch ExtractResendBatch(common::time::TimePoint currentTime)
 		{
 			ResendBatch batch{};
 
-			for (auto& [endpointKey, session] : sessionTable_)
+			for (auto sessionIterator = sessionTable_.begin(); sessionIterator != sessionTable_.end();)
 			{
+				const EndpointKey endpointKey = sessionIterator->first;
+				common::net::ReliableUdpSession& session = sessionIterator->second;
+
 				common::net::ReliableUdpSession::ResendResult resendResult = session.ExtractResendResult(currentTime);
 				batch.giveUpPacketCount += resendResult.giveUpPacketList.size();
 
@@ -204,6 +232,15 @@ namespace server::net
 						.packetBuffer = std::move(pendingPacket.packetBuffer),
 						});
 				}
+
+				if (closingEndpointSet_.contains(endpointKey) && session.GetPendingPacketCount() == 0)
+				{
+					closingEndpointSet_.erase(endpointKey);
+					sessionIterator = sessionTable_.erase(sessionIterator);
+					continue;
+				}
+
+				++sessionIterator;
 			}
 
 			return batch;
@@ -225,6 +262,11 @@ namespace server::net
 		[[nodiscard]] std::size_t GetCount() const noexcept
 		{
 			return sessionTable_.size();
+		}
+
+		[[nodiscard]] bool IsClosing(const EndpointKey& endpointKey) const noexcept
+		{
+			return closingEndpointSet_.contains(endpointKey);
 		}
 	};
 }

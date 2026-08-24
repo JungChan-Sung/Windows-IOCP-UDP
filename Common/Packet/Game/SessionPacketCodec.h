@@ -101,4 +101,26 @@ namespace common::packet
 		}
 	};
 
+	template <>
+	struct PacketCodec<LeaveResponsePacket>
+	{
+	public:
+		static inline constexpr PacketType packetType = PacketType::LeaveResponse;
+		static inline constexpr int fixedWireSize = static_cast<int>(serializedPacketHeaderSize);
+
+	public:
+		static void WritePayload(PacketWriter&, const LeaveResponsePacket&)
+		{}
+
+		[[nodiscard]] static bool ReadPayload(PacketReader&, LeaveResponsePacket&) noexcept
+		{
+			return true;
+		}
+
+	public:
+		[[nodiscard]] static std::size_t GetSerializedSize(const LeaveResponsePacket&) noexcept
+		{
+			return fixedWireSize;
+		}
+	};
 }

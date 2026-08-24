@@ -29,4 +29,10 @@ namespace common::packet
 	public:
 		PacketHeader header{ 0, PacketType::LeaveRequest };
 	};
+
+	struct LeaveResponsePacket
+	{
+	public:
+		PacketHeader header{ 0, PacketType::LeaveResponse };
+	};
 }

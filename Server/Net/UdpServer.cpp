@@ -751,6 +751,35 @@ namespace server::net
 		return std::move(*buildResult);
 	}
 
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableLeaveResponse(const EndpointKey& endpointKey)
+	{
+		const common::packet::LeaveResponsePacket responsePacket{};
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(responsePacket);
+		if (!packetBuffer.has_value())
+		{
+			return std::nullopt;
+		}
+
+		ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult = reliableUdpSessionRegistry_.BuildOutgoingPacket(
+			endpointKey,
+			common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()),
+			common::time::Clock::now()
+		);
+		if (!buildResult.has_value())
+		{
+			if (buildResult.error() == ReliableUdpSessionRegistry::BuildOutgoingPacketFailure::SendWindowFull)
+			{
+				serverMetricsCollector_.IncrementReliableSendWindowFullCount();
+			}
+
+			return std::nullopt;
+		}
+
+		serverMetricsCollector_.IncrementReliableDataSendPacketCount();
+
+		return std::move(*buildResult);
+	}
+
 	void UdpServer::HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet)
 	{
 		serverMetricsCollector_.IncrementJoinRequestCount();
@@ -970,6 +999,7 @@ namespace server::net
 	void UdpServer::ProcessLeaveRequest(const EndpointKey& endpointKey)
 	{
 		service::PeerSessionService::LeaveResult leaveResult{};
+		std::optional<common::packet::PacketBuffer> leaveResponsePacketBuffer;
 		bool matchHistoryLeft = true;
 
 		{
@@ -978,13 +1008,21 @@ namespace server::net
 			leaveResult = peerSessionService_.LeavePeer(endpointKey, peerRoomManager_, gameWorld_);
 			if (leaveResult.shouldBroadcastPlayerLeft)
 			{
-				static_cast<void>(reliableUdpSessionRegistry_.Remove(endpointKey));
-
 				matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
 					leaveResult.roomId,
 					leaveResult.persistentPlayerId,
 					common::time::SystemClock::now()
 				);
+
+				leaveResponsePacketBuffer = BuildReliableLeaveResponse(endpointKey);
+				if (leaveResponsePacketBuffer.has_value())
+				{
+					static_cast<void>(reliableUdpSessionRegistry_.BeginClose(endpointKey));
+				}
+				else
+				{
+					static_cast<void>(reliableUdpSessionRegistry_.Remove(endpointKey));
+				}
 			}
 		}
 
@@ -999,10 +1037,24 @@ namespace server::net
 			return;
 		}
 
+		if (leaveResponsePacketBuffer.has_value())
+		{
+			static_cast<void>(packetSender_.SendPacket(
+				endpointKey,
+				leaveResponsePacketBuffer->data(),
+				static_cast<int>(leaveResponsePacketBuffer->size())
+			));
+		}
+		else
+		{
+			LogWarning("Failed to build reliable leave response.");
+		}
+
 		{
 			std::ostringstream stream;
 			stream << "Peer left. PlayerId=" << leaveResult.playerId
 				<< ", RoomId=" << leaveResult.roomId;
+
 			LogInfo(stream.str());
 		}
 

@@ -38,6 +38,7 @@ namespace common::packet
 	struct AccountLoginResponsePacket;
 	struct JoinResponsePacket;
 	struct JoinRoomResponsePacket;
+	struct LeaveResponsePacket;
 	struct PlayerJoinedPacket;
 	struct PlayerLeftPacket;
 	struct PlayerSnapshotPacket;
@@ -80,6 +81,8 @@ namespace client::net
 		std::size_t iocpRecvContextCount_ = config::defaultIocpRecvContextCount;
 
 		std::atomic<bool> isRunning_ = false;
+		std::atomic<bool> leaveResponseReceived_ = false;
+
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
 		common::time::Milliseconds snapshotAssemblyTimeout_ = config::defaultSnapshotAssemblyTimeout;
@@ -143,6 +146,7 @@ namespace client::net
 		void HandleReliablePacket(const char* packetData, int packetSize);
 		void HandleAccountLoginResponse(const common::packet::AccountLoginResponsePacket& packet);
 		void HandleJoinResponse(const common::packet::JoinResponsePacket& packet);
+		void HandleLeaveResponse(const common::packet::LeaveResponsePacket& packet);
 		void HandleJoinRoomResponse(const common::packet::JoinRoomResponsePacket& packet);
 		void HandlePlayerJoined(const common::packet::PlayerJoinedPacket& packet);
 		void HandlePlayerLeft(const common::packet::PlayerLeftPacket& packet);
@@ -165,6 +169,11 @@ namespace client::net
 		void SetSnapshotAssemblyTimeout(common::time::Milliseconds snapshotAssemblyTimeout) noexcept;
 
 		[[nodiscard]] AccountLoginSnapshot GetAccountLoginSnapshot() const;
+
+		[[nodiscard]] bool HasReceivedLeaveResponse() const noexcept
+		{
+			return leaveResponseReceived_.load();
+		}
 	};
 }
 

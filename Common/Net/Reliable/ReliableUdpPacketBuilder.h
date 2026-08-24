@@ -12,6 +12,7 @@
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/PacketHeader.h>
+#include <Common/Packet/PacketReliability.h>
 
 namespace common::net
 {
@@ -31,7 +32,7 @@ namespace common::net
 		packet::ConstPacketSpan serializedGamePacket
 	)
 	{
-		if (serializedGamePacket.size() <= packet::serializedPacketHeaderSize)
+		if (serializedGamePacket.size() < packet::serializedPacketHeaderSize)
 		{
 			return std::nullopt;
 		}
@@ -52,6 +53,11 @@ namespace common::net
 		}
 
 		if (packet::GetPacketHeaderProtocolVersion(*gamePacketHeader) != packet::protocolVersion)
+		{
+			return std::nullopt;
+		}
+
+		if (!packet::IsReliablePacketType(gamePacketHeader->type))
 		{
 			return std::nullopt;
 		}
@@ -153,6 +159,18 @@ namespace common::net
 			return std::nullopt;
 		}
 
+		if (packetHeader.type == packet::PacketType::None)
+		{
+			if (packetSize != static_cast<int>(reliableUdpPayloadOffset))
+			{
+				return std::nullopt;
+			}
+		}
+		else if (!packet::IsReliablePacketType(packetHeader.type))
+		{
+			return std::nullopt;
+		}
+
 		ReliableUdpPacketHeader reliableHeader{};
 		if (!ReadReliableUdpPacketHeader(reader, reliableHeader))
 		{
@@ -172,7 +190,7 @@ namespace common::net
 
 	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildGamePacketFromReliableUdpPacketView(const ReliableUdpPacketView& packetView)
 	{
-		if (packetView.payload.empty())
+		if (!packet::IsReliablePacketType(packetView.packetHeader.type))
 		{
 			return std::nullopt;
 		}

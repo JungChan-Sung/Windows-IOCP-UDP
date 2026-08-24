@@ -1,11 +1,15 @@
 #include "ReliableUdpPacketBuilderTests.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <span>
 
+#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Net/Reliable/ReliableUdpPacketSerialization.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
-#include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
+#include <Common/Packet/Serialization/PacketSerializationCore.h>
 
 #include <Tests/DebugTestResult.h>
 
@@ -30,11 +34,10 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		reliableHeader.ackSequence = 7;
 		reliableHeader.ackBitfield = 0b101;
 
-		const std::optional<common::packet::PacketBuffer> reliablePacket =
-			common::net::BuildReliableUdpPacket(
-				reliableHeader,
-				std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
-			);
+		const std::optional<common::packet::PacketBuffer> reliablePacket = common::net::BuildReliableUdpPacket(
+			reliableHeader,
+			std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
+		);
 
 		tests::Expect(result, reliablePacket.has_value(), "ReliableUdpPacketBuilder: build reliable packet");
 
@@ -137,6 +140,96 @@ namespace tests::net::reliableUdpPacketBuilderTest
 		}
 	}
 
+	void RunBuildAndParseHeaderOnlyReliablePacketTest(tests::DebugTestResult& result)
+	{
+		common::packet::LeaveRequestPacket gamePacket{};
+
+		const std::optional<common::packet::PacketBuffer> serializedGamePacket = common::packet::SerializePacket(gamePacket);
+
+		tests::Expect(result, serializedGamePacket.has_value(), "ReliableUdpPacketBuilder: serialize header-only game packet");
+
+		if (!serializedGamePacket.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			serializedGamePacket->size() == common::packet::serializedPacketHeaderSize,
+			"ReliableUdpPacketBuilder: header-only game packet size"
+		);
+
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+		reliableHeader.sequence = 20;
+		reliableHeader.ackSequence = 8;
+		reliableHeader.ackBitfield = 0b11;
+
+		const std::optional<common::packet::PacketBuffer> reliablePacket = common::net::BuildReliableUdpPacket(
+			reliableHeader,
+			std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
+		);
+
+		tests::Expect(result, reliablePacket.has_value(), "ReliableUdpPacketBuilder: build header-only reliable packet");
+
+		if (!reliablePacket.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			reliablePacket->size() == common::net::reliableUdpPayloadOffset,
+			"ReliableUdpPacketBuilder: header-only reliable packet size"
+		);
+
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
+				reliablePacket->data(),
+				static_cast<int>(reliablePacket->size())
+			);
+
+		tests::Expect(result, packetView.has_value(), "ReliableUdpPacketBuilder: parse header-only reliable packet");
+
+		if (!packetView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			packetView->packetHeader.type == common::packet::PacketType::LeaveRequest,
+			"ReliableUdpPacketBuilder: header-only reliable packet type"
+		);
+
+		tests::Expect(result, packetView->payload.empty(), "ReliableUdpPacketBuilder: header-only reliable payload empty");
+		tests::Expect(result, packetView->reliableHeader.sequence == reliableHeader.sequence,
+			"ReliableUdpPacketBuilder: header-only reliable sequence");
+
+		const std::optional<common::packet::PacketBuffer> rebuiltGamePacket =
+			common::net::BuildGamePacketFromReliableUdpPacketView(*packetView);
+
+		tests::Expect(result, rebuiltGamePacket.has_value(), "ReliableUdpPacketBuilder: rebuild header-only game packet");
+
+		if (!rebuiltGamePacket.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			rebuiltGamePacket->size() == common::packet::serializedPacketHeaderSize,
+			"ReliableUdpPacketBuilder: rebuilt header-only game packet size"
+		);
+
+		const std::optional<common::packet::LeaveRequestPacket> parsedGamePacket =
+			common::packet::DeserializePacket<common::packet::LeaveRequestPacket>(
+				rebuiltGamePacket->data(),
+				static_cast<int>(rebuiltGamePacket->size())
+			);
+
+		tests::Expect(result, parsedGamePacket.has_value(), "ReliableUdpPacketBuilder: deserialize rebuilt header-only game packet");
+	}
+
 	void RunRejectInvalidBuildInputTest(tests::DebugTestResult& result)
 	{
 		common::net::ReliableUdpPacketHeader reliableHeader{};
@@ -154,15 +247,102 @@ namespace tests::net::reliableUdpPacketBuilderTest
 
 		tests::Expect(result, !nullPacket.has_value(), "ReliableUdpPacketBuilder: reject null packet");
 
-		char headerOnlyPacket[common::net::reliableUdpPayloadOffset]{};
+		char invalidPacket[common::net::reliableUdpPayloadOffset]{};
 
-		const std::optional<common::net::ReliableUdpPacketView> headerOnlyPacketView =
+		const std::optional<common::net::ReliableUdpPacketView> invalidPacketView =
 			common::net::ParseReliableUdpPacket(
-				headerOnlyPacket,
-				static_cast<int>(sizeof(headerOnlyPacket))
+				invalidPacket,
+				static_cast<int>(sizeof(invalidPacket))
 			);
 
-		tests::Expect(result, !headerOnlyPacketView.has_value(), "ReliableUdpPacketBuilder: reject header only packet");
+		tests::Expect(result, !invalidPacketView.has_value(), "ReliableUdpPacketBuilder: reject invalid packet");
+	}
+
+	void RunRejectUnreliablePacketTypeTest(tests::DebugTestResult& result)
+	{
+		common::packet::JoinRequestPacket gamePacket{};
+
+		const std::optional<common::packet::PacketBuffer> serializedGamePacket = common::packet::SerializePacket(gamePacket);
+
+		tests::Expect(result, serializedGamePacket.has_value(), "ReliableUdpPacketBuilder: serialize unreliable game packet");
+
+		if (!serializedGamePacket.has_value())
+		{
+			return;
+		}
+
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+
+		const std::optional<common::packet::PacketBuffer> reliablePacket = common::net::BuildReliableUdpPacket(
+			reliableHeader,
+			std::span<const char>(serializedGamePacket->data(), serializedGamePacket->size())
+		);
+
+		tests::Expect(
+			result,
+			!reliablePacket.has_value(),
+			"ReliableUdpPacketBuilder: reject unreliable game packet type"
+		);
+
+		const std::size_t malformedPacketSize = common::net::reliableUdpPayloadOffset;
+
+		common::packet::PacketWriter writer;
+		writer.Reserve(malformedPacketSize);
+
+		common::packet::WritePacketHeader(
+			writer,
+			static_cast<std::uint16_t>(malformedPacketSize),
+			common::packet::PacketType::JoinRequest,
+			true
+		);
+
+		common::net::WriteReliableUdpPacketHeader(writer, reliableHeader);
+
+		const common::packet::PacketBuffer malformedPacket = writer.TakeBuffer();
+
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
+				malformedPacket.data(),
+				static_cast<int>(malformedPacket.size())
+			);
+
+		tests::Expect(
+			result,
+			!packetView.has_value(),
+			"ReliableUdpPacketBuilder: reject reliable wrapper with unreliable packet type"
+		);
+	}
+
+	void RunRejectAckOnlyPacketWithPayloadTest(tests::DebugTestResult& result)
+	{
+		const std::size_t packetSize = common::net::reliableUdpPayloadOffset + 1;
+
+		common::packet::PacketWriter writer;
+		writer.Reserve(packetSize);
+
+		common::packet::WritePacketHeader(
+			writer,
+			static_cast<std::uint16_t>(packetSize),
+			common::packet::PacketType::None,
+			true
+		);
+
+		common::net::WriteReliableUdpPacketHeader(writer, common::net::ReliableUdpPacketHeader{});
+		writer.WriteUInt8(1);
+
+		const common::packet::PacketBuffer packetBuffer = writer.TakeBuffer();
+
+		const std::optional<common::net::ReliableUdpPacketView> packetView =
+			common::net::ParseReliableUdpPacket(
+				packetBuffer.data(),
+				static_cast<int>(packetBuffer.size())
+			);
+
+		tests::Expect(
+			result,
+			!packetView.has_value(),
+			"ReliableUdpPacketBuilder: reject ack-only packet with payload"
+		);
 	}
 
 	void RunBuildAndParseAckOnlyPacketTest(tests::DebugTestResult& result)
@@ -228,8 +408,11 @@ namespace tests::net
 		tests::DebugTestResult result{};
 
 		reliableUdpPacketBuilderTest::RunBuildAndParseReliablePacketTest(result);
+		reliableUdpPacketBuilderTest::RunBuildAndParseHeaderOnlyReliablePacketTest(result);
 		reliableUdpPacketBuilderTest::RunRejectInvalidBuildInputTest(result);
 		reliableUdpPacketBuilderTest::RunRejectInvalidParseBufferTest(result);
+		reliableUdpPacketBuilderTest::RunRejectUnreliablePacketTypeTest(result);
+		reliableUdpPacketBuilderTest::RunRejectAckOnlyPacketWithPayloadTest(result);
 		reliableUdpPacketBuilderTest::RunBuildAndParseAckOnlyPacketTest(result);
 
 		return result;

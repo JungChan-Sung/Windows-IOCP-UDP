@@ -544,8 +544,19 @@ namespace client::net
 	void UdpClient::HandlePacket(const char* packetData, int packetSize)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
+		if (!packetHeader.has_value())
+		{
+			packetDispatcher_.Dispatch(packetData, packetSize);
+			return;
+		}
 
-		if (packetHeader.has_value() && common::packet::IsReliablePacketHeader(*packetHeader))
+		const bool isReliable = common::packet::IsReliablePacketHeader(*packetHeader);
+		if (!common::packet::IsPacketTransportReliabilityValid(packetHeader->type, isReliable))
+		{
+			return;
+		}
+
+		if (isReliable)
 		{
 			HandleReliablePacket(packetData, packetSize);
 			return;

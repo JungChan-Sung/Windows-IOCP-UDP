@@ -1075,16 +1075,20 @@ namespace server::net
 
 		if (reliableResponsePacketBuffer.has_value())
 		{
-			packetSender_.SendPacket(
+			static_cast<void>(packetSender_.SendPacket(
 				endpointKey,
 				reliableResponsePacketBuffer->data(),
 				static_cast<int>(reliableResponsePacketBuffer->size())
-			);
+			));
 		}
 		else
 		{
-			const common::packet::JoinRoomResponsePacket responsePacket = protocol::BuildJoinRoomResponse(roomChangeResult);
-			static_cast<void>(SendSerializedPacket(packetSender_, endpointKey, responsePacket));
+			std::ostringstream stream;
+			stream << "Failed to build reliable join room response. Endpoint=" << FormatEndpoint(endpointKey)
+				<< ", PlayerId=" << roomChangeResult.playerId
+				<< ", RoomId=" << roomChangeResult.nextRoomId;
+
+			LogWarning(stream.str());
 		}
 
 		{

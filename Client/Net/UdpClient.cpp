@@ -464,7 +464,12 @@ namespace client::net
 			}
 		}
 
-		return SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size()));
+		if (!SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size())))
+		{
+			LogWarning("Initial reliable packet send failed. Packet remains queued for retry.");
+		}
+
+		return true;
 	}
 
 	bool UdpClient::SendReliableAckPacket()

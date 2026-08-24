@@ -171,24 +171,28 @@ namespace client::app
 
 		if (world_.IsJoined())
 		{
-			const bool initialLeaveSendSucceeded = udpClient_.SendLeaveRequest();
-
-			if (!initialLeaveSendSucceeded)
-			{
-				logger_.Warning("Initial leave request send failed. Waiting for reliable retry.");
-			}
-
 			constexpr common::time::Milliseconds leaveResponseTimeout{ 1500 };
 			constexpr common::time::Milliseconds leaveResponsePollInterval{ 10 };
 
+			bool leaveRequestQueued = udpClient_.SendLeaveRequest();
 			const common::time::TimePoint deadline = common::time::Clock::now() + leaveResponseTimeout;
 			while (!udpClient_.HasReceivedLeaveResponse() && common::time::Clock::now() < deadline)
 			{
 				udpClient_.ProcessReliableResends();
+
+				if (!leaveRequestQueued)
+				{
+					leaveRequestQueued = udpClient_.SendLeaveRequest();
+				}
+
 				std::this_thread::sleep_for(leaveResponsePollInterval);
 			}
 
-			if (!udpClient_.HasReceivedLeaveResponse())
+			if (!leaveRequestQueued)
+			{
+				logger_.Warning("Failed to queue leave request before timeout.");
+			}
+			else if (!udpClient_.HasReceivedLeaveResponse())
 			{
 				logger_.Warning("Leave response timed out.");
 			}

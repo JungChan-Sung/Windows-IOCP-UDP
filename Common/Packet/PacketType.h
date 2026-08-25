@@ -31,6 +31,8 @@ namespace common::packet
 
 		LeaveResponse = 15,
 
+		KeepAlive = 16,
+
 		Count,
 	};
 }

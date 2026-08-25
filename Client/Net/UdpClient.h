@@ -125,6 +125,7 @@ namespace client::net
 		[[nodiscard]] bool SendJoinRequest();
 		[[nodiscard]] bool SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence);
 		[[nodiscard]] bool SendFireRequest();
+		[[nodiscard]] bool SendKeepAlive();
 		[[nodiscard]] bool SendLeaveRequest();
 		[[nodiscard]] bool SendJoinRoomRequest(RoomId roomId);
 
@@ -136,8 +137,8 @@ namespace client::net
 
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
 		[[nodiscard]] bool SendAccountLoginRequest(const common::packet::AccountLoginRequestPacket& packet);
-		[[nodiscard]] bool SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket);
-		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket);
+		[[nodiscard]] bool SendSerializedPacket(common::packet::ConstPacketSpan serializedPacket);
+		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedPacket);
 		[[nodiscard]] bool SendReliableAckPacket();
 
 		void RegisterPacketHandlers();

@@ -32,6 +32,7 @@ namespace client::config
 		common::time::Milliseconds updateSleepInterval = defaultUpdateSleepInterval;
 		common::time::Milliseconds accountLoginRetryInterval = defaultAccountLoginRetryInterval;
 		common::time::Milliseconds joinRetryInterval = defaultJoinRetryInterval;
+		common::time::Milliseconds keepAliveInterval = defaultKeepAliveInterval;
 		common::time::Milliseconds roomJoinInterval = defaultRoomJoinInterval;
 		common::time::Milliseconds interpolationAdjustStep = defaultInterpolationAdjustStep;
 	};

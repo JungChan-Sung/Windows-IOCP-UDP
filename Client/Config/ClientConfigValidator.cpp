@@ -84,6 +84,12 @@ namespace client::config
 			clientConfig.timing.joinRetryInterval = defaultConfig.timing.joinRetryInterval;
 		}
 
+		if (clientConfig.timing.keepAliveInterval <= common::time::Milliseconds::zero())
+		{
+			AddWarning(warningList, "Timing.KeepAliveMs must be greater than 0. Default keep-alive interval will be used.");
+			clientConfig.timing.keepAliveInterval = defaultConfig.timing.keepAliveInterval;
+		}
+
 		if (clientConfig.timing.roomJoinInterval <= common::time::Milliseconds::zero())
 		{
 			AddWarning(warningList, "Timing.RoomJoinMs must be greater than 0. Default room join interval will be used.");

@@ -244,6 +244,21 @@ namespace
 			return;
 		}
 
+		if (normalizedKey == "keepalivems")
+		{
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				clientConfig.timing.keepAliveInterval = common::time::Milliseconds(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
 		if (normalizedKey == "roomjoinms")
 		{
 			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);

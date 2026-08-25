@@ -76,6 +76,9 @@
     <Filter Include="소스 파일\Time">
       <UniqueIdentifier>{25236bdd-58f0-4d8f-9a65-478bc1175eb2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Packet\Control">
+      <UniqueIdentifier>{0fdae92c-1f3c-4ef6-82c1-043f02301218}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -299,6 +302,12 @@
     </ClInclude>
     <ClInclude Include="Net\EndpointKey.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Control\ControlPacket.h">
+      <Filter>헤더 파일\Packet\Control</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\Control\ControlPacketCodec.h">
+      <Filter>헤더 파일\Packet\Control</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

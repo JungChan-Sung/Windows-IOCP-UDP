@@ -14,6 +14,7 @@
 #include <Common/Log/ILogger.h>
 #include <Common/Log/LogMessageBuilder.h>
 #include <Common/Packet/Account/AccountPacket.h>
+#include <Common/Packet/Control/ControlPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/Packet/PacketReliability.h>
@@ -244,7 +245,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
@@ -260,7 +261,7 @@ namespace client::net
 		}
 
 		inputSequence = packet.inputSequence;
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
 	}
 
 	bool UdpClient::SendFireRequest()
@@ -273,7 +274,19 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
+	}
+
+	bool UdpClient::SendKeepAlive()
+	{
+		common::packet::KeepAlivePacket packet{};
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
+		if (!packetBuffer.has_value())
+		{
+			return false;
+		}
+
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendLeaveRequest()
@@ -288,7 +301,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	bool UdpClient::SendJoinRoomRequest(RoomId roomId)
@@ -302,7 +315,7 @@ namespace client::net
 			return false;
 		}
 
-		return SendSerializedGamePacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
+		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
 	void UdpClient::ProcessReliableResends()
@@ -404,14 +417,13 @@ namespace client::net
 		return SendPacket(packetBuffer->data(), static_cast<int>(packetBuffer->size()));
 	}
 
-	bool UdpClient::SendSerializedGamePacket(common::packet::ConstPacketSpan serializedGamePacket)
+	bool UdpClient::SendSerializedPacket(common::packet::ConstPacketSpan serializedPacket)
 	{
 		const std::optional<common::packet::PacketHeader> packetHeader =
 			common::packet::DeserializePacketHeader(
-				serializedGamePacket.data(),
-				static_cast<int>(serializedGamePacket.size())
+				serializedPacket.data(),
+				static_cast<int>(serializedPacket.size())
 			);
-
 		if (!packetHeader.has_value())
 		{
 			return false;
@@ -427,17 +439,17 @@ namespace client::net
 			return false;
 		}
 
-		if (static_cast<std::size_t>(packetHeader->size) != serializedGamePacket.size())
+		if (static_cast<std::size_t>(packetHeader->size) != serializedPacket.size())
 		{
 			return false;
 		}
 
 		if (common::packet::IsReliablePacketType(packetHeader->type))
 		{
-			return SendReliablePacket(serializedGamePacket);
+			return SendReliablePacket(serializedPacket);
 		}
 
-		return SendPacket(serializedGamePacket.data(), static_cast<int>(serializedGamePacket.size()));
+		return SendPacket(serializedPacket.data(), static_cast<int>(serializedPacket.size()));
 	}
 
 	bool UdpClient::SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket)

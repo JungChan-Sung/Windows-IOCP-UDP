@@ -38,6 +38,8 @@ namespace common::packet
 		PacketReliability::Unreliable,	// AccountLoginResponse
 
 		PacketReliability::Reliable,	// LeaveResponse
+
+		PacketReliability::Unreliable,	// KeepAlive
 		});
 
 	static_assert(packetReliabilityTable.size() == static_cast<std::size_t>(PacketType::Count));

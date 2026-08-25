@@ -62,6 +62,8 @@
     <ClInclude Include="Net\WsaSession.h" />
     <ClInclude Include="Packet\Account\AccountPacket.h" />
     <ClInclude Include="Packet\Account\AccountPacketCodec.h" />
+    <ClInclude Include="Packet\Control\ControlPacket.h" />
+    <ClInclude Include="Packet\Control\ControlPacketCodec.h" />
     <ClInclude Include="Packet\Game\CommandPacket.h" />
     <ClInclude Include="Packet\Game\CommandPacketCodec.h" />
     <ClInclude Include="Packet\Game\EffectPacket.h" />

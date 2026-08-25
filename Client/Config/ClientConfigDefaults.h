@@ -18,6 +18,7 @@ namespace client::config
 	inline constexpr common::time::Milliseconds defaultUpdateSleepInterval = common::time::Milliseconds(1);
 	inline constexpr common::time::Milliseconds defaultAccountLoginRetryInterval = common::time::Milliseconds(1000);
 	inline constexpr common::time::Milliseconds defaultJoinRetryInterval = common::time::Milliseconds(1000);
+	inline constexpr common::time::Milliseconds defaultKeepAliveInterval = common::time::Milliseconds(2000);
 	inline constexpr common::time::Milliseconds defaultRoomJoinInterval = common::time::Milliseconds(200);
 	inline constexpr common::time::Milliseconds defaultInterpolationAdjustStep = common::time::Milliseconds(10);
 

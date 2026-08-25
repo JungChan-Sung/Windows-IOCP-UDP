@@ -61,6 +61,7 @@ namespace client::app
 		std::jthread updateThread_;
 
 		common::time::TimePoint nextSimulationTickTime_;
+		common::time::TimePoint nextKeepAliveTime_;
 		common::time::TimePoint nextRoomJoinTime_;
 		common::time::TimePoint lastEffectUpdateTime_;
 
@@ -92,6 +93,7 @@ namespace client::app
 		[[nodiscard]] bool ProcessAccountLogin(common::time::TimePoint currentTime);
 
 		void Update();
+		void TrySendKeepAlive(common::time::TimePoint currentTime);
 		void TryJoinRoom() noexcept;
 		void TryAdjustInterpolationDelay() noexcept;
 	};

@@ -158,15 +158,16 @@ namespace server::service
 		}
 	}
 
-	void PeerRoomManager::RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept
+	bool PeerRoomManager::RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept
 	{
-		PeerState* peerState = FindPeer(endpointKey);
+		PeerState* peerState = FindJoinedPeer(endpointKey);
 		if (peerState == nullptr)
 		{
-			return;
+			return false;
 		}
 
 		peerState->lastRecvTime = currentTime;
+		return true;
 	}
 
 	bool PeerRoomManager::RemovePeer(const EndpointKey& endpointKey, PlayerId& playerId, RoomId& roomId) noexcept

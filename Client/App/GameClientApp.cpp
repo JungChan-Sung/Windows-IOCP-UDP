@@ -149,6 +149,7 @@ namespace client::app
 		joinHandshakeState_.Reset();
 
 		nextSimulationTickTime_ = currentTime;
+		nextKeepAliveTime_ = currentTime + config_.timing.keepAliveInterval;
 		nextRoomJoinTime_ = currentTime;
 		lastEffectUpdateTime_ = currentTime;
 
@@ -273,6 +274,7 @@ namespace client::app
 			.AppendCommaNamedValue("IocpRecvContextCount", config_.network.iocpRecvContextCount)
 			.AppendCommaNamedValue("UpdateSleepMs", config_.timing.updateSleepInterval.count())
 			.AppendCommaNamedValue("JoinRetryMs", config_.timing.joinRetryInterval.count())
+			.AppendCommaNamedValue("KeepAliveMs", config_.timing.keepAliveInterval.count())
 			.AppendCommaNamedValue("RoomJoinMs", config_.timing.roomJoinInterval.count())
 			.AppendCommaNamedValue("InterpolationAdjustStepMs", config_.timing.interpolationAdjustStep.count())
 			.AppendCommaNamedValue("InterpolationDefaultDelayMs", config_.interpolation.defaultDelay.count())
@@ -387,6 +389,8 @@ namespace client::app
 
 		joinHandshakeState_.Complete();
 
+		TrySendKeepAlive(currentTime);
+
 		int processedSimulationTickCount = 0;
 		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
 		{
@@ -428,6 +432,21 @@ namespace client::app
 				udpClient_.SendFireRequest();
 			}
 		}
+	}
+
+	void GameClientApp::TrySendKeepAlive(common::time::TimePoint currentTime)
+	{
+		if (currentTime < nextKeepAliveTime_)
+		{
+			return;
+		}
+
+		if (!udpClient_.SendKeepAlive())
+		{
+			logger_.Warning("Keep-alive packet send failed.");
+		}
+
+		nextKeepAliveTime_ = currentTime + config_.timing.keepAliveInterval;
 	}
 
 	void GameClientApp::TryJoinRoom() noexcept

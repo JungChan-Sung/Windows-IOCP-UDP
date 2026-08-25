@@ -86,7 +86,7 @@ namespace server::service
 		void ForEachJoinedPeer(const std::function<void(PeerState&)>& action);
 		void ForEachJoinedPeer(const std::function<void(const PeerState&)>& action) const;
 
-		void RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept;
+		[[nodiscard]] bool RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept;
 
 		[[nodiscard]] bool RemovePeer(const EndpointKey& endpointKey, PlayerId& playerId, RoomId& roomId) noexcept;
 

@@ -154,6 +154,7 @@ namespace server::net
 		void HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);
 		void HandleInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);
 		void HandleFireRequest(const EndpointKey& endpointKey);
+		void HandleKeepAlive(const EndpointKey& endpointKey);
 		void HandleLeaveRequest(const EndpointKey& endpointKey);
 		void HandleJoinRoomRequest(const EndpointKey& endpointKey, const common::packet::JoinRoomRequestPacket& packet);
 		void HandleAccountLoginRequest(const EndpointKey& endpointKey, const common::packet::AccountLoginRequestPacket& packet);

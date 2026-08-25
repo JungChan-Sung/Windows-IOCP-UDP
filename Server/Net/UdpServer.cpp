@@ -20,6 +20,7 @@
 #include <Common/Log/ILogger.h>
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Packet/Account/AccountPacket.h>
+#include <Common/Packet/Control/ControlPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
@@ -598,6 +599,14 @@ namespace server::net
 
 		RegisterEndpointOnlyPacketHandler(
 			packetDispatcher_,
+			common::packet::PacketType::KeepAlive,
+			*this,
+			common::packet::packetExpectedSize<common::packet::KeepAlivePacket>,
+			&UdpServer::HandleKeepAlive
+		);
+
+		RegisterEndpointOnlyPacketHandler(
+			packetDispatcher_,
 			common::packet::PacketType::LeaveRequest,
 			*this,
 			common::packet::packetExpectedSize<common::packet::LeaveRequestPacket>,
@@ -796,6 +805,13 @@ namespace server::net
 	{
 		serverMetricsCollector_.IncrementFireRequestCount();
 		ProcessFireRequest(endpointKey);
+	}
+
+	void UdpServer::HandleKeepAlive(const EndpointKey& endpointKey)
+	{
+		std::scoped_lock lock(stateMutex_);
+
+		static_cast<void>(peerRoomManager_.RefreshRecvTime(endpointKey, common::time::Clock::now()));
 	}
 
 	void UdpServer::HandleLeaveRequest(const EndpointKey& endpointKey)

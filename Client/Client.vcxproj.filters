@@ -55,6 +55,12 @@
     <Filter Include="소스 파일\Runtime">
       <UniqueIdentifier>{3858d9da-7dd1-4466-955a-3779751b5905}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Input">
+      <UniqueIdentifier>{98bdbacc-5847-42a1-a1a0-3a9f57ba0478}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Input">
+      <UniqueIdentifier>{7ab8909c-fa70-4925-88a5-095dfaf931b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -68,9 +74,6 @@
     </ClCompile>
     <ClCompile Include="App\GameClientApp.cpp">
       <Filter>소스 파일\App</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\InputState.cpp">
-      <Filter>소스 파일\Game</Filter>
     </ClCompile>
     <ClCompile Include="Ui\GameWindow.cpp">
       <Filter>소스 파일\Ui</Filter>
@@ -102,6 +105,9 @@
     <ClCompile Include="Runtime\ClientRuntime.cpp">
       <Filter>소스 파일\Runtime</Filter>
     </ClCompile>
+    <ClCompile Include="Input\InputState.cpp">
+      <Filter>소스 파일\Input</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\ClientWorld.h">
@@ -112,9 +118,6 @@
     </ClInclude>
     <ClInclude Include="App\GameClientApp.h">
       <Filter>헤더 파일\App</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\InputState.h">
-      <Filter>헤더 파일\Game</Filter>
     </ClInclude>
     <ClInclude Include="Ui\GameWindow.h">
       <Filter>헤더 파일\Ui</Filter>
@@ -172,6 +175,12 @@
     </ClInclude>
     <ClInclude Include="Runtime\ClientRuntime.h">
       <Filter>헤더 파일\Runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputState.h">
+      <Filter>헤더 파일\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\InputSnapshot.h">
+      <Filter>헤더 파일\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

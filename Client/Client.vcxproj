@@ -148,7 +148,7 @@
     <ClCompile Include="Config\ClientConfigLoader.cpp" />
     <ClCompile Include="Config\ClientConfigValidator.cpp" />
     <ClCompile Include="Game\ClientWorld.cpp" />
-    <ClCompile Include="Game\InputState.cpp" />
+    <ClCompile Include="Input\InputState.cpp" />
     <ClCompile Include="Net\AccountLoginState.cpp" />
     <ClCompile Include="Net\ClientPacketDispatcher.cpp" />
     <ClCompile Include="Net\SnapshotChunkAssembler.cpp" />
@@ -170,7 +170,8 @@
     <ClInclude Include="Game\ClientTuning.h" />
     <ClInclude Include="Game\ClientWorld.h" />
     <ClInclude Include="Game\EffectConfig.h" />
-    <ClInclude Include="Game\InputState.h" />
+    <ClInclude Include="Input\InputSnapshot.h" />
+    <ClInclude Include="Input\InputState.h" />
     <ClInclude Include="Net\AccountLoginState.h" />
     <ClInclude Include="Net\ClientPacketDispatcher.h" />
     <ClInclude Include="Net\JoinHandshakeState.h" />

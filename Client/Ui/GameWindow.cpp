@@ -133,7 +133,7 @@ namespace client::ui
 			return 0;
 
 		case WM_KEYDOWN:
-			OnKeyDown(wParam);
+			OnKeyDown(wParam, lParam);
 			return 0;
 
 		case WM_KEYUP:
@@ -225,9 +225,11 @@ namespace client::ui
 		);
 	}
 
-	void GameWindow::OnKeyDown(WPARAM wParam) noexcept
+	void GameWindow::OnKeyDown(WPARAM wParam, LPARAM lParam) noexcept
 	{
-		inputState_.SetKeyDown(static_cast<unsigned int>(wParam));
+		const bool isRepeat = (lParam & (static_cast<LPARAM>(1) << 30)) != 0;
+
+		inputState_.SetKeyDown(static_cast<unsigned int>(wParam), isRepeat);
 	}
 
 	void GameWindow::OnKeyUp(WPARAM wParam) noexcept

@@ -1,7 +1,5 @@
 #include "ClientRuntime.h"
 
-#include <Windows.h>
-
 #include <cstdint>
 #include <thread>
 
@@ -10,6 +8,7 @@
 
 #include <Client/Config/ClientConfig.h>
 #include <Client/Game/ClientWorld.h>
+#include <Client/Input/InputSnapshot.h>
 #include <Client/Net/AccountLoginState.h>
 #include <Client/Net/UdpClient.h>
 #include <Client/Ui/GameWindow.h>
@@ -121,7 +120,8 @@ namespace client::runtime
 
 	void ClientRuntime::Update()
 	{
-		TryAdjustInterpolationDelay();
+		const input::InputSnapshot inputSnapshot = gameWindow_->ConsumeInputSnapshot();
+		TryAdjustInterpolationDelay(inputSnapshot);
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
 		if (!ProcessAccountLogin(currentTime))
@@ -150,19 +150,14 @@ namespace client::runtime
 
 		TrySendKeepAlive(currentTime);
 
+		const bool isLocalPlayerDead = world_->IsLocalPlayerDead();
+		const common::game::InputFlags inputFlags = isLocalPlayerDead ? common::game::InputFlags::None : inputSnapshot.movementFlags;
+
 		int processedSimulationTickCount = 0;
 		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
 		{
-			common::game::InputFlags inputFlags = common::game::InputFlags::None;
-
-			if (!world_->IsLocalPlayerDead())
-			{
-				inputFlags = gameWindow_->GetInputState().ToInputFlags();
-			}
-
 			std::uint32_t inputSequence = 0;
 			const bool sendResult = udpClient_->SendInputCommand(inputFlags, inputSequence);
-
 			if (sendResult)
 			{
 				world_->ApplyLocalPredictionTick(inputSequence, inputFlags, config_->simulation.deltaSeconds);
@@ -179,16 +174,13 @@ namespace client::runtime
 
 		if (currentTime >= nextRoomJoinTime_)
 		{
-			TryJoinRoom();
+			TryJoinRoom(inputSnapshot);
 			nextRoomJoinTime_ = currentTime + config_->timing.roomJoinInterval;
 		}
 
-		if (::GetForegroundWindow() == gameWindow_->GetWindowHandle() && !world_->IsLocalPlayerDead())
+		if (inputSnapshot.fireRequested && !isLocalPlayerDead)
 		{
-			if ((::GetAsyncKeyState(VK_SPACE) & 0x001) != 0)
-			{
-				udpClient_->SendFireRequest();
-			}
+			udpClient_->SendFireRequest();
 		}
 	}
 
@@ -207,50 +199,37 @@ namespace client::runtime
 		nextKeepAliveTime_ = currentTime + config_->timing.keepAliveInterval;
 	}
 
-	void ClientRuntime::TryJoinRoom() noexcept
+	void ClientRuntime::TryJoinRoom(const input::InputSnapshot& inputSnapshot) noexcept
 	{
-		if (::GetForegroundWindow() != gameWindow_->GetWindowHandle())
-		{
-			return;
-		}
-
 		if (world_->IsLocalPlayerDead())
 		{
 			return;
 		}
 
-		if ((::GetAsyncKeyState('1') & 0x8000) != 0)
+		if (inputSnapshot.isRoom1Pressed)
 		{
 			udpClient_->SendJoinRoomRequest(1);
 		}
 
-		if ((::GetAsyncKeyState('2') & 0x8000) != 0)
+		if (inputSnapshot.isRoom2Pressed)
 		{
 			udpClient_->SendJoinRoomRequest(2);
 		}
 
-		if ((::GetAsyncKeyState('3') & 0x8000) != 0)
+		if (inputSnapshot.isRoom3Pressed)
 		{
 			udpClient_->SendJoinRoomRequest(3);
 		}
 	}
 
-	void ClientRuntime::TryAdjustInterpolationDelay() noexcept
+	void ClientRuntime::TryAdjustInterpolationDelay(const input::InputSnapshot& inputSnapshot) noexcept
 	{
-		if (::GetForegroundWindow() != gameWindow_->GetWindowHandle())
-		{
-			return;
-		}
-
-		const bool isDecreasePressed = ((::GetAsyncKeyState(VK_OEM_MINUS) & 0x0001) != 0) || ((::GetAsyncKeyState(VK_SUBTRACT) & 0x0001) != 0);
-		const bool isIncreasePressed = ((::GetAsyncKeyState(VK_OEM_PLUS) & 0x0001) != 0) || ((::GetAsyncKeyState(VK_ADD) & 0x0001) != 0);
-
-		if (isDecreasePressed)
+		if (inputSnapshot.decreaseInterpolationRequested)
 		{
 			world_->SetInterpolationDelay(world_->GetInterpolationDelay() - config_->timing.interpolationAdjustStep);
 		}
 
-		if (isIncreasePressed)
+		if (inputSnapshot.increaseInterpolationRequested)
 		{
 			world_->SetInterpolationDelay(world_->GetInterpolationDelay() + config_->timing.interpolationAdjustStep);
 		}

@@ -4,7 +4,7 @@
 
 #include <Common/Game/GameTypes.h>
 
-#include <Client/Game/InputState.h>
+#include <Client/Input/InputState.h>
 #include <Client/Render/GdiObject.h>
 
 namespace client::game
@@ -38,7 +38,7 @@ namespace client::ui
 		int backBufferWidth_ = 0;
 		int backBufferHeight_ = 0;
 
-		game::InputState inputState_;
+		input::InputState inputState_;
 		game::ClientWorld* world_ = nullptr;
 		render::GdiRenderer* renderer_ = nullptr;
 
@@ -69,7 +69,7 @@ namespace client::ui
 	private:
 		LRESULT HandleMessage(UINT message, WPARAM wParam, LPARAM lParam);
 		void OnPaint();
-		void OnKeyDown(WPARAM wParam) noexcept;
+		void OnKeyDown(WPARAM wParam, LPARAM lParam) noexcept;
 		void OnKeyUp(WPARAM wParam) noexcept;
 		void OnKillFocus() noexcept;
 		void OnTimer(WPARAM wParam) noexcept;
@@ -84,9 +84,9 @@ namespace client::ui
 			return windowHandle_;
 		}
 
-		[[nodiscard]] const game::InputState& GetInputState() const noexcept
+		[[nodiscard]] input::InputSnapshot ConsumeInputSnapshot() noexcept
 		{
-			return inputState_;
+			return inputState_.ConsumeSnapshot();
 		}
 	};
 }

@@ -18,6 +18,11 @@ namespace client::game
 	class ClientWorld;
 }
 
+namespace client::input
+{
+	struct InputSnapshot;
+}
+
 namespace client::net
 {
 	class UdpClient;
@@ -81,8 +86,8 @@ namespace client::runtime
 		[[nodiscard]] bool ProcessAccountLogin(common::time::TimePoint currentTime);
 
 		void TrySendKeepAlive(common::time::TimePoint currentTime);
-		void TryJoinRoom() noexcept;
-		void TryAdjustInterpolationDelay() noexcept;
+		void TryJoinRoom(const input::InputSnapshot& inputSnapshot) noexcept;
+		void TryAdjustInterpolationDelay(const input::InputSnapshot& inputSnapshot) noexcept;
 
 		void ShutdownJoinedSession();
 

@@ -2,8 +2,6 @@
 
 #include <Windows.h>
 
-#include <Common/Game/GameTypes.h>
-
 #include <Client/Input/InputState.h>
 #include <Client/Render/GdiObject.h>
 

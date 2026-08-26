@@ -6,6 +6,7 @@
 #include "Client/AccountLoginStateTests.h"
 #include "Client/ClientConfigTests.h"
 #include "Client/ClientWorldTests.h"
+#include "Client/InputStateTests.h"
 #include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
 #include "Config/ConfigTextTests.h"
@@ -103,6 +104,7 @@ namespace tests
 		MergeAndPrint(totalResult, "IntegrationSmoke", server::RunIntegrationSmokeTests());
 		MergeAndPrint(totalResult, "ClientConfig", client::RunClientConfigTests());
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
+		MergeAndPrint(totalResult, "InputState", client::RunInputStateTests());
 		MergeAndPrint(totalResult, "AccountLoginState", client::RunAccountLoginStateTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());

@@ -342,6 +342,12 @@
     <ClCompile Include="Server\PeerRoomManagerTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Client\InputStateTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Input\InputState.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -532,6 +538,9 @@
     </ClInclude>
     <ClInclude Include="Server\PeerRoomManagerTests.h">
       <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\InputStateTests.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

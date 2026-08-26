@@ -468,6 +468,23 @@ namespace client::game
 		interpolationDelay_ = defaultInterpolationDelay_;
 	}
 
+	ClientWorld::RenderFrameSnapshot ClientWorld::BuildRenderFrameSnapshot(common::time::TimePoint renderTime) const
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		RenderFrameSnapshot snapshot{};
+		snapshot.localPlayerId = localPlayerId_;
+		snapshot.currentRoomId = currentRoomId_;
+		snapshot.lastServerTick = lastServerTick_;
+		snapshot.interpolationDelay = interpolationDelay_;
+
+		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
+		snapshot.bulletStateList = renderBulletStateList_;
+		snapshot.impactEffectStateList = renderImpactEffectStateList_;
+
+		return snapshot;
+	}
+
 	ClientWorld::RenderPlayerStateList ClientWorld::BuildRenderPlayerStateList(common::time::TimePoint renderTime) const
 	{
 		RenderPlayerStateList renderPlayerStateList;
@@ -649,22 +666,5 @@ namespace client::game
 		}
 
 		return playerIterator->second.isDead;
-	}
-
-	ClientWorld::RenderFrameSnapshot ClientWorld::BuildRenderFrameSnapshot(common::time::TimePoint renderTime) const
-	{
-		std::scoped_lock lock(worldMutex_);
-
-		RenderFrameSnapshot snapshot{};
-		snapshot.localPlayerId = localPlayerId_;
-		snapshot.currentRoomId = currentRoomId_;
-		snapshot.lastServerTick = lastServerTick_;
-		snapshot.interpolationDelay = interpolationDelay_;
-
-		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
-		snapshot.bulletStateList = renderBulletStateList_;
-		snapshot.impactEffectStateList = renderImpactEffectStateList_;
-
-		return snapshot;
 	}
 }

@@ -101,7 +101,6 @@ namespace client::game
 		};
 
 	public:
-		using PendingInputList = std::deque<PendingInput>;
 		using RenderPlayerStateList = std::vector<RenderPlayerState>;
 		using RenderBulletStateList = std::vector<RenderBulletState>;
 		using RenderImpactEffectStateList = std::vector<RenderImpactEffectState>;

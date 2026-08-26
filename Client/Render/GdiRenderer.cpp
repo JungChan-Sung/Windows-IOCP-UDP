@@ -58,40 +58,35 @@ namespace
 
 namespace client::render
 {
-	void GdiRenderer::Render(
-		HDC deviceContext,
-		const RECT& clientRect,
-		const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList,
-		const game::ClientWorld::RenderBulletStateList& renderBulletStateList,
-		const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList,
-		PlayerId localPlayerId,
-		RoomId currentRoomId,
-		std::uint32_t serverTick,
-		int interpolationDelayMs
-	) const
+	void GdiRenderer::Render(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderFrameSnapshot& renderFrameSnapshot) const
 	{
+		const game::ClientWorld::RenderPlayerStateList& playerStateList = renderFrameSnapshot.playerStateList;
+		const game::ClientWorld::RenderBulletStateList& bulletStateList = renderFrameSnapshot.bulletStateList;
+		const game::ClientWorld::RenderImpactEffectStateList& impactEffectStateList = renderFrameSnapshot.impactEffectStateList;
+
+		const PlayerId localPlayerId = renderFrameSnapshot.localPlayerId;
+		const RoomId currentRoomId = renderFrameSnapshot.currentRoomId;
+		const std::uint32_t serverTick = renderFrameSnapshot.lastServerTick;
+		const int interpolationDelayMs = static_cast<int>(renderFrameSnapshot.interpolationDelay.count());
+
 		DrawBackground(deviceContext, clientRect);
 		DrawGrid(deviceContext, clientRect);
 		DrawWalls(deviceContext, currentRoomId);
-		DrawImpactEffects(deviceContext, renderImpactEffectStateList);
-		DrawPlayers(deviceContext, renderPlayerStateList, renderImpactEffectStateList, localPlayerId);
-		DrawBullets(deviceContext, renderBulletStateList);
-		DrawScreenEdgeFlash(deviceContext, clientRect, renderPlayerStateList, renderImpactEffectStateList, localPlayerId);
+		DrawImpactEffects(deviceContext, impactEffectStateList);
+		DrawPlayers(deviceContext, playerStateList, impactEffectStateList, localPlayerId);
+		DrawBullets(deviceContext, bulletStateList);
+		DrawScreenEdgeFlash(deviceContext, clientRect, playerStateList, impactEffectStateList, localPlayerId);
 		DrawHud(
 			deviceContext,
 			clientRect,
-			renderPlayerStateList,
-			renderImpactEffectStateList,
+			playerStateList,
+			impactEffectStateList,
 			localPlayerId,
 			currentRoomId,
 			serverTick,
 			interpolationDelayMs
 		);
-		DrawScoreboard(
-			deviceContext,
-			renderPlayerStateList,
-			localPlayerId
-		);
+		DrawScoreboard(deviceContext, playerStateList, localPlayerId);
 	}
 
 	void GdiRenderer::DrawBackground(HDC deviceContext, const RECT& clientRect) const

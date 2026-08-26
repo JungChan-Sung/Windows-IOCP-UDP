@@ -468,6 +468,73 @@ namespace client::game
 		interpolationDelay_ = defaultInterpolationDelay_;
 	}
 
+	ClientWorld::RenderPlayerStateList ClientWorld::BuildRenderPlayerStateList(common::time::TimePoint renderTime) const
+	{
+		RenderPlayerStateList renderPlayerStateList;
+		renderPlayerStateList.reserve(playerTable_.size());
+
+		const common::time::TimePoint interpolationTargetTime = renderTime - interpolationDelay_;
+
+		for (const auto& playerEntry : playerTable_)
+		{
+			const RemotePlayerState& playerState = playerEntry.second;
+			if (!playerState.isInitialized)
+			{
+				continue;
+			}
+
+			RenderPlayerState renderPlayerState{};
+			renderPlayerState.playerId = playerState.playerId;
+			renderPlayerState.isLocalPlayer = playerState.playerId == localPlayerId_;
+			renderPlayerState.hp = playerState.hp;
+			renderPlayerState.isDead = playerState.isDead;
+			renderPlayerState.respawnRemainingSeconds = playerState.respawnRemainingSeconds;
+			renderPlayerState.invincibilityRemainingSeconds = playerState.invincibilityRemainingSeconds;
+			renderPlayerState.hitFlashRemainingSeconds = playerState.hitFlashRemainingSeconds;
+			renderPlayerState.killCount = playerState.killCount;
+			renderPlayerState.deathCount = playerState.deathCount;
+
+			if (renderPlayerState.isLocalPlayer)
+			{
+				if (isLocalPredictedInitialized_)
+				{
+					renderPlayerState.x = localPredictedX_ + localRenderCorrectionOffsetX_;
+					renderPlayerState.y = localPredictedY_ + localRenderCorrectionOffsetY_;
+				}
+				else
+				{
+					renderPlayerState.x = playerState.targetSample.x;
+					renderPlayerState.y = playerState.targetSample.y;
+				}
+
+				renderPlayerStateList.push_back(renderPlayerState);
+				continue;
+			}
+
+			const SnapshotSample& previousSample = playerState.previousSample;
+			const SnapshotSample& targetSample = playerState.targetSample;
+			if (targetSample.time <= previousSample.time)
+			{
+				renderPlayerState.x = targetSample.x;
+				renderPlayerState.y = targetSample.y;
+
+				renderPlayerStateList.push_back(renderPlayerState);
+				continue;
+			}
+
+			const float totalSeconds = common::time::FloatSeconds(targetSample.time - previousSample.time).count();
+			const float elapsedSeconds = common::time::FloatSeconds(interpolationTargetTime - previousSample.time).count();
+			const float alpha = std::clamp(elapsedSeconds / totalSeconds, 0.0F, 1.0F);
+
+			renderPlayerState.x = Lerp(previousSample.x, targetSample.x, alpha);
+			renderPlayerState.y = Lerp(previousSample.y, targetSample.y, alpha);
+
+			renderPlayerStateList.push_back(renderPlayerState);
+		}
+
+		return renderPlayerStateList;
+	}
+
 	bool ClientWorld::TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY)
 	{
 		std::scoped_lock lock(worldMutex_);
@@ -545,70 +612,7 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		RenderPlayerStateList renderPlayerStateList;
-		renderPlayerStateList.reserve(playerTable_.size());
-
-		const auto interpolationTargetTime = renderTime - interpolationDelay_;
-
-		for (const auto& playerEntry : playerTable_)
-		{
-			const RemotePlayerState& playerState = playerEntry.second;
-			if (!playerState.isInitialized)
-			{
-				continue;
-			}
-
-			RenderPlayerState renderPlayerState{};
-			renderPlayerState.playerId = playerState.playerId;
-			renderPlayerState.isLocalPlayer = playerState.playerId == localPlayerId_;
-			renderPlayerState.hp = playerState.hp;
-			renderPlayerState.isDead = playerState.isDead;
-			renderPlayerState.respawnRemainingSeconds = playerState.respawnRemainingSeconds;
-			renderPlayerState.invincibilityRemainingSeconds = playerState.invincibilityRemainingSeconds;
-			renderPlayerState.hitFlashRemainingSeconds = playerState.hitFlashRemainingSeconds;
-			renderPlayerState.killCount = playerState.killCount;
-			renderPlayerState.deathCount = playerState.deathCount;
-
-			if (renderPlayerState.isLocalPlayer)
-			{
-				if (isLocalPredictedInitialized_)
-				{
-					renderPlayerState.x = localPredictedX_ + localRenderCorrectionOffsetX_;
-					renderPlayerState.y = localPredictedY_ + localRenderCorrectionOffsetY_;
-				}
-				else
-				{
-					renderPlayerState.x = playerState.targetSample.x;
-					renderPlayerState.y = playerState.targetSample.y;
-				}
-
-				renderPlayerStateList.push_back(renderPlayerState);
-				continue;
-			}
-
-			const SnapshotSample& previousSample = playerState.previousSample;
-			const SnapshotSample& targetSample = playerState.targetSample;
-
-			if (targetSample.time <= previousSample.time)
-			{
-				renderPlayerState.x = targetSample.x;
-				renderPlayerState.y = targetSample.y;
-
-				renderPlayerStateList.push_back(renderPlayerState);
-				continue;
-			}
-
-			const float totalSeconds = common::time::FloatSeconds(targetSample.time - previousSample.time).count();
-			const float elapsedSeconds = common::time::FloatSeconds(interpolationTargetTime - previousSample.time).count();
-			const float alpha = std::clamp(elapsedSeconds / totalSeconds, 0.0F, 1.0F);
-
-			renderPlayerState.x = Lerp(previousSample.x, targetSample.x, alpha);
-			renderPlayerState.y = Lerp(previousSample.y, targetSample.y, alpha);
-
-			renderPlayerStateList.push_back(renderPlayerState);
-		}
-
-		return renderPlayerStateList;
+		return BuildRenderPlayerStateList(renderTime);
 	}
 
 	ClientWorld::RenderBulletStateList ClientWorld::GetRenderBulletStatesSnapshot() const
@@ -645,5 +649,22 @@ namespace client::game
 		}
 
 		return playerIterator->second.isDead;
+	}
+
+	ClientWorld::RenderFrameSnapshot ClientWorld::BuildRenderFrameSnapshot(common::time::TimePoint renderTime) const
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		RenderFrameSnapshot snapshot{};
+		snapshot.localPlayerId = localPlayerId_;
+		snapshot.currentRoomId = currentRoomId_;
+		snapshot.lastServerTick = lastServerTick_;
+		snapshot.interpolationDelay = interpolationDelay_;
+
+		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
+		snapshot.bulletStateList = renderBulletStateList_;
+		snapshot.impactEffectStateList = renderImpactEffectStateList_;
+
+		return snapshot;
 	}
 }

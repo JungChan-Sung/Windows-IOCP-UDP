@@ -28,17 +28,7 @@ namespace client::render
 		GdiRenderer& operator=(GdiRenderer&&) = delete;
 
 	public:
-		void Render(
-			HDC deviceContext,
-			const RECT& clientRect,
-			const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList,
-			const game::ClientWorld::RenderBulletStateList& renderBulletStateList,
-			const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList,
-			PlayerId localPlayerId,
-			RoomId currentRoomId,
-			std::uint32_t serverTick,
-			int interpolationDelayMs
-		) const;
+		void Render(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderFrameSnapshot& renderFrameSnapshot) const;
 
 	private:
 		void DrawBackground(HDC deviceContext, const RECT& clientRect) const;

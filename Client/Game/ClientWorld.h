@@ -101,11 +101,28 @@ namespace client::game
 		};
 
 	public:
-		using PlayerTable = std::unordered_map<std::uint32_t, RemotePlayerState>;
 		using PendingInputList = std::deque<PendingInput>;
 		using RenderPlayerStateList = std::vector<RenderPlayerState>;
 		using RenderBulletStateList = std::vector<RenderBulletState>;
 		using RenderImpactEffectStateList = std::vector<RenderImpactEffectState>;
+
+	public:
+		struct RenderFrameSnapshot
+		{
+		public:
+			PlayerId localPlayerId = 0;
+			RoomId currentRoomId = 0;
+			std::uint32_t lastServerTick = 0;
+			common::time::Milliseconds interpolationDelay{};
+
+			RenderPlayerStateList playerStateList;
+			RenderBulletStateList bulletStateList;
+			RenderImpactEffectStateList impactEffectStateList;
+		};
+
+	public:
+		using PlayerTable = std::unordered_map<std::uint32_t, RemotePlayerState>;
+		using PendingInputList = std::deque<PendingInput>;
 		using BulletStateDataList = std::vector<common::packet::BulletStateData>;
 		using ImpactEffectDataList = std::vector<common::packet::ImpactEffectData>;
 
@@ -155,7 +172,7 @@ namespace client::game
 		void ApplyPlayerLeftEvent(PlayerId playerId);
 		void ApplyPlayerSnapshot(const common::packet::PlayerSnapshotPacket& packet);
 		void ApplyBulletSnapshotData(
-			std::uint32_t serverTick, 
+			std::uint32_t serverTick,
 			RoomId roomId,
 			const BulletStateDataList& bulletStateDataList
 		);
@@ -175,6 +192,11 @@ namespace client::game
 			common::time::Milliseconds maxDelay
 		) noexcept;
 
+		[[nodiscard]] RenderFrameSnapshot BuildRenderFrameSnapshot(common::time::TimePoint renderTime) const;
+
+	private:
+		[[nodiscard]] RenderPlayerStateList BuildRenderPlayerStateList(common::time::TimePoint renderTime) const;
+
 	public:
 		[[nodiscard]] bool TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
 		void SetCurrentRoomId(RoomId roomId);
@@ -189,5 +211,6 @@ namespace client::game
 		[[nodiscard]] RenderImpactEffectStateList GetRenderImpactEffectStatesSnapshot() const;
 		[[nodiscard]] common::time::Milliseconds GetInterpolationDelay() const noexcept;
 		[[nodiscard]] bool IsLocalPlayerDead() const noexcept;
+
 	};
 }

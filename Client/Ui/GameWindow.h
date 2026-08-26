@@ -21,10 +21,6 @@ namespace client::ui
 {
 	class GameWindow
 	{
-	public:
-		using PlayerId = common::game::PlayerId;
-		using RoomId = common::game::RoomId;
-
 	private:
 		static inline constexpr const wchar_t* windowClassName = L"UdpGameClientWindowClass";
 		static inline constexpr UINT_PTR repaintTimerId = 1;

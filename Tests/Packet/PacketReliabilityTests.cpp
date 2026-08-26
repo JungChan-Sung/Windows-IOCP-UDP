@@ -30,6 +30,7 @@ namespace tests::packet::packetReliabilityTest
 		common::packet::PacketType::ImpactEffect,
 		common::packet::PacketType::AccountLoginRequest,
 		common::packet::PacketType::AccountLoginResponse,
+		common::packet::PacketType::KeepAlive,
 	};
 
 	void RunReliablePacketTypeTests(tests::DebugTestResult& result)

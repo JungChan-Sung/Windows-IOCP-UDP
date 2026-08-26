@@ -39,6 +39,7 @@ namespace
 			"UpdateSleepMs=2\n"
 			"AccountLoginRetryMs=750\n"
 			"JoinRetryMs=1500\n"
+			"KeepAliveMs=2500\n"
 			"RoomJoinMs=300\n"
 			"InterpolationAdjustStepMs=15\n"
 			"\n"
@@ -76,6 +77,7 @@ namespace
 		);
 		tests::Expect(result, config.network.iocpWorkerThreadCount == 2, "ClientConfig: iocpWorkerThreadCount");
 		tests::Expect(result, config.network.iocpRecvContextCount == 8, "ClientConfig: iocpRecvContextCount");
+
 		tests::Expect(
 			result,
 			config.account.loginName == "test_account",
@@ -87,14 +89,17 @@ namespace
 			config.account.passwordHash == "test_password_hash",
 			"ClientConfig: account password hash"
 		);
+
 		tests::Expect(result, config.timing.updateSleepInterval == common::time::Milliseconds(2), "ClientConfig: updateSleep");
+
 		tests::Expect(
 			result,
-			config.timing.accountLoginRetryInterval
-			== common::time::Milliseconds(750),
+			config.timing.accountLoginRetryInterval == common::time::Milliseconds(750),
 			"ClientConfig: account login retry"
 		);
+
 		tests::Expect(result, config.timing.joinRetryInterval == common::time::Milliseconds(1500), "ClientConfig: joinRetry");
+		tests::Expect(result, config.timing.keepAliveInterval == common::time::Milliseconds(2500), "ClientConfig: keepAlive");
 		tests::Expect(result, config.timing.roomJoinInterval == common::time::Milliseconds(300), "ClientConfig: roomJoin");
 		tests::Expect(result, config.timing.interpolationAdjustStep == common::time::Milliseconds(15), "ClientConfig: adjustStep");
 		tests::Expect(result, config.interpolation.defaultDelay == common::time::Milliseconds(120), "ClientConfig: defaultDelay");
@@ -103,11 +108,13 @@ namespace
 		tests::Expect(result, config.snapshot.assemblyTimeout == common::time::Milliseconds(700), "ClientConfig: assemblyTimeout");
 		tests::Expect(result, config.simulation.tickInterval == common::time::Milliseconds(40), "ClientConfig: simulation tick");
 		tests::Expect(result, config.simulation.deltaSeconds == 0.04F, "ClientConfig: simulation delta");
+
 		tests::Expect(
 			result,
 			config.diagnostics.logLevel == common::log::LogLevel::Debug,
 			"ClientConfig: load diagnostics log level"
 		);
+
 		tests::Expect(
 			result,
 			config.diagnostics.asyncLogWorkerThreadCount == 2,
@@ -137,6 +144,7 @@ namespace
 			"[Timing]\n"
 			"UpdateSleepMs=0\n"
 			"AccountLoginRetryMs=0\n"
+			"KeepAliveMs=0\n"
 			"\n"
 			"[Diagnostics]\n"
 			"LogLevel=Verbose\n"
@@ -147,18 +155,26 @@ namespace
 		std::filesystem::remove(filePath);
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: invalid file loaded");
-		tests::Expect(result, loadResult.warningList.size() >= 11, "ClientConfig: invalid file warning count");
+		tests::Expect(result, loadResult.warningList.size() >= 12, "ClientConfig: invalid file warning count");
+
 		tests::Expect(
 			result,
-			loadResult.config.timing.accountLoginRetryInterval
-			== client::config::defaultAccountLoginRetryInterval,
+			loadResult.config.timing.accountLoginRetryInterval == client::config::defaultAccountLoginRetryInterval,
 			"ClientConfig: invalid account login retry keeps default"
 		);
+
+		tests::Expect(
+			result,
+			loadResult.config.timing.keepAliveInterval == client::config::defaultKeepAliveInterval,
+			"ClientConfig: invalid keep-alive keeps default"
+		);
+
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.logLevel == client::config::defaultLogLevel,
 			"ClientConfig: invalid log level keeps default"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.asyncLogWorkerThreadCount == client::config::defaultAsyncLogWorkerThreadCount,
@@ -189,9 +205,9 @@ namespace
 		config.account.loginName.clear();
 		config.account.passwordHash.clear();
 		config.timing.updateSleepInterval = common::time::Milliseconds(0);
-		config.timing.accountLoginRetryInterval
-			= common::time::Milliseconds::zero();
+		config.timing.accountLoginRetryInterval = common::time::Milliseconds::zero();
 		config.timing.joinRetryInterval = common::time::Milliseconds(0);
+		config.timing.keepAliveInterval = common::time::Milliseconds(0);
 		config.timing.roomJoinInterval = common::time::Milliseconds(0);
 		config.timing.interpolationAdjustStep = common::time::Milliseconds(0);
 		config.interpolation.defaultDelay = common::time::Milliseconds(999);
@@ -208,21 +224,25 @@ namespace
 		tests::Expect(result, !warningList.empty(), "ClientConfigValidator: warning generated");
 		tests::Expect(result, config.network.serverIp == defaultConfig.network.serverIp, "ClientConfigValidator: serverIp normalized");
 		tests::Expect(result, config.network.serverPort == defaultConfig.network.serverPort, "ClientConfigValidator: serverPort normalized");
+
 		tests::Expect(
 			result,
 			config.network.iocpWorkerThreadCount == defaultConfig.network.iocpWorkerThreadCount,
 			"ClientConfigValidator: iocp worker thread count normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.network.iocpRecvContextCount == defaultConfig.network.iocpRecvContextCount,
 			"ClientConfigValidator: iocp recv context count normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfigValidator: update sleep normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.account.loginName.empty(),
@@ -234,37 +254,49 @@ namespace
 			config.account.passwordHash.empty(),
 			"ClientConfigValidator: empty account password hash preserved"
 		);
+
 		tests::Expect(
 			result,
-			config.timing.accountLoginRetryInterval
-			== defaultConfig.timing.accountLoginRetryInterval,
+			config.timing.accountLoginRetryInterval == defaultConfig.timing.accountLoginRetryInterval,
 			"ClientConfigValidator: account login retry normalized"
 		);
+
+		tests::Expect(
+			result,
+			config.timing.keepAliveInterval == defaultConfig.timing.keepAliveInterval,
+			"ClientConfigValidator: keep-alive normalized"
+		);
+
 		tests::Expect(
 			result,
 			config.interpolation.minDelay == defaultConfig.interpolation.minDelay,
 			"ClientConfigValidator: min delay normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.interpolation.maxDelay == defaultConfig.interpolation.maxDelay,
 			"ClientConfigValidator: max delay normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.snapshot.assemblyTimeout == defaultConfig.snapshot.assemblyTimeout,
 			"ClientConfigValidator: snapshot timeout normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.simulation.tickInterval == defaultConfig.simulation.tickInterval,
 			"ClientConfigValidator: simulation tick normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.simulation.deltaSeconds == defaultConfig.simulation.deltaSeconds,
 			"ClientConfigValidator: simulation delta normalized"
 		);
+
 		tests::Expect(
 			result,
 			config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
@@ -276,41 +308,67 @@ namespace
 			tests::ContainsWarningMessage(warningList, "Network.ServerIp cannot be empty. Default server ip will be used."),
 			"ClientConfigValidator: server ip warning message"
 		);
+
 		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(warningList, "Network.ServerPort cannot be 0. Default server port will be used."),
 			"ClientConfigValidator: server port warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Network.IocpWorkerThreadCount must be greater than 0. Default IOCP worker thread count will be used."
+			),
 			"ClientConfigValidator: iocp worker warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Network.IocpRecvContextCount must be greater than 0. Default IOCP recv context count will be used."
+			),
 			"ClientConfigValidator: iocp recv warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Interpolation.MinDelayMs cannot be greater than Interpolation.MaxDelayMs. Default interpolation range will be used."
+			),
 			"ClientConfigValidator: interpolation range warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Simulation.TickIntervalMs must be greater than 0. Default tick interval will be used."
+			),
 			"ClientConfigValidator: simulation tick warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Simulation.DeltaSeconds must be greater than 0. Default delta seconds will be used."
+			),
 			"ClientConfigValidator: simulation delta warning message"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(warningList, "Diagnostics.AsyncLogWorkerThreadCount must be greater than 0. Default async log worker thread count will be used."),
+			tests::ContainsWarningMessage(
+				warningList,
+				"Diagnostics.AsyncLogWorkerThreadCount must be greater than 0. Default async log worker thread count will be used."
+			),
 			"ClientConfigValidator: async log worker warning message"
 		);
+
 		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(
@@ -328,6 +386,7 @@ namespace
 			),
 			"ClientConfigValidator: account password hash warning"
 		);
+
 		tests::Expect(
 			result,
 			tests::ContainsWarningMessage(
@@ -335,6 +394,15 @@ namespace
 				"Timing.AccountLoginRetryMs must be greater than 0. Default account login retry interval will be used."
 			),
 			"ClientConfigValidator: account login retry warning"
+		);
+
+		tests::Expect(
+			result,
+			tests::ContainsWarningMessage(
+				warningList,
+				"Timing.KeepAliveMs must be greater than 0. Default keep-alive interval will be used."
+			),
+			"ClientConfigValidator: keep-alive warning"
 		);
 	}
 
@@ -355,16 +423,19 @@ namespace
 
 		tests::Expect(result, loadResult.loadedFromFile, "ClientConfig: transport type case file loaded");
 		tests::Expect(result, loadResult.warningList.empty(), "ClientConfig: transport type case has no loader warning");
+
 		tests::Expect(
 			result,
 			loadResult.config.network.transportType == client::config::ClientTransportType::Iocp,
 			"ClientConfig: transport type case insensitive"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.network.iocpWorkerThreadCount == 3,
 			"ClientConfig: transport type case worker count"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.network.iocpRecvContextCount == 6,
@@ -387,9 +458,13 @@ namespace
 			lowerConfig.interpolation.defaultDelay == common::time::Milliseconds(100),
 			"ClientConfigValidator: default delay clamped to min"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(lowerWarningList, "Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."),
+			tests::ContainsWarningMessage(
+				lowerWarningList,
+				"Interpolation.DefaultDelayMs is lower than MinDelayMs. It will be clamped to MinDelayMs."
+			),
 			"ClientConfigValidator: default delay lower warning message"
 		);
 
@@ -406,9 +481,13 @@ namespace
 			upperConfig.interpolation.defaultDelay == common::time::Milliseconds(300),
 			"ClientConfigValidator: default delay clamped to max"
 		);
+
 		tests::Expect(
 			result,
-			tests::ContainsWarningMessage(upperWarningList, "Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."),
+			tests::ContainsWarningMessage(
+				upperWarningList,
+				"Interpolation.DefaultDelayMs is greater than MaxDelayMs. It will be clamped to MaxDelayMs."
+			),
 			"ClientConfigValidator: default delay upper warning message"
 		);
 	}
@@ -428,13 +507,13 @@ namespace
 			"[Timing]\n"
 			"UpdateSleepMs=0\n"
 			"AccountLoginRetryMs=0\n"
+			"KeepAliveMs=0\n"
 			"\n"
 			"[Diagnostics]\n"
 			"AsyncLogWorkerThreadCount=0\n"
 		);
 
-		client::config::ClientConfigLoadResult loadResult =
-			client::config::ClientConfigLoader::LoadValidated(filePath);
+		client::config::ClientConfigLoadResult loadResult = client::config::ClientConfigLoader::LoadValidated(filePath);
 
 		std::filesystem::remove(filePath);
 
@@ -445,32 +524,43 @@ namespace
 			loadResult.loadedFromFile,
 			"ClientConfig: LoadValidated file loaded"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.network.serverIp == defaultConfig.network.serverIp,
 			"ClientConfig: LoadValidated normalizes server ip"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.network.iocpWorkerThreadCount == defaultConfig.network.iocpWorkerThreadCount,
 			"ClientConfig: LoadValidated normalizes IOCP worker thread count"
 		);
+
 		tests::Expect(
 			result,
 			loadResult.config.timing.updateSleepInterval == defaultConfig.timing.updateSleepInterval,
 			"ClientConfig: LoadValidated normalizes update sleep"
 		);
+
 		tests::Expect(
 			result,
-			loadResult.config.timing.accountLoginRetryInterval
-			== defaultConfig.timing.accountLoginRetryInterval,
+			loadResult.config.timing.accountLoginRetryInterval == defaultConfig.timing.accountLoginRetryInterval,
 			"ClientConfig: LoadValidated normalizes account login retry"
 		);
+
+		tests::Expect(
+			result,
+			loadResult.config.timing.keepAliveInterval == defaultConfig.timing.keepAliveInterval,
+			"ClientConfig: LoadValidated normalizes keep-alive"
+		);
+
 		tests::Expect(
 			result,
 			loadResult.config.diagnostics.asyncLogWorkerThreadCount == defaultConfig.diagnostics.asyncLogWorkerThreadCount,
 			"ClientConfig: LoadValidated normalizes async log worker thread count"
 		);
+
 		tests::Expect(
 			result,
 			!loadResult.warningList.empty(),

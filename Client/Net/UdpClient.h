@@ -138,7 +138,7 @@ namespace client::net
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
 		[[nodiscard]] bool SendAccountLoginRequest(const common::packet::AccountLoginRequestPacket& packet);
 		[[nodiscard]] bool SendSerializedPacket(common::packet::ConstPacketSpan serializedPacket);
-		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedPacket);
+		[[nodiscard]] bool SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket);
 		[[nodiscard]] bool SendReliableAckPacket();
 
 		void RegisterPacketHandlers();

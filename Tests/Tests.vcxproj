@@ -184,6 +184,7 @@
     <ClCompile Include="Net\UdpFaultDecisionGeneratorTests.cpp" />
     <ClCompile Include="Net\UdpFaultPacketSchedulerTests.cpp" />
     <ClCompile Include="Net\UdpFaultSimulatorTests.cpp" />
+    <ClCompile Include="Packet\ControlPacketTests.cpp" />
     <ClCompile Include="Packet\PacketReliabilityTests.cpp" />
     <ClCompile Include="Packet\PacketSerializationTests.cpp" />
     <ClCompile Include="Persistence\AccountRepositoryIntegrationTests.cpp" />
@@ -208,6 +209,7 @@
     <ClCompile Include="Server\MatchHistoryTrackerTests.cpp" />
     <ClCompile Include="Server\PacketPayloadValidatorTests.cpp" />
     <ClCompile Include="Server\PasswordHashVerifierTests.cpp" />
+    <ClCompile Include="Server\PeerRoomManagerTests.cpp" />
     <ClCompile Include="Server\PeerSessionServiceTests.cpp" />
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp" />
     <ClCompile Include="Server\ReliableUdpSessionRegistryTests.cpp" />
@@ -255,6 +257,7 @@
     <ClInclude Include="Net\UdpFaultDecisionGeneratorTests.h" />
     <ClInclude Include="Net\UdpFaultPacketSchedulerTests.h" />
     <ClInclude Include="Net\UdpFaultSimulatorTests.h" />
+    <ClInclude Include="Packet\ControlPacketTests.h" />
     <ClInclude Include="Packet\PacketReliabilityTests.h" />
     <ClInclude Include="Packet\PacketSerializationTests.h" />
     <ClInclude Include="Persistence\AccountRepositoryIntegrationTests.h" />
@@ -279,6 +282,7 @@
     <ClInclude Include="Server\MatchHistoryTrackerTests.h" />
     <ClInclude Include="Server\PacketPayloadValidatorTests.h" />
     <ClInclude Include="Server\PasswordHashVerifierTests.h" />
+    <ClInclude Include="Server\PeerRoomManagerTests.h" />
     <ClInclude Include="Server\PeerSessionServiceTests.h" />
     <ClInclude Include="Server\PlayerCommandServiceTests.h" />
     <ClInclude Include="Server\ReliableUdpSessionRegistryTests.h" />

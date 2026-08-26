@@ -19,6 +19,7 @@
 #include "Net/UdpFaultDecisionGeneratorTests.h"
 #include "Net/UdpFaultPacketSchedulerTests.h"
 #include "Net/UdpFaultSimulatorTests.h"
+#include "Packet/ControlPacketTests.h"
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
 #include "Persistence/AccountRepositoryIntegrationTests.h"
@@ -45,6 +46,7 @@
 #include "Server/ServerMetricsCollectorTests.h"
 #include "Server/GameSimulationTests.h"
 #include "Server/GameWorldTests.h"
+#include "Server/PeerRoomManagerTests.h"
 #include "Server/PeerSessionServiceTests.h"
 #include "Server/PlayerCommandServiceTests.h"
 #include "Server/PacketPayloadValidatorTests.h"
@@ -64,6 +66,7 @@ namespace tests
 	{
 		tests::DebugTestResult totalResult{};
 
+		MergeAndPrint(totalResult, "ControlPacket", packet::RunControlPacketTests());
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
@@ -88,10 +91,11 @@ namespace tests
 		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());
 		MergeAndPrint(totalResult, "GameSimulation", server::RunGameSimulationTests());
 		MergeAndPrint(totalResult, "GameWorld", server::RunGameWorldTests());
-		MergeAndPrint(totalResult, "MatchHistoryTracker", server::RunMatchHistoryTrackerTests());
-		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
+		MergeAndPrint(totalResult, "PeerRoomManager", server::RunPeerRoomManagerTests());
 		MergeAndPrint(totalResult, "PeerSessionService", server::RunPeerSessionServiceTests());
 		MergeAndPrint(totalResult, "PlayerCommandService", server::RunPlayerCommandServiceTests());
+		MergeAndPrint(totalResult, "MatchHistoryTracker", server::RunMatchHistoryTrackerTests());
+		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "ReliableUdpSessionRegistry", server::RunReliableUdpSessionRegistryTests());
 		MergeAndPrint(totalResult, "SnapshotBroadcastBuilder", server::RunSnapshotBroadcastBuilderTests());
 		MergeAndPrint(totalResult, "PacketPayloadValidator", server::RunPacketPayloadValidatorTests());

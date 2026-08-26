@@ -336,6 +336,12 @@
     <ClCompile Include="Server\ReliableUdpSessionRegistryTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Packet\ControlPacketTests.cpp">
+      <Filter>소스 파일\Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\PeerRoomManagerTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -519,6 +525,12 @@
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\ReliableUdpSessionRegistryTests.h">
+      <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\ControlPacketTests.h">
+      <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\PeerRoomManagerTests.h">
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>

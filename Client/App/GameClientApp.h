@@ -7,19 +7,17 @@
 #include <expected>
 #include <span>
 #include <string>
-#include <thread>
 #include <variant>
 
 #include <Common/Log/AsyncLogWriter.h>
 #include <Common/Log/DebugOutputLogger.h>
-#include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfig.h>
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Game/ClientWorld.h>
-#include <Client/Net/JoinHandshakeState.h>
 #include <Client/Net/UdpClient.h>
 #include <Client/Render/GdiRenderer.h>
+#include <Client/Runtime/ClientRuntime.h>
 #include <Client/Ui/GameWindow.h>
 
 namespace client::app
@@ -33,15 +31,13 @@ namespace client::app
 			AccountLoginStartFailed,
 			AccountLoginFailed,
 			GameWindowCreateFailed,
+			RuntimeStartFailed,
 			MessageLoopFailed,
 		};
 
 	public:
 		using RunError = std::variant<RunFailure, common::log::AsyncLogWriter::StartError, net::UdpClient::StartError>;
 		using RunResult = std::expected<void, RunError>;
-
-	private:
-		static inline constexpr int maxSimulationTicksPerUpdate = 4;
 
 	private:
 		config::ClientConfig config_;
@@ -51,19 +47,11 @@ namespace client::app
 
 		game::ClientWorld world_;
 		net::UdpClient udpClient_;
-		net::JoinHandshakeState joinHandshakeState_;
+		runtime::ClientRuntime runtime_;
 		ui::GameWindow gameWindow_;
 		render::GdiRenderer gdiRenderer_;
 
 		std::atomic<bool> isRunning_ = false;
-		std::atomic<bool> accountLoginFailed_ = false;
-
-		std::jthread updateThread_;
-
-		common::time::TimePoint nextSimulationTickTime_;
-		common::time::TimePoint nextKeepAliveTime_;
-		common::time::TimePoint nextRoomJoinTime_;
-		common::time::TimePoint lastEffectUpdateTime_;
 
 	public:
 		GameClientApp() = default;
@@ -88,14 +76,5 @@ namespace client::app
 		void OutputStartupConfig() const;
 
 		int MessageLoop();
-		void UpdateLoop(std::stop_token stopToken);
-
-		[[nodiscard]] bool ProcessAccountLogin(common::time::TimePoint currentTime);
-
-		void Update();
-		void TrySendKeepAlive(common::time::TimePoint currentTime);
-		void TryJoinRoom() noexcept;
-		void TryAdjustInterpolationDelay() noexcept;
 	};
 }
-

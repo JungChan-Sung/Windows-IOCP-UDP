@@ -156,6 +156,7 @@
     <ClCompile Include="Net\UdpIocpTransport.cpp" />
     <ClCompile Include="Net\UdpSocketTransport.cpp" />
     <ClCompile Include="Render\GdiRenderer.cpp" />
+    <ClCompile Include="Runtime\ClientRuntime.cpp" />
     <ClCompile Include="Ui\GameWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -180,6 +181,7 @@
     <ClInclude Include="Render\GdiObject.h" />
     <ClInclude Include="Render\GdiRenderConstants.h" />
     <ClInclude Include="Render\GdiRenderer.h" />
+    <ClInclude Include="Runtime\ClientRuntime.h" />
     <ClInclude Include="Ui\GameWindow.h" />
   </ItemGroup>
   <ItemGroup>

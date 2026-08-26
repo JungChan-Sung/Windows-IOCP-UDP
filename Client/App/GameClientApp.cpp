@@ -5,7 +5,6 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <type_traits>
 #include <variant>
 
@@ -13,11 +12,9 @@
 #include <Common/Log/LogMessageBuilder.h>
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/String/StringFormat.h>
-#include <Common/Time/TimeTypes.h>
 
 #include <Client/Config/ClientConfigLoader.h>
 #include <Client/Config/ClientTransportType.h>
-#include <Client/Net/AccountLoginState.h>
 
 namespace client::app
 {
@@ -43,6 +40,9 @@ namespace client::app
 
 					case RunFailure::GameWindowCreateFailed:
 						return "GameWindowCreateFailed";
+
+					case RunFailure::RuntimeStartFailed:
+						return "RuntimeStartFailed";
 
 					case RunFailure::MessageLoopFailed:
 						return "MessageLoopFailed";
@@ -75,8 +75,6 @@ namespace client::app
 			return std::unexpected(RunError{ RunFailure::AlreadyRunning });
 		}
 
-		accountLoginFailed_.store(false);
-
 		const config::ClientConfigLoadResult loadResult = BuildClientConfig(serverIp, serverPort);
 		config_ = loadResult.config;
 
@@ -98,20 +96,16 @@ namespace client::app
 		LogConfigWarnings(loadResult.warningList);
 		OutputStartupConfig();
 
-		world_.SetInterpolationSettings(
-			config_.interpolation.defaultDelay,
-			config_.interpolation.minDelay,
-			config_.interpolation.maxDelay
-		);
+		world_.SetInterpolationSettings(config_.interpolation.defaultDelay, config_.interpolation.minDelay, config_.interpolation.maxDelay);
 
 		udpClient_.SetSnapshotAssemblyTimeout(config_.snapshot.assemblyTimeout);
-		udpClient_.SetTransportConfig(
-			config_.network.transportType,
-			config_.network.iocpWorkerThreadCount,
-			config_.network.iocpRecvContextCount
-		);
+		udpClient_.SetTransportConfig(config_.network.transportType, config_.network.iocpWorkerThreadCount, config_.network.iocpRecvContextCount);
 
-		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(config_.network.serverIp.c_str(), config_.network.serverPort, world_);
+		const net::UdpClient::StartResult udpClientStartResult = udpClient_.Start(
+			config_.network.serverIp.c_str(),
+			config_.network.serverPort,
+			world_
+		);
 		if (!udpClientStartResult.has_value())
 		{
 			udpClient_.DetachLogger();
@@ -144,63 +138,23 @@ namespace client::app
 
 		isRunning_.store(true);
 
-		const auto currentTime = common::time::Clock::now();
+		if (!runtime_.Start(config_, logger_, world_, udpClient_, gameWindow_))
+		{
+			isRunning_.store(false);
 
-		joinHandshakeState_.Reset();
+			gameWindow_.Destroy();
+			udpClient_.Stop();
+			udpClient_.DetachLogger();
+			world_.Clear();
 
-		nextSimulationTickTime_ = currentTime;
-		nextKeepAliveTime_ = currentTime + config_.timing.keepAliveInterval;
-		nextRoomJoinTime_ = currentTime;
-		lastEffectUpdateTime_ = currentTime;
-
-		updateThread_ = std::jthread(
-			[this](std::stop_token stopToken)
-			{
-				UpdateLoop(stopToken);
-			}
-		);
+			return std::unexpected(RunError{ RunFailure::RuntimeStartFailed });
+		}
 
 		const int exitCode = MessageLoop();
 
 		isRunning_.store(false);
 
-		if (updateThread_.joinable())
-		{
-			updateThread_.request_stop();
-			updateThread_.join();
-		}
-
-		if (world_.IsJoined())
-		{
-			constexpr common::time::Milliseconds leaveResponseTimeout{ 1500 };
-			constexpr common::time::Milliseconds leaveResponsePollInterval{ 10 };
-
-			bool leaveRequestQueued = udpClient_.SendLeaveRequest();
-			const common::time::TimePoint deadline = common::time::Clock::now() + leaveResponseTimeout;
-			while (!udpClient_.HasReceivedLeaveResponse() && common::time::Clock::now() < deadline)
-			{
-				udpClient_.ProcessReliableResends();
-
-				if (!leaveRequestQueued)
-				{
-					leaveRequestQueued = udpClient_.SendLeaveRequest();
-				}
-
-				std::this_thread::sleep_for(leaveResponsePollInterval);
-			}
-
-			if (!leaveRequestQueued)
-			{
-				logger_.Warning("Failed to queue leave request before timeout.");
-			}
-			else if (!udpClient_.HasReceivedLeaveResponse())
-			{
-				logger_.Warning("Leave response timed out.");
-			}
-		}
-
-		updateThread_ = std::jthread();
-		joinHandshakeState_.Reset();
+		runtime_.Stop();
 
 		gameWindow_.Destroy();
 		udpClient_.Stop();
@@ -212,7 +166,7 @@ namespace client::app
 			return std::unexpected(RunError{ RunFailure::MessageLoopFailed });
 		}
 
-		if (accountLoginFailed_.load())
+		if (runtime_.HasAccountLoginFailed())
 		{
 			return std::unexpected(RunError{ RunFailure::AccountLoginFailed });
 		}
@@ -247,8 +201,7 @@ namespace client::app
 				continue;
 			}
 
-			const std::string message =
-				common::log::LogMessageBuilder{}
+			const std::string message = common::log::LogMessageBuilder{}
 				.Append("Client.ini:")
 				.Append(warning.lineNumber)
 				.Append(": ")
@@ -297,6 +250,7 @@ namespace client::app
 		while (isRunning_.load())
 		{
 			const BOOL result = ::GetMessageW(&message, nullptr, 0, 0);
+
 			if (result == 0)
 			{
 				return static_cast<int>(message.wParam);
@@ -312,194 +266,5 @@ namespace client::app
 		}
 
 		return 0;
-	}
-
-	void GameClientApp::UpdateLoop(std::stop_token stopToken)
-	{
-		while (!stopToken.stop_requested() && isRunning_.load())
-		{
-			Update();
-			std::this_thread::sleep_for(config_.timing.updateSleepInterval);
-		}
-	}
-
-	bool GameClientApp::ProcessAccountLogin(common::time::TimePoint currentTime)
-	{
-		if (joinHandshakeState_.GetState() != net::JoinHandshakeState::State::Idle)
-		{
-			return true;
-		}
-
-		udpClient_.ProcessAccountLogin();
-
-		const net::UdpClient::AccountLoginSnapshot loginSnapshot = udpClient_.GetAccountLoginSnapshot();
-		switch (loginSnapshot.state)
-		{
-		case net::AccountLoginState::State::Idle:
-		case net::AccountLoginState::State::WaitingResponse:
-			return false;
-
-		case net::AccountLoginState::State::Succeeded:
-			joinHandshakeState_.Begin(currentTime, config_.timing.joinRetryInterval);
-			logger_.Info("Account login completed. Starting join handshake.");
-			return true;
-
-		case net::AccountLoginState::State::Failed:
-			if (!accountLoginFailed_.exchange(true))
-			{
-				logger_.Error("Account login failed. Closing client.");
-				isRunning_.store(false);
-				gameWindow_.RequestClose();
-			}
-
-			return false;
-
-		default:
-			return false;
-		}
-	}
-
-	void GameClientApp::Update()
-	{
-		TryAdjustInterpolationDelay();
-
-		const auto currentTime = common::time::Clock::now();
-
-		if (!ProcessAccountLogin(currentTime))
-		{
-			return;
-		}
-
-		udpClient_.ProcessReliableResends();
-
-		const float effectDeltaSeconds = common::time::FloatSeconds(currentTime - lastEffectUpdateTime_).count();
-		lastEffectUpdateTime_ = currentTime;
-
-		world_.UpdateLocalEffects(effectDeltaSeconds);
-
-		if (!world_.IsJoined())
-		{
-			if (joinHandshakeState_.TryStartAttempt(currentTime))
-			{
-				udpClient_.SendJoinRequest();
-			}
-
-			return;
-		}
-
-		joinHandshakeState_.Complete();
-
-		TrySendKeepAlive(currentTime);
-
-		int processedSimulationTickCount = 0;
-		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
-		{
-			common::game::InputFlags inputFlags = common::game::InputFlags::None;
-
-			if (!world_.IsLocalPlayerDead())
-			{
-				inputFlags = gameWindow_.GetInputState().ToInputFlags();
-			}
-
-			std::uint32_t inputSequence = 0;
-			const bool sendResult = udpClient_.SendInputCommand(inputFlags, inputSequence);
-
-			if (sendResult)
-			{
-				const float predictionDeltaSeconds = config_.simulation.deltaSeconds;
-				world_.ApplyLocalPredictionTick(inputSequence, inputFlags, predictionDeltaSeconds);
-			}
-
-			nextSimulationTickTime_ += config_.simulation.tickInterval;
-			++processedSimulationTickCount;
-		}
-
-		if (processedSimulationTickCount == maxSimulationTicksPerUpdate && currentTime >= nextSimulationTickTime_)
-		{
-			nextSimulationTickTime_ = currentTime + config_.simulation.tickInterval;
-		}
-
-		if (currentTime >= nextRoomJoinTime_)
-		{
-			TryJoinRoom();
-			nextRoomJoinTime_ = currentTime + config_.timing.roomJoinInterval;
-		}
-
-		if (::GetForegroundWindow() == gameWindow_.GetWindowHandle() && !world_.IsLocalPlayerDead())
-		{
-			if ((::GetAsyncKeyState(VK_SPACE) & 0x001) != 0)
-			{
-				udpClient_.SendFireRequest();
-			}
-		}
-	}
-
-	void GameClientApp::TrySendKeepAlive(common::time::TimePoint currentTime)
-	{
-		if (currentTime < nextKeepAliveTime_)
-		{
-			return;
-		}
-
-		if (!udpClient_.SendKeepAlive())
-		{
-			logger_.Warning("Keep-alive packet send failed.");
-		}
-
-		nextKeepAliveTime_ = currentTime + config_.timing.keepAliveInterval;
-	}
-
-	void GameClientApp::TryJoinRoom() noexcept
-	{
-		if (::GetForegroundWindow() != gameWindow_.GetWindowHandle())
-		{
-			return;
-		}
-
-		if (world_.IsLocalPlayerDead())
-		{
-			return;
-		}
-
-		if ((::GetAsyncKeyState('1') & 0x8000) != 0)
-		{
-			udpClient_.SendJoinRoomRequest(1);
-		}
-
-		if ((::GetAsyncKeyState('2') & 0x8000) != 0)
-		{
-			udpClient_.SendJoinRoomRequest(2);
-		}
-
-		if ((::GetAsyncKeyState('3') & 0x8000) != 0)
-		{
-			udpClient_.SendJoinRoomRequest(3);
-		}
-	}
-
-	void GameClientApp::TryAdjustInterpolationDelay() noexcept
-	{
-		if (::GetForegroundWindow() != gameWindow_.GetWindowHandle())
-		{
-			return;
-		}
-
-		const bool isDecreasePressed
-			= ((::GetAsyncKeyState(VK_OEM_MINUS) & 0x0001) != 0)
-			|| ((::GetAsyncKeyState(VK_SUBTRACT) & 0x0001) != 0);
-
-		const bool isIncreasePressed
-			= ((::GetAsyncKeyState(VK_OEM_PLUS) & 0x0001) != 0)
-			|| ((::GetAsyncKeyState(VK_ADD) & 0x0001) != 0);
-
-		if (isDecreasePressed)
-		{
-			world_.SetInterpolationDelay(world_.GetInterpolationDelay() - config_.timing.interpolationAdjustStep);
-		}
-
-		if (isIncreasePressed)
-		{
-			world_.SetInterpolationDelay(world_.GetInterpolationDelay() + config_.timing.interpolationAdjustStep);
-		}
 	}
 }

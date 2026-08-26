@@ -49,6 +49,12 @@
     <Filter Include="소스 파일\Config">
       <UniqueIdentifier>{4c567638-11f8-4658-8ab9-065af0f1704b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Runtime">
+      <UniqueIdentifier>{14b9fe71-e720-4f70-940b-aefbd1a81684}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Runtime">
+      <UniqueIdentifier>{3858d9da-7dd1-4466-955a-3779751b5905}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -92,6 +98,9 @@
     </ClCompile>
     <ClCompile Include="Net\AccountLoginState.cpp">
       <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime\ClientRuntime.cpp">
+      <Filter>소스 파일\Runtime</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="Net\AccountLoginState.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Runtime\ClientRuntime.h">
+      <Filter>헤더 파일\Runtime</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

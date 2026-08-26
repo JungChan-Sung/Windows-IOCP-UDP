@@ -10,22 +10,22 @@ namespace client::game
 		{
 		case 'W':
 		case VK_UP:
-			isUpPressed_ = true;
+			isUpPressed_.store(true, std::memory_order_relaxed);
 			break;
 
 		case 'S':
 		case VK_DOWN:
-			isDownPressed_ = true;
+			isDownPressed_.store(true, std::memory_order_relaxed);
 			break;
 
 		case 'A':
 		case VK_LEFT:
-			isLeftPressed_ = true;
+			isLeftPressed_.store(true, std::memory_order_relaxed);
 			break;
 
 		case 'D':
 		case VK_RIGHT:
-			isRightPressed_ = true;
+			isRightPressed_.store(true, std::memory_order_relaxed);
 			break;
 
 		default:
@@ -39,22 +39,22 @@ namespace client::game
 		{
 		case 'W':
 		case VK_UP:
-			isUpPressed_ = false;
+			isUpPressed_.store(false, std::memory_order_relaxed);
 			break;
 
 		case 'S':
 		case VK_DOWN:
-			isDownPressed_ = false;
+			isDownPressed_.store(false, std::memory_order_relaxed);
 			break;
 
 		case 'A':
 		case VK_LEFT:
-			isLeftPressed_ = false;
+			isLeftPressed_.store(false, std::memory_order_relaxed);
 			break;
 
 		case 'D':
 		case VK_RIGHT:
-			isRightPressed_ = false;
+			isRightPressed_.store(false, std::memory_order_relaxed);
 			break;
 
 		default:
@@ -64,32 +64,32 @@ namespace client::game
 
 	void InputState::Clear() noexcept
 	{
-		isUpPressed_ = false;
-		isDownPressed_ = false;
-		isLeftPressed_ = false;
-		isRightPressed_ = false;
+		isUpPressed_.store(false, std::memory_order_relaxed);
+		isDownPressed_.store(false, std::memory_order_relaxed);
+		isLeftPressed_.store(false, std::memory_order_relaxed);
+		isRightPressed_.store(false, std::memory_order_relaxed);
 	}
 
 	common::game::InputFlags InputState::ToInputFlags() const noexcept
 	{
 		common::game::InputFlags inputFlags = common::game::InputFlags::None;
 
-		if (isUpPressed_)
+		if (isUpPressed_.load(std::memory_order_relaxed))
 		{
 			inputFlags |= common::game::InputFlags::Up;
 		}
 
-		if (isDownPressed_)
+		if (isDownPressed_.load(std::memory_order_relaxed))
 		{
 			inputFlags |= common::game::InputFlags::Down;
 		}
 
-		if (isLeftPressed_)
+		if (isLeftPressed_.load(std::memory_order_relaxed))
 		{
 			inputFlags |= common::game::InputFlags::Left;
 		}
 
-		if (isRightPressed_)
+		if (isRightPressed_.load(std::memory_order_relaxed))
 		{
 			inputFlags |= common::game::InputFlags::Right;
 		}

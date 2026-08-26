@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <Common/Game/InputFlags.h>
 
 namespace client::game
@@ -7,10 +9,10 @@ namespace client::game
 	class InputState
 	{
 	private:
-		bool isUpPressed_ = false;
-		bool isDownPressed_ = false;
-		bool isLeftPressed_ = false;
-		bool isRightPressed_ = false;
+		std::atomic<bool> isUpPressed_ = false;
+		std::atomic<bool> isDownPressed_ = false;
+		std::atomic<bool> isLeftPressed_ = false;
+		std::atomic<bool> isRightPressed_ = false;
 
 	public:
 		InputState() = default;
@@ -27,8 +29,6 @@ namespace client::game
 		void SetKeyUp(unsigned int virtualKey) noexcept;
 		void Clear() noexcept;
 
-	public:
 		[[nodiscard]] common::game::InputFlags ToInputFlags() const noexcept;
 	};
 }
-

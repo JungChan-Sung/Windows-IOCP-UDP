@@ -138,6 +138,8 @@ namespace server::net
 	private:
 		void UpdateGameTick();
 
+		void CommitProcessedInputSequences() noexcept;
+
 		[[nodiscard]] game::PlayerSimulationContextList BuildPlayerSimulationContextList() const;
 		[[nodiscard]] protocol::SnapshotBroadcastContext BuildSnapshotBroadcastContext() const;
 

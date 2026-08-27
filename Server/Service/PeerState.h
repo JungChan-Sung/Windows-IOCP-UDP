@@ -22,7 +22,8 @@ namespace server::service
 		std::string nickname;
 
 		common::game::PlayerId playerId = 0;
-		std::uint32_t lastInputSequence = 0;
+		std::uint32_t lastAcceptedInputSequence = 0;
+		std::uint32_t lastProcessedInputSequence = 0;
 		common::game::RoomId roomId = 0;
 		bool isJoined = false;
 		common::time::TimePoint lastRecvTime{};

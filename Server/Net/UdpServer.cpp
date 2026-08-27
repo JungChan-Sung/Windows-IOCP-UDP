@@ -437,6 +437,8 @@ namespace server::net
 				config_.gameRule
 			);
 
+			CommitProcessedInputSequences();
+
 			killEventCount = killEventList.size();
 			recordedKillCount = matchHistoryTracker_.RecordKills(killEventList);
 
@@ -460,6 +462,16 @@ namespace server::net
 		BroadcastSnapshots();
 
 		LogServerStatusIfDue();
+	}
+
+	void UdpServer::CommitProcessedInputSequences() noexcept
+	{
+		peerRoomManager_.ForEachJoinedPeer(
+			[](service::PeerState& peerState)
+			{
+				peerState.lastProcessedInputSequence = peerState.lastAcceptedInputSequence;
+			}
+		);
 	}
 
 	game::PlayerSimulationContextList UdpServer::BuildPlayerSimulationContextList() const
@@ -503,7 +515,7 @@ namespace server::net
 				roomContext.peerContextList.push_back(protocol::SnapshotPeerContext{
 					.endpointKey = peerState.endpointKey,
 					.playerId = peerState.playerId,
-					.lastInputSequence = peerState.lastInputSequence,
+					.lastProcessedInputSequence = peerState.lastProcessedInputSequence,
 					});
 
 				const game::PlayerState* playerState = gameWorld_.FindPlayer(peerState.playerId);

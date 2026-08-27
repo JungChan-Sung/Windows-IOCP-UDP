@@ -49,6 +49,7 @@ namespace
 		playerState.weaponType = common::game::WeaponType::Basic;
 		playerState.lastMoveDirectionX = 1.0F;
 		playerState.lastMoveDirectionY = 0.0F;
+
 		return playerState;
 	}
 
@@ -61,10 +62,22 @@ namespace
 		TimePoint currentTime
 	)
 	{
-		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(endpointKey, playerId, roomId, currentTime);
+		PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
+			endpointKey,
+			playerId,
+			roomId,
+			currentTime
+		);
+
 		peerState.persistentPlayerId = static_cast<std::int64_t>(5000 + playerId);
 
-		gameWorld.UpsertPlayer(MakePlayer(playerId, 100.0F, 100.0F));
+		gameWorld.UpsertPlayer(
+			MakePlayer(
+				playerId,
+				100.0F,
+				100.0F
+			)
+		);
 	}
 
 	void RunApplyInputCommandSuccessTest(tests::DebugTestResult& result)
@@ -77,10 +90,27 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint commandTime = joinTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 1, 1, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			1,
+			1,
+			joinTime
+		);
 
-		const common::game::InputFlags inputFlags = common::game::InputFlags::Right | common::game::InputFlags::Up;
-		const bool applied = service.ApplyInputCommand(endpointKey, 1, inputFlags, peerRoomManager, gameWorld, commandTime);
+		const common::game::InputFlags inputFlags =
+			common::game::InputFlags::Right |
+			common::game::InputFlags::Up;
+
+		const bool applied = service.ApplyInputCommand(
+			endpointKey,
+			1,
+			inputFlags,
+			peerRoomManager,
+			gameWorld,
+			commandTime
+		);
 
 		tests::Expect(result, applied, "PlayerCommandService: input command applied");
 
@@ -92,15 +122,44 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastInputSequence == 1, "PlayerCommandService: input sequence updated");
-			tests::Expect(result, peerState->lastRecvTime == commandTime, "PlayerCommandService: input recv time updated");
+			tests::Expect(
+				result,
+				peerState->lastAcceptedInputSequence == 1,
+				"PlayerCommandService: accepted input sequence updated"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastProcessedInputSequence == 0,
+				"PlayerCommandService: processed input sequence unchanged"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == commandTime,
+				"PlayerCommandService: input recv time updated"
+			);
 		}
 
 		if (playerState != nullptr)
 		{
-			tests::Expect(result, playerState->inputFlags == inputFlags, "PlayerCommandService: input flags updated");
-			tests::Expect(result, IsNearlyEqual(playerState->lastMoveDirectionX, 0.707106F), "PlayerCommandService: input direction x updated");
-			tests::Expect(result, IsNearlyEqual(playerState->lastMoveDirectionY, -0.707106F), "PlayerCommandService: input direction y updated");
+			tests::Expect(
+				result,
+				playerState->inputFlags == inputFlags,
+				"PlayerCommandService: input flags updated"
+			);
+
+			tests::Expect(
+				result,
+				IsNearlyEqual(playerState->lastMoveDirectionX, 0.707106F),
+				"PlayerCommandService: input direction x updated"
+			);
+
+			tests::Expect(
+				result,
+				IsNearlyEqual(playerState->lastMoveDirectionY, -0.707106F),
+				"PlayerCommandService: input direction y updated"
+			);
 		}
 	}
 
@@ -115,7 +174,14 @@ namespace
 		const TimePoint firstCommandTime = joinTime + std::chrono::seconds(1);
 		const TimePoint staleCommandTime = firstCommandTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 2, 1, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			2,
+			1,
+			joinTime
+		);
 
 		const bool firstApplied = service.ApplyInputCommand(
 			endpointKey,
@@ -143,13 +209,32 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastInputSequence == 10, "PlayerCommandService: stale sequence unchanged");
-			tests::Expect(result, peerState->lastRecvTime == firstCommandTime, "PlayerCommandService: stale recv time unchanged");
+			tests::Expect(
+				result,
+				peerState->lastAcceptedInputSequence == 10,
+				"PlayerCommandService: stale accepted sequence unchanged"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastProcessedInputSequence == 0,
+				"PlayerCommandService: stale processed sequence unchanged"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == firstCommandTime,
+				"PlayerCommandService: stale recv time unchanged"
+			);
 		}
 
 		if (playerState != nullptr)
 		{
-			tests::Expect(result, playerState->inputFlags == common::game::InputFlags::Right, "PlayerCommandService: stale input flags unchanged");
+			tests::Expect(
+				result,
+				playerState->inputFlags == common::game::InputFlags::Right,
+				"PlayerCommandService: stale input flags unchanged"
+			);
 		}
 	}
 
@@ -163,7 +248,14 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint commandTime = joinTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 3, 1, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			3,
+			1,
+			joinTime
+		);
 
 		server::game::PlayerState* playerState = gameWorld.FindPlayer(3);
 		if (playerState != nullptr)
@@ -171,8 +263,14 @@ namespace
 			playerState->isDead = true;
 		}
 
-		const bool applied =
-			service.ApplyInputCommand(endpointKey, 1, common::game::InputFlags::Down, peerRoomManager, gameWorld, commandTime);
+		const bool applied = service.ApplyInputCommand(
+			endpointKey,
+			1,
+			common::game::InputFlags::Down,
+			peerRoomManager,
+			gameWorld,
+			commandTime
+		);
 
 		tests::Expect(result, !applied, "PlayerCommandService: dead player input rejected");
 
@@ -180,8 +278,23 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastInputSequence == 0, "PlayerCommandService: dead input sequence unchanged");
-			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: dead input recv time unchanged");
+			tests::Expect(
+				result,
+				peerState->lastAcceptedInputSequence == 0,
+				"PlayerCommandService: dead accepted input sequence unchanged"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastProcessedInputSequence == 0,
+				"PlayerCommandService: dead processed input sequence unchanged"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == joinTime,
+				"PlayerCommandService: dead input recv time unchanged"
+			);
 		}
 	}
 
@@ -220,7 +333,14 @@ namespace
 		constexpr common::game::RoomId roomId = 2;
 		constexpr std::int64_t persistentPlayerId = 5000 + playerId;
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, playerId, roomId, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			playerId,
+			roomId,
+			joinTime
+		);
 
 		server::game::PlayerState* playerState = gameWorld.FindPlayer(playerId);
 		if (playerState != nullptr)
@@ -231,7 +351,13 @@ namespace
 			playerState->lastMoveDirectionY = 1.0F;
 		}
 
-		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
+		const bool fired = service.FireBullet(
+			endpointKey,
+			peerRoomManager,
+			gameWorld,
+			weaponRuleConfig,
+			fireTime
+		);
 
 		tests::Expect(result, fired, "PlayerCommandService: fire succeeds");
 		tests::Expect(result, gameWorld.GetBulletCount() == 1, "PlayerCommandService: fire creates bullet");
@@ -240,7 +366,11 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastRecvTime == fireTime, "PlayerCommandService: fire recv time updated");
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == fireTime,
+				"PlayerCommandService: fire recv time updated"
+			);
 		}
 
 		const server::game::PlayerState* updatedPlayerState = gameWorld.FindPlayer(playerId);
@@ -249,12 +379,14 @@ namespace
 		{
 			tests::Expect(
 				result,
-				updatedPlayerState->fireCooldownRemainingSeconds == weaponRuleConfig.basicWeaponRule.fireCooldownSeconds,
+				updatedPlayerState->fireCooldownRemainingSeconds ==
+				weaponRuleConfig.basicWeaponRule.fireCooldownSeconds,
 				"PlayerCommandService: fire cooldown set"
 			);
 		}
 
-		const server::game::GameWorld::BulletStateList& bulletStateList = gameWorld.GetBulletStateList();
+		const server::game::GameWorld::BulletStateList& bulletStateList =
+			gameWorld.GetBulletStateList();
 
 		if (!bulletStateList.empty())
 		{
@@ -262,18 +394,36 @@ namespace
 
 			tests::Expect(result, bulletState.bulletId == 1, "PlayerCommandService: fire bullet id");
 			tests::Expect(result, bulletState.ownerPlayerId == playerId, "PlayerCommandService: fire owner id");
-			tests::Expect(result, bulletState.ownerPersistentPlayerId == persistentPlayerId, "PlayerCommandService: fire persistent owner id");
+			tests::Expect(
+				result,
+				bulletState.ownerPersistentPlayerId == persistentPlayerId,
+				"PlayerCommandService: fire persistent owner id"
+			);
 			tests::Expect(result, bulletState.roomId == roomId, "PlayerCommandService: fire room id");
 			tests::Expect(result, IsNearlyEqual(bulletState.x, 50.0F), "PlayerCommandService: fire bullet x");
 			tests::Expect(result, IsNearlyEqual(bulletState.y, 60.0F), "PlayerCommandService: fire bullet y");
 			tests::Expect(result, IsNearlyEqual(bulletState.velocityX, 0.0F), "PlayerCommandService: fire velocity x");
+
 			tests::Expect(
 				result,
-				IsNearlyEqual(bulletState.velocityY, weaponRuleConfig.basicWeaponRule.bulletSpeed),
+				IsNearlyEqual(
+					bulletState.velocityY,
+					weaponRuleConfig.basicWeaponRule.bulletSpeed
+				),
 				"PlayerCommandService: fire velocity y"
 			);
-			tests::Expect(result, bulletState.damage == weaponRuleConfig.basicWeaponRule.bulletDamage, "PlayerCommandService: fire damage");
-			tests::Expect(result, bulletState.radius == weaponRuleConfig.basicWeaponRule.bulletRadius, "PlayerCommandService: fire radius");
+
+			tests::Expect(
+				result,
+				bulletState.damage == weaponRuleConfig.basicWeaponRule.bulletDamage,
+				"PlayerCommandService: fire damage"
+			);
+
+			tests::Expect(
+				result,
+				bulletState.radius == weaponRuleConfig.basicWeaponRule.bulletRadius,
+				"PlayerCommandService: fire radius"
+			);
 		}
 	}
 
@@ -288,7 +438,14 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 6, 1, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			6,
+			1,
+			joinTime
+		);
 
 		server::game::PlayerState* playerState = gameWorld.FindPlayer(6);
 		if (playerState != nullptr)
@@ -296,7 +453,13 @@ namespace
 			playerState->fireCooldownRemainingSeconds = 1.0F;
 		}
 
-		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
+		const bool fired = service.FireBullet(
+			endpointKey,
+			peerRoomManager,
+			gameWorld,
+			weaponRuleConfig,
+			fireTime
+		);
 
 		tests::Expect(result, !fired, "PlayerCommandService: cooldown fire rejected");
 		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: cooldown creates no bullet");
@@ -305,7 +468,11 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastRecvTime == fireTime, "PlayerCommandService: cooldown still refreshes recv time");
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == fireTime,
+				"PlayerCommandService: cooldown still refreshes recv time"
+			);
 		}
 	}
 
@@ -320,7 +487,14 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		AddJoinedPeerAndPlayer(peerRoomManager, gameWorld, endpointKey, 7, 1, joinTime);
+		AddJoinedPeerAndPlayer(
+			peerRoomManager,
+			gameWorld,
+			endpointKey,
+			7,
+			1,
+			joinTime
+		);
 
 		server::game::PlayerState* playerState = gameWorld.FindPlayer(7);
 		if (playerState != nullptr)
@@ -328,7 +502,13 @@ namespace
 			playerState->isDead = true;
 		}
 
-		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
+		const bool fired = service.FireBullet(
+			endpointKey,
+			peerRoomManager,
+			gameWorld,
+			weaponRuleConfig,
+			fireTime
+		);
 
 		tests::Expect(result, !fired, "PlayerCommandService: dead player fire rejected");
 		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: dead player creates no bullet");
@@ -337,7 +517,11 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: dead fire recv time unchanged");
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == joinTime,
+				"PlayerCommandService: dead fire recv time unchanged"
+			);
 		}
 	}
 
@@ -348,7 +532,13 @@ namespace
 		server::game::GameWorld gameWorld;
 		common::game::WeaponRuleConfig weaponRuleConfig{};
 
-		const bool fired = service.FireBullet(MakeEndpointKey(8), peerRoomManager, gameWorld, weaponRuleConfig, Clock::now());
+		const bool fired = service.FireBullet(
+			MakeEndpointKey(8),
+			peerRoomManager,
+			gameWorld,
+			weaponRuleConfig,
+			Clock::now()
+		);
 
 		tests::Expect(result, !fired, "PlayerCommandService: unknown peer fire rejected");
 		tests::Expect(result, peerRoomManager.GetPeerCount() == 0, "PlayerCommandService: unknown fire peer count");
@@ -366,9 +556,22 @@ namespace
 		const TimePoint joinTime = Clock::now();
 		const TimePoint fireTime = joinTime + std::chrono::seconds(1);
 
-		static_cast<void>(peerRoomManager.UpsertJoinedPeer(endpointKey, 9, 1, joinTime));
+		static_cast<void>(
+			peerRoomManager.UpsertJoinedPeer(
+				endpointKey,
+				9,
+				1,
+				joinTime
+			)
+			);
 
-		const bool fired = service.FireBullet(endpointKey, peerRoomManager, gameWorld, weaponRuleConfig, fireTime);
+		const bool fired = service.FireBullet(
+			endpointKey,
+			peerRoomManager,
+			gameWorld,
+			weaponRuleConfig,
+			fireTime
+		);
 
 		tests::Expect(result, !fired, "PlayerCommandService: missing player fire rejected");
 		tests::Expect(result, gameWorld.GetBulletCount() == 0, "PlayerCommandService: missing player bullet count");
@@ -377,7 +580,11 @@ namespace
 
 		if (peerState != nullptr)
 		{
-			tests::Expect(result, peerState->lastRecvTime == joinTime, "PlayerCommandService: missing player recv time unchanged");
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == joinTime,
+				"PlayerCommandService: missing player recv time unchanged"
+			);
 		}
 	}
 }
@@ -392,6 +599,7 @@ namespace tests::server
 		RunApplyInputCommandStaleSequenceRejectedTest(result);
 		RunApplyInputCommandDeadPlayerRejectedTest(result);
 		RunApplyInputCommandUnknownPeerRejectedTest(result);
+
 		RunFireBulletSuccessTest(result);
 		RunFireBulletCooldownRejectedTest(result);
 		RunFireBulletDeadPlayerRejectedTest(result);

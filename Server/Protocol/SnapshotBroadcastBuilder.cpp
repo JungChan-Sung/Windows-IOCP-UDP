@@ -19,7 +19,7 @@ namespace server::protocol
 				PlayerSnapshotTask task{};
 				task.endpointKey = peerContext.endpointKey;
 				task.snapshotPacket = snapshotBase;
-				task.snapshotPacket.lastProcessedInputSequence = peerContext.lastInputSequence;
+				task.snapshotPacket.lastProcessedInputSequence = peerContext.lastProcessedInputSequence;
 
 				playerSnapshotTaskList.push_back(std::move(task));
 			}

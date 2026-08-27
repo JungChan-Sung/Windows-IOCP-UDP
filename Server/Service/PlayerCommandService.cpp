@@ -40,12 +40,12 @@ namespace server::service
 			return false;
 		}
 
-		if (inputSequence <= peerState.lastInputSequence)
+		if (inputSequence <= peerState.lastAcceptedInputSequence)
 		{
 			return false;
 		}
 
-		peerState.lastInputSequence = inputSequence;
+		peerState.lastAcceptedInputSequence = inputSequence;
 		peerState.lastRecvTime = currentTime;
 		playerState.inputFlags = inputFlags;
 

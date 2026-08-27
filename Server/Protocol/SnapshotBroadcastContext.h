@@ -14,7 +14,7 @@ namespace server::protocol
 	public:
 		common::net::EndpointKey endpointKey{};
 		common::game::PlayerId playerId = 0;
-		std::uint32_t lastInputSequence = 0;
+		std::uint32_t lastProcessedInputSequence = 0;
 	};
 
 	using SnapshotPeerContextList = std::vector<SnapshotPeerContext>;

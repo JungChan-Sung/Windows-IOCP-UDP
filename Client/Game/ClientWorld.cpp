@@ -273,7 +273,7 @@ namespace client::game
 			);
 		}
 
-		if (!isLocalPredictedInitialized_)
+		if (!localPlayerPrediction_.IsInitialized())
 		{
 			localPlayerPrediction_.Reset(
 				reconciledX,
@@ -515,7 +515,7 @@ namespace client::game
 
 			if (renderPlayerState.isLocalPlayer)
 			{
-				if (isLocalPredictedInitialized_)
+				if (localPlayerPrediction_.IsInitialized())
 				{
 					renderPlayerState.x = localPlayerPrediction_.GetX() + localRenderCorrectionOffsetX_;
 					renderPlayerState.y = localPlayerPrediction_.GetY() + localRenderCorrectionOffsetY_;

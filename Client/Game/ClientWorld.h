@@ -150,7 +150,6 @@ namespace client::game
 
 		float localRenderCorrectionOffsetX_ = 0.0F;
 		float localRenderCorrectionOffsetY_ = 0.0F;
-		bool isLocalPredictedInitialized_ = false;
 
 		PlayerId localPlayerId_ = 0;
 		std::uint32_t lastServerTick_ = 0;

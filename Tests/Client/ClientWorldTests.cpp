@@ -1,6 +1,10 @@
 #include "ClientWorldTests.h"
 
+#include <cmath>
+
 #include <Common/Game/EffectType.h>
+#include <Common/Game/InputFlags.h>
+#include <Common/Game/SimulationConstants.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -10,6 +14,13 @@
 
 namespace
 {
+	inline constexpr float floatTolerance = 0.001F;
+
+	[[nodiscard]] bool IsNearlyEqual(float left, float right) noexcept
+	{
+		return std::abs(left - right) <= floatTolerance;
+	}
+
 	void RunValidJoinStateAcceptedTest(tests::DebugTestResult& result)
 	{
 		client::game::ClientWorld world;
@@ -76,6 +87,86 @@ namespace
 		tests::Expect(result, world.IsJoined(), "ClientWorld: joined after clear and rejoin");
 		tests::Expect(result, world.GetLocalPlayerId() == 200, "ClientWorld: rejoin player id set");
 		tests::Expect(result, world.GetCurrentRoomId() == 3, "ClientWorld: rejoin room id set");
+	}
+
+	void RunLocalPredictionAppliedToRenderFrameTest(tests::DebugTestResult& result)
+	{
+		client::game::ClientWorld world;
+
+		const bool joinResult = world.TrySetJoinState(
+			100,
+			1,
+			320.0F,
+			350.0F
+		);
+
+		client::game::ClientWorld::PlayerJoinedEvent playerJoinedEvent{};
+		playerJoinedEvent.playerId = 100;
+		playerJoinedEvent.x = 320.0F;
+		playerJoinedEvent.y = 350.0F;
+
+		world.ApplyPlayerJoinedEvent(playerJoinedEvent);
+
+		world.ApplyLocalPredictionTick(
+			1,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot snapshot =
+			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+
+		tests::Expect(result, joinResult, "ClientWorld: prediction integration join accepted");
+		tests::Expect(result, snapshot.playerStateList.size() == 1, "ClientWorld: prediction integration player count");
+
+		if (snapshot.playerStateList.size() != 1)
+		{
+			return;
+		}
+
+		const client::game::ClientWorld::RenderPlayerState& playerState = snapshot.playerStateList.front();
+
+		const float expectedX =
+			320.0F + (common::game::defaultMoveSpeed * common::game::defaultFixedDeltaSeconds);
+
+		tests::Expect(result, playerState.isLocalPlayer, "ClientWorld: predicted player is local");
+		tests::Expect(result, IsNearlyEqual(playerState.x, expectedX), "ClientWorld: local prediction immediately updates render x");
+		tests::Expect(result, IsNearlyEqual(playerState.y, 350.0F), "ClientWorld: local prediction preserves render y");
+	}
+
+	void RunLocalPredictionRequiresJoinTest(tests::DebugTestResult& result)
+	{
+		client::game::ClientWorld world;
+
+		client::game::ClientWorld::PlayerJoinedEvent playerJoinedEvent{};
+		playerJoinedEvent.playerId = 100;
+		playerJoinedEvent.x = 320.0F;
+		playerJoinedEvent.y = 350.0F;
+
+		world.ApplyPlayerJoinedEvent(playerJoinedEvent);
+
+		world.ApplyLocalPredictionTick(
+			1,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot snapshot =
+			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+
+		tests::Expect(result, !world.IsJoined(), "ClientWorld: prediction guard world is not joined");
+		tests::Expect(result, snapshot.playerStateList.size() == 1, "ClientWorld: prediction guard player count");
+
+		if (snapshot.playerStateList.size() != 1)
+		{
+			return;
+		}
+
+		const client::game::ClientWorld::RenderPlayerState& playerState = snapshot.playerStateList.front();
+
+		tests::Expect(result, !playerState.isLocalPlayer, "ClientWorld: unjoined player is not local");
+		tests::Expect(result, IsNearlyEqual(playerState.x, 320.0F), "ClientWorld: prediction ignored before join x");
+		tests::Expect(result, IsNearlyEqual(playerState.y, 350.0F), "ClientWorld: prediction ignored before join y");
 	}
 
 	void RunRenderFrameMetadataTest(tests::DebugTestResult& result)
@@ -260,6 +351,9 @@ namespace tests::client
 		RunInvalidRoomIdRejectedTest(result);
 		RunDuplicateJoinStateRejectedTest(result);
 		RunClearAllowsNewJoinStateTest(result);
+
+		RunLocalPredictionAppliedToRenderFrameTest(result);
+		RunLocalPredictionRequiresJoinTest(result);
 
 		RunRenderFrameMetadataTest(result);
 		RunRenderFramePlayerStateTest(result);

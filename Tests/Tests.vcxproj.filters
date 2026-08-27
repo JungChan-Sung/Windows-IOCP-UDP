@@ -351,6 +351,9 @@
     <ClCompile Include="Client\InputStateTests.cpp">
       <Filter>소스 파일\Client</Filter>
     </ClCompile>
+    <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">

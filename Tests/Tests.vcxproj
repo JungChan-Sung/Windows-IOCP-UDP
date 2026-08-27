@@ -137,6 +137,7 @@
     <ClCompile Include="..\Client\Config\ClientConfigLoader.cpp" />
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
+    <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp" />
     <ClCompile Include="..\Client\Input\InputState.cpp" />
     <ClCompile Include="..\Client\Net\AccountLoginState.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />

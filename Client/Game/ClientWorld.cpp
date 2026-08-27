@@ -106,7 +106,7 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		if (!isJoined_ || localPlayerId_ == 0 || !isLocalPredictedInitialized_)
+		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerPrediction_.IsInitialized() || deltaSeconds <= 0.0F)
 		{
 			return;
 		}
@@ -115,17 +115,14 @@ namespace client::game
 		pendingInput.sequence = inputSequence;
 		pendingInput.inputFlags = inputFlags;
 		pendingInput.deltaSeconds = deltaSeconds;
+
 		pendingInputList_.push_back(pendingInput);
 
-		common::game::MovePlayerWithWallCollision(
-			localPredictedX_,
-			localPredictedY_,
+		localPlayerPrediction_.ApplyInput(
 			inputFlags,
 			deltaSeconds,
 			common::game::defaultMoveSpeed,
-			common::game::playerHalfExtent,
-			common::game::defaultWorldBounds,
-			common::game::GetWallRectListForRoom(currentRoomId_)
+			currentRoomId_
 		);
 	}
 
@@ -159,11 +156,13 @@ namespace client::game
 
 		if (playerJoinedEvent.playerId == localPlayerId_)
 		{
-			localPredictedX_ = playerJoinedEvent.x;
-			localPredictedY_ = playerJoinedEvent.y;
+			localPlayerPrediction_.Reset(
+				playerJoinedEvent.x,
+				playerJoinedEvent.y
+			);
+
 			localRenderCorrectionOffsetX_ = 0.0F;
 			localRenderCorrectionOffsetY_ = 0.0F;
-			isLocalPredictedInitialized_ = true;
 		}
 	}
 
@@ -276,16 +275,18 @@ namespace client::game
 
 		if (!isLocalPredictedInitialized_)
 		{
-			localPredictedX_ = reconciledX;
-			localPredictedY_ = reconciledY;
+			localPlayerPrediction_.Reset(
+				reconciledX,
+				reconciledY
+			);
+
 			localRenderCorrectionOffsetX_ = 0.0F;
 			localRenderCorrectionOffsetY_ = 0.0F;
-			isLocalPredictedInitialized_ = true;
 			return;
 		}
 
-		const float oldPredictedX = localPredictedX_;
-		const float oldPredictedY = localPredictedY_;
+		const float oldPredictedX = localPlayerPrediction_.GetX();
+		const float oldPredictedY = localPlayerPrediction_.GetY();
 
 		const float correctionDeltaX = reconciledX - oldPredictedX;
 		const float correctionDeltaY = reconciledY - oldPredictedY;
@@ -299,8 +300,10 @@ namespace client::game
 			return;
 		}
 
-		localPredictedX_ = reconciledX;
-		localPredictedY_ = reconciledY;
+		localPlayerPrediction_.Reset(
+			reconciledX,
+			reconciledY
+		);
 
 		if (correctionDistanceSquared >= hardSnapDistanceSquared)
 		{
@@ -418,11 +421,10 @@ namespace client::game
 
 		interpolationDelay_ = defaultInterpolationDelay_;
 
-		localPredictedX_ = 0.0F;
-		localPredictedY_ = 0.0F;
+		localPlayerPrediction_.Clear();
+
 		localRenderCorrectionOffsetX_ = 0.0F;
 		localRenderCorrectionOffsetY_ = 0.0F;
-		isLocalPredictedInitialized_ = false;
 
 		localPlayerId_ = 0;
 		lastServerTick_ = 0;
@@ -434,11 +436,11 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		localPredictedX_ = x;
-		localPredictedY_ = y;
+		localPlayerPrediction_.Reset(x, y);
+
 		localRenderCorrectionOffsetX_ = 0.0F;
 		localRenderCorrectionOffsetY_ = 0.0F;
-		isLocalPredictedInitialized_ = true;
+
 		pendingInputList_.clear();
 
 		auto playerIterator = playerTable_.find(localPlayerId_);
@@ -515,8 +517,8 @@ namespace client::game
 			{
 				if (isLocalPredictedInitialized_)
 				{
-					renderPlayerState.x = localPredictedX_ + localRenderCorrectionOffsetX_;
-					renderPlayerState.y = localPredictedY_ + localRenderCorrectionOffsetY_;
+					renderPlayerState.x = localPlayerPrediction_.GetX() + localRenderCorrectionOffsetX_;
+					renderPlayerState.y = localPlayerPrediction_.GetY() + localRenderCorrectionOffsetY_;
 				}
 				else
 				{
@@ -565,11 +567,14 @@ namespace client::game
 		currentRoomId_ = roomId;
 		isJoined_ = true;
 
-		localPredictedX_ = spawnX;
-		localPredictedY_ = spawnY;
+		localPlayerPrediction_.Reset(
+			spawnX,
+			spawnY
+		);
+
 		localRenderCorrectionOffsetX_ = 0.0F;
 		localRenderCorrectionOffsetY_ = 0.0F;
-		isLocalPredictedInitialized_ = true;
+
 		pendingInputList_.clear();
 
 		return true;

@@ -342,11 +342,14 @@
     <ClCompile Include="Server\PeerRoomManagerTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Client\InputStateTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\Client\Input\InputState.cpp">
       <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\LocalPlayerPredictionTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\InputStateTests.cpp">
+      <Filter>소스 파일\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -539,8 +542,11 @@
     <ClInclude Include="Server\PeerRoomManagerTests.h">
       <Filter>헤더 파일\Server</Filter>
     </ClInclude>
+    <ClInclude Include="Client\LocalPlayerPredictionTests.h">
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
     <ClInclude Include="Client\InputStateTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Client</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

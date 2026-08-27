@@ -11,6 +11,8 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Client/Game/LocalPlayerPrediction.h>
+
 namespace client::game
 {
 	class ClientWorld
@@ -144,8 +146,8 @@ namespace client::game
 		common::time::Milliseconds maxInterpolationDelay_;
 		common::time::Milliseconds interpolationDelay_;
 
-		float localPredictedX_ = 0.0F;
-		float localPredictedY_ = 0.0F;
+		LocalPlayerPrediction localPlayerPrediction_;
+
 		float localRenderCorrectionOffsetX_ = 0.0F;
 		float localRenderCorrectionOffsetY_ = 0.0F;
 		bool isLocalPredictedInitialized_ = false;

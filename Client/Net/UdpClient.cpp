@@ -248,20 +248,25 @@ namespace client::net
 		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()));
 	}
 
-	bool UdpClient::SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence)
+	std::optional<std::uint32_t> UdpClient::SendInputCommand(common::game::InputFlags inputFlags)
 	{
 		common::packet::InputCommandPacket packet{};
-		packet.inputSequence = ++inputSequence_;
+		packet.inputSequence = inputSequence_ + 1;
 		packet.inputFlags = inputFlags;
 
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
 		if (!packetBuffer.has_value())
 		{
-			return false;
+			return std::nullopt;
 		}
 
-		inputSequence = packet.inputSequence;
-		return SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), (packetBuffer->size())));
+		if (!SendSerializedPacket(common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size())))
+		{
+			return std::nullopt;
+		}
+
+		inputSequence_ = packet.inputSequence;
+		return packet.inputSequence;
 	}
 
 	bool UdpClient::SendFireRequest()

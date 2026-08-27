@@ -123,7 +123,7 @@ namespace client::net
 		void ResetAccountLogin();
 
 		[[nodiscard]] bool SendJoinRequest();
-		[[nodiscard]] bool SendInputCommand(common::game::InputFlags inputFlags, std::uint32_t& inputSequence);
+		[[nodiscard]] std::optional<std::uint32_t> SendInputCommand(common::game::InputFlags inputFlags);
 		[[nodiscard]] bool SendFireRequest();
 		[[nodiscard]] bool SendKeepAlive();
 		[[nodiscard]] bool SendLeaveRequest();

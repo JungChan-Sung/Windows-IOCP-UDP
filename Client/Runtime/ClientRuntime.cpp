@@ -1,6 +1,7 @@
 #include "ClientRuntime.h"
 
 #include <cstdint>
+#include <optional>
 #include <thread>
 
 #include <Common/Game/InputFlags.h>
@@ -156,11 +157,10 @@ namespace client::runtime
 		int processedSimulationTickCount = 0;
 		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
 		{
-			std::uint32_t inputSequence = 0;
-			const bool sendResult = udpClient_->SendInputCommand(inputFlags, inputSequence);
-			if (sendResult)
+			const std::optional<std::uint32_t> inputSequence = udpClient_->SendInputCommand(inputFlags);
+			if (inputSequence.has_value())
 			{
-				world_->ApplyLocalPredictionTick(inputSequence, inputFlags, config_->simulation.deltaSeconds);
+				world_->ApplyLocalPredictionTick(*inputSequence, inputFlags, config_->simulation.deltaSeconds);
 			}
 
 			nextSimulationTickTime_ += config_->simulation.tickInterval;

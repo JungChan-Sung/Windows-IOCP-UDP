@@ -127,7 +127,8 @@ namespace server::service
 		peerState.persistentPlayerId = authenticatedIdentity.persistentPlayerId;
 		peerState.sessionToken = authenticatedIdentity.sessionToken;
 		peerState.nickname = authenticatedIdentity.nickname;
-		peerState.lastInputSequence = 0;
+		peerState.lastAcceptedInputSequence = 0;
+		peerState.lastProcessedInputSequence = 0;
 
 		game::PlayerState playerState = CreateInitialPlayerState(playerId, spawnPosition, gameRuleConfig);
 		gameWorld.UpsertPlayer(std::move(playerState));

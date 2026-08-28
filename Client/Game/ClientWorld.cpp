@@ -9,8 +9,7 @@
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientTuning.h>
-
-#include "EffectConfig.h"
+#include <Client/Game/EffectConfig.h>
 
 namespace
 {
@@ -75,18 +74,14 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerReconciliation_.IsInitialized() || deltaSeconds <= 0.0F)
+		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerPrediction_.IsInitialized() || deltaSeconds <= 0.0F)
 		{
 			return;
 		}
 
-		localPlayerReconciliation_.ApplyPredictionTick(
-			inputSequence,
-			inputFlags,
-			deltaSeconds,
-			common::game::defaultMoveSpeed,
-			currentRoomId_
-		);
+		localPlayerReconciliation_.RecordPendingInput(inputSequence, inputFlags, deltaSeconds);
+
+		localPlayerPrediction_.ApplyInput(inputFlags, deltaSeconds, common::game::defaultMoveSpeed, currentRoomId_);
 	}
 
 	void ClientWorld::ApplyPlayerJoinedEvent(const PlayerJoinedEvent& playerJoinedEvent)
@@ -108,7 +103,8 @@ namespace client::game
 
 		if (playerJoinedEvent.playerId == localPlayerId_)
 		{
-			localPlayerReconciliation_.Reset(playerJoinedEvent.x, playerJoinedEvent.y);
+			localPlayerPrediction_.Reset(playerJoinedEvent.x, playerJoinedEvent.y);
+			localPlayerReconciliation_.Clear();
 		}
 	}
 
@@ -198,6 +194,7 @@ namespace client::game
 		}
 
 		localPlayerReconciliation_.Reconcile(
+			localPlayerPrediction_,
 			localAuthoritativeX,
 			localAuthoritativeY,
 			packet.lastProcessedInputSequence,
@@ -284,6 +281,7 @@ namespace client::game
 
 		interpolationDelay_ = defaultInterpolationDelay_;
 
+		localPlayerPrediction_.Clear();
 		localPlayerReconciliation_.Clear();
 
 		localPlayerId_ = 0;
@@ -296,7 +294,8 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		localPlayerReconciliation_.Reset(x, y);
+		localPlayerPrediction_.Reset(x, y);
+		localPlayerReconciliation_.Clear();
 
 		auto playerIterator = playerTable_.find(localPlayerId_);
 		if (playerIterator != playerTable_.end())
@@ -370,10 +369,10 @@ namespace client::game
 
 			if (renderPlayerState.isLocalPlayer)
 			{
-				if (localPlayerReconciliation_.IsInitialized())
+				if (localPlayerPrediction_.IsInitialized())
 				{
-					renderPlayerState.x = localPlayerReconciliation_.GetRenderX();
-					renderPlayerState.y = localPlayerReconciliation_.GetRenderY();
+					renderPlayerState.x = localPlayerPrediction_.GetX() + localPlayerReconciliation_.GetRenderCorrectionOffsetX();
+					renderPlayerState.y = localPlayerPrediction_.GetY() + localPlayerReconciliation_.GetRenderCorrectionOffsetY();
 				}
 				else
 				{
@@ -422,7 +421,8 @@ namespace client::game
 		currentRoomId_ = roomId;
 		isJoined_ = true;
 
-		localPlayerReconciliation_.Reset(spawnX, spawnY);
+		localPlayerPrediction_.Reset(spawnX, spawnY);
+		localPlayerReconciliation_.Clear();
 
 		return true;
 	}

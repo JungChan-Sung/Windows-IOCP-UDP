@@ -12,11 +12,11 @@ namespace client::game
 
 	class LocalPlayerReconciliation
 	{
-	public:
+	private:
 		struct PendingInput
 		{
 			std::uint32_t sequence = 0;
-			common::game::InputFlags inputFlags{};
+			common::game::InputFlags inputFlags = common::game::InputFlags::None;
 			float deltaSeconds = 0.0F;
 		};
 

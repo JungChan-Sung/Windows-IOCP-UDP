@@ -6,9 +6,6 @@
 
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Game/SimulationConstants.h>
-#include <Common/Game/RoomLayout.h>
-#include <Common/Game/WorldCollision.h>
-#include <Common/Net/SequenceNumber.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientTuning.h>
@@ -19,39 +16,10 @@ namespace
 {
 	using SnapshotSample = client::game::ClientWorld::SnapshotSample;
 	using RemotePlayerState = client::game::ClientWorld::RemotePlayerState;
-	using PendingInput = client::game::ClientWorld::PendingInput;
 
 	[[nodiscard]] float Lerp(float startValue, float endValue, float alpha) noexcept
 	{
 		return startValue + ((endValue - startValue) * alpha);
-	}
-
-	[[nodiscard]] float LengthSquared(float x, float y) noexcept
-	{
-		return (x * x) + (y * y);
-	}
-
-	void ClampVectorLength(float& x, float& y, float maxLength) noexcept
-	{
-		const float lengthSquared = LengthSquared(x, y);
-		const float maxLengthSquared = maxLength * maxLength;
-
-		if (lengthSquared <= maxLengthSquared)
-		{
-			return;
-		}
-
-		const float length = std::sqrt(lengthSquared);
-		if (length <= 0.0F)
-		{
-			x = 0.0F;
-			y = 0.0F;
-			return;
-		}
-
-		const float scale = maxLength / length;
-		x *= scale;
-		y *= scale;
 	}
 
 	void InitializePlayerState(
@@ -107,19 +75,13 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerPrediction_.IsInitialized() || deltaSeconds <= 0.0F)
+		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerReconciliation_.IsInitialized() || deltaSeconds <= 0.0F)
 		{
 			return;
 		}
 
-		PendingInput pendingInput{};
-		pendingInput.sequence = inputSequence;
-		pendingInput.inputFlags = inputFlags;
-		pendingInput.deltaSeconds = deltaSeconds;
-
-		pendingInputList_.push_back(pendingInput);
-
-		localPlayerPrediction_.ApplyInput(
+		localPlayerReconciliation_.ApplyPredictionTick(
+			inputSequence,
 			inputFlags,
 			deltaSeconds,
 			common::game::defaultMoveSpeed,
@@ -137,33 +99,16 @@ namespace client::game
 
 		if (!playerState.isInitialized)
 		{
-			InitializePlayerState(
-				playerState,
-				playerJoinedEvent.playerId,
-				playerJoinedEvent.x,
-				playerJoinedEvent.y,
-				currentTime
-			);
+			InitializePlayerState(playerState, playerJoinedEvent.playerId, playerJoinedEvent.x, playerJoinedEvent.y, currentTime);
 		}
 		else
 		{
-			UpdatePlayerSample(
-				playerState,
-				playerJoinedEvent.x,
-				playerJoinedEvent.y,
-				currentTime
-			);
+			UpdatePlayerSample(playerState, playerJoinedEvent.x, playerJoinedEvent.y, currentTime);
 		}
 
 		if (playerJoinedEvent.playerId == localPlayerId_)
 		{
-			localPlayerPrediction_.Reset(
-				playerJoinedEvent.x,
-				playerJoinedEvent.y
-			);
-
-			localRenderCorrectionOffsetX_ = 0.0F;
-			localRenderCorrectionOffsetY_ = 0.0F;
+			localPlayerReconciliation_.Reset(playerJoinedEvent.x, playerJoinedEvent.y);
 		}
 	}
 
@@ -252,74 +197,12 @@ namespace client::game
 			return;
 		}
 
-		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, packet.lastProcessedInputSequence))
-		{
-			pendingInputList_.pop_front();
-		}
-
-		float reconciledX = localAuthoritativeX;
-		float reconciledY = localAuthoritativeY;
-
-		for (const PendingInput& pendingInput : pendingInputList_)
-		{
-			common::game::MovePlayerWithWallCollision(
-				reconciledX,
-				reconciledY,
-				pendingInput.inputFlags,
-				pendingInput.deltaSeconds,
-				common::game::defaultMoveSpeed,
-				common::game::playerHalfExtent,
-				common::game::defaultWorldBounds,
-				common::game::GetWallRectListForRoom(packet.roomId)
-			);
-		}
-
-		if (!localPlayerPrediction_.IsInitialized())
-		{
-			localPlayerPrediction_.Reset(
-				reconciledX,
-				reconciledY
-			);
-
-			localRenderCorrectionOffsetX_ = 0.0F;
-			localRenderCorrectionOffsetY_ = 0.0F;
-			return;
-		}
-
-		const float oldPredictedX = localPlayerPrediction_.GetX();
-		const float oldPredictedY = localPlayerPrediction_.GetY();
-
-		const float correctionDeltaX = reconciledX - oldPredictedX;
-		const float correctionDeltaY = reconciledY - oldPredictedY;
-		const float correctionDistanceSquared = LengthSquared(correctionDeltaX, correctionDeltaY);
-
-		const float ignoreDistanceSquared = localCorrectionIgnoreDistance * localCorrectionIgnoreDistance;
-		const float hardSnapDistanceSquared = localCorrectionHardSnapDistance * localCorrectionHardSnapDistance;
-
-		if (correctionDistanceSquared <= ignoreDistanceSquared)
-		{
-			return;
-		}
-
-		localPlayerPrediction_.Reset(
-			reconciledX,
-			reconciledY
-		);
-
-		if (correctionDistanceSquared >= hardSnapDistanceSquared)
-		{
-			localRenderCorrectionOffsetX_ = 0.0F;
-			localRenderCorrectionOffsetY_ = 0.0F;
-			return;
-		}
-
-		localRenderCorrectionOffsetX_ += oldPredictedX - reconciledX;
-		localRenderCorrectionOffsetY_ += oldPredictedY - reconciledY;
-
-		ClampVectorLength(
-			localRenderCorrectionOffsetX_,
-			localRenderCorrectionOffsetY_,
-			localRenderCorrectionMaxOffset
+		localPlayerReconciliation_.Reconcile(
+			localAuthoritativeX,
+			localAuthoritativeY,
+			packet.lastProcessedInputSequence,
+			common::game::defaultMoveSpeed,
+			packet.roomId
 		);
 	}
 
@@ -388,27 +271,7 @@ namespace client::game
 			effectIterator = renderImpactEffectStateList_.erase(effectIterator);
 		}
 
-		const float correctionOffsetDistanceSquared = LengthSquared(
-			localRenderCorrectionOffsetX_,
-			localRenderCorrectionOffsetY_
-		);
-
-		if (correctionOffsetDistanceSquared > 0.0F)
-		{
-			const float alpha = std::clamp(localRenderCorrectionSmoothSpeed * deltaSeconds, 0.0F, 1.0F);
-
-			localRenderCorrectionOffsetX_ = Lerp(localRenderCorrectionOffsetX_, 0.0F, alpha);
-			localRenderCorrectionOffsetY_ = Lerp(localRenderCorrectionOffsetY_, 0.0F, alpha);
-
-			const float clearDistanceSquared =
-				localRenderCorrectionClearDistance * localRenderCorrectionClearDistance;
-
-			if (LengthSquared(localRenderCorrectionOffsetX_, localRenderCorrectionOffsetY_) <= clearDistanceSquared)
-			{
-				localRenderCorrectionOffsetX_ = 0.0F;
-				localRenderCorrectionOffsetY_ = 0.0F;
-			}
-		}
+		localPlayerReconciliation_.UpdateRenderCorrection(deltaSeconds);
 	}
 
 	void ClientWorld::Clear() noexcept
@@ -416,16 +279,12 @@ namespace client::game
 		std::scoped_lock lock(worldMutex_);
 
 		playerTable_.clear();
-		pendingInputList_.clear();
 		renderBulletStateList_.clear();
 		renderImpactEffectStateList_.clear();
 
 		interpolationDelay_ = defaultInterpolationDelay_;
 
-		localPlayerPrediction_.Clear();
-
-		localRenderCorrectionOffsetX_ = 0.0F;
-		localRenderCorrectionOffsetY_ = 0.0F;
+		localPlayerReconciliation_.Clear();
 
 		localPlayerId_ = 0;
 		lastServerTick_ = 0;
@@ -437,12 +296,7 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		localPlayerPrediction_.Reset(x, y);
-
-		localRenderCorrectionOffsetX_ = 0.0F;
-		localRenderCorrectionOffsetY_ = 0.0F;
-
-		pendingInputList_.clear();
+		localPlayerReconciliation_.Reset(x, y);
 
 		auto playerIterator = playerTable_.find(localPlayerId_);
 		if (playerIterator != playerTable_.end())
@@ -516,10 +370,10 @@ namespace client::game
 
 			if (renderPlayerState.isLocalPlayer)
 			{
-				if (localPlayerPrediction_.IsInitialized())
+				if (localPlayerReconciliation_.IsInitialized())
 				{
-					renderPlayerState.x = localPlayerPrediction_.GetX() + localRenderCorrectionOffsetX_;
-					renderPlayerState.y = localPlayerPrediction_.GetY() + localRenderCorrectionOffsetY_;
+					renderPlayerState.x = localPlayerReconciliation_.GetRenderX();
+					renderPlayerState.y = localPlayerReconciliation_.GetRenderY();
 				}
 				else
 				{
@@ -568,15 +422,7 @@ namespace client::game
 		currentRoomId_ = roomId;
 		isJoined_ = true;
 
-		localPlayerPrediction_.Reset(
-			spawnX,
-			spawnY
-		);
-
-		localRenderCorrectionOffsetX_ = 0.0F;
-		localRenderCorrectionOffsetY_ = 0.0F;
-
-		pendingInputList_.clear();
+		localPlayerReconciliation_.Reset(spawnX, spawnY);
 
 		return true;
 	}

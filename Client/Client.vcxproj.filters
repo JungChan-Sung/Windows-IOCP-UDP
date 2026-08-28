@@ -111,6 +111,9 @@
     <ClCompile Include="Game\LocalPlayerPrediction.cpp">
       <Filter>소스 파일\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Game\LocalPlayerReconciliation.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\ClientWorld.h">
@@ -186,6 +189,9 @@
       <Filter>헤더 파일\Input</Filter>
     </ClInclude>
     <ClInclude Include="Game\LocalPlayerPrediction.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\LocalPlayerReconciliation.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
   </ItemGroup>

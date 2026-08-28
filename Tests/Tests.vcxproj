@@ -138,6 +138,7 @@
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
     <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp" />
+    <ClCompile Include="..\Client\Game\LocalPlayerReconciliation.cpp" />
     <ClCompile Include="..\Client\Input\InputState.cpp" />
     <ClCompile Include="..\Client\Net\AccountLoginState.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="Client\InputStateTests.cpp" />
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
     <ClCompile Include="Client\LocalPlayerPredictionTests.cpp" />
+    <ClCompile Include="Client\LocalPlayerReconciliationTests.cpp" />
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
     <ClCompile Include="Config\ConfigTextTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
@@ -242,6 +244,7 @@
     <ClInclude Include="Client\InputStateTests.h" />
     <ClInclude Include="Client\JoinHandshakeStateTests.h" />
     <ClInclude Include="Client\LocalPlayerPredictionTests.h" />
+    <ClInclude Include="Client\LocalPlayerReconciliationTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
     <ClInclude Include="Config\ConfigTextTests.h" />
     <ClInclude Include="DebugTestResult.h" />

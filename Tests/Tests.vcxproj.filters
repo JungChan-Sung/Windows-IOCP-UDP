@@ -354,6 +354,12 @@
     <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
+    <ClCompile Include="Client\LocalPlayerReconciliationTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Game\LocalPlayerReconciliation.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -549,6 +555,9 @@
       <Filter>헤더 파일\Client</Filter>
     </ClInclude>
     <ClInclude Include="Client\InputStateTests.h">
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\LocalPlayerReconciliationTests.h">
       <Filter>헤더 파일\Client</Filter>
     </ClInclude>
   </ItemGroup>

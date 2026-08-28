@@ -149,6 +149,7 @@
     <ClCompile Include="Config\ClientConfigValidator.cpp" />
     <ClCompile Include="Game\ClientWorld.cpp" />
     <ClCompile Include="Game\LocalPlayerPrediction.cpp" />
+    <ClCompile Include="Game\LocalPlayerReconciliation.cpp" />
     <ClCompile Include="Input\InputState.cpp" />
     <ClCompile Include="Net\AccountLoginState.cpp" />
     <ClCompile Include="Net\ClientPacketDispatcher.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Game\ClientWorld.h" />
     <ClInclude Include="Game\EffectConfig.h" />
     <ClInclude Include="Game\LocalPlayerPrediction.h" />
+    <ClInclude Include="Game\LocalPlayerReconciliation.h" />
     <ClInclude Include="Input\InputSnapshot.h" />
     <ClInclude Include="Input\InputState.h" />
     <ClInclude Include="Net\AccountLoginState.h" />

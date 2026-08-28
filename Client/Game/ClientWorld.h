@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <deque>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -11,7 +10,7 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Time/TimeTypes.h>
 
-#include <Client/Game/LocalPlayerPrediction.h>
+#include <Client/Game/LocalPlayerReconciliation.h>
 
 namespace client::game
 {
@@ -56,13 +55,6 @@ namespace client::game
 			PlayerId playerId = 0;
 			float x = 0.0F;
 			float y = 0.0F;
-		};
-
-		struct PendingInput
-		{
-			std::uint32_t sequence = 0;
-			common::game::InputFlags inputFlags{};
-			float deltaSeconds = 0.0F;
 		};
 
 		struct RenderPlayerState
@@ -123,21 +115,12 @@ namespace client::game
 
 	public:
 		using PlayerTable = std::unordered_map<std::uint32_t, RemotePlayerState>;
-		using PendingInputList = std::deque<PendingInput>;
 		using BulletStateDataList = std::vector<common::packet::BulletStateData>;
 		using ImpactEffectDataList = std::vector<common::packet::ImpactEffectData>;
 
 	private:
-		static inline constexpr float localCorrectionIgnoreDistance = 2.0F;
-		static inline constexpr float localCorrectionHardSnapDistance = 160.0F;
-		static inline constexpr float localRenderCorrectionMaxOffset = 96.0F;
-		static inline constexpr float localRenderCorrectionSmoothSpeed = 12.0F;
-		static inline constexpr float localRenderCorrectionClearDistance = 0.25F;
-
-	private:
 		mutable std::mutex worldMutex_;
 		PlayerTable playerTable_;
-		PendingInputList pendingInputList_;
 		RenderBulletStateList renderBulletStateList_;
 		RenderImpactEffectStateList renderImpactEffectStateList_;
 
@@ -146,10 +129,7 @@ namespace client::game
 		common::time::Milliseconds maxInterpolationDelay_;
 		common::time::Milliseconds interpolationDelay_;
 
-		LocalPlayerPrediction localPlayerPrediction_;
-
-		float localRenderCorrectionOffsetX_ = 0.0F;
-		float localRenderCorrectionOffsetY_ = 0.0F;
+		LocalPlayerReconciliation localPlayerReconciliation_;
 
 		PlayerId localPlayerId_ = 0;
 		std::uint32_t lastServerTick_ = 0;
@@ -171,16 +151,8 @@ namespace client::game
 		void ApplyPlayerJoinedEvent(const PlayerJoinedEvent& playerJoinedEvent);
 		void ApplyPlayerLeftEvent(PlayerId playerId);
 		void ApplyPlayerSnapshot(const common::packet::PlayerSnapshotPacket& packet);
-		void ApplyBulletSnapshotData(
-			std::uint32_t serverTick,
-			RoomId roomId,
-			const BulletStateDataList& bulletStateDataList
-		);
-		void ApplyImpactEffectData(
-			std::uint32_t serverTick,
-			RoomId roomId,
-			const ImpactEffectDataList& impactEffectDataList
-		);
+		void ApplyBulletSnapshotData(std::uint32_t serverTick, RoomId roomId, const BulletStateDataList& bulletStateDataList);
+		void ApplyImpactEffectData(std::uint32_t serverTick, RoomId roomId, const ImpactEffectDataList& impactEffectDataList);
 
 		void UpdateLocalEffects(float deltaSeconds);
 

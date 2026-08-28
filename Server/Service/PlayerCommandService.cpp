@@ -4,6 +4,7 @@
 
 #include <Common/Game/GameRules.h>
 #include <Common/Game/Movement.h>
+#include <Common/Net/SequenceNumber.h>
 
 #include <Server/Game/BulletFactory.h>
 
@@ -40,7 +41,7 @@ namespace server::service
 			return false;
 		}
 
-		if (inputSequence <= peerState.lastAcceptedInputSequence)
+		if (!common::net::IsSequenceNewer(inputSequence, peerState.lastAcceptedInputSequence))
 		{
 			return false;
 		}

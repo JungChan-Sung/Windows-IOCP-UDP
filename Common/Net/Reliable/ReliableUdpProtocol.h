@@ -3,32 +3,13 @@
 #include <cstdint>
 #include <limits>
 
+#include <Common/Net/SequenceNumber.h>
+
 namespace common::net
 {
 	using ReliableSequence = std::uint32_t;
 
 	inline constexpr int reliableAckBitCount = 32;
-	inline constexpr ReliableSequence reliableSequenceHalfRange = static_cast<ReliableSequence>(1) << 31;
-
-	[[nodiscard]] inline bool IsSequenceNewer(ReliableSequence lhs, ReliableSequence rhs) noexcept
-	{
-		if (lhs == rhs)
-		{
-			return false;
-		}
-
-		if (lhs > rhs)
-		{
-			return (lhs - rhs) < reliableSequenceHalfRange;
-		}
-
-		return (rhs - lhs) > reliableSequenceHalfRange;
-	}
-
-	[[nodiscard]] inline bool IsSequenceOlder(ReliableSequence lhs, ReliableSequence rhs) noexcept
-	{
-		return IsSequenceNewer(rhs, lhs);
-	}
 
 	[[nodiscard]] inline bool IsSequenceAcked(ReliableSequence sequence, ReliableSequence ackSequence, std::uint32_t ackBitfield) noexcept
 	{

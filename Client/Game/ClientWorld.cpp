@@ -8,6 +8,7 @@
 #include <Common/Game/SimulationConstants.h>
 #include <Common/Game/RoomLayout.h>
 #include <Common/Game/WorldCollision.h>
+#include <Common/Net/SequenceNumber.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientTuning.h>
@@ -251,7 +252,7 @@ namespace client::game
 			return;
 		}
 
-		while (!pendingInputList_.empty() && pendingInputList_.front().sequence <= packet.lastProcessedInputSequence)
+		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, packet.lastProcessedInputSequence))
 		{
 			pendingInputList_.pop_front();
 		}

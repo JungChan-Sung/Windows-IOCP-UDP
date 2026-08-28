@@ -152,15 +152,18 @@ namespace client::runtime
 		TrySendKeepAlive(currentTime);
 
 		const bool isLocalPlayerDead = world_->IsLocalPlayerDead();
-		const common::game::InputFlags inputFlags = isLocalPlayerDead ? common::game::InputFlags::None : inputSnapshot.movementFlags;
+		const common::game::InputFlags inputFlags = inputSnapshot.movementFlags;
 
 		int processedSimulationTickCount = 0;
 		while (currentTime >= nextSimulationTickTime_ && processedSimulationTickCount < maxSimulationTicksPerUpdate)
 		{
-			const std::optional<std::uint32_t> inputSequence = udpClient_->SendInputCommand(inputFlags);
-			if (inputSequence.has_value())
+			if (!isLocalPlayerDead)
 			{
-				world_->ApplyLocalPredictionTick(*inputSequence, inputFlags, config_->simulation.deltaSeconds);
+				const std::optional<std::uint32_t> inputSequence = udpClient_->SendInputCommand(inputFlags);
+				if (inputSequence.has_value())
+				{
+					world_->ApplyLocalPredictionTick(*inputSequence, inputFlags, config_->simulation.deltaSeconds);
+				}
 			}
 
 			nextSimulationTickTime_ += config_->simulation.tickInterval;

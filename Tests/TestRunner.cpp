@@ -6,6 +6,7 @@
 #include "Client/AccountLoginStateTests.h"
 #include "Client/ClientConfigTests.h"
 #include "Client/ClientWorldTests.h"
+#include "Client/ClientWorldLifecycleTests.h"
 #include "Client/InputStateTests.h"
 #include "Client/LocalPlayerPredictionTests.h"
 #include "Client/LocalPlayerReconciliationTests.h"
@@ -72,6 +73,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ControlPacket", packet::RunControlPacketTests());
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
+
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
 		MergeAndPrint(totalResult, "ReliableUdpProtocol", net::RunReliableUdpProtocolTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketHeader", net::RunReliableUdpPacketHeaderTests());
@@ -82,13 +84,18 @@ namespace tests
 		MergeAndPrint(totalResult, "UdpFaultDecisionGenerator", net::RunUdpFaultDecisionGeneratorTests());
 		MergeAndPrint(totalResult, "UdpFaultPacketScheduler", net::RunUdpFaultPacketSchedulerTests());
 		MergeAndPrint(totalResult, "UdpFaultSimulator", net::RunUdpFaultSimulatorTests());
+
 		MergeAndPrint(totalResult, "WorldCollision", game::RunWorldCollisionTests());
+
 		MergeAndPrint(totalResult, "ThreadPool", threading::RunThreadPoolTests());
+
 		MergeAndPrint(totalResult, "LogLevel", log::RunLogLevelTests());
 		MergeAndPrint(totalResult, "LogFormatter", log::RunLogFormatterTests());
 		MergeAndPrint(totalResult, "LogMessageBuilder", log::RunLogMessageBuilderTests());
 		MergeAndPrint(totalResult, "AsyncLogWriter", log::RunAsyncLogWriterTests());
+
 		MergeAndPrint(totalResult, "ConfigText", config::RunConfigTextTests());
+
 		MergeAndPrint(totalResult, "ServerConfig", server::RunServerConfigTests());
 		MergeAndPrint(totalResult, "ServerMetricsCollector", server::RunServerMetricsCollectorTests());
 		MergeAndPrint(totalResult, "InvalidPacketLogLimiter", server::RunInvalidPacketLogLimiterTests());
@@ -104,21 +111,26 @@ namespace tests
 		MergeAndPrint(totalResult, "PacketPayloadValidator", server::RunPacketPayloadValidatorTests());
 		MergeAndPrint(totalResult, "UdpPacketDispatcher", server::RunUdpPacketDispatcherTests());
 		MergeAndPrint(totalResult, "IntegrationSmoke", server::RunIntegrationSmokeTests());
+
 		MergeAndPrint(totalResult, "ClientConfig", client::RunClientConfigTests());
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
+		MergeAndPrint(totalResult, "ClientWorldLifecycle", client::RunClientWorldLifecycleTests());
 		MergeAndPrint(totalResult, "InputState", client::RunInputStateTests());
 		MergeAndPrint(totalResult, "LocalPlayerPrediction", client::RunLocalPlayerPredictionTests());
 		MergeAndPrint(totalResult, "LocalPlayerReconciliation", client::RunLocalPlayerReconciliationTests());
 		MergeAndPrint(totalResult, "AccountLoginState", client::RunAccountLoginStateTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());
+
 		MergeAndPrint(totalResult, "UtfConversion", string::RunUtfConversionTests());
+
 		MergeAndPrint(totalResult, "OdbcStatement", persistence::RunOdbcStatementTests());
 		MergeAndPrint(totalResult, "PersistenceRuntime", persistence::RunPersistenceRuntimeTests());
 		MergeAndPrint(totalResult, "PersistenceRuntimeIntegration", persistence::RunPersistenceRuntimeIntegrationTests());
 		MergeAndPrint(totalResult, "AccountRepositoryIntegration", persistence::RunAccountRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "PlayerRepositoryIntegration", persistence::RunPlayerRepositoryIntegrationTests());
 		MergeAndPrint(totalResult, "AccountValidation", persistence::RunAccountValidationTests());
+
 		MergeAndPrint(totalResult, "PasswordHashVerifier", server::RunPasswordHashVerifierTests());
 		MergeAndPrint(totalResult, "AccountPacketMapper", server::RunAccountPacketMapperTests());
 		MergeAndPrint(totalResult, "AccountService", server::RunAccountServiceTests());

@@ -79,6 +79,12 @@ namespace client::game
 			return;
 		}
 
+		const auto localPlayerIterator = playerTable_.find(localPlayerId_);
+		if (localPlayerIterator != playerTable_.end() && localPlayerIterator->second.isDead)
+		{
+			return;
+		}
+
 		localPlayerReconciliation_.RecordPendingInput(inputSequence, inputFlags, deltaSeconds);
 
 		localPlayerPrediction_.ApplyInput(inputFlags, deltaSeconds, common::game::defaultMoveSpeed, currentRoomId_);
@@ -122,15 +128,14 @@ namespace client::game
 		currentRoomId_ = packet.roomId;
 
 		const auto currentTime = common::time::Clock::now();
-		const std::size_t playerCount = std::min(
-			static_cast<std::size_t>(packet.playerCount),
-			packet.players.size()
-		);
+		const std::size_t playerCount = std::min(static_cast<std::size_t>(packet.playerCount), packet.players.size());
 
 		std::unordered_set<std::uint32_t> receivedPlayerIdSet;
 		receivedPlayerIdSet.reserve(playerCount);
 
 		bool hasLocalAuthoritativeState = false;
+		bool hasLocalPlayerLifecycleTransition = false;
+
 		float localAuthoritativeX = 0.0F;
 		float localAuthoritativeY = 0.0F;
 
@@ -140,6 +145,9 @@ namespace client::game
 			receivedPlayerIdSet.insert(playerStateData.playerId);
 
 			RemotePlayerState& playerState = playerTable_[playerStateData.playerId];
+
+			const bool wasInitialized = playerState.isInitialized;
+			const bool wasDead = playerState.isDead;
 
 			if (!playerState.isInitialized)
 			{
@@ -174,6 +182,11 @@ namespace client::game
 				hasLocalAuthoritativeState = true;
 				localAuthoritativeX = playerStateData.x;
 				localAuthoritativeY = playerStateData.y;
+
+				if (wasInitialized && wasDead != playerState.isDead)
+				{
+					hasLocalPlayerLifecycleTransition = true;
+				}
 			}
 		}
 
@@ -190,6 +203,13 @@ namespace client::game
 
 		if (!hasLocalAuthoritativeState)
 		{
+			return;
+		}
+
+		if (hasLocalPlayerLifecycleTransition)
+		{
+			localPlayerPrediction_.Reset(localAuthoritativeX, localAuthoritativeY);
+			localPlayerReconciliation_.Clear();
 			return;
 		}
 

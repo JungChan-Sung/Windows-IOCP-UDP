@@ -317,6 +317,77 @@ namespace
 			"LocalPlayerReconciliation: clear resets correction y"
 		);
 	}
+
+	void RunHistoryOverflowFallbackTest(tests::DebugTestResult& result)
+	{
+		client::game::LocalPlayerPrediction prediction;
+		client::game::LocalPlayerReconciliation reconciliation;
+
+		prediction.Reset(350.0F, 350.0F);
+
+		for (std::uint32_t sequence = 1; sequence <= 257; ++sequence)
+		{
+			reconciliation.RecordPendingInput(sequence, common::game::InputFlags::None, common::game::defaultFixedDeltaSeconds);
+		}
+
+		reconciliation.Reconcile(
+			prediction,
+			320.0F,
+			350.0F,
+			0,
+			common::game::defaultMoveSpeed,
+			1
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(prediction.GetX(), 320.0F),
+			"LocalPlayerReconciliation: history overflow resets prediction to authoritative x"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(prediction.GetY(), 350.0F),
+			"LocalPlayerReconciliation: history overflow resets prediction to authoritative y"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(reconciliation.GetRenderCorrectionOffsetX(), 0.0F),
+			"LocalPlayerReconciliation: history overflow clears render correction x"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(reconciliation.GetRenderCorrectionOffsetY(), 0.0F),
+			"LocalPlayerReconciliation: history overflow clears render correction y"
+		);
+
+		const float moveDistance = common::game::defaultMoveSpeed * common::game::defaultFixedDeltaSeconds;
+
+		reconciliation.RecordPendingInput(258, common::game::InputFlags::Right, common::game::defaultFixedDeltaSeconds);
+		prediction.ApplyInput(
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds,
+			common::game::defaultMoveSpeed,
+			1
+		);
+
+		reconciliation.Reconcile(
+			prediction,
+			320.0F,
+			350.0F,
+			257,
+			common::game::defaultMoveSpeed,
+			1
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(prediction.GetX(), 320.0F + moveDistance),
+			"LocalPlayerReconciliation: history tracking recovers after overflow fallback"
+		);
+	}
 }
 
 namespace tests::client
@@ -332,6 +403,7 @@ namespace tests::client
 		RunModerateCorrectionTest(result);
 		RunHardSnapTest(result);
 		RunClearRemovesPendingInputTest(result);
+		RunHistoryOverflowFallbackTest(result);
 
 		return result;
 	}

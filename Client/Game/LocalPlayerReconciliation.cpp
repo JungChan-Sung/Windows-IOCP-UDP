@@ -48,12 +48,21 @@ namespace client::game
 
 		renderCorrectionOffsetX_ = 0.0F;
 		renderCorrectionOffsetY_ = 0.0F;
+
+		isHistoryValid_ = true;
 	}
 
 	void LocalPlayerReconciliation::RecordPendingInput(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds)
 	{
-		if (deltaSeconds <= 0.0F)
+		if (deltaSeconds <= 0.0F || !isHistoryValid_)
 		{
+			return;
+		}
+
+		if (pendingInputList_.size() >= maxPendingInputCount)
+		{
+			pendingInputList_.clear();
+			isHistoryValid_ = false;
 			return;
 		}
 
@@ -67,6 +76,19 @@ namespace client::game
 
 	void LocalPlayerReconciliation::Reconcile(LocalPlayerPrediction& prediction, float authoritativeX, float authoritativeY, std::uint32_t lastProcessedInputSequence, float moveSpeed, RoomId roomId) noexcept
 	{
+		if (!isHistoryValid_)
+		{
+			pendingInputList_.clear();
+
+			prediction.Reset(authoritativeX, authoritativeY);
+
+			renderCorrectionOffsetX_ = 0.0F;
+			renderCorrectionOffsetY_ = 0.0F;
+
+			isHistoryValid_ = true;
+			return;
+		}
+
 		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, lastProcessedInputSequence))
 		{
 			pendingInputList_.pop_front();

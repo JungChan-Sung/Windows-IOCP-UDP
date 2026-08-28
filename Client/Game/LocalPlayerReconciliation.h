@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 
@@ -27,6 +28,8 @@ namespace client::game
 		using PendingInputList = std::deque<PendingInput>;
 
 	private:
+		static inline constexpr std::size_t maxPendingInputCount = 256;
+
 		static inline constexpr float correctionIgnoreDistance = 2.0F;
 		static inline constexpr float correctionHardSnapDistance = 160.0F;
 
@@ -39,6 +42,8 @@ namespace client::game
 
 		float renderCorrectionOffsetX_ = 0.0F;
 		float renderCorrectionOffsetY_ = 0.0F;
+
+		bool isHistoryValid_ = true;
 
 	public:
 		LocalPlayerReconciliation() = default;

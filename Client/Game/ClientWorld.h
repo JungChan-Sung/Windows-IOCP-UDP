@@ -10,6 +10,7 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Client/Game/LocalPlayerPrediction.h>
 #include <Client/Game/LocalPlayerReconciliation.h>
 
 namespace client::game
@@ -129,6 +130,7 @@ namespace client::game
 		common::time::Milliseconds maxInterpolationDelay_;
 		common::time::Milliseconds interpolationDelay_;
 
+		LocalPlayerPrediction localPlayerPrediction_;
 		LocalPlayerReconciliation localPlayerReconciliation_;
 
 		PlayerId localPlayerId_ = 0;

@@ -5,6 +5,8 @@
 
 #include <Common/Net/SequenceNumber.h>
 
+#include <Client/Game/LocalPlayerPrediction.h>
+
 namespace client::game
 {
 
@@ -43,39 +45,27 @@ namespace client::game
 	void LocalPlayerReconciliation::Clear() noexcept
 	{
 		pendingInputList_.clear();
-		prediction_.Clear();
 
 		renderCorrectionOffsetX_ = 0.0F;
 		renderCorrectionOffsetY_ = 0.0F;
 	}
 
-	void LocalPlayerReconciliation::Reset(float x, float y) noexcept
+	void LocalPlayerReconciliation::RecordPendingInput(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds)
 	{
-		pendingInputList_.clear();
-
-		prediction_.Reset(x, y);
-
-		renderCorrectionOffsetX_ = 0.0F;
-		renderCorrectionOffsetY_ = 0.0F;
-	}
-
-	void LocalPlayerReconciliation::ApplyPredictionTick(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds, float moveSpeed, RoomId roomId)
-	{
-		if (!prediction_.IsInitialized() || deltaSeconds <= 0.0F || moveSpeed <= 0.0F)
+		if (deltaSeconds <= 0.0F)
 		{
 			return;
 		}
 
-		pendingInputList_.push_back(PendingInput{
-			.sequence = inputSequence,
-			.inputFlags = inputFlags,
-			.deltaSeconds = deltaSeconds,
-			});
+		PendingInput pendingInput{};
+		pendingInput.sequence = inputSequence;
+		pendingInput.inputFlags = inputFlags;
+		pendingInput.deltaSeconds = deltaSeconds;
 
-		prediction_.ApplyInput(inputFlags, deltaSeconds, moveSpeed, roomId);
+		pendingInputList_.push_back(pendingInput);
 	}
 
-	void LocalPlayerReconciliation::Reconcile(float authoritativeX, float authoritativeY, std::uint32_t lastProcessedInputSequence, float moveSpeed, RoomId roomId) noexcept
+	void LocalPlayerReconciliation::Reconcile(LocalPlayerPrediction& prediction, float authoritativeX, float authoritativeY, std::uint32_t lastProcessedInputSequence, float moveSpeed, RoomId roomId) noexcept
 	{
 		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, lastProcessedInputSequence))
 		{
@@ -93,17 +83,17 @@ namespace client::game
 		const float reconciledX = replayPrediction.GetX();
 		const float reconciledY = replayPrediction.GetY();
 
-		if (!prediction_.IsInitialized())
+		if (!prediction.IsInitialized())
 		{
-			prediction_.Reset(reconciledX, reconciledY);
+			prediction.Reset(reconciledX, reconciledY);
 
 			renderCorrectionOffsetX_ = 0.0F;
 			renderCorrectionOffsetY_ = 0.0F;
 			return;
 		}
 
-		const float oldPredictedX = prediction_.GetX();
-		const float oldPredictedY = prediction_.GetY();
+		const float oldPredictedX = prediction.GetX();
+		const float oldPredictedY = prediction.GetY();
 		const float correctionDeltaX = reconciledX - oldPredictedX;
 		const float correctionDeltaY = reconciledY - oldPredictedY;
 
@@ -114,7 +104,7 @@ namespace client::game
 			return;
 		}
 
-		prediction_.Reset(reconciledX, reconciledY);
+		prediction.Reset(reconciledX, reconciledY);
 
 		const float hardSnapDistanceSquared = correctionHardSnapDistance * correctionHardSnapDistance;
 		if (correctionDistanceSquared >= hardSnapDistanceSquared)

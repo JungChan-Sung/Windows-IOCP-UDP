@@ -1,21 +1,17 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <deque>
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Game/InputFlags.h>
 
-#include <Client/Game/LocalPlayerPrediction.h>
-
 namespace client::game
 {
+	class LocalPlayerPrediction;
+
 	class LocalPlayerReconciliation
 	{
-	public:
-		using RoomId = common::game::RoomId;
-
 	public:
 		struct PendingInput
 		{
@@ -25,7 +21,24 @@ namespace client::game
 		};
 
 	public:
+		using RoomId = common::game::RoomId;
+
+	private:
 		using PendingInputList = std::deque<PendingInput>;
+
+	private:
+		static inline constexpr float correctionIgnoreDistance = 2.0F;
+		static inline constexpr float correctionHardSnapDistance = 160.0F;
+
+		static inline constexpr float renderCorrectionMaxOffset = 96.0F;
+		static inline constexpr float renderCorrectionSmoothSpeed = 12.0F;
+		static inline constexpr float renderCorrectionClearDistance = 0.25F;
+
+	private:
+		PendingInputList pendingInputList_;
+
+		float renderCorrectionOffsetX_ = 0.0F;
+		float renderCorrectionOffsetY_ = 0.0F;
 
 	public:
 		LocalPlayerReconciliation() = default;
@@ -38,36 +51,17 @@ namespace client::game
 		LocalPlayerReconciliation& operator=(LocalPlayerReconciliation&&) = delete;
 
 	private:
-		static inline constexpr float correctionIgnoreDistance = 2.0F;
-		static inline constexpr float correctionHardSnapDistance = 160.0F;
-		static inline constexpr float renderCorrectionMaxOffset = 96.0F;
-		static inline constexpr float renderCorrectionSmoothSpeed = 12.0F;
-		static inline constexpr float renderCorrectionClearDistance = 0.25F;
-
-	private:
-		PendingInputList pendingInputList_;
-		LocalPlayerPrediction prediction_;
-
-		float renderCorrectionOffsetX_ = 0.0F;
-		float renderCorrectionOffsetY_ = 0.0F;
-
-	private:
 		[[nodiscard]] static float LengthSquared(float x, float y) noexcept;
 		[[nodiscard]] static float Lerp(float startValue, float endValue, float alpha) noexcept;
+
 		static void ClampVectorLength(float& x, float& y, float maxLength) noexcept;
 
 	public:
 		void Clear() noexcept;
-		void Reset(float x, float y) noexcept;
+		void RecordPendingInput(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds);
 
-		void ApplyPredictionTick(
-			std::uint32_t inputSequence,
-			common::game::InputFlags inputFlags,
-			float deltaSeconds,
-			float moveSpeed,
-			RoomId roomId
-		);
 		void Reconcile(
+			LocalPlayerPrediction& prediction,
 			float authoritativeX,
 			float authoritativeY,
 			std::uint32_t lastProcessedInputSequence,
@@ -78,34 +72,14 @@ namespace client::game
 		void UpdateRenderCorrection(float deltaSeconds) noexcept;
 
 	public:
-		[[nodiscard]] bool IsInitialized() const noexcept
+		[[nodiscard]] float GetRenderCorrectionOffsetX() const noexcept
 		{
-			return prediction_.IsInitialized();
+			return renderCorrectionOffsetX_;
 		}
 
-		[[nodiscard]] float GetPredictedX() const noexcept
+		[[nodiscard]] float GetRenderCorrectionOffsetY() const noexcept
 		{
-			return prediction_.GetX();
-		}
-
-		[[nodiscard]] float GetPredictedY() const noexcept
-		{
-			return prediction_.GetY();
-		}
-
-		[[nodiscard]] float GetRenderX() const noexcept
-		{
-			return prediction_.GetX() + renderCorrectionOffsetX_;
-		}
-
-		[[nodiscard]] float GetRenderY() const noexcept
-		{
-			return prediction_.GetY() + renderCorrectionOffsetY_;
-		}
-
-		[[nodiscard]] std::size_t GetPendingInputCount() const noexcept
-		{
-			return pendingInputList_.size();
+			return renderCorrectionOffsetY_;
 		}
 	};
 }

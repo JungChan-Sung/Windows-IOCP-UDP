@@ -10,6 +10,11 @@ namespace client::game
 	public:
 		using RoomId = common::game::RoomId;
 
+	private:
+		float x_ = 0.0F;
+		float y_ = 0.0F;
+		bool isInitialized_ = false;
+
 	public:
 		LocalPlayerPrediction() = default;
 		~LocalPlayerPrediction() noexcept = default;
@@ -19,11 +24,6 @@ namespace client::game
 
 		LocalPlayerPrediction(LocalPlayerPrediction&&) = delete;
 		LocalPlayerPrediction& operator=(LocalPlayerPrediction&&) = delete;
-
-	private:
-		float x_ = 0.0F;
-		float y_ = 0.0F;
-		bool isInitialized_ = false;
 
 	public:
 		void Clear() noexcept;

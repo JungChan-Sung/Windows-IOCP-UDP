@@ -4,8 +4,9 @@
 #include <cmath>
 #include <unordered_set>
 
-#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Game/SimulationConstants.h>
+#include <Common/Net/SequenceNumber.h>
+#include <Common/Packet/Game/GamePacket.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Client/Game/ClientTuning.h>
@@ -124,8 +125,19 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
+		if (currentRoomId_ != 0 && packet.roomId != currentRoomId_)
+		{
+			return;
+		}
+
+		if (hasReceivedPlayerSnapshot_ && !common::net::IsSequenceNewer(packet.serverTick, lastServerTick_))
+		{
+			return;
+		}
+
 		lastServerTick_ = packet.serverTick;
 		currentRoomId_ = packet.roomId;
+		hasReceivedPlayerSnapshot_ = true;
 
 		const auto currentTime = common::time::Clock::now();
 		const std::size_t playerCount = std::min(static_cast<std::size_t>(packet.playerCount), packet.players.size());
@@ -307,6 +319,8 @@ namespace client::game
 		localPlayerId_ = 0;
 		lastServerTick_ = 0;
 		currentRoomId_ = 0;
+
+		hasReceivedPlayerSnapshot_ = false;
 		isJoined_ = false;
 	}
 

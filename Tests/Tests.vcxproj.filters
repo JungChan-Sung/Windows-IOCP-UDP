@@ -361,7 +361,10 @@
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
     <ClCompile Include="Client\ClientWorldLifecycleTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\ClientWorldSnapshotOrderTests.cpp">
+      <Filter>소스 파일\Client</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -564,7 +567,10 @@
       <Filter>헤더 파일\Client</Filter>
     </ClInclude>
     <ClInclude Include="Client\ClientWorldLifecycleTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\ClientWorldSnapshotOrderTests.h">
+      <Filter>헤더 파일\Client</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

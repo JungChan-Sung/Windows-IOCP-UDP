@@ -167,6 +167,7 @@
     <ClCompile Include="Client\AccountLoginStateTests.cpp" />
     <ClCompile Include="Client\ClientConfigTests.cpp" />
     <ClCompile Include="Client\ClientWorldLifecycleTests.cpp" />
+    <ClCompile Include="Client\ClientWorldSnapshotOrderTests.cpp" />
     <ClCompile Include="Client\ClientWorldTests.cpp" />
     <ClCompile Include="Client\InputStateTests.cpp" />
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="Client\AccountLoginStateTests.h" />
     <ClInclude Include="Client\ClientConfigTests.h" />
     <ClInclude Include="Client\ClientWorldLifecycleTests.h" />
+    <ClInclude Include="Client\ClientWorldSnapshotOrderTests.h" />
     <ClInclude Include="Client\ClientWorldTests.h" />
     <ClInclude Include="Client\InputStateTests.h" />
     <ClInclude Include="Client\JoinHandshakeStateTests.h" />

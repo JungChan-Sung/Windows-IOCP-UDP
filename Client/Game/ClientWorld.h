@@ -136,6 +136,8 @@ namespace client::game
 		PlayerId localPlayerId_ = 0;
 		std::uint32_t lastServerTick_ = 0;
 		RoomId currentRoomId_ = 0;
+
+		bool hasReceivedPlayerSnapshot_ = false;
 		bool isJoined_ = false;
 
 	public:

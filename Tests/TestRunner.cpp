@@ -7,12 +7,15 @@
 #include "Client/ClientConfigTests.h"
 #include "Client/ClientWorldTests.h"
 #include "Client/ClientWorldLifecycleTests.h"
+#include "Client/ClientWorldSnapshotOrderTests.h"
 #include "Client/InputStateTests.h"
 #include "Client/LocalPlayerPredictionTests.h"
 #include "Client/LocalPlayerReconciliationTests.h"
 #include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
+
 #include "Config/ConfigTextTests.h"
+
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
 #include "Net/ReliableUdpProtocolTests.h"
 #include "Net/ReliableUdpPacketHeaderTests.h"
@@ -23,20 +26,25 @@
 #include "Net/UdpFaultDecisionGeneratorTests.h"
 #include "Net/UdpFaultPacketSchedulerTests.h"
 #include "Net/UdpFaultSimulatorTests.h"
+
 #include "Packet/ControlPacketTests.h"
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
+
 #include "Persistence/AccountRepositoryIntegrationTests.h"
 #include "Persistence/AccountValidationTests.h"
 #include "Persistence/OdbcStatementTests.h"
 #include "Persistence/PersistenceRuntimeTests.h"
 #include "Persistence/PersistenceRuntimeIntegrationTests.h"
 #include "Persistence/PlayerRepositoryIntegrationTests.h"
+
 #include "Threading/ThreadPoolTests.h"
+
 #include "Log/AsyncLogWriterTests.h"
 #include "Log/LogFormatterTests.h"
 #include "Log/LogLevelTests.h"
 #include "Log/LogMessageBuilderTests.h"
+
 #include "Server/PasswordHashVerifierTests.h"
 #include "Server/AccountPacketMapperTests.h"
 #include "Server/AccountServiceTests.h"
@@ -61,7 +69,9 @@
 #include "Server/InvalidPacketLogLimiterTests.h"
 #include "Server/MatchHistoryTrackerTests.h"
 #include "Server/MatchHistoryPersistenceIntegrationTests.h"
+
 #include "String/UtfConversionTests.h"
+
 #include "Game/WorldCollisionTests.h"
 
 namespace tests
@@ -115,6 +125,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientConfig", client::RunClientConfigTests());
 		MergeAndPrint(totalResult, "ClientWorld", client::RunClientWorldTests());
 		MergeAndPrint(totalResult, "ClientWorldLifecycle", client::RunClientWorldLifecycleTests());
+		MergeAndPrint(totalResult, "ClientWorldSnapshotOrder", client::RunClientWorldSnapshotOrderTests());
 		MergeAndPrint(totalResult, "InputState", client::RunInputStateTests());
 		MergeAndPrint(totalResult, "LocalPlayerPrediction", client::RunLocalPlayerPredictionTests());
 		MergeAndPrint(totalResult, "LocalPlayerReconciliation", client::RunLocalPlayerReconciliationTests());

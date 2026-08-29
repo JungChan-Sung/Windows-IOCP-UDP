@@ -30,7 +30,7 @@ namespace
 		playerState.isInitialized = true;
 	}
 
-	void UpdatePlayerSample(RemotePlayerState& playerState, float x, float y, common::time::TimePoint sampleTime) noexcept
+	void UpdatePlayerSample(RemotePlayerState& playerState, float x, float y, common::time::TimePoint sampleTime)
 	{
 		playerState.interpolationBuffer.PushSample(x, y, sampleTime);
 	}
@@ -114,6 +114,8 @@ namespace client::game
 		hasReceivedPlayerSnapshot_ = true;
 
 		const auto currentTime = common::time::Clock::now();
+		const common::time::TimePoint minimumInterpolationTargetTime = currentTime - maxInterpolationDelay_;
+
 		const std::size_t playerCount = std::min(static_cast<std::size_t>(packet.playerCount), packet.players.size());
 
 		std::unordered_set<std::uint32_t> receivedPlayerIdSet;
@@ -148,6 +150,8 @@ namespace client::game
 			{
 				UpdatePlayerSample(playerState, playerStateData.x, playerStateData.y, currentTime);
 			}
+
+			playerState.interpolationBuffer.PruneBefore(minimumInterpolationTargetTime);
 
 			playerState.hp = playerStateData.hp;
 			playerState.isDead = isDead;

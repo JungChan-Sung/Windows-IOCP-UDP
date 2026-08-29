@@ -248,6 +248,72 @@ namespace
 			"RemotePlayerInterpolationBuffer: reset clears previous y history"
 		);
 	}
+
+	void RunPrunePreservesInterpolationBoundaryTest(tests::DebugTestResult& result)
+	{
+		client::game::RemotePlayerInterpolationBuffer interpolationBuffer;
+
+		common::time::TimePoint startTime;
+
+		interpolationBuffer.Reset(100.0F, 100.0F, startTime);
+		interpolationBuffer.PushSample(200.0F, 100.0F, startTime + common::time::Milliseconds(100));
+		interpolationBuffer.PushSample(300.0F, 100.0F, startTime + common::time::Milliseconds(200));
+		interpolationBuffer.PushSample(400.0F, 100.0F, startTime + common::time::Milliseconds(300));
+
+		interpolationBuffer.PruneBefore(startTime + common::time::Milliseconds(150));
+
+		const auto interpolatedPosition =
+			interpolationBuffer.Interpolate(startTime + common::time::Milliseconds(150));
+
+		tests::Expect(
+			result,
+			interpolatedPosition.has_value(),
+			"RemotePlayerInterpolationBuffer: prune preserves interpolation boundary"
+		);
+
+		if (!interpolatedPosition.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(interpolatedPosition->x, 250.0F),
+			"RemotePlayerInterpolationBuffer: prune keeps previous sample needed for interpolation"
+		);
+	}
+
+	void RunPruneRemovesExpiredHistoryTest(tests::DebugTestResult& result)
+	{
+		client::game::RemotePlayerInterpolationBuffer interpolationBuffer;
+
+		common::time::TimePoint startTime;
+
+		interpolationBuffer.Reset(100.0F, 100.0F, startTime);
+		interpolationBuffer.PushSample(200.0F, 100.0F, startTime + common::time::Milliseconds(100));
+		interpolationBuffer.PushSample(300.0F, 100.0F, startTime + common::time::Milliseconds(200));
+
+		interpolationBuffer.PruneBefore(startTime + common::time::Milliseconds(150));
+
+		const auto interpolatedPosition = interpolationBuffer.Interpolate(startTime);
+
+		tests::Expect(
+			result,
+			interpolatedPosition.has_value(),
+			"RemotePlayerInterpolationBuffer: pruned buffer still has position"
+		);
+
+		if (!interpolatedPosition.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(interpolatedPosition->x, 200.0F),
+			"RemotePlayerInterpolationBuffer: prune removes expired oldest history"
+		);
+	}
 }
 
 namespace tests::client
@@ -265,6 +331,8 @@ namespace tests::client
 		RunEqualTimestampReplacesSampleTest(result);
 		RunOlderTimestampIgnoredTest(result);
 		RunResetClearsHistoryTest(result);
+		RunPrunePreservesInterpolationBoundaryTest(result);
+		RunPruneRemovesExpiredHistoryTest(result);
 
 		return result;
 	}

@@ -1,6 +1,7 @@
 #include "RemotePlayerInterpolationBuffer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 
 namespace client::game
@@ -48,6 +49,14 @@ namespace client::game
 		snapshotSampleList_.push_back(snapshotSample);
 
 		if (snapshotSampleList_.size() > maxSnapshotSampleCount)
+		{
+			snapshotSampleList_.pop_front();
+		}
+	}
+
+	void RemotePlayerInterpolationBuffer::PruneBefore(common::time::TimePoint minimumInterpolationTargetTime) noexcept
+	{
+		while (snapshotSampleList_.size() >= 2 && snapshotSampleList_[1].time <= minimumInterpolationTargetTime)
 		{
 			snapshotSampleList_.pop_front();
 		}

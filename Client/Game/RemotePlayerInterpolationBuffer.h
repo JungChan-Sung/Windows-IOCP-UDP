@@ -48,6 +48,7 @@ namespace client::game
 		void Clear() noexcept;
 		void Reset(float x, float y, common::time::TimePoint sampleTime);
 		void PushSample(float x, float y, common::time::TimePoint sampleTime);
+		void PruneBefore(common::time::TimePoint minimumInterpolationTargetTime) noexcept;
 
 		[[nodiscard]] std::optional<InterpolatedPosition> Interpolate(common::time::TimePoint interpolationTargetTime) const noexcept;
 	};

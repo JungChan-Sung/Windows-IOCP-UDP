@@ -57,7 +57,6 @@ namespace client::game
 
 	private:
 		[[nodiscard]] static float LengthSquared(float x, float y) noexcept;
-		[[nodiscard]] static float Lerp(float startValue, float endValue, float alpha) noexcept;
 
 		static void ClampVectorLength(float& x, float& y, float maxLength) noexcept;
 

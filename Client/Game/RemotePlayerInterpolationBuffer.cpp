@@ -5,11 +5,6 @@
 
 namespace client::game
 {
-	float RemotePlayerInterpolationBuffer::Lerp(float startValue, float endValue, float alpha) noexcept
-	{
-		return startValue + ((endValue - startValue) * alpha);
-	}
-
 	void RemotePlayerInterpolationBuffer::Clear() noexcept
 	{
 		snapshotSampleList_.clear();
@@ -96,8 +91,8 @@ namespace client::game
 		const float alpha = std::clamp(elapsedSeconds / totalSeconds, 0.0F, 1.0F);
 
 		return InterpolatedPosition{
-			.x = Lerp(previousSampleIterator->x, targetSampleIterator->x, alpha),
-			.y = Lerp(previousSampleIterator->y, targetSampleIterator->y, alpha),
+			.x = std::lerp(previousSampleIterator->x, targetSampleIterator->x, alpha),
+			.y = std::lerp(previousSampleIterator->y, targetSampleIterator->y, alpha),
 		};
 	}
 }

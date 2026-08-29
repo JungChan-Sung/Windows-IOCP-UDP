@@ -15,11 +15,6 @@ namespace client::game
 		return (x * x) + (y * y);
 	}
 
-	float LocalPlayerReconciliation::Lerp(float startValue, float endValue, float alpha) noexcept
-	{
-		return startValue + ((endValue - startValue) * alpha);
-	}
-
 	void LocalPlayerReconciliation::ClampVectorLength(float& x, float& y, float maxLength) noexcept
 	{
 		const float lengthSquared = LengthSquared(x, y);
@@ -158,8 +153,8 @@ namespace client::game
 
 		const float alpha = std::clamp(renderCorrectionSmoothSpeed * deltaSeconds, 0.0F, 1.0F);
 
-		renderCorrectionOffsetX_ = Lerp(renderCorrectionOffsetX_, 0.0F, alpha);
-		renderCorrectionOffsetY_ = Lerp(renderCorrectionOffsetY_, 0.0F, alpha);
+		renderCorrectionOffsetX_ = std::lerp(renderCorrectionOffsetX_, 0.0F, alpha);
+		renderCorrectionOffsetY_ = std::lerp(renderCorrectionOffsetY_, 0.0F, alpha);
 
 		const float clearDistanceSquared = renderCorrectionClearDistance * renderCorrectionClearDistance;
 		if (LengthSquared(renderCorrectionOffsetX_, renderCorrectionOffsetY_) <= clearDistanceSquared)

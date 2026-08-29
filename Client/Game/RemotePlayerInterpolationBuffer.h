@@ -44,9 +44,6 @@ namespace client::game
 		RemotePlayerInterpolationBuffer(RemotePlayerInterpolationBuffer&&) = delete;
 		RemotePlayerInterpolationBuffer& operator=(RemotePlayerInterpolationBuffer&&) = delete;
 
-	private:
-		[[nodiscard]] static float Lerp(float startValue, float endValue, float alpha) noexcept;
-
 	public:
 		void Clear() noexcept;
 		void Reset(float x, float y, common::time::TimePoint sampleTime);

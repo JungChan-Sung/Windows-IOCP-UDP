@@ -72,11 +72,7 @@ namespace
 		common::time::TimePoint startTime;
 
 		interpolationBuffer.Reset(100.0F, 200.0F, startTime);
-		interpolationBuffer.PushSample(
-			200.0F,
-			300.0F,
-			startTime + common::time::Milliseconds(100)
-		);
+		interpolationBuffer.PushSample(200.0F, 300.0F, startTime + common::time::Milliseconds(100));
 
 		const auto interpolatedPosition =
 			interpolationBuffer.Interpolate(startTime + common::time::Milliseconds(50));
@@ -210,6 +206,48 @@ namespace
 			"RemotePlayerInterpolationBuffer: older timestamp ignored"
 		);
 	}
+
+	void RunResetClearsHistoryTest(tests::DebugTestResult& result)
+	{
+		client::game::RemotePlayerInterpolationBuffer interpolationBuffer;
+
+		common::time::TimePoint startTime;
+
+		interpolationBuffer.Reset(100.0F, 200.0F, startTime);
+		interpolationBuffer.PushSample(200.0F, 300.0F, startTime + common::time::Milliseconds(100));
+
+		interpolationBuffer.Reset(
+			500.0F,
+			600.0F,
+			startTime + common::time::Milliseconds(200)
+		);
+
+		const auto interpolatedPosition =
+			interpolationBuffer.Interpolate(startTime + common::time::Milliseconds(150));
+
+		tests::Expect(
+			result,
+			interpolatedPosition.has_value(),
+			"RemotePlayerInterpolationBuffer: reset keeps new position available"
+		);
+
+		if (!interpolatedPosition.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(interpolatedPosition->x, 500.0F),
+			"RemotePlayerInterpolationBuffer: reset clears previous x history"
+		);
+
+		tests::Expect(
+			result,
+			IsNearlyEqual(interpolatedPosition->y, 600.0F),
+			"RemotePlayerInterpolationBuffer: reset clears previous y history"
+		);
+	}
 }
 
 namespace tests::client
@@ -226,6 +264,7 @@ namespace tests::client
 		RunAfterLatestSampleTest(result);
 		RunEqualTimestampReplacesSampleTest(result);
 		RunOlderTimestampIgnoredTest(result);
+		RunResetClearsHistoryTest(result);
 
 		return result;
 	}

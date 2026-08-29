@@ -134,29 +134,23 @@ namespace client::game
 
 			const bool wasInitialized = playerState.isInitialized;
 			const bool wasDead = playerState.isDead;
+			const bool isDead = playerStateData.isDead != 0;
 
 			if (!playerState.isInitialized)
 			{
-				InitializePlayerState(
-					playerState,
-					playerStateData.playerId,
-					playerStateData.x,
-					playerStateData.y,
-					currentTime
-				);
+				InitializePlayerState(playerState, playerStateData.playerId, playerStateData.x, playerStateData.y, currentTime);
+			}
+			else if (wasDead != isDead)
+			{
+				playerState.interpolationBuffer.Reset(playerStateData.x, playerStateData.y, currentTime);
 			}
 			else
 			{
-				UpdatePlayerSample(
-					playerState,
-					playerStateData.x,
-					playerStateData.y,
-					currentTime
-				);
+				UpdatePlayerSample(playerState, playerStateData.x, playerStateData.y, currentTime);
 			}
 
 			playerState.hp = playerStateData.hp;
-			playerState.isDead = playerStateData.isDead != 0;
+			playerState.isDead = isDead;
 			playerState.respawnRemainingSeconds = playerStateData.respawnRemainingSeconds;
 			playerState.invincibilityRemainingSeconds = playerStateData.invincibilityRemainingSeconds;
 			playerState.hitFlashRemainingSeconds = playerStateData.hitFlashRemainingSeconds;
@@ -169,7 +163,7 @@ namespace client::game
 				localAuthoritativeX = playerStateData.x;
 				localAuthoritativeY = playerStateData.y;
 
-				if (wasInitialized && wasDead != playerState.isDead)
+				if (wasInitialized && wasDead != isDead)
 				{
 					hasLocalPlayerLifecycleTransition = true;
 				}

@@ -14,30 +14,12 @@
 
 namespace
 {
-	using SnapshotSample = client::game::ClientWorld::SnapshotSample;
 	using RemotePlayerState = client::game::ClientWorld::RemotePlayerState;
 
-	[[nodiscard]] float Lerp(float startValue, float endValue, float alpha) noexcept
-	{
-		return startValue + ((endValue - startValue) * alpha);
-	}
-
-	void InitializePlayerState(
-		RemotePlayerState& playerState,
-		std::uint32_t playerId,
-		float x,
-		float y,
-		common::time::TimePoint sampleTime
-	) noexcept
+	void InitializePlayerState(RemotePlayerState& playerState, std::uint32_t playerId, float x, float y, common::time::TimePoint sampleTime)
 	{
 		playerState.playerId = playerId;
-		playerState.previousSample.x = x;
-		playerState.previousSample.y = y;
-		playerState.previousSample.time = sampleTime;
-
-		playerState.targetSample.x = x;
-		playerState.targetSample.y = y;
-		playerState.targetSample.time = sampleTime;
+		playerState.interpolationBuffer.Reset(x, y, sampleTime);
 
 		playerState.hp = 0;
 		playerState.isDead = false;
@@ -48,17 +30,9 @@ namespace
 		playerState.isInitialized = true;
 	}
 
-	void UpdatePlayerSample(
-		RemotePlayerState& playerState,
-		float x,
-		float y,
-		common::time::TimePoint sampleTime
-	) noexcept
+	void UpdatePlayerSample(RemotePlayerState& playerState, float x, float y, common::time::TimePoint sampleTime) noexcept
 	{
-		playerState.previousSample = playerState.targetSample;
-		playerState.targetSample.x = x;
-		playerState.targetSample.y = y;
-		playerState.targetSample.time = sampleTime;
+		playerState.interpolationBuffer.PushSample(x, y, sampleTime);
 	}
 }
 
@@ -324,7 +298,7 @@ namespace client::game
 		isJoined_ = false;
 	}
 
-	void ClientWorld::ResetLocalPlayerPrediction(float x, float y) noexcept
+	void ClientWorld::ResetLocalPlayerPrediction(float x, float y)
 	{
 		std::scoped_lock lock(worldMutex_);
 
@@ -336,14 +310,7 @@ namespace client::game
 		{
 			const auto currentTime = common::time::Clock::now();
 
-			playerIterator->second.previousSample.x = x;
-			playerIterator->second.previousSample.y = y;
-			playerIterator->second.previousSample.time = currentTime;
-
-			playerIterator->second.targetSample.x = x;
-			playerIterator->second.targetSample.y = y;
-			playerIterator->second.targetSample.time = currentTime;
-
+			playerIterator->second.interpolationBuffer.Reset(x, y, currentTime);
 			playerIterator->second.isInitialized = true;
 		}
 	}
@@ -410,31 +377,27 @@ namespace client::game
 				}
 				else
 				{
-					renderPlayerState.x = playerState.targetSample.x;
-					renderPlayerState.y = playerState.targetSample.y;
+					const auto latestPosition = playerState.interpolationBuffer.Interpolate(renderTime);
+					if (latestPosition.has_value())
+					{
+						renderPlayerState.x = latestPosition->x;
+						renderPlayerState.y = latestPosition->y;
+					}
 				}
 
 				renderPlayerStateList.push_back(renderPlayerState);
 				continue;
 			}
 
-			const SnapshotSample& previousSample = playerState.previousSample;
-			const SnapshotSample& targetSample = playerState.targetSample;
-			if (targetSample.time <= previousSample.time)
+			const auto interpolatedPosition = playerState.interpolationBuffer.Interpolate(interpolationTargetTime);
+			if (!interpolatedPosition.has_value())
 			{
-				renderPlayerState.x = targetSample.x;
-				renderPlayerState.y = targetSample.y;
-
-				renderPlayerStateList.push_back(renderPlayerState);
 				continue;
 			}
 
-			const float totalSeconds = common::time::FloatSeconds(targetSample.time - previousSample.time).count();
-			const float elapsedSeconds = common::time::FloatSeconds(interpolationTargetTime - previousSample.time).count();
-			const float alpha = std::clamp(elapsedSeconds / totalSeconds, 0.0F, 1.0F);
+			renderPlayerState.x = interpolatedPosition->x;
+			renderPlayerState.y = interpolatedPosition->y;
 
-			renderPlayerState.x = Lerp(previousSample.x, targetSample.x, alpha);
-			renderPlayerState.y = Lerp(previousSample.y, targetSample.y, alpha);
 
 			renderPlayerStateList.push_back(renderPlayerState);
 		}

@@ -12,6 +12,7 @@
 
 #include <Client/Game/LocalPlayerPrediction.h>
 #include <Client/Game/LocalPlayerReconciliation.h>
+#include <Client/Game/RemotePlayerInterpolationBuffer.h>
 
 namespace client::game
 {
@@ -22,20 +23,12 @@ namespace client::game
 		using RoomId = common::game::RoomId;
 
 	public:
-		struct SnapshotSample
-		{
-		public:
-			float x = 0.0F;
-			float y = 0.0F;
-			common::time::TimePoint time{};
-		};
-
 		struct RemotePlayerState
 		{
 		public:
 			PlayerId playerId = 0;
-			SnapshotSample previousSample{};
-			SnapshotSample targetSample{};
+
+			RemotePlayerInterpolationBuffer interpolationBuffer;
 
 			int hp = 0;
 			bool isDead = false;
@@ -161,7 +154,7 @@ namespace client::game
 		void UpdateLocalEffects(float deltaSeconds);
 
 		void Clear() noexcept;
-		void ResetLocalPlayerPrediction(float x, float y) noexcept;
+		void ResetLocalPlayerPrediction(float x, float y);
 		void SetInterpolationSettings(
 			common::time::Milliseconds defaultDelay,
 			common::time::Milliseconds minDelay,

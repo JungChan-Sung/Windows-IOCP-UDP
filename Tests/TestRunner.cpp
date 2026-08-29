@@ -11,6 +11,7 @@
 #include "Client/InputStateTests.h"
 #include "Client/LocalPlayerPredictionTests.h"
 #include "Client/LocalPlayerReconciliationTests.h"
+#include "Client/RemotePlayerInterpolationBufferTests.h"
 #include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
 
@@ -129,6 +130,7 @@ namespace tests
 		MergeAndPrint(totalResult, "InputState", client::RunInputStateTests());
 		MergeAndPrint(totalResult, "LocalPlayerPrediction", client::RunLocalPlayerPredictionTests());
 		MergeAndPrint(totalResult, "LocalPlayerReconciliation", client::RunLocalPlayerReconciliationTests());
+		MergeAndPrint(totalResult, "RemotePlayerInterpolationBuffer", client::RunRemotePlayerInterpolationBufferTests());
 		MergeAndPrint(totalResult, "AccountLoginState", client::RunAccountLoginStateTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());

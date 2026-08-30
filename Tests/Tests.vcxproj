@@ -140,6 +140,7 @@
     <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp" />
     <ClCompile Include="..\Client\Game\LocalPlayerReconciliation.cpp" />
     <ClCompile Include="..\Client\Game\RemotePlayerInterpolationBuffer.cpp" />
+    <ClCompile Include="..\Client\Game\ServerTickTimeline.cpp" />
     <ClCompile Include="..\Client\Input\InputState.cpp" />
     <ClCompile Include="..\Client\Net\AccountLoginState.cpp" />
     <ClCompile Include="..\Client\Net\SnapshotChunkAssembler.cpp" />
@@ -175,6 +176,7 @@
     <ClCompile Include="Client\LocalPlayerPredictionTests.cpp" />
     <ClCompile Include="Client\LocalPlayerReconciliationTests.cpp" />
     <ClCompile Include="Client\RemotePlayerInterpolationBufferTests.cpp" />
+    <ClCompile Include="Client\ServerTickTimelineTests.cpp" />
     <ClCompile Include="Client\SnapshotChunkAssemblerTests.cpp" />
     <ClCompile Include="Config\ConfigTextTests.cpp" />
     <ClCompile Include="Game\WorldCollisionTests.cpp" />
@@ -226,6 +228,7 @@
     <ClCompile Include="Server\ServerConfigTests.cpp" />
     <ClCompile Include="Server\ServerMetricsCollectorTests.cpp" />
     <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp" />
+    <ClCompile Include="Server\SnapshotTimingMetadataTests.cpp" />
     <ClCompile Include="Server\UdpPacketDispatcherTests.cpp" />
     <ClCompile Include="String\UtfConversionTests.cpp" />
     <ClCompile Include="TestRunner.cpp" />
@@ -252,6 +255,7 @@
     <ClInclude Include="Client\LocalPlayerPredictionTests.h" />
     <ClInclude Include="Client\LocalPlayerReconciliationTests.h" />
     <ClInclude Include="Client\RemotePlayerInterpolationBufferTests.h" />
+    <ClInclude Include="Client\ServerTickTimelineTests.h" />
     <ClInclude Include="Client\SnapshotChunkAssemblerTests.h" />
     <ClInclude Include="Config\ConfigTextTests.h" />
     <ClInclude Include="DebugTestResult.h" />
@@ -305,6 +309,7 @@
     <ClInclude Include="Server\ServerConfigTests.h" />
     <ClInclude Include="Server\ServerMetricsCollectorTests.h" />
     <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h" />
+    <ClInclude Include="Server\SnapshotTimingMetadataTests.h" />
     <ClInclude Include="Server\UdpPacketDispatcherTests.h" />
     <ClInclude Include="String\UtfConversionTests.h" />
     <ClInclude Include="TestHelpers.h" />

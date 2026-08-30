@@ -12,6 +12,7 @@
 #include "Client/LocalPlayerPredictionTests.h"
 #include "Client/LocalPlayerReconciliationTests.h"
 #include "Client/RemotePlayerInterpolationBufferTests.h"
+#include "Client/ServerTickTimelineTests.h"
 #include "Client/JoinHandshakeStateTests.h"
 #include "Client/SnapshotChunkAssemblerTests.h"
 
@@ -66,6 +67,7 @@
 #include "Server/UdpPacketDispatcherTests.h"
 #include "Server/ReliableUdpSessionRegistryTests.h"
 #include "Server/SnapshotBroadcastBuilderTests.h"
+#include "Server/SnapshotTimingMetadataTests.h"
 #include "Server/IntegrationSmokeTests.h"
 #include "Server/InvalidPacketLogLimiterTests.h"
 #include "Server/MatchHistoryTrackerTests.h"
@@ -119,6 +121,7 @@ namespace tests
 		MergeAndPrint(totalResult, "MatchHistoryPersistenceIntegration", server::RunMatchHistoryPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "ReliableUdpSessionRegistry", server::RunReliableUdpSessionRegistryTests());
 		MergeAndPrint(totalResult, "SnapshotBroadcastBuilder", server::RunSnapshotBroadcastBuilderTests());
+		MergeAndPrint(totalResult, "SnapshotTimingMetadata", server::RunSnapshotTimingMetadataTests());
 		MergeAndPrint(totalResult, "PacketPayloadValidator", server::RunPacketPayloadValidatorTests());
 		MergeAndPrint(totalResult, "UdpPacketDispatcher", server::RunUdpPacketDispatcherTests());
 		MergeAndPrint(totalResult, "IntegrationSmoke", server::RunIntegrationSmokeTests());
@@ -131,6 +134,7 @@ namespace tests
 		MergeAndPrint(totalResult, "LocalPlayerPrediction", client::RunLocalPlayerPredictionTests());
 		MergeAndPrint(totalResult, "LocalPlayerReconciliation", client::RunLocalPlayerReconciliationTests());
 		MergeAndPrint(totalResult, "RemotePlayerInterpolationBuffer", client::RunRemotePlayerInterpolationBufferTests());
+		MergeAndPrint(totalResult, "ServerTickTimeline", client::RunServerTickTimelineTests());
 		MergeAndPrint(totalResult, "AccountLoginState", client::RunAccountLoginStateTests());
 		MergeAndPrint(totalResult, "JoinHandshakeState", client::RunJoinHandshakeStateTests());
 		MergeAndPrint(totalResult, "ClientSnapshotChunkAssembler", client::RunSnapshotChunkAssemblerTests());

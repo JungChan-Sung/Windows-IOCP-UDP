@@ -43,6 +43,8 @@ namespace common::packet
 		std::uint32_t lastProcessedInputSequence = 0;
 
 		std::uint16_t playerCount = 0;
+		std::uint32_t serverTickIntervalMilliseconds = 0;
+
 		std::array<PlayerStateData, maxPlayersPerSnapshot> players{};
 	};
 

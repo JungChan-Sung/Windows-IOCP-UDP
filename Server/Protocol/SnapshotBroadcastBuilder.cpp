@@ -12,7 +12,7 @@ namespace server::protocol
 		for (const SnapshotRoomContext& roomContext : context.roomContextList)
 		{
 			common::packet::PlayerSnapshotPacket snapshotBase{};
-			FillPlayerSnapshotBase(snapshotBase, roomContext, context.serverTick);
+			FillPlayerSnapshotBase(snapshotBase, roomContext, context);
 
 			for (const SnapshotPeerContext& peerContext : roomContext.peerContextList)
 			{
@@ -133,10 +133,11 @@ namespace server::protocol
 		return endpointKeyList;
 	}
 
-	void SnapshotBroadcastBuilder::FillPlayerSnapshotBase(common::packet::PlayerSnapshotPacket& snapshotPacket, const SnapshotRoomContext& roomContext, std::uint32_t serverTick) const
+	void SnapshotBroadcastBuilder::FillPlayerSnapshotBase(common::packet::PlayerSnapshotPacket& snapshotPacket, const SnapshotRoomContext& roomContext, const SnapshotBroadcastContext& context) const
 	{
-		snapshotPacket.serverTick = serverTick;
+		snapshotPacket.serverTick = context.serverTick;
 		snapshotPacket.roomId = roomContext.roomId;
+		snapshotPacket.serverTickIntervalMilliseconds = context.serverTickIntervalMilliseconds;
 
 		for (const SnapshotPlayerStateContext& playerContext : roomContext.playerStateContextList)
 		{

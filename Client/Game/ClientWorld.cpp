@@ -114,7 +114,13 @@ namespace client::game
 		hasReceivedPlayerSnapshot_ = true;
 
 		const auto currentTime = common::time::Clock::now();
-		const common::time::TimePoint minimumInterpolationTargetTime = currentTime - maxInterpolationDelay_;
+		const common::time::Milliseconds serverTickInterval(packet.serverTickIntervalMilliseconds);
+		const common::time::TimePoint snapshotSampleTime = serverTickTimeline_.ResolveSampleTime(
+			packet.serverTick,
+			serverTickInterval,
+			currentTime
+		);
+		const common::time::TimePoint minimumInterpolationTargetTime = snapshotSampleTime - maxInterpolationDelay_;
 
 		const std::size_t playerCount = std::min(static_cast<std::size_t>(packet.playerCount), packet.players.size());
 
@@ -140,15 +146,15 @@ namespace client::game
 
 			if (!playerState.isInitialized)
 			{
-				InitializePlayerState(playerState, playerStateData.playerId, playerStateData.x, playerStateData.y, currentTime);
+				InitializePlayerState(playerState, playerStateData.playerId, playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
 			else if (wasDead != isDead)
 			{
-				playerState.interpolationBuffer.Reset(playerStateData.x, playerStateData.y, currentTime);
+				playerState.interpolationBuffer.Reset(playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
 			else
 			{
-				UpdatePlayerSample(playerState, playerStateData.x, playerStateData.y, currentTime);
+				UpdatePlayerSample(playerState, playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
 
 			playerState.interpolationBuffer.PruneBefore(minimumInterpolationTargetTime);
@@ -287,6 +293,7 @@ namespace client::game
 
 		localPlayerPrediction_.Clear();
 		localPlayerReconciliation_.Clear();
+		serverTickTimeline_.Clear();
 
 		localPlayerId_ = 0;
 		lastServerTick_ = 0;

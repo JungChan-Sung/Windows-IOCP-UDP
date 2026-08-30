@@ -1,0 +1,40 @@
+#pragma once
+
+#include <cstdint>
+
+#include <Common/Time/TimeTypes.h>
+
+namespace client::game
+{
+	class ServerTickTimeline
+	{
+	public:
+		using TimePoint = common::time::TimePoint;
+		using Milliseconds = common::time::Milliseconds;
+
+	private:
+		Milliseconds tickInterval_;
+		TimePoint anchorTime_;
+
+		std::uint32_t anchorServerTick_ = 0;
+		bool isInitialized_ = false;
+
+	public:
+		ServerTickTimeline();
+		~ServerTickTimeline() noexcept = default;
+
+		ServerTickTimeline(const ServerTickTimeline&) = delete;
+		ServerTickTimeline& operator=(const ServerTickTimeline&) = delete;
+
+		ServerTickTimeline(ServerTickTimeline&&) = delete;
+		ServerTickTimeline& operator=(ServerTickTimeline&&) = delete;
+
+	private:
+		[[nodiscard]] static Milliseconds ResolveTickInterval(Milliseconds tickInterval) noexcept;
+
+	public:
+		void Clear() noexcept;
+
+		[[nodiscard]] TimePoint ResolveSampleTime(std::uint32_t serverTick, Milliseconds tickInterval, TimePoint arrivalTime) noexcept;
+	};
+}

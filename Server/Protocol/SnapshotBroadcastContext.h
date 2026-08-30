@@ -77,6 +77,8 @@ namespace server::protocol
 	{
 	public:
 		std::uint32_t serverTick = 0;
+		std::uint32_t serverTickIntervalMilliseconds = 0;
+
 		SnapshotRoomContextList roomContextList;
 	};
 }

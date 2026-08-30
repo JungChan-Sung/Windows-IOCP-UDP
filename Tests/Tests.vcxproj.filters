@@ -366,10 +366,19 @@
     <ClCompile Include="Client\ClientWorldSnapshotOrderTests.cpp">
       <Filter>소스 파일\Client</Filter>
     </ClCompile>
-    <ClCompile Include="Client\RemotePlayerInterpolationBufferTests.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\Client\Game\RemotePlayerInterpolationBuffer.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\RemotePlayerInterpolationBufferTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\ServerTickTimelineTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Server\SnapshotTimingMetadataTests.cpp">
+      <Filter>소스 파일\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Game\ServerTickTimeline.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
   </ItemGroup>
@@ -579,7 +588,13 @@
       <Filter>헤더 파일\Client</Filter>
     </ClInclude>
     <ClInclude Include="Client\RemotePlayerInterpolationBufferTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\ServerTickTimelineTests.h">
+      <Filter>헤더 파일\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Server\SnapshotTimingMetadataTests.h">
+      <Filter>헤더 파일\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

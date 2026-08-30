@@ -33,7 +33,8 @@ namespace common::packet
 		= uint32WireSize
 		+ int32WireSize
 		+ uint32WireSize
-		+ uint16WireSize;
+		+ uint16WireSize
+		+ uint32WireSize;
 
 	inline constexpr std::size_t bulletSnapshotFixedPayloadWireSize
 		= uint32WireSize
@@ -100,6 +101,7 @@ namespace common::packet
 			writer.WriteInt32(packet.roomId);
 			writer.WriteUInt32(packet.lastProcessedInputSequence);
 			writer.WriteUInt16(static_cast<std::uint16_t>(playerCount));
+			writer.WriteInt32(packet.serverTickIntervalMilliseconds);
 
 			for (std::size_t index = 0; index < playerCount; ++index)
 			{
@@ -112,7 +114,8 @@ namespace common::packet
 			if (!reader.ReadUInt32(packet.serverTick)
 				|| !reader.ReadInt32(packet.roomId)
 				|| !reader.ReadUInt32(packet.lastProcessedInputSequence)
-				|| !reader.ReadUInt16(packet.playerCount))
+				|| !reader.ReadUInt16(packet.playerCount)
+				|| !reader.ReadUInt32(packet.serverTickIntervalMilliseconds))
 			{
 				return false;
 			}

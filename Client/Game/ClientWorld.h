@@ -13,6 +13,7 @@
 #include <Client/Game/LocalPlayerPrediction.h>
 #include <Client/Game/LocalPlayerReconciliation.h>
 #include <Client/Game/RemotePlayerInterpolationBuffer.h>
+#include <Client/Game/ServerTickTimeline.h>
 
 namespace client::game
 {
@@ -122,6 +123,8 @@ namespace client::game
 		common::time::Milliseconds minInterpolationDelay_;
 		common::time::Milliseconds maxInterpolationDelay_;
 		common::time::Milliseconds interpolationDelay_;
+
+		ServerTickTimeline serverTickTimeline_;
 
 		LocalPlayerPrediction localPlayerPrediction_;
 		LocalPlayerReconciliation localPlayerReconciliation_;

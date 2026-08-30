@@ -3,6 +3,7 @@
 #include <WS2tcpip.h>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -496,6 +497,10 @@ namespace server::net
 	{
 		protocol::SnapshotBroadcastContext context{};
 		context.serverTick = gameWorld_.GetServerTick();
+
+		const common::time::Milliseconds serverTickInterval = std::chrono::duration_cast<common::time::Milliseconds>(config_.tick.tickInterval);
+		context.serverTickIntervalMilliseconds = static_cast<std::uint32_t>(serverTickInterval.count());
+
 		context.roomContextList.reserve(peerRoomManager_.GetRoomCount());
 
 		std::unordered_map<RoomId, std::size_t> roomIndexTable;

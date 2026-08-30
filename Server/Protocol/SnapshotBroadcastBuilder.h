@@ -32,7 +32,7 @@ namespace server::protocol
 		void FillPlayerSnapshotBase(
 			common::packet::PlayerSnapshotPacket& snapshotPacket,
 			const SnapshotRoomContext& roomContext,
-			std::uint32_t serverTick
+			const SnapshotBroadcastContext& context
 		) const;
 	};
 }

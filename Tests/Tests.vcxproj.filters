@@ -381,6 +381,12 @@
     <ClCompile Include="..\Client\Game\ServerTickTimeline.cpp">
       <Filter>소스 파일\Link</Filter>
     </ClCompile>
+    <ClCompile Include="Client\InterpolationDelayControllerTests.cpp">
+      <Filter>소스 파일\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Client\Game\InterpolationDelayController.cpp">
+      <Filter>소스 파일\Link</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -595,6 +601,9 @@
     </ClInclude>
     <ClInclude Include="Server\SnapshotTimingMetadataTests.h">
       <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\InterpolationDelayControllerTests.h">
+      <Filter>헤더 파일\Client</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

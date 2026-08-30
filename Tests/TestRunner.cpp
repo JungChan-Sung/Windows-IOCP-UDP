@@ -9,6 +9,7 @@
 #include "Client/ClientWorldLifecycleTests.h"
 #include "Client/ClientWorldSnapshotOrderTests.h"
 #include "Client/InputStateTests.h"
+#include "Client/InterpolationDelayControllerTests.h"
 #include "Client/LocalPlayerPredictionTests.h"
 #include "Client/LocalPlayerReconciliationTests.h"
 #include "Client/RemotePlayerInterpolationBufferTests.h"
@@ -131,6 +132,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ClientWorldLifecycle", client::RunClientWorldLifecycleTests());
 		MergeAndPrint(totalResult, "ClientWorldSnapshotOrder", client::RunClientWorldSnapshotOrderTests());
 		MergeAndPrint(totalResult, "InputState", client::RunInputStateTests());
+		MergeAndPrint(totalResult, "InterpolationDelayController", client::RunInterpolationDelayControllerTests());
 		MergeAndPrint(totalResult, "LocalPlayerPrediction", client::RunLocalPlayerPredictionTests());
 		MergeAndPrint(totalResult, "LocalPlayerReconciliation", client::RunLocalPlayerReconciliationTests());
 		MergeAndPrint(totalResult, "RemotePlayerInterpolationBuffer", client::RunRemotePlayerInterpolationBufferTests());

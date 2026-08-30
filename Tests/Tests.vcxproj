@@ -137,6 +137,7 @@
     <ClCompile Include="..\Client\Config\ClientConfigLoader.cpp" />
     <ClCompile Include="..\Client\Config\ClientConfigValidator.cpp" />
     <ClCompile Include="..\Client\Game\ClientWorld.cpp" />
+    <ClCompile Include="..\Client\Game\InterpolationDelayController.cpp" />
     <ClCompile Include="..\Client\Game\LocalPlayerPrediction.cpp" />
     <ClCompile Include="..\Client\Game\LocalPlayerReconciliation.cpp" />
     <ClCompile Include="..\Client\Game\RemotePlayerInterpolationBuffer.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="Client\ClientWorldSnapshotOrderTests.cpp" />
     <ClCompile Include="Client\ClientWorldTests.cpp" />
     <ClCompile Include="Client\InputStateTests.cpp" />
+    <ClCompile Include="Client\InterpolationDelayControllerTests.cpp" />
     <ClCompile Include="Client\JoinHandshakeStateTests.cpp" />
     <ClCompile Include="Client\LocalPlayerPredictionTests.cpp" />
     <ClCompile Include="Client\LocalPlayerReconciliationTests.cpp" />
@@ -251,6 +253,7 @@
     <ClInclude Include="Client\ClientWorldSnapshotOrderTests.h" />
     <ClInclude Include="Client\ClientWorldTests.h" />
     <ClInclude Include="Client\InputStateTests.h" />
+    <ClInclude Include="Client\InterpolationDelayControllerTests.h" />
     <ClInclude Include="Client\JoinHandshakeStateTests.h" />
     <ClInclude Include="Client\LocalPlayerPredictionTests.h" />
     <ClInclude Include="Client\LocalPlayerReconciliationTests.h" />

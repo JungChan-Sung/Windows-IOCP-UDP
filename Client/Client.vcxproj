@@ -148,6 +148,7 @@
     <ClCompile Include="Config\ClientConfigLoader.cpp" />
     <ClCompile Include="Config\ClientConfigValidator.cpp" />
     <ClCompile Include="Game\ClientWorld.cpp" />
+    <ClCompile Include="Game\InterpolationDelayController.cpp" />
     <ClCompile Include="Game\LocalPlayerPrediction.cpp" />
     <ClCompile Include="Game\LocalPlayerReconciliation.cpp" />
     <ClCompile Include="Game\RemotePlayerInterpolationBuffer.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="Game\ClientTuning.h" />
     <ClInclude Include="Game\ClientWorld.h" />
     <ClInclude Include="Game\EffectConfig.h" />
+    <ClInclude Include="Game\InterpolationDelayController.h" />
     <ClInclude Include="Game\LocalPlayerPrediction.h" />
     <ClInclude Include="Game\LocalPlayerReconciliation.h" />
     <ClInclude Include="Game\RemotePlayerInterpolationBuffer.h" />

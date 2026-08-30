@@ -10,6 +10,7 @@
 #include <Common/Game/InputFlags.h>
 #include <Common/Time/TimeTypes.h>
 
+#include <Client/Game/InterpolationDelayController.h>
 #include <Client/Game/LocalPlayerPrediction.h>
 #include <Client/Game/LocalPlayerReconciliation.h>
 #include <Client/Game/RemotePlayerInterpolationBuffer.h>
@@ -119,11 +120,7 @@ namespace client::game
 		RenderBulletStateList renderBulletStateList_;
 		RenderImpactEffectStateList renderImpactEffectStateList_;
 
-		common::time::Milliseconds defaultInterpolationDelay_;
-		common::time::Milliseconds minInterpolationDelay_;
-		common::time::Milliseconds maxInterpolationDelay_;
-		common::time::Milliseconds interpolationDelay_;
-
+		InterpolationDelayController interpolationDelayController_;
 		ServerTickTimeline serverTickTimeline_;
 
 		LocalPlayerPrediction localPlayerPrediction_;
@@ -137,7 +134,7 @@ namespace client::game
 		bool isJoined_ = false;
 
 	public:
-		ClientWorld();
+		ClientWorld() = default;
 		~ClientWorld() noexcept = default;
 
 		ClientWorld(const ClientWorld&) = delete;

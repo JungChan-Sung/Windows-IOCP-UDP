@@ -38,13 +38,6 @@ namespace
 
 namespace client::game
 {
-	ClientWorld::ClientWorld()
-		: defaultInterpolationDelay_(game::defaultInterpolationDelay),
-		minInterpolationDelay_(game::minInterpolationDelay),
-		maxInterpolationDelay_(game::maxInterpolationDelay),
-		interpolationDelay_(game::defaultInterpolationDelay)
-	{}
-
 	void ClientWorld::ApplyLocalPredictionTick(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds)
 	{
 		std::scoped_lock lock(worldMutex_);
@@ -120,7 +113,13 @@ namespace client::game
 			serverTickInterval,
 			currentTime
 		);
-		const common::time::TimePoint minimumInterpolationTargetTime = snapshotSampleTime - maxInterpolationDelay_;
+		interpolationDelayController_.ObserveSnapshotTiming(
+			currentTime,
+			snapshotSampleTime,
+			serverTickInterval
+		);
+
+		const common::time::TimePoint minimumInterpolationTargetTime = snapshotSampleTime - interpolationDelayController_.GetMaxDelay();
 
 		const std::size_t playerCount = std::min(static_cast<std::size_t>(packet.playerCount), packet.players.size());
 
@@ -289,7 +288,7 @@ namespace client::game
 		renderBulletStateList_.clear();
 		renderImpactEffectStateList_.clear();
 
-		interpolationDelay_ = defaultInterpolationDelay_;
+		interpolationDelayController_.Reset();
 
 		localPlayerPrediction_.Clear();
 		localPlayerReconciliation_.Clear();
@@ -324,10 +323,7 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		minInterpolationDelay_ = minDelay;
-		maxInterpolationDelay_ = maxDelay;
-		defaultInterpolationDelay_ = std::clamp(defaultDelay, minInterpolationDelay_, maxInterpolationDelay_);
-		interpolationDelay_ = defaultInterpolationDelay_;
+		interpolationDelayController_.Configure(defaultDelay, minDelay, maxDelay);
 	}
 
 	ClientWorld::RenderFrameSnapshot ClientWorld::BuildRenderFrameSnapshot(common::time::TimePoint renderTime) const
@@ -338,7 +334,7 @@ namespace client::game
 		snapshot.localPlayerId = localPlayerId_;
 		snapshot.currentRoomId = currentRoomId_;
 		snapshot.lastServerTick = lastServerTick_;
-		snapshot.interpolationDelay = interpolationDelay_;
+		snapshot.interpolationDelay = interpolationDelayController_.GetDelay();
 
 		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
 		snapshot.bulletStateList = renderBulletStateList_;
@@ -352,7 +348,7 @@ namespace client::game
 		RenderPlayerStateList renderPlayerStateList;
 		renderPlayerStateList.reserve(playerTable_.size());
 
-		const common::time::TimePoint interpolationTargetTime = renderTime - interpolationDelay_;
+		const common::time::TimePoint interpolationTargetTime = renderTime - interpolationDelayController_.GetDelay();
 
 		for (const auto& playerEntry : playerTable_)
 		{
@@ -432,6 +428,7 @@ namespace client::game
 	void ClientWorld::SetCurrentRoomId(RoomId roomId)
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		currentRoomId_ = roomId;
 	}
 
@@ -440,42 +437,34 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		if (interpolationDelay < minInterpolationDelay_)
-		{
-			interpolationDelay_ = minInterpolationDelay_;
-			return;
-		}
-
-		if (interpolationDelay > maxInterpolationDelay_)
-		{
-			interpolationDelay_ = maxInterpolationDelay_;
-			return;
-		}
-
-		interpolationDelay_ = interpolationDelay;
+		interpolationDelayController_.SetDelay(interpolationDelay);
 	}
 
 	bool ClientWorld::IsJoined() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return isJoined_;
 	}
 
 	ClientWorld::PlayerId ClientWorld::GetLocalPlayerId() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return localPlayerId_;
 	}
 
 	std::uint32_t ClientWorld::GetLastServerTick() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return lastServerTick_;
 	}
 
 	ClientWorld::RoomId ClientWorld::GetCurrentRoomId() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return currentRoomId_;
 	}
 
@@ -489,19 +478,22 @@ namespace client::game
 	ClientWorld::RenderBulletStateList ClientWorld::GetRenderBulletStatesSnapshot() const
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return renderBulletStateList_;
 	}
 
 	ClientWorld::RenderImpactEffectStateList ClientWorld::GetRenderImpactEffectStatesSnapshot() const
 	{
 		std::scoped_lock lock(worldMutex_);
+
 		return renderImpactEffectStateList_;
 	}
 
 	common::time::Milliseconds ClientWorld::GetInterpolationDelay() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
-		return interpolationDelay_;
+
+		return interpolationDelayController_.GetDelay();
 	}
 
 	bool ClientWorld::IsLocalPlayerDead() const noexcept

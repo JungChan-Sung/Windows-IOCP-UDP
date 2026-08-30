@@ -101,7 +101,7 @@ namespace common::packet
 			writer.WriteInt32(packet.roomId);
 			writer.WriteUInt32(packet.lastProcessedInputSequence);
 			writer.WriteUInt16(static_cast<std::uint16_t>(playerCount));
-			writer.WriteInt32(packet.serverTickIntervalMilliseconds);
+			writer.WriteUInt32(packet.serverTickIntervalMilliseconds);
 
 			for (std::size_t index = 0; index < playerCount; ++index)
 			{

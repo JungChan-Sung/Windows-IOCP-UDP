@@ -117,8 +117,11 @@
     <ClCompile Include="Game\RemotePlayerInterpolationBuffer.cpp">
       <Filter>소스 파일\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Game\InterpolationDelayController.cpp">
+      <Filter>소스 파일\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Game\ServerTickTimeline.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,8 +206,11 @@
     <ClInclude Include="Game\RemotePlayerInterpolationBuffer.h">
       <Filter>헤더 파일\Game</Filter>
     </ClInclude>
+    <ClInclude Include="Game\InterpolationDelayController.h">
+      <Filter>헤더 파일\Game</Filter>
+    </ClInclude>
     <ClInclude Include="Game\ServerTickTimeline.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

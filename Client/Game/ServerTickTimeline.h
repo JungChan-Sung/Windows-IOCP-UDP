@@ -12,7 +12,7 @@ namespace client::game
 	public:
 		struct SampleTimeResult
 		{
-			common::time::TimePoint sampleTime{};
+			common::time::TimePoint sampleTime;
 			bool wasReanchored = false;
 		};
 
@@ -49,6 +49,6 @@ namespace client::game
 	public:
 		void Clear() noexcept;
 
-		[[nodiscard]] TimePoint ResolveSampleTime(std::uint32_t serverTick, Milliseconds tickInterval, TimePoint arrivalTime) noexcept;
+		[[nodiscard]] SampleTimeResult ResolveSampleTime(std::uint32_t serverTick, Milliseconds tickInterval, TimePoint arrivalTime) noexcept;
 	};
 }

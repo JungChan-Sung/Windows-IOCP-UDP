@@ -78,8 +78,8 @@ namespace client::game
 		}
 
 		return SampleTimeResult{
-					.sampleTime = predictedSampleTime,
-					.wasReanchored = false,
+			.sampleTime = predictedSampleTime,
+			.wasReanchored = false,
 		};
 	}
 }

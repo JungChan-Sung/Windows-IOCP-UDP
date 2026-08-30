@@ -12,7 +12,7 @@ namespace client::game
 	public:
 		struct SampleTimeResult
 		{
-			common::time::TimePoint sampleTime;
+			common::time::TimePoint sampleTime{};
 			bool wasReanchored = false;
 		};
 

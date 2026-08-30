@@ -13,6 +13,7 @@ namespace client::game
 		: defaultDelay_(game::defaultInterpolationDelay),
 		minDelay_(game::minInterpolationDelay),
 		maxDelay_(game::maxInterpolationDelay),
+		requestedDelay_(game::defaultInterpolationDelay),
 		delay_(game::defaultInterpolationDelay)
 	{}
 
@@ -31,7 +32,10 @@ namespace client::game
 
 	void InterpolationDelayController::Reset() noexcept
 	{
+		requestedDelay_ = defaultDelay_;
 		delay_ = defaultDelay_;
+
+		isDecreaseScheduled_ = false;
 	}
 
 	void InterpolationDelayController::Configure(Milliseconds defaultDelay, Milliseconds minDelay, Milliseconds maxDelay) noexcept
@@ -39,22 +43,43 @@ namespace client::game
 		minDelay_ = std::max(minDelay, Milliseconds::zero());
 		maxDelay_ = std::max(maxDelay, minDelay_);
 		defaultDelay_ = std::clamp(defaultDelay, minDelay_, maxDelay_);
+
+		requestedDelay_ = defaultDelay_;
 		delay_ = defaultDelay_;
+
+		isDecreaseScheduled_ = false;
 	}
 
 	void InterpolationDelayController::ObserveSnapshotTiming(TimePoint arrivalTime, TimePoint sampleTime, Milliseconds tickInterval) noexcept
 	{
 		const Milliseconds requiredDelay = CalculateRequiredDelay(arrivalTime, sampleTime, tickInterval);
-		if (requiredDelay <= delay_)
+		const Milliseconds targetDelay = std::max(requestedDelay_, requiredDelay);
+		if (targetDelay >= delay_)
+		{
+			delay_ = std::min(targetDelay, maxDelay_);
+			isDecreaseScheduled_ = false;
+			return;
+		}
+
+		if (!isDecreaseScheduled_)
+		{
+			nextDecreaseTime_ = arrivalTime + automaticDecreaseHoldDuration;
+			isDecreaseScheduled_ = true;
+			return;
+		}
+
+		if (arrivalTime < nextDecreaseTime_)
 		{
 			return;
 		}
 
-		SetDelay(requiredDelay);
-	}
+		delay_ = std::max(targetDelay, delay_ - automaticDecreaseStep);
+		if (delay_ <= targetDelay)
+		{
+			isDecreaseScheduled_ = false;
+			return;
+		}
 
-	void InterpolationDelayController::SetDelay(Milliseconds delay) noexcept
-	{
-		delay_ = std::clamp(delay, minDelay_, maxDelay_);
+		nextDecreaseTime_ = arrivalTime + automaticDecreaseInterval;
 	}
 }

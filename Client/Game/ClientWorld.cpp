@@ -108,11 +108,12 @@ namespace client::game
 
 		const auto currentTime = common::time::Clock::now();
 		const common::time::Milliseconds serverTickInterval(packet.serverTickIntervalMilliseconds);
-		const common::time::TimePoint snapshotSampleTime = serverTickTimeline_.ResolveSampleTime(
+		const ServerTickTimeline::SampleTimeResult sampleTimeResult = serverTickTimeline_.ResolveSampleTime(
 			packet.serverTick,
 			serverTickInterval,
 			currentTime
 		);
+		const common::time::TimePoint snapshotSampleTime = sampleTimeResult.sampleTime;
 		interpolationDelayController_.ObserveSnapshotTiming(
 			currentTime,
 			snapshotSampleTime,
@@ -147,7 +148,7 @@ namespace client::game
 			{
 				InitializePlayerState(playerState, playerStateData.playerId, playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
-			else if (wasDead != isDead)
+			else if (sampleTimeResult.wasReanchored || wasDead != isDead)
 			{
 				playerState.interpolationBuffer.Reset(playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}

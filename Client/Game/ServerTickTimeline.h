@@ -10,6 +10,13 @@ namespace client::game
 	class ServerTickTimeline
 	{
 	public:
+		struct SampleTimeResult
+		{
+			common::time::TimePoint sampleTime{};
+			bool wasReanchored = false;
+		};
+
+	public:
 		using TimePoint = common::time::TimePoint;
 		using Milliseconds = common::time::Milliseconds;
 

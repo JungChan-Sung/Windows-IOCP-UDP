@@ -33,11 +33,13 @@ namespace client::game
 		isInitialized_ = false;
 	}
 
-	ServerTickTimeline::TimePoint ServerTickTimeline::ResolveSampleTime(std::uint32_t serverTick, Milliseconds tickInterval, TimePoint arrivalTime) noexcept
+	ServerTickTimeline::SampleTimeResult ServerTickTimeline::ResolveSampleTime(std::uint32_t serverTick, Milliseconds tickInterval, TimePoint arrivalTime) noexcept
 	{
 		const Milliseconds resolvedTickInterval = ResolveTickInterval(tickInterval);
 		if (!isInitialized_ || resolvedTickInterval != tickInterval_)
 		{
+			const bool wasReanchored = isInitialized_;
+
 			tickInterval_ = resolvedTickInterval;
 			anchorTime_ = arrivalTime;
 
@@ -46,7 +48,10 @@ namespace client::game
 
 			isInitialized_ = true;
 
-			return arrivalTime;
+			return SampleTimeResult{
+				.sampleTime = arrivalTime,
+				.wasReanchored = wasReanchored,
+			};
 		}
 
 		const std::uint32_t tickOffset = serverTick - anchorServerTick_;
@@ -61,7 +66,10 @@ namespace client::game
 				anchorServerTick_ = serverTick;
 				reanchorCandidateCount_ = 0;
 
-				return arrivalTime;
+				return SampleTimeResult{
+					.sampleTime = arrivalTime,
+					.wasReanchored = true,
+				};
 			}
 		}
 		else
@@ -69,6 +77,9 @@ namespace client::game
 			reanchorCandidateCount_ = 0;
 		}
 
-		return predictedSampleTime;
+		return SampleTimeResult{
+					.sampleTime = predictedSampleTime,
+					.wasReanchored = false,
+		};
 	}
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 #include <Common/Time/TimeTypes.h>
@@ -13,10 +14,16 @@ namespace client::game
 		using Milliseconds = common::time::Milliseconds;
 
 	private:
+		static inline constexpr Milliseconds reanchorDriftThreshold = Milliseconds(100);
+		static inline constexpr std::size_t reanchorConfirmationCount = 4;
+
+	private:
 		Milliseconds tickInterval_;
 		TimePoint anchorTime_;
 
 		std::uint32_t anchorServerTick_ = 0;
+		std::size_t reanchorCandidateCount_ = 0;
+
 		bool isInitialized_ = false;
 
 	public:

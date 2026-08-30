@@ -15,12 +15,11 @@ namespace
 
 		common::time::TimePoint startTime;
 
-		const common::time::TimePoint sampleTime =
-			timeline.ResolveSampleTime(
-				100,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(1000)
-			);
+		const common::time::TimePoint sampleTime = timeline.ResolveSampleTime(
+			100,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1000)
+		);
 
 		tests::Expect(
 			result,
@@ -35,26 +34,23 @@ namespace
 
 		common::time::TimePoint startTime;
 
-		const common::time::TimePoint firstSampleTime =
-			timeline.ResolveSampleTime(
-				100,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(1000)
-			);
+		const common::time::TimePoint firstSampleTime = timeline.ResolveSampleTime(
+			100,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1000)
+		);
 
-		const common::time::TimePoint secondSampleTime =
-			timeline.ResolveSampleTime(
-				101,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(1080)
-			);
+		const common::time::TimePoint secondSampleTime = timeline.ResolveSampleTime(
+			101,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1080)
+		);
 
-		const common::time::TimePoint thirdSampleTime =
-			timeline.ResolveSampleTime(
-				102,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(1090)
-			);
+		const common::time::TimePoint thirdSampleTime = timeline.ResolveSampleTime(
+			102,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1090)
+		);
 
 		tests::Expect(
 			result,
@@ -78,12 +74,11 @@ namespace
 		const common::time::TimePoint firstSampleTime =
 			timeline.ResolveSampleTime(100, common::time::Milliseconds(16), startTime);
 
-		const common::time::TimePoint skippedSampleTime =
-			timeline.ResolveSampleTime(
-				105,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(200)
-			);
+		const common::time::TimePoint skippedSampleTime = timeline.ResolveSampleTime(
+			105,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(200)
+		);
 
 		tests::Expect(
 			result,
@@ -103,12 +98,11 @@ namespace
 		const common::time::TimePoint maxTickSampleTime =
 			timeline.ResolveSampleTime(maxServerTick, common::time::Milliseconds(16), startTime);
 
-		const common::time::TimePoint wrappedSampleTime =
-			timeline.ResolveSampleTime(
-				0,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(100)
-			);
+		const common::time::TimePoint wrappedSampleTime = timeline.ResolveSampleTime(
+			0,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(100)
+		);
 
 		tests::Expect(
 			result,
@@ -127,12 +121,11 @@ namespace
 			timeline.ResolveSampleTime(100, common::time::Milliseconds(16), startTime)
 			);
 
-		const common::time::TimePoint reanchoredSampleTime =
-			timeline.ResolveSampleTime(
-				101,
-				common::time::Milliseconds(20),
-				startTime + common::time::Milliseconds(300)
-			);
+		const common::time::TimePoint reanchoredSampleTime = timeline.ResolveSampleTime(
+			101,
+			common::time::Milliseconds(20),
+			startTime + common::time::Milliseconds(300)
+		);
 
 		tests::Expect(
 			result,
@@ -140,17 +133,150 @@ namespace
 			"ServerTickTimeline: tick interval change reanchors timeline"
 		);
 
-		const common::time::TimePoint nextSampleTime =
-			timeline.ResolveSampleTime(
-				102,
-				common::time::Milliseconds(20),
-				startTime + common::time::Milliseconds(500)
-			);
+		const common::time::TimePoint nextSampleTime = timeline.ResolveSampleTime(
+			102,
+			common::time::Milliseconds(20),
+			startTime + common::time::Milliseconds(500)
+		);
 
 		tests::Expect(
 			result,
 			nextSampleTime == startTime + common::time::Milliseconds(320),
 			"ServerTickTimeline: reanchored timeline uses new interval"
+		);
+	}
+
+	void RunPersistentDriftReanchorsTimelineTest(tests::DebugTestResult& result)
+	{
+		client::game::ServerTickTimeline timeline;
+
+		common::time::TimePoint startTime;
+
+		const common::time::TimePoint firstSampleTime = timeline.ResolveSampleTime(
+			100,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1000)
+		);
+
+		const common::time::TimePoint secondSampleTime = timeline.ResolveSampleTime(
+			101,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1200)
+		);
+
+		const common::time::TimePoint thirdSampleTime = timeline.ResolveSampleTime(
+			102,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1216)
+		);
+
+		const common::time::TimePoint fourthSampleTime = timeline.ResolveSampleTime(
+			103,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1232)
+		);
+
+		const common::time::TimePoint reanchoredSampleTime = timeline.ResolveSampleTime(
+			104,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1248)
+		);
+
+		tests::Expect(
+			result,
+			firstSampleTime == startTime + common::time::Milliseconds(1000),
+			"ServerTickTimeline: persistent drift test first sample"
+		);
+
+		tests::Expect(
+			result,
+			secondSampleTime == startTime + common::time::Milliseconds(1016),
+			"ServerTickTimeline: first drift observation does not reanchor"
+		);
+
+		tests::Expect(
+			result,
+			thirdSampleTime == startTime + common::time::Milliseconds(1032),
+			"ServerTickTimeline: second drift observation does not reanchor"
+		);
+
+		tests::Expect(
+			result,
+			fourthSampleTime == startTime + common::time::Milliseconds(1048),
+			"ServerTickTimeline: third drift observation does not reanchor"
+		);
+
+		tests::Expect(
+			result,
+			reanchoredSampleTime == startTime + common::time::Milliseconds(1248),
+			"ServerTickTimeline: persistent drift reanchors after confirmation"
+		);
+
+		const common::time::TimePoint nextSampleTime = timeline.ResolveSampleTime(
+			105,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1264)
+		);
+
+		tests::Expect(
+			result,
+			nextSampleTime == startTime + common::time::Milliseconds(1264),
+			"ServerTickTimeline: new anchor restores tick spacing"
+		);
+	}
+
+	void RunDriftConfirmationResetTest(tests::DebugTestResult& result)
+	{
+		client::game::ServerTickTimeline timeline;
+
+		common::time::TimePoint startTime;
+
+		static_cast<void>(
+			timeline.ResolveSampleTime(100, common::time::Milliseconds(16), startTime)
+			);
+
+		static_cast<void>(
+			timeline.ResolveSampleTime(
+				101,
+				common::time::Milliseconds(16),
+				startTime + common::time::Milliseconds(120)
+			)
+			);
+
+		static_cast<void>(
+			timeline.ResolveSampleTime(
+				102,
+				common::time::Milliseconds(16),
+				startTime + common::time::Milliseconds(131)
+			)
+			);
+
+		static_cast<void>(
+			timeline.ResolveSampleTime(
+				103,
+				common::time::Milliseconds(16),
+				startTime + common::time::Milliseconds(168)
+			)
+			);
+
+		static_cast<void>(
+			timeline.ResolveSampleTime(
+				104,
+				common::time::Milliseconds(16),
+				startTime + common::time::Milliseconds(184)
+			)
+			);
+
+		const common::time::TimePoint sampleTime = timeline.ResolveSampleTime(
+			105,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(200)
+		);
+
+		tests::Expect(
+			result,
+			sampleTime == startTime + common::time::Milliseconds(80),
+			"ServerTickTimeline: drift confirmation resets when timing recovers"
 		);
 	}
 
@@ -166,12 +292,11 @@ namespace
 
 		timeline.Clear();
 
-		const common::time::TimePoint sampleTime =
-			timeline.ResolveSampleTime(
-				500,
-				common::time::Milliseconds(16),
-				startTime + common::time::Milliseconds(1000)
-			);
+		const common::time::TimePoint sampleTime = timeline.ResolveSampleTime(
+			500,
+			common::time::Milliseconds(16),
+			startTime + common::time::Milliseconds(1000)
+		);
 
 		tests::Expect(
 			result,
@@ -189,12 +314,11 @@ namespace
 		const common::time::TimePoint firstSampleTime =
 			timeline.ResolveSampleTime(100, common::time::Milliseconds(0), startTime);
 
-		const common::time::TimePoint secondSampleTime =
-			timeline.ResolveSampleTime(
-				101,
-				common::time::Milliseconds(0),
-				startTime + common::time::Milliseconds(100)
-			);
+		const common::time::TimePoint secondSampleTime = timeline.ResolveSampleTime(
+			101,
+			common::time::Milliseconds(0),
+			startTime + common::time::Milliseconds(100)
+		);
 
 		tests::Expect(
 			result,
@@ -215,6 +339,8 @@ namespace tests::client
 		RunSkippedServerTicksPreserveSimulationTimeTest(result);
 		RunWrappedServerTickTest(result);
 		RunTickIntervalChangeReanchorsTimelineTest(result);
+		RunPersistentDriftReanchorsTimelineTest(result);
+		RunDriftConfirmationResetTest(result);
 		RunClearReanchorsTimelineTest(result);
 		RunInvalidIntervalUsesDefaultTest(result);
 

@@ -73,6 +73,7 @@
 #include "Server/InvalidPacketLogLimiterTests.h"
 #include "Server/MatchHistoryTrackerTests.h"
 #include "Server/MatchHistoryPersistenceIntegrationTests.h"
+#include "Server/ServerAdminCommandTests.h"
 
 #include "String/UtfConversionTests.h"
 
@@ -159,6 +160,7 @@ namespace tests
 		MergeAndPrint(totalResult, "AccountLoginPersistenceIntegration", server::RunAccountLoginPersistenceIntegrationTests());
 		MergeAndPrint(totalResult, "AccountLoginAdmissionService", server::RunAccountLoginAdmissionServiceTests());
 		MergeAndPrint(totalResult, "AuthenticatedAccountRegistry", server::RunAuthenticatedAccountRegistryTests());
+		MergeAndPrint(totalResult, "ServerAdminCommand", server::RunServerAdminCommandTests());
 
 		std::cout << "[Total] Passed=" << totalResult.passedCount << ", Failed=" << totalResult.failedCount << '\n';
 

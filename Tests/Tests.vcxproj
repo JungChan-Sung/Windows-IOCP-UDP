@@ -148,6 +148,7 @@
     <ClCompile Include="..\Server\Account\AccountLoginTaskProcessor.cpp" />
     <ClCompile Include="..\Server\Account\AccountService.cpp" />
     <ClCompile Include="..\Server\Account\PasswordHashVerifier.cpp" />
+    <ClCompile Include="..\Server\Admin\ServerAdminCommand.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigLoader.cpp" />
     <ClCompile Include="..\Server\Config\ServerConfigValidator.cpp" />
     <ClCompile Include="..\Server\Diagnostics\InvalidPacketLogLimiter.cpp" />
@@ -227,6 +228,7 @@
     <ClCompile Include="Server\PeerSessionServiceTests.cpp" />
     <ClCompile Include="Server\PlayerCommandServiceTests.cpp" />
     <ClCompile Include="Server\ReliableUdpSessionRegistryTests.cpp" />
+    <ClCompile Include="Server\ServerAdminCommandTests.cpp" />
     <ClCompile Include="Server\ServerConfigTests.cpp" />
     <ClCompile Include="Server\ServerMetricsCollectorTests.cpp" />
     <ClCompile Include="Server\SnapshotBroadcastBuilderTests.cpp" />
@@ -309,6 +311,7 @@
     <ClInclude Include="Server\PeerSessionServiceTests.h" />
     <ClInclude Include="Server\PlayerCommandServiceTests.h" />
     <ClInclude Include="Server\ReliableUdpSessionRegistryTests.h" />
+    <ClInclude Include="Server\ServerAdminCommandTests.h" />
     <ClInclude Include="Server\ServerConfigTests.h" />
     <ClInclude Include="Server\ServerMetricsCollectorTests.h" />
     <ClInclude Include="Server\SnapshotBroadcastBuilderTests.h" />

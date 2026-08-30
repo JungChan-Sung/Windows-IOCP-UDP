@@ -67,6 +67,12 @@
     <Filter Include="헤더 파일\Service">
       <UniqueIdentifier>{8d548320-5857-4640-802a-d5fab1f10893}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Admin">
+      <UniqueIdentifier>{7a6b8f91-f7aa-4d41-b35c-28dfe0e74278}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Admin">
+      <UniqueIdentifier>{c329f82a-9d29-461e-bc41-7bd3a4f82300}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -161,6 +167,9 @@
     </ClCompile>
     <ClCompile Include="Protocol\GamePacketMapper.cpp">
       <Filter>소스 파일\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Admin\ServerAdminCommand.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -298,6 +307,9 @@
     </ClInclude>
     <ClInclude Include="Protocol\GamePacketMapper.h">
       <Filter>헤더 파일\Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Admin\ServerAdminCommand.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

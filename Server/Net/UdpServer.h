@@ -134,6 +134,7 @@ namespace server::net
 		void DetachAccountLoginPacketHandler() noexcept;
 
 		[[nodiscard]] game::CompletedMatchList ExtractCompletedMatches();
+		[[nodiscard]] diagnostics::ServerStatusSnapshot CaptureStatusSnapshot() const;
 
 	private:
 		void UpdateGameTick();
@@ -182,8 +183,6 @@ namespace server::net
 		void LogError(std::string_view message) const;
 		void LogInvalidPacket(const EndpointKey& endpointKey, const protocol::UdpPacketDispatcher::DispatchResult& dispatchResult);
 		void LogServerStatusIfDue();
-
-		[[nodiscard]] diagnostics::ServerStatusSnapshot BuildServerStatusSnapshot() const;
 
 	public:
 		[[nodiscard]] const config::ServerConfig& GetConfig() const noexcept

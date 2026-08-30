@@ -35,10 +35,12 @@ namespace server::diagnostics
 		ServerStatusReporter& operator=(ServerStatusReporter&&) = delete;
 
 	public:
+		[[nodiscard]] static std::string BuildMessage(const ServerStatusSnapshot& snapshot);
+
+	public:
 		void Reset() noexcept;
 
 		[[nodiscard]] bool ShouldReport(TimePoint currentTime) noexcept;
-		[[nodiscard]] std::string BuildMessage(const ServerStatusSnapshot& snapshot) const;
 
 	public:
 		void SetEnabled(bool isEnabled) noexcept

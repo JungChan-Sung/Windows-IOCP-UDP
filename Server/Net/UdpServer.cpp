@@ -413,6 +413,41 @@ namespace server::net
 		return matchHistoryTracker_.ExtractCompletedMatches();
 	}
 
+	diagnostics::ServerStatusSnapshot UdpServer::CaptureStatusSnapshot() const
+	{
+		diagnostics::ServerStatusSnapshot snapshot{};
+
+		{
+			std::scoped_lock lock(stateMutex_);
+
+			snapshot.serverTick = gameWorld_.GetServerTick();
+
+			snapshot.peerCount = peerRoomManager_.GetPeerCount();
+			snapshot.joinedPeerCount = peerRoomManager_.GetJoinedPeerCount();
+			snapshot.roomCount = peerRoomManager_.GetRoomCount();
+
+			snapshot.playerCount = gameWorld_.GetPlayerCount();
+			snapshot.bulletCount = gameWorld_.GetBulletCount();
+			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
+
+			snapshot.reliablePendingPacketCount = reliableUdpSessionRegistry_.GetPendingPacketCount();
+		}
+
+		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();
+
+		snapshot.pendingSendContextCount = udpTransport_.GetPendingSendContextCount();
+
+		snapshot.faultSimulationPendingPacketCount = packetSender_.GetFaultSimulationPendingPacketCount();
+
+		snapshot.udpSendCompletionCount = transportMetrics.sendCompletionCount;
+		snapshot.udpSendCompletionFailureCount = transportMetrics.sendCompletionFailureCount;
+		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;
+
+		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
+
+		return snapshot;
+	}
+
 	void UdpServer::UpdateGameTick()
 	{
 		if (!isRunning_.load())
@@ -1544,42 +1579,7 @@ namespace server::net
 			return;
 		}
 
-		const diagnostics::ServerStatusSnapshot snapshot = BuildServerStatusSnapshot();
+		const diagnostics::ServerStatusSnapshot snapshot = CaptureStatusSnapshot();
 		LogInfo(serverStatusReporter_.BuildMessage(snapshot));
-	}
-
-	diagnostics::ServerStatusSnapshot UdpServer::BuildServerStatusSnapshot() const
-	{
-		diagnostics::ServerStatusSnapshot snapshot{};
-
-		{
-			std::scoped_lock lock(stateMutex_);
-
-			snapshot.serverTick = gameWorld_.GetServerTick();
-
-			snapshot.peerCount = peerRoomManager_.GetPeerCount();
-			snapshot.joinedPeerCount = peerRoomManager_.GetJoinedPeerCount();
-			snapshot.roomCount = peerRoomManager_.GetRoomCount();
-
-			snapshot.playerCount = gameWorld_.GetPlayerCount();
-			snapshot.bulletCount = gameWorld_.GetBulletCount();
-			snapshot.pendingImpactEffectCount = gameWorld_.GetPendingImpactEffectCount();
-
-			snapshot.reliablePendingPacketCount = reliableUdpSessionRegistry_.GetPendingPacketCount();
-		}
-
-		const net::UdpIocpTransportMetricsSnapshot transportMetrics = udpTransport_.CaptureMetricsSnapshot();
-
-		snapshot.pendingSendContextCount = udpTransport_.GetPendingSendContextCount();
-
-		snapshot.faultSimulationPendingPacketCount = packetSender_.GetFaultSimulationPendingPacketCount();
-
-		snapshot.udpSendCompletionCount = transportMetrics.sendCompletionCount;
-		snapshot.udpSendCompletionFailureCount = transportMetrics.sendCompletionFailureCount;
-		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;
-
-		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
-
-		return snapshot;
 	}
 }

@@ -4,41 +4,7 @@
 
 namespace server::diagnostics
 {
-	void ServerStatusReporter::Reset() noexcept
-	{
-		nextReportTime_ = TimePoint();
-		isFirstCheck_ = true;
-	}
-
-	bool ServerStatusReporter::ShouldReport(TimePoint currentTime) noexcept
-	{
-		if (!isEnabled_)
-		{
-			return false;
-		}
-
-		if (reportInterval_ <= Duration::zero())
-		{
-			return false;
-		}
-
-		if (isFirstCheck_)
-		{
-			isFirstCheck_ = false;
-			nextReportTime_ = currentTime + reportInterval_;
-			return false;
-		}
-
-		if (currentTime < nextReportTime_)
-		{
-			return false;
-		}
-
-		nextReportTime_ = currentTime + reportInterval_;
-		return true;
-	}
-
-	std::string ServerStatusReporter::BuildMessage(const ServerStatusSnapshot& snapshot) const
+	std::string ServerStatusReporter::BuildMessage(const ServerStatusSnapshot& snapshot)
 	{
 		std::ostringstream stream;
 		stream << "Server status. "
@@ -82,5 +48,39 @@ namespace server::diagnostics
 			<< ", TimedOutPeers=" << snapshot.metrics.timedOutPeerCount;
 
 		return stream.str();
+	}
+
+	void ServerStatusReporter::Reset() noexcept
+	{
+		nextReportTime_ = TimePoint();
+		isFirstCheck_ = true;
+	}
+
+	bool ServerStatusReporter::ShouldReport(TimePoint currentTime) noexcept
+	{
+		if (!isEnabled_)
+		{
+			return false;
+		}
+
+		if (reportInterval_ <= Duration::zero())
+		{
+			return false;
+		}
+
+		if (isFirstCheck_)
+		{
+			isFirstCheck_ = false;
+			nextReportTime_ = currentTime + reportInterval_;
+			return false;
+		}
+
+		if (currentTime < nextReportTime_)
+		{
+			return false;
+		}
+
+		nextReportTime_ = currentTime + reportInterval_;
+		return true;
 	}
 }

@@ -146,6 +146,7 @@
     <ClCompile Include="Account\AccountLoginTaskProcessor.cpp" />
     <ClCompile Include="Account\AccountService.cpp" />
     <ClCompile Include="Account\PasswordHashVerifier.cpp" />
+    <ClCompile Include="Admin\ServerAdminCommand.cpp" />
     <ClCompile Include="App\GameServerApp.cpp" />
     <ClCompile Include="Config\ServerConfigLoader.cpp" />
     <ClCompile Include="Config\ServerConfigValidator.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="Account\AccountLoginTaskProcessor.h" />
     <ClInclude Include="Account\AccountService.h" />
     <ClInclude Include="Account\PasswordHashVerifier.h" />
+    <ClInclude Include="Admin\ServerAdminCommand.h" />
     <ClInclude Include="App\GameServerApp.h" />
     <ClInclude Include="Config\ServerConfig.h" />
     <ClInclude Include="Config\ServerConfigLoader.h" />

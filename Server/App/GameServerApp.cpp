@@ -1,7 +1,5 @@
 #include "GameServerApp.h"
 
-#include <Windows.h>
-
 #include <chrono>
 #include <string>
 #include <thread>
@@ -15,7 +13,9 @@
 
 #include <Persistence/Core/DatabaseError.h>
 
+#include <Server/Admin/ServerAdminCommand.h>
 #include <Server/Config/ServerConfigLoader.h>
+#include <Server/Diagnostics/ServerStatusReporter.h>
 
 namespace server::app
 {
@@ -242,7 +242,7 @@ namespace server::app
 			.Build();
 
 		logger_.Info(message);
-		logger_.Info("Press ESC to stop.");
+		logger_.Info("Type 'help' for admin commands. Press ESC to stop.");
 	}
 
 	void GameServerApp::ProcessCompletedMatches()
@@ -304,14 +304,48 @@ namespace server::app
 		}
 	}
 
-	void GameServerApp::MainLoop() noexcept
+	bool GameServerApp::ProcessAdminCommand(std::string_view commandLine)
+	{
+		const admin::ServerAdminCommand command = admin::ParseServerAdminCommand(commandLine);
+		switch (command.type)
+		{
+		case admin::ServerAdminCommandType::Help:
+			logger_.Info("Admin commands: help, status, stop.");
+			return false;
+
+		case admin::ServerAdminCommandType::Status:
+		{
+			const diagnostics::ServerStatusSnapshot snapshot = udpServer_.CaptureStatusSnapshot();
+			logger_.Info(diagnostics::ServerStatusReporter::BuildMessage(snapshot));
+			return false;
+		}
+
+		case admin::ServerAdminCommandType::Stop:
+			logger_.Info("Server stop requested by admin command.");
+			return true;
+
+		case admin::ServerAdminCommandType::Unknown:
+		default:
+			logger_.Warning("Unknown admin command. Type 'help' for available commands.");
+			return false;
+		}
+	}
+
+	void GameServerApp::MainLoop()
 	{
 		while (true)
 		{
 			ProcessCompletedMatches();
 			ProcessMatchHistorySaveCompletions();
 
-			if ((::GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0)
+			const admin::ServerAdminConsole::Event consoleEvent = adminConsole_.Poll();
+			if (consoleEvent.type == admin::ServerAdminConsole::EventType::StopRequested)
+			{
+				logger_.Info("Server stop requested by ESC.");
+				break;
+			}
+
+			if (consoleEvent.type == admin::ServerAdminConsole::EventType::CommandLine && ProcessAdminCommand(consoleEvent.commandLine))
 			{
 				break;
 			}

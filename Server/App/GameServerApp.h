@@ -3,6 +3,7 @@
 #include <expected>
 #include <span>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include <Common/Log/AsyncLogWriter.h>
@@ -12,6 +13,7 @@
 
 #include <Server/Account/AccountLoginTaskProcessor.h>
 #include <Server/Account/AccountService.h>
+#include <Server/Admin/ServerAdminConsole.h>
 #include <Server/Config/ServerConfigLoader.h>
 #include <Server/Match/MatchHistoryTaskProcessor.h>
 #include <Server/Net/UdpServer.h>
@@ -31,6 +33,8 @@ namespace server::app
 		using RunResult = std::expected<void, RunError>;
 
 	private:
+		admin::ServerAdminConsole adminConsole_;
+
 		common::log::AsyncLogWriter logger_;
 
 		persistence::PersistenceRuntime persistenceRuntime_;
@@ -68,7 +72,9 @@ namespace server::app
 		void ProcessCompletedMatches();
 		void ProcessMatchHistorySaveCompletions();
 
-		void MainLoop() noexcept;
+		[[nodiscard]] bool ProcessAdminCommand(std::string_view commandLine);
+
+		void MainLoop();
 	};
 }
 

@@ -169,6 +169,9 @@
       <Filter>소스 파일\Protocol</Filter>
     </ClCompile>
     <ClCompile Include="Admin\ServerAdminCommand.cpp">
+      <Filter>소스 파일\Admin</Filter>
+    </ClCompile>
+    <ClCompile Include="Admin\ServerAdminConsole.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -309,6 +312,9 @@
       <Filter>헤더 파일\Protocol</Filter>
     </ClInclude>
     <ClInclude Include="Admin\ServerAdminCommand.h">
+      <Filter>헤더 파일\Admin</Filter>
+    </ClInclude>
+    <ClInclude Include="Admin\ServerAdminConsole.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

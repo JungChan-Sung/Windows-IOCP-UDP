@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <optional>
 
+#include <Common/Net/Auth/AuthenticatedUdpPacket.h>
 #include <Common/Net/Endpoint.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpPacketHeader.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Packet/Game/GamePacket.h>
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Packet/PacketSerialization.h>
@@ -27,6 +29,87 @@ namespace
 			.address = address,
 			.port = port,
 		};
+	}
+
+	[[nodiscard]] constexpr common::net::SessionToken MakeSessionToken(
+		std::uint64_t high = 1,
+		std::uint64_t low = 2
+	) noexcept
+	{
+		return common::net::SessionToken{
+			.high = high,
+			.low = low,
+		};
+	}
+
+	[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildAuthenticatedInputCommandPacket(
+		const common::net::SessionToken& sessionToken,
+		common::net::PacketAuthenticationSequence authenticationSequence
+	)
+	{
+		common::packet::InputCommandPacket packet{};
+		packet.inputSequence = 10;
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(packet);
+
+		if (!serializedPacket.has_value())
+		{
+			return std::nullopt;
+		}
+
+		return common::net::BuildAuthenticatedUdpPacket(
+			sessionToken,
+			authenticationSequence,
+			common::packet::ConstPacketSpan(
+				serializedPacket->data(),
+				serializedPacket->size()
+			)
+		);
+	}
+
+	[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildAuthenticatedJoinRoomRequestPacket(
+		const common::net::SessionToken& sessionToken,
+		common::net::PacketAuthenticationSequence authenticationSequence,
+		common::net::ReliableSequence reliableSequence
+	)
+	{
+		common::packet::JoinRoomRequestPacket packet{};
+		packet.roomId = 1;
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(packet);
+
+		if (!serializedPacket.has_value())
+		{
+			return std::nullopt;
+		}
+
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+		reliableHeader.sequence = reliableSequence;
+
+		const std::optional<common::packet::PacketBuffer> reliablePacket =
+			common::net::BuildReliableUdpPacket(
+				reliableHeader,
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				)
+			);
+
+		if (!reliablePacket.has_value())
+		{
+			return std::nullopt;
+		}
+
+		return common::net::BuildAuthenticatedUdpPacket(
+			sessionToken,
+			authenticationSequence,
+			common::packet::ConstPacketSpan(
+				reliablePacket->data(),
+				reliablePacket->size()
+			)
+		);
 	}
 
 	void RunInitialStateTest(tests::DebugTestResult& result)
@@ -273,6 +356,368 @@ namespace
 		tests::Expect(result, session.GetPendingPacketCount() == 0, "ReliableUdpSessionRegistry: give-up removes pending packet");
 	}
 
+	void RunAuthenticateUnreliableDuplicateTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(19, 19000);
+		const common::net::SessionToken sessionToken = MakeSessionToken();
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				sessionToken
+			)
+			);
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer =
+			BuildAuthenticatedInputCommandPacket(
+				sessionToken,
+				100
+			);
+
+		tests::Expect(
+			result,
+			packetBuffer.has_value(),
+			"ReliableUdpSessionRegistry: authenticated unreliable packet built"
+		);
+
+		if (!packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult firstResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				packetBuffer->data(),
+				static_cast<int>(packetBuffer->size())
+			);
+
+		tests::Expect(
+			result,
+			firstResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: first unreliable authentication succeeds"
+		);
+
+		tests::Expect(
+			result,
+			firstResult.packetBuffer.has_value(),
+			"ReliableUdpSessionRegistry: authenticated unreliable packet unwrapped"
+		);
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult duplicateResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				packetBuffer->data(),
+				static_cast<int>(packetBuffer->size())
+			);
+
+		tests::Expect(
+			result,
+			duplicateResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::ReplayRejected,
+			"ReliableUdpSessionRegistry: unreliable authentication duplicate rejected"
+		);
+	}
+
+	void RunAuthenticateReliableDuplicateTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(20, 20000);
+		const common::net::SessionToken sessionToken = MakeSessionToken();
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				sessionToken
+			)
+			);
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer =
+			BuildAuthenticatedJoinRoomRequestPacket(
+				sessionToken,
+				200,
+				10
+			);
+
+		tests::Expect(
+			result,
+			packetBuffer.has_value(),
+			"ReliableUdpSessionRegistry: authenticated reliable packet built"
+		);
+
+		if (!packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult firstAuthenticationResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				packetBuffer->data(),
+				static_cast<int>(packetBuffer->size())
+			);
+
+		tests::Expect(
+			result,
+			firstAuthenticationResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: first reliable authentication succeeds"
+		);
+
+		if (!firstAuthenticationResult.packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> firstPacketView =
+			common::net::ParseReliableUdpPacket(
+				firstAuthenticationResult.packetBuffer->data(),
+				static_cast<int>(
+					firstAuthenticationResult.packetBuffer->size()
+					)
+			);
+
+		tests::Expect(
+			result,
+			firstPacketView.has_value(),
+			"ReliableUdpSessionRegistry: first authenticated reliable packet parsed"
+		);
+
+		if (!firstPacketView.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult firstProcessResult =
+			registry.ProcessReceivedPacket(
+				endpointKey,
+				*firstPacketView
+			);
+
+		tests::Expect(
+			result,
+			firstProcessResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::DataReceived,
+			"ReliableUdpSessionRegistry: first reliable packet received"
+		);
+
+		tests::Expect(
+			result,
+			firstProcessResult.ackPacketBuffer.has_value(),
+			"ReliableUdpSessionRegistry: first reliable packet produces ack"
+		);
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult duplicateAuthenticationResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				packetBuffer->data(),
+				static_cast<int>(packetBuffer->size())
+			);
+
+		tests::Expect(
+			result,
+			duplicateAuthenticationResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: reliable authentication duplicate allowed"
+		);
+
+		if (!duplicateAuthenticationResult.packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> duplicatePacketView =
+			common::net::ParseReliableUdpPacket(
+				duplicateAuthenticationResult.packetBuffer->data(),
+				static_cast<int>(
+					duplicateAuthenticationResult.packetBuffer->size()
+					)
+			);
+
+		tests::Expect(
+			result,
+			duplicatePacketView.has_value(),
+			"ReliableUdpSessionRegistry: duplicate reliable packet parsed"
+		);
+
+		if (!duplicatePacketView.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult duplicateProcessResult =
+			registry.ProcessReceivedPacket(
+				endpointKey,
+				*duplicatePacketView
+			);
+
+		tests::Expect(
+			result,
+			duplicateProcessResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::DuplicateData,
+			"ReliableUdpSessionRegistry: reliable duplicate handled by reliable layer"
+		);
+
+		tests::Expect(
+			result,
+			duplicateProcessResult.ackPacketBuffer.has_value(),
+			"ReliableUdpSessionRegistry: reliable duplicate produces ack again"
+		);
+	}
+
+	void RunAuthenticateWrongSessionTokenTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(21, 21000);
+
+		const common::net::SessionToken registeredSessionToken =
+			MakeSessionToken(1, 2);
+
+		const common::net::SessionToken wrongSessionToken =
+			MakeSessionToken(3, 4);
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				registeredSessionToken
+			)
+			);
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer =
+			BuildAuthenticatedInputCommandPacket(
+				wrongSessionToken,
+				100
+			);
+
+		tests::Expect(
+			result,
+			packetBuffer.has_value(),
+			"ReliableUdpSessionRegistry: wrong token packet built"
+		);
+
+		if (!packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult authenticationResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				packetBuffer->data(),
+				static_cast<int>(packetBuffer->size())
+			);
+
+		tests::Expect(
+			result,
+			authenticationResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::InvalidTag,
+			"ReliableUdpSessionRegistry: wrong session token rejected"
+		);
+	}
+
+	void RunAuthenticationStateResetOnUpsertTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(22, 22000);
+
+		const common::net::SessionToken firstSessionToken =
+			MakeSessionToken(1, 2);
+
+		const common::net::SessionToken secondSessionToken =
+			MakeSessionToken(3, 4);
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				firstSessionToken
+			)
+			);
+
+		const std::optional<common::packet::PacketBuffer> firstPacket =
+			BuildAuthenticatedInputCommandPacket(
+				firstSessionToken,
+				100
+			);
+
+		tests::Expect(
+			result,
+			firstPacket.has_value(),
+			"ReliableUdpSessionRegistry: first session packet built"
+		);
+
+		if (!firstPacket.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult firstResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				firstPacket->data(),
+				static_cast<int>(firstPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			firstResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: first session packet authenticated"
+		);
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				secondSessionToken
+			)
+			);
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult oldTokenResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				firstPacket->data(),
+				static_cast<int>(firstPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			oldTokenResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::InvalidTag,
+			"ReliableUdpSessionRegistry: old session token rejected after upsert"
+		);
+
+		const std::optional<common::packet::PacketBuffer> secondPacket =
+			BuildAuthenticatedInputCommandPacket(
+				secondSessionToken,
+				100
+			);
+
+		tests::Expect(
+			result,
+			secondPacket.has_value(),
+			"ReliableUdpSessionRegistry: second session packet built"
+		);
+
+		if (!secondPacket.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult secondResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				secondPacket->data(),
+				static_cast<int>(secondPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			secondResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: authentication sequence reusable after new session"
+		);
+	}
+
 	void RunProcessReceivedPacketTest(tests::DebugTestResult& result)
 	{
 		ReliableUdpSessionRegistry registry;
@@ -372,6 +817,184 @@ namespace
 		tests::Expect(result, registry.GetCount() == 0, "ReliableUdpSessionRegistry: unknown close does not create session");
 	}
 
+	void RunClosingSessionAcceptsAuthenticatedAckTest(tests::DebugTestResult& result)
+	{
+		ReliableUdpSessionRegistry registry;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(23, 23000);
+		const common::net::SessionToken sessionToken = MakeSessionToken();
+
+		const common::time::TimePoint now =
+			common::time::Clock::now();
+
+		static_cast<void>(
+			registry.Upsert(
+				endpointKey,
+				common::net::ReliableUdpConfig{},
+				sessionToken
+			)
+			);
+
+		const common::packet::LeaveResponsePacket leaveResponsePacket{};
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(leaveResponsePacket);
+
+		tests::Expect(
+			result,
+			serializedPacket.has_value(),
+			"ReliableUdpSessionRegistry: closing authenticated ack response serialized"
+		);
+
+		if (!serializedPacket.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult =
+			registry.BuildOutgoingPacket(
+				endpointKey,
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				),
+				now
+			);
+
+		tests::Expect(
+			result,
+			buildResult.has_value(),
+			"ReliableUdpSessionRegistry: closing authenticated ack response built"
+		);
+
+		if (!buildResult.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> responseView =
+			common::net::ParseReliableUdpPacket(
+				buildResult->data(),
+				static_cast<int>(buildResult->size())
+			);
+
+		tests::Expect(
+			result,
+			responseView.has_value(),
+			"ReliableUdpSessionRegistry: closing authenticated ack response parsed"
+		);
+
+		if (!responseView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			registry.BeginClose(endpointKey),
+			"ReliableUdpSessionRegistry: closing session begins before authenticated ack"
+		);
+
+		common::net::ReliableUdpPacketHeader ackHeader{};
+		ackHeader.ackSequence = responseView->reliableHeader.sequence;
+
+		const std::optional<common::packet::PacketBuffer> ackPacket =
+			common::net::BuildReliableUdpAckPacket(ackHeader);
+
+		tests::Expect(
+			result,
+			ackPacket.has_value(),
+			"ReliableUdpSessionRegistry: raw closing ack built"
+		);
+
+		if (!ackPacket.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::packet::PacketBuffer> authenticatedAckPacket =
+			common::net::BuildAuthenticatedUdpPacket(
+				sessionToken,
+				300,
+				common::packet::ConstPacketSpan(
+					ackPacket->data(),
+					ackPacket->size()
+				)
+			);
+
+		tests::Expect(
+			result,
+			authenticatedAckPacket.has_value(),
+			"ReliableUdpSessionRegistry: closing ack authenticated"
+		);
+
+		if (!authenticatedAckPacket.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult authenticationResult =
+			registry.AuthenticateIncomingPacket(
+				endpointKey,
+				authenticatedAckPacket->data(),
+				static_cast<int>(authenticatedAckPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			authenticationResult.status == ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded,
+			"ReliableUdpSessionRegistry: closing session authenticates ack"
+		);
+
+		if (!authenticationResult.packetBuffer.has_value())
+		{
+			return;
+		}
+
+		const std::optional<common::net::ReliableUdpPacketView> ackView =
+			common::net::ParseReliableUdpPacket(
+				authenticationResult.packetBuffer->data(),
+				static_cast<int>(
+					authenticationResult.packetBuffer->size()
+					)
+			);
+
+		tests::Expect(
+			result,
+			ackView.has_value(),
+			"ReliableUdpSessionRegistry: authenticated closing ack parsed"
+		);
+
+		if (!ackView.has_value())
+		{
+			return;
+		}
+
+		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult processResult =
+			registry.ProcessReceivedPacket(
+				endpointKey,
+				*ackView
+			);
+
+		tests::Expect(
+			result,
+			processResult.status == ReliableUdpSessionRegistry::ProcessReceivedPacketStatus::AckOnlyProcessed,
+			"ReliableUdpSessionRegistry: authenticated closing ack processed"
+		);
+
+		tests::Expect(
+			result,
+			registry.GetCount() == 0,
+			"ReliableUdpSessionRegistry: session removed after authenticated closing ack"
+		);
+
+		tests::Expect(
+			result,
+			!registry.IsClosing(endpointKey),
+			"ReliableUdpSessionRegistry: closing state removed after authenticated ack"
+		);
+	}
+
 	void RunClosingSessionRemovedAfterAckTest(tests::DebugTestResult& result)
 	{
 		ReliableUdpSessionRegistry registry;
@@ -396,7 +1019,10 @@ namespace
 		ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult =
 			registry.BuildOutgoingPacket(
 				endpointKey,
-				common::packet::ConstPacketSpan(serializedPacket->data(), serializedPacket->size()),
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				),
 				now
 			);
 
@@ -408,7 +1034,10 @@ namespace
 		}
 
 		const std::optional<common::net::ReliableUdpPacketView> leaveResponseView =
-			common::net::ParseReliableUdpPacket(buildResult->data(), static_cast<int>(buildResult->size()));
+			common::net::ParseReliableUdpPacket(
+				buildResult->data(),
+				static_cast<int>(buildResult->size())
+			);
 
 		tests::Expect(result, leaveResponseView.has_value(), "ReliableUdpSessionRegistry: parse reliable leave response");
 
@@ -430,7 +1059,10 @@ namespace
 		ackPacketView.reliableHeader.ackSequence = leaveResponseView->reliableHeader.sequence;
 
 		const ReliableUdpSessionRegistry::ProcessReceivedPacketResult processResult =
-			registry.ProcessReceivedPacket(endpointKey, ackPacketView);
+			registry.ProcessReceivedPacket(
+				endpointKey,
+				ackPacketView
+			);
 
 		tests::Expect(
 			result,
@@ -474,7 +1106,10 @@ namespace
 		const ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult =
 			registry.BuildOutgoingPacket(
 				endpointKey,
-				common::packet::ConstPacketSpan(serializedPacket->data(), serializedPacket->size()),
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				),
 				now
 			);
 
@@ -522,10 +1157,17 @@ namespace tests::server
 		RunRemoveTest(result);
 		RunClearTest(result);
 		RunExtractResendBatchTest(result);
+
+		RunAuthenticateUnreliableDuplicateTest(result);
+		RunAuthenticateReliableDuplicateTest(result);
+		RunAuthenticateWrongSessionTokenTest(result);
+		RunAuthenticationStateResetOnUpsertTest(result);
+
 		RunProcessReceivedPacketTest(result);
 		RunPendingPacketCountTest(result);
 
 		RunBeginCloseUnknownSessionTest(result);
+		RunClosingSessionAcceptsAuthenticatedAckTest(result);
 		RunClosingSessionRemovedAfterAckTest(result);
 		RunClosingSessionRemovedAfterGiveUpTest(result);
 

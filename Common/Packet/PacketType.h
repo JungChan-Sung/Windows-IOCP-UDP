@@ -33,6 +33,8 @@ namespace common::packet
 
 		KeepAlive = 16,
 
+		ServerDisconnect = 17,
+
 		Count,
 	};
 }

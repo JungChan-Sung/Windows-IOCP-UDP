@@ -110,6 +110,7 @@ namespace client::net
 		world_ = &world;
 		inputSequence_ = 0;
 		leaveResponseReceived_.store(false);
+		serverDisconnectReason_.store(ServerDisconnectReason::None);
 
 		accountLoginState_.Reset();
 
@@ -573,6 +574,13 @@ namespace client::net
 			*this,
 			&UdpClient::HandleImpactEffectPacket
 		);
+
+		RegisterTypedPacketHandler(
+			packetDispatcher_,
+			common::packet::PacketType::ServerDisconnect,
+			*this,
+			&UdpClient::HandleServerDisconnect
+		);
 	}
 
 	void UdpClient::HandlePacket(const char* packetData, int packetSize)
@@ -821,6 +829,18 @@ namespace client::net
 			assembledBulletSnapshot->roomId,
 			assembledBulletSnapshot->impactEffectDataList
 		);
+	}
+
+	void UdpClient::HandleServerDisconnect(const common::packet::ServerDisconnectPacket& packet)
+	{
+		serverDisconnectReason_.store(packet.reason);
+
+		const std::string message = common::log::LogMessageBuilder{}
+			.Append("Server disconnected client. ")
+			.AppendNamedValue("Reason", common::packet::ToString(packet.reason))
+			.Build();
+
+		LogWarning(message);
 	}
 
 	void UdpClient::LogDebug(std::string_view message) const

@@ -74,6 +74,8 @@ namespace server::service
 		[[nodiscard]] const PeerState* FindJoinedPeer(const EndpointKey& endpointKey) const noexcept;
 		[[nodiscard]] PeerState* FindJoinedPeerByAccountId(common::identity::AccountId accountId) noexcept;
 		[[nodiscard]] const PeerState* FindJoinedPeerByAccountId(common::identity::AccountId accountId) const noexcept;
+		[[nodiscard]] PeerState* FindJoinedPeerByPlayerId(PlayerId playerId) noexcept;
+		[[nodiscard]] const PeerState* FindJoinedPeerByPlayerId(PlayerId playerId) const noexcept;
 		[[nodiscard]] const RoomMemberSet* FindRoomMemberSet(RoomId roomId) const noexcept;
 
 		[[nodiscard]] PeerState& UpsertJoinedPeer(

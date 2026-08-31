@@ -491,6 +491,104 @@ namespace server::net
 		return snapshot;
 	}
 
+	UdpServer::KickPlayerResult UdpServer::KickPlayer(PlayerId playerId)
+	{
+		KickPlayerResult result{};
+
+		if (playerId == 0)
+		{
+			return result;
+		}
+
+		EndpointKey endpointKey{};
+		service::PeerSessionService::LeaveResult leaveResult{};
+
+		std::optional<common::packet::PacketBuffer> disconnectPacketBuffer;
+
+		bool matchHistoryLeft = true;
+		bool authenticatedAccountRemoved = true;
+
+		{
+			std::scoped_lock lock(stateMutex_);
+
+			const service::PeerState* peerState = peerRoomManager_.FindJoinedPeerByPlayerId(playerId);
+			if (peerState == nullptr)
+			{
+				return result;
+			}
+
+			endpointKey = peerState->endpointKey;
+			leaveResult = peerSessionService_.LeavePeer(
+				endpointKey,
+				peerRoomManager_,
+				gameWorld_
+			);
+
+			if (!leaveResult.shouldBroadcastPlayerLeft)
+			{
+				return result;
+			}
+
+			result.kicked = true;
+			result.playerId = leaveResult.playerId;
+			result.roomId = leaveResult.roomId;
+
+			matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
+				leaveResult.roomId,
+				leaveResult.persistentPlayerId,
+				common::time::SystemClock::now()
+			);
+
+			authenticatedAccountRemoved = authenticatedAccountRegistry_.Remove(endpointKey);
+
+			disconnectPacketBuffer = BuildReliableServerDisconnect(
+				endpointKey,
+				common::packet::ServerDisconnectReason::Kicked
+			);
+			if (disconnectPacketBuffer.has_value())
+			{
+				result.disconnectNotificationQueued = true;
+				static_cast<void>(reliableUdpSessionRegistry_.BeginClose(endpointKey));
+			}
+			else
+			{
+				static_cast<void>(reliableUdpSessionRegistry_.Remove(endpointKey));
+			}
+		}
+
+		if (!matchHistoryLeft)
+		{
+			LogError("Failed to remove kicked player from match history.");
+		}
+
+		if (!authenticatedAccountRemoved)
+		{
+			LogWarning("Kicked player's authenticated account state was not found.");
+		}
+
+		if (disconnectPacketBuffer.has_value())
+		{
+			if (!packetSender_.SendPacket(endpointKey, disconnectPacketBuffer->data(), static_cast<int>(disconnectPacketBuffer->size())))
+			{
+				LogWarning("Initial server disconnect notification send failed. Packet remains queued for retry.");
+			}
+		}
+		else
+		{
+			LogWarning("Failed to queue server disconnect notification for kicked player.");
+		}
+
+		{
+			std::ostringstream stream;
+			stream << "Player kicked. PlayerId=" << result.playerId << ", RoomId=" << result.roomId;
+			LogInfo(stream.str());
+		}
+
+		BroadcastPlayerLeft(result.roomId, result.playerId);
+
+		return result;
+	}
+
 	void UdpServer::UpdateGameTick()
 	{
 		if (!isRunning_.load())
@@ -859,6 +957,37 @@ namespace server::net
 	{
 		const common::packet::LeaveResponsePacket responsePacket{};
 		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(responsePacket);
+		if (!packetBuffer.has_value())
+		{
+			return std::nullopt;
+		}
+
+		ReliableUdpSessionRegistry::BuildOutgoingPacketResult buildResult = reliableUdpSessionRegistry_.BuildOutgoingPacket(
+			endpointKey,
+			common::packet::ConstPacketSpan(packetBuffer->data(), packetBuffer->size()),
+			common::time::Clock::now()
+		);
+		if (!buildResult.has_value())
+		{
+			if (buildResult.error() == ReliableUdpSessionRegistry::BuildOutgoingPacketFailure::SendWindowFull)
+			{
+				serverMetricsCollector_.IncrementReliableSendWindowFullCount();
+			}
+
+			return std::nullopt;
+		}
+
+		serverMetricsCollector_.IncrementReliableDataSendPacketCount();
+
+		return std::move(*buildResult);
+	}
+
+	std::optional<common::packet::PacketBuffer> UdpServer::BuildReliableServerDisconnect(const EndpointKey& endpointKey, common::packet::ServerDisconnectReason reason)
+	{
+		common::packet::ServerDisconnectPacket packet{};
+		packet.reason = reason;
+
+		const std::optional<common::packet::PacketBuffer> packetBuffer = common::packet::SerializePacket(packet);
 		if (!packetBuffer.has_value())
 		{
 			return std::nullopt;

@@ -12,6 +12,7 @@
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
+#include <Common/Packet/Control/ControlPacket.h>
 #include <Common/Packet/PacketBuffer.h>
 #include <Common/Time/TimeTypes.h>
 
@@ -64,6 +65,8 @@ namespace client::net
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
 
+		using ServerDisconnectReason = common::packet::ServerDisconnectReason;
+
 		using AccountLoginRequestId = AccountLoginState::RequestId;
 		using AccountLoginSnapshot = AccountLoginState::Snapshot;
 
@@ -82,6 +85,7 @@ namespace client::net
 
 		std::atomic<bool> isRunning_ = false;
 		std::atomic<bool> leaveResponseReceived_ = false;
+		std::atomic<ServerDisconnectReason> serverDisconnectReason_ = ServerDisconnectReason::None;
 
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
@@ -154,6 +158,7 @@ namespace client::net
 		void HandlePlayerSnapshot(const common::packet::PlayerSnapshotPacket& packet);
 		void HandleBulletSnapshot(const common::packet::BulletSnapshotPacket& packet);
 		void HandleImpactEffectPacket(const common::packet::ImpactEffectPacket& packet);
+		void HandleServerDisconnect(const common::packet::ServerDisconnectPacket& packet);
 
 		void LogDebug(std::string_view message) const;
 		void LogInfo(std::string_view message) const;
@@ -174,6 +179,16 @@ namespace client::net
 		[[nodiscard]] bool HasReceivedLeaveResponse() const noexcept
 		{
 			return leaveResponseReceived_.load();
+		}
+
+		[[nodiscard]] ServerDisconnectReason GetServerDisconnectReason() const noexcept
+		{
+			return serverDisconnectReason_.load();
+		}
+
+		[[nodiscard]] bool HasReceivedServerDisconnect() const noexcept
+		{
+			return GetServerDisconnectReason() != ServerDisconnectReason::None;
 		}
 	};
 }

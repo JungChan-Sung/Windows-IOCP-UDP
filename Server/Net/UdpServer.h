@@ -48,6 +48,8 @@ namespace common::packet
 	struct InputCommandPacket;
 	struct JoinRequestPacket;
 	struct JoinRoomRequestPacket;
+
+	enum class ServerDisconnectReason : std::uint8_t;
 }
 
 namespace server::protocol
@@ -64,6 +66,16 @@ namespace server::net
 		enum class StartFailure
 		{
 			AlreadyRunning,
+		};
+
+		struct KickPlayerResult
+		{
+		public:
+			bool kicked = false;
+			bool disconnectNotificationQueued = false;
+
+			common::game::PlayerId playerId = 0;
+			common::game::RoomId roomId = 0;
 		};
 
 	public:
@@ -139,6 +151,8 @@ namespace server::net
 		[[nodiscard]] diagnostics::ServerStatusSnapshot CaptureStatusSnapshot() const;
 		[[nodiscard]] diagnostics::ServerDetailSnapshot CaptureDetailSnapshot() const;
 
+		[[nodiscard]] KickPlayerResult KickPlayer(PlayerId playerId);
+
 	private:
 		void UpdateGameTick();
 
@@ -156,6 +170,10 @@ namespace server::net
 			const service::PeerSessionService::RoomChangeResult& roomChangeResult
 		);
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableLeaveResponse(const EndpointKey& endpointKey);
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildReliableServerDisconnect(
+			const EndpointKey& endpointKey,
+			common::packet::ServerDisconnectReason reason
+		);
 
 		void HandleJoinRequest(const EndpointKey& endpointKey, const common::packet::JoinRequestPacket& packet);
 		void HandleInputCommand(const EndpointKey& endpointKey, const common::packet::InputCommandPacket& packet);

@@ -1,5 +1,6 @@
 #include "ServerAdminCommand.h"
 
+#include <charconv>
 #include <cstddef>
 #include <string_view>
 
@@ -47,6 +48,20 @@ namespace
 
 		return value;
 	}
+
+	[[nodiscard]] bool ParsePlayerId(std::string_view value, common::game::PlayerId& playerId) noexcept
+	{
+		if (value.empty())
+		{
+			return false;
+		}
+
+		const char* begin = value.data();
+		const char* end = begin + value.size();
+
+		const auto [parseEnd, error] = std::from_chars(begin, end, playerId);
+		return error == std::errc{} && parseEnd == end && playerId != 0;
+	}
 }
 
 namespace server::admin
@@ -55,35 +70,61 @@ namespace server::admin
 	{
 		commandLine = Trim(commandLine);
 
-		if (EqualsIgnoreCase(commandLine, "help"))
+		const std::size_t separatorIndex = commandLine.find_first_of(" \t");
+
+		const std::string_view commandName =
+			(separatorIndex == std::string_view::npos)
+			? commandLine
+			: commandLine.substr(0, separatorIndex);
+
+		const std::string_view argument =
+			(separatorIndex == std::string_view::npos)
+			? std::string_view{}
+		: Trim(commandLine.substr(separatorIndex + 1));
+
+		if (EqualsIgnoreCase(commandName, "help") && argument.empty())
 		{
 			return ServerAdminCommand{
 				.type = ServerAdminCommandType::Help,
 			};
 		}
 
-		if (EqualsIgnoreCase(commandLine, "status"))
+		if (EqualsIgnoreCase(commandName, "status") && argument.empty())
 		{
 			return ServerAdminCommand{
 				.type = ServerAdminCommandType::Status,
 			};
 		}
 
-		if (EqualsIgnoreCase(commandLine, "players"))
+		if (EqualsIgnoreCase(commandName, "players") && argument.empty())
 		{
 			return ServerAdminCommand{
 				.type = ServerAdminCommandType::Players,
 			};
 		}
 
-		if (EqualsIgnoreCase(commandLine, "rooms"))
+		if (EqualsIgnoreCase(commandName, "rooms") && argument.empty())
 		{
 			return ServerAdminCommand{
 				.type = ServerAdminCommandType::Rooms,
 			};
 		}
 
-		if (EqualsIgnoreCase(commandLine, "stop"))
+		if (EqualsIgnoreCase(commandName, "kick"))
+		{
+			common::game::PlayerId playerId = 0;
+			if (!ParsePlayerId(argument, playerId))
+			{
+				return {};
+			}
+
+			return ServerAdminCommand{
+				.type = ServerAdminCommandType::Kick,
+				.playerId = playerId,
+			};
+		}
+
+		if (EqualsIgnoreCase(commandName, "stop") && argument.empty())
 		{
 			return ServerAdminCommand{
 				.type = ServerAdminCommandType::Stop,

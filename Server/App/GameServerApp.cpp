@@ -311,7 +311,7 @@ namespace server::app
 		switch (command.type)
 		{
 		case admin::ServerAdminCommandType::Help:
-			logger_.Info("Admin commands: help, status, stop.");
+			logger_.Info("Admin commands: help, status, players, rooms, kick <playerId>, stop.");
 			return false;
 
 		case admin::ServerAdminCommandType::Status:
@@ -377,6 +377,25 @@ namespace server::app
 			return false;
 		}
 
+		case admin::ServerAdminCommandType::Kick:
+		{
+			const net::UdpServer::KickPlayerResult kickResult = udpServer_.KickPlayer(command.playerId);
+			if (!kickResult.kicked)
+			{
+				std::ostringstream stream;
+				stream << "Kick failed. PlayerId=" << command.playerId << " was not found.";
+
+				logger_.Warning(stream.str());
+				return false;
+			}
+
+			std::ostringstream stream;
+			stream << "Kick completed. PlayerId=" << kickResult.playerId
+				<< ", RoomId=" << kickResult.roomId
+				<< ", DisconnectNotificationQueued=" << kickResult.disconnectNotificationQueued;
+			logger_.Info(stream.str());
+			return false;
+		}
 
 		case admin::ServerAdminCommandType::Stop:
 			logger_.Info("Server stop requested by admin command.");

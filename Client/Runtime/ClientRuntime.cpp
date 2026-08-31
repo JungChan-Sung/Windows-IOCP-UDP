@@ -121,6 +121,13 @@ namespace client::runtime
 
 	void ClientRuntime::Update()
 	{
+		if (udpClient_->HasReceivedServerDisconnect())
+		{
+			isRunning_.store(false);
+			gameWindow_->RequestClose();
+			return;
+		}
+
 		const input::InputSnapshot inputSnapshot = gameWindow_->ConsumeInputSnapshot();
 		TryAdjustInterpolationDelay(inputSnapshot);
 
@@ -240,7 +247,7 @@ namespace client::runtime
 
 	void ClientRuntime::ShutdownJoinedSession()
 	{
-		if (!world_->IsJoined())
+		if (!world_->IsJoined() || udpClient_->HasReceivedServerDisconnect())
 		{
 			return;
 		}

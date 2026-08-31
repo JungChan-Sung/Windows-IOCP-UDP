@@ -108,6 +108,32 @@ namespace server::service
 		return nullptr;
 	}
 
+	PeerState* PeerRoomManager::FindJoinedPeerByPlayerId(PlayerId playerId) noexcept
+	{
+		for (auto& [_, peerState] : peerTable_)
+		{
+			if (peerState.isJoined && peerState.playerId == playerId)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const PeerState* PeerRoomManager::FindJoinedPeerByPlayerId(PlayerId playerId) const noexcept
+	{
+		for (const auto& [_, peerState] : peerTable_)
+		{
+			if (peerState.isJoined && peerState.playerId == playerId)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
 	const PeerRoomManager::RoomMemberSet* PeerRoomManager::FindRoomMemberSet(RoomId roomId) const noexcept
 	{
 		const auto roomIterator = roomTable_.find(roomId);

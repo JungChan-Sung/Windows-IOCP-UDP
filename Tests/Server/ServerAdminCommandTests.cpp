@@ -64,6 +64,85 @@ namespace
 		);
 	}
 
+	void RunKickCommandTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("kick 42");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Kick,
+			"ServerAdminCommand: parses kick"
+		);
+
+		tests::Expect(
+			result,
+			command.playerId == 42,
+			"ServerAdminCommand: parses kick player id"
+		);
+	}
+
+	void RunKickCaseInsensitiveTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("KiCk\t12");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Kick
+			&& command.playerId == 12,
+			"ServerAdminCommand: kick is case insensitive"
+		);
+	}
+
+	void RunKickMissingPlayerIdTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("kick");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Unknown,
+			"ServerAdminCommand: kick requires player id"
+		);
+	}
+
+	void RunKickZeroPlayerIdTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("kick 0");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Unknown,
+			"ServerAdminCommand: kick rejects zero player id"
+		);
+	}
+
+	void RunKickInvalidPlayerIdTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("kick player");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Unknown,
+			"ServerAdminCommand: kick rejects invalid player id"
+		);
+	}
+
+	void RunKickExtraArgumentTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("kick 12 extra");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Unknown,
+			"ServerAdminCommand: kick rejects extra argument"
+		);
+	}
+
 	void RunStopCommandTest(tests::DebugTestResult& result)
 	{
 		const server::admin::ServerAdminCommand command =
@@ -136,6 +215,12 @@ namespace tests::server
 		RunStatusCommandTest(result);
 		RunPlayersCommandTest(result);
 		RunRoomsCommandTest(result);
+		RunKickCommandTest(result);
+		RunKickCaseInsensitiveTest(result);
+		RunKickMissingPlayerIdTest(result);
+		RunKickZeroPlayerIdTest(result);
+		RunKickInvalidPlayerIdTest(result);
+		RunKickExtraArgumentTest(result);
 		RunStopCommandTest(result);
 		RunWhitespaceTrimTest(result);
 		RunCaseInsensitiveTest(result);

@@ -15,6 +15,7 @@ namespace tests::packet::packetReliabilityTest
 		common::packet::PacketType::LeaveResponse,
 		common::packet::PacketType::JoinRoomRequest,
 		common::packet::PacketType::JoinRoomResponse,
+		common::packet::PacketType::ServerDisconnect,
 	};
 
 	inline constexpr std::array unreliablePacketTypes

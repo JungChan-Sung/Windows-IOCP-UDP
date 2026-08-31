@@ -156,6 +156,7 @@ namespace client::net
 		{
 			accountLoginState_.Reset();
 			leaveResponseReceived_.store(false);
+			serverDisconnectReason_.store(ServerDisconnectReason::None);
 			return;
 		}
 
@@ -171,6 +172,7 @@ namespace client::net
 
 		accountLoginState_.Reset();
 		leaveResponseReceived_.store(false);
+		serverDisconnectReason_.store(ServerDisconnectReason::None);
 
 		packetDispatcher_.Clear();
 		snapshotChunkAssembler_.Clear();

@@ -181,6 +181,73 @@ namespace
 		tests::Expect(result, expiredPeerList.size() == 1, "PeerRoomManager: peer removed after timeout boundary");
 		tests::Expect(result, peerRoomManager.FindPeer(endpointKey) == nullptr, "PeerRoomManager: expired peer removed");
 	}
+
+	void RunFindJoinedPeerByPlayerIdTest(tests::DebugTestResult& result)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey endpointKey1 = MakeEndpointKey(10, 1000);
+		const common::net::EndpointKey endpointKey2 = MakeEndpointKey(20, 2000);
+
+		const common::time::TimePoint currentTime = common::time::Clock::now();
+
+		static_cast<void>(peerRoomManager.UpsertJoinedPeer(endpointKey1, 100, 1, currentTime));
+		static_cast<void>(peerRoomManager.UpsertJoinedPeer(endpointKey2, 200, 2, currentTime));
+
+		const server::service::PeerState* peerState =
+			peerRoomManager.FindJoinedPeerByPlayerId(200);
+
+		tests::Expect(
+			result,
+			peerState != nullptr,
+			"PeerRoomManager: joined peer found by player id"
+		);
+
+		if (peerState == nullptr)
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			peerState->endpointKey == endpointKey2,
+			"PeerRoomManager: player id lookup returns correct endpoint"
+		);
+
+		tests::Expect(
+			result,
+			peerState->roomId == 2,
+			"PeerRoomManager: player id lookup returns correct room"
+		);
+	}
+
+	void RunFindJoinedPeerByPlayerIdRejectsUnjoinedPeerTest(tests::DebugTestResult& result)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(30, 3000);
+
+		server::service::PeerState& peerState = peerRoomManager.UpsertJoinedPeer(
+			endpointKey,
+			300,
+			1,
+			common::time::Clock::now()
+		);
+
+		peerState.isJoined = false;
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindJoinedPeerByPlayerId(300) == nullptr,
+			"PeerRoomManager: unjoined peer not found by player id"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindJoinedPeerByPlayerId(999) == nullptr,
+			"PeerRoomManager: unknown player id not found"
+		);
+	}
 }
 
 namespace tests::server
@@ -194,6 +261,8 @@ namespace tests::server
 		RunRefreshUnjoinedPeerTest(result);
 		RunRefreshPreventsTimeoutTest(result);
 		RunRefreshAtTimeoutBoundaryTest(result);
+		RunFindJoinedPeerByPlayerIdTest(result);
+		RunFindJoinedPeerByPlayerIdRejectsUnjoinedPeerTest(result);
 
 		return result;
 	}

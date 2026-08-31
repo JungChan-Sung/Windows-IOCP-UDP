@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <string_view>
+
 #include <Common/Packet/PacketHeader.h>
 
 namespace common::packet

@@ -20,6 +20,7 @@
 #include "Config/ConfigTextTests.h"
 
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
+#include "Net/PacketReplayGuardTests.h"
 #include "Net/ReliableUdpProtocolTests.h"
 #include "Net/ReliableUdpPacketHeaderTests.h"
 #include "Net/ReliableUdpPacketBuilderTests.h"
@@ -90,6 +91,7 @@ namespace tests
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
 
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
+		MergeAndPrint(totalResult, "PacketReplayGuard", net::RunPacketReplayGuardTests());
 		MergeAndPrint(totalResult, "ReliableUdpProtocol", net::RunReliableUdpProtocolTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketHeader", net::RunReliableUdpPacketHeaderTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketBuilder", net::RunReliableUdpPacketBuilderTests());

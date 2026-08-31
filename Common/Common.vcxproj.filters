@@ -79,6 +79,12 @@
     <Filter Include="헤더 파일\Packet\Control">
       <UniqueIdentifier>{0fdae92c-1f3c-4ef6-82c1-043f02301218}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Net\Auth">
+      <UniqueIdentifier>{8ac8a5bb-1040-48d3-92cc-16465d38edb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Net\Auth">
+      <UniqueIdentifier>{6b4bf2ed-a354-40a0-9f64-aa6549ea34f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\Endpoint.h">
@@ -312,6 +318,12 @@
     <ClInclude Include="Net\SequenceNumber.h">
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
+    <ClInclude Include="Net\Auth\PacketAuthentication.h">
+      <Filter>헤더 파일\Net\Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\Auth\PacketReplayGuard.h">
+      <Filter>헤더 파일\Net\Auth</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -352,6 +364,9 @@
     </ClCompile>
     <ClCompile Include="Time\SystemDateTime.cpp">
       <Filter>소스 파일\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Auth\PacketReplayGuard.cpp">
+      <Filter>소스 파일\Net\Auth</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

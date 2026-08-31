@@ -187,6 +187,7 @@
     <ClCompile Include="Log\LogFormatterTests.cpp" />
     <ClCompile Include="Log\LogLevelTests.cpp" />
     <ClCompile Include="Log\LogMessageBuilderTests.cpp" />
+    <ClCompile Include="Net\PacketReplayGuardTests.cpp" />
     <ClCompile Include="Net\ReliableUdpLoadTestHarness.cpp" />
     <ClCompile Include="Net\ReliableUdpLoadTests.cpp" />
     <ClCompile Include="Net\ReliableUdpPacketBuilderTests.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="Log\LogLevelTests.h" />
     <ClInclude Include="Log\LogMessageBuilderTests.h" />
     <ClInclude Include="Log\MemoryLogger.h" />
+    <ClInclude Include="Net\PacketReplayGuardTests.h" />
     <ClInclude Include="Net\ReliableUdpLoadTestHarness.h" />
     <ClInclude Include="Net\ReliableUdpLoadTests.h" />
     <ClInclude Include="Net\ReliableUdpPacketBuilderTests.h" />

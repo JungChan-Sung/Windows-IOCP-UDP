@@ -393,6 +393,9 @@
     <ClCompile Include="Server\ServerAdminCommandTests.cpp">
       <Filter>소스 파일\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Net\PacketReplayGuardTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -613,6 +616,9 @@
     </ClInclude>
     <ClInclude Include="Server\ServerAdminCommandTests.h">
       <Filter>헤더 파일\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\PacketReplayGuardTests.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

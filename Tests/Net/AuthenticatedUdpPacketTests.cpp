@@ -380,6 +380,77 @@ namespace
 			"AuthenticatedUdpPacket: wrong session token rejected"
 		);
 	}
+
+	void RunTamperedAuthenticationSequenceRejectedTest(tests::DebugTestResult& result)
+	{
+		const common::packet::FireRequestPacket packet{};
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(packet);
+
+		if (!serializedPacket.has_value())
+		{
+			tests::Expect(
+				result,
+				false,
+				"AuthenticatedUdpPacket: sequence tamper base serialize"
+			);
+			return;
+		}
+
+		std::optional<common::packet::PacketBuffer> authenticatedPacket =
+			common::net::BuildAuthenticatedUdpPacket(
+				MakeSessionToken(),
+				100,
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				)
+			);
+
+		if (!authenticatedPacket.has_value())
+		{
+			tests::Expect(
+				result,
+				false,
+				"AuthenticatedUdpPacket: sequence tamper authenticated build"
+			);
+			return;
+		}
+
+		const std::size_t sequenceOffset =
+			authenticatedPacket->size()
+			- common::net::packetAuthenticationTagSize
+			- common::net::packetAuthenticationSequenceWireSize;
+
+		(*authenticatedPacket)[sequenceOffset] ^= 0x01;
+
+		const std::optional<common::net::AuthenticatedUdpPacketView> packetView =
+			common::net::ParseAuthenticatedUdpPacket(
+				authenticatedPacket->data(),
+				static_cast<int>(authenticatedPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			packetView.has_value(),
+			"AuthenticatedUdpPacket: sequence tamper structurally parses"
+		);
+
+		if (!packetView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			!common::net::VerifyAuthenticatedUdpPacket(
+				MakeSessionToken(),
+				*packetView
+			),
+			"AuthenticatedUdpPacket: tampered authentication sequence rejected"
+		);
+	}
 }
 
 namespace tests::net
@@ -391,6 +462,7 @@ namespace tests::net
 		RunUnreliableRoundTripTest(result);
 		RunReliableRoundTripTest(result);
 		RunTamperedPayloadRejectedTest(result);
+		RunTamperedAuthenticationSequenceRejectedTest(result);
 		RunWrongSessionTokenRejectedTest(result);
 
 		return result;

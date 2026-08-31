@@ -14,6 +14,11 @@ namespace server::diagnostics
 		std::atomic<std::uint64_t> invalidPacketDropCount_ = 0;
 		std::atomic<std::uint64_t> invalidReliablePacketCount_ = 0;
 
+		std::atomic<std::uint64_t> authenticationSessionNotFoundDropCount_ = 0;
+		std::atomic<std::uint64_t> authenticationInvalidPacketDropCount_ = 0;
+		std::atomic<std::uint64_t> authenticationInvalidTagDropCount_ = 0;
+		std::atomic<std::uint64_t> authenticationReplayDropCount_ = 0;
+
 		std::atomic<std::uint64_t> joinRequestCount_ = 0;
 		std::atomic<std::uint64_t> inputCommandCount_ = 0;
 		std::atomic<std::uint64_t> fireRequestCount_ = 0;
@@ -57,6 +62,11 @@ namespace server::diagnostics
 		void IncrementReceivedPacketCount() noexcept;
 		void IncrementInvalidPacketDropCount() noexcept;
 		void IncrementInvalidReliablePacketCount() noexcept;
+
+		void IncrementAuthenticationSessionNotFoundDropCount() noexcept;
+		void IncrementAuthenticationInvalidPacketDropCount() noexcept;
+		void IncrementAuthenticationInvalidTagDropCount() noexcept;
+		void IncrementAuthenticationReplayDropCount() noexcept;
 
 		void IncrementJoinRequestCount() noexcept;
 		void IncrementInputCommandCount() noexcept;

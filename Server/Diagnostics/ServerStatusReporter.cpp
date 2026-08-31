@@ -37,6 +37,10 @@ namespace server::diagnostics
 			<< ", ReceivedPackets=" << snapshot.metrics.receivedPacketCount
 			<< ", InvalidPacketDrops=" << snapshot.metrics.invalidPacketDropCount
 			<< ", InvalidReliablePackets=" << snapshot.metrics.invalidReliablePacketCount
+			<< ", AuthenticationSessionNotFoundDrops=" << snapshot.metrics.authenticationSessionNotFoundDropCount
+			<< ", AuthenticationInvalidPacketDrops=" << snapshot.metrics.authenticationInvalidPacketDropCount
+			<< ", AuthenticationInvalidTagDrops=" << snapshot.metrics.authenticationInvalidTagDropCount
+			<< ", AuthenticationReplayDrops=" << snapshot.metrics.authenticationReplayDropCount
 			<< ", JoinRequests=" << snapshot.metrics.joinRequestCount
 			<< ", InputCommands=" << snapshot.metrics.inputCommandCount
 			<< ", FireRequests=" << snapshot.metrics.fireRequestCount

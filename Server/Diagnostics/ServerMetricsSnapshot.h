@@ -11,6 +11,11 @@ namespace server::diagnostics
 		std::uint64_t invalidPacketDropCount = 0;
 		std::uint64_t invalidReliablePacketCount = 0;
 
+		std::uint64_t authenticationSessionNotFoundDropCount = 0;
+		std::uint64_t authenticationInvalidPacketDropCount = 0;
+		std::uint64_t authenticationInvalidTagDropCount = 0;
+		std::uint64_t authenticationReplayDropCount = 0;
+
 		// Counts packets that passed dispatcher/header/payload validation and reached UdpServer handlers.
 		std::uint64_t joinRequestCount = 0;
 		std::uint64_t inputCommandCount = 0;

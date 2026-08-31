@@ -8,6 +8,11 @@ namespace server::diagnostics
 		invalidPacketDropCount_.store(0);
 		invalidReliablePacketCount_.store(0);
 
+		authenticationSessionNotFoundDropCount_.store(0);
+		authenticationInvalidPacketDropCount_.store(0);
+		authenticationInvalidTagDropCount_.store(0);
+		authenticationReplayDropCount_.store(0);
+
 		joinRequestCount_.store(0);
 		inputCommandCount_.store(0);
 		fireRequestCount_.store(0);
@@ -49,6 +54,26 @@ namespace server::diagnostics
 	void ServerMetricsCollector::IncrementInvalidReliablePacketCount() noexcept
 	{
 		++invalidReliablePacketCount_;
+	}
+
+	void ServerMetricsCollector::IncrementAuthenticationSessionNotFoundDropCount() noexcept
+	{
+		++authenticationSessionNotFoundDropCount_;
+	}
+
+	void ServerMetricsCollector::IncrementAuthenticationInvalidPacketDropCount() noexcept
+	{
+		++authenticationInvalidPacketDropCount_;
+	}
+
+	void ServerMetricsCollector::IncrementAuthenticationInvalidTagDropCount() noexcept
+	{
+		++authenticationInvalidTagDropCount_;
+	}
+
+	void ServerMetricsCollector::IncrementAuthenticationReplayDropCount() noexcept
+	{
+		++authenticationReplayDropCount_;
 	}
 
 	void ServerMetricsCollector::IncrementJoinRequestCount() noexcept
@@ -168,6 +193,11 @@ namespace server::diagnostics
 		snapshot.receivedPacketCount = receivedPacketCount_.load();
 		snapshot.invalidPacketDropCount = invalidPacketDropCount_.load();
 		snapshot.invalidReliablePacketCount = invalidReliablePacketCount_.load();
+
+		snapshot.authenticationSessionNotFoundDropCount = authenticationSessionNotFoundDropCount_.load();
+		snapshot.authenticationInvalidPacketDropCount = authenticationInvalidPacketDropCount_.load();
+		snapshot.authenticationInvalidTagDropCount = authenticationInvalidTagDropCount_.load();
+		snapshot.authenticationReplayDropCount = authenticationReplayDropCount_.load();
 
 		snapshot.joinRequestCount = joinRequestCount_.load();
 		snapshot.inputCommandCount = inputCommandCount_.load();

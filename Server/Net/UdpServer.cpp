@@ -857,6 +857,31 @@ namespace server::net
 
 			if (authenticationResult.status != ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded)
 			{
+				using AuthenticationStatus = ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus;
+
+				switch (authenticationResult.status)
+				{
+				case AuthenticationStatus::SessionNotFound:
+					serverMetricsCollector_.IncrementAuthenticationSessionNotFoundDropCount();
+					break;
+
+				case AuthenticationStatus::InvalidPacket:
+					serverMetricsCollector_.IncrementAuthenticationInvalidPacketDropCount();
+					break;
+
+				case AuthenticationStatus::InvalidTag:
+					serverMetricsCollector_.IncrementAuthenticationInvalidTagDropCount();
+					break;
+
+				case AuthenticationStatus::ReplayRejected:
+					serverMetricsCollector_.IncrementAuthenticationReplayDropCount();
+					break;
+
+				case AuthenticationStatus::Succeeded:
+				default:
+					break;
+				}
+
 				return DispatchResult{
 					.status = DispatchStatus::InvalidPacketHeader,
 					.packetType = receivedHeader->type,

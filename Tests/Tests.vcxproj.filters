@@ -400,6 +400,9 @@
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Net\AuthenticatedUdpPacketTests.cpp">
+      <Filter>소스 파일\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet\PacketAuthenticationPolicyTests.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -630,6 +633,9 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Net\AuthenticatedUdpPacketTests.h">
+      <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\PacketAuthenticationPolicyTests.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

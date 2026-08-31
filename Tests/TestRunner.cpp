@@ -36,6 +36,7 @@
 #include "Packet/ControlPacketTests.h"
 #include "Packet/PacketSerializationTests.h"
 #include "Packet/PacketReliabilityTests.h"
+#include "Packet/PacketAuthenticationPolicyTests.h"
 
 #include "Persistence/AccountRepositoryIntegrationTests.h"
 #include "Persistence/AccountValidationTests.h"
@@ -91,6 +92,7 @@ namespace tests
 		MergeAndPrint(totalResult, "ControlPacket", packet::RunControlPacketTests());
 		MergeAndPrint(totalResult, "PacketSerialization", packet::RunPacketSerializationTests());
 		MergeAndPrint(totalResult, "PacketReliability", packet::RunPacketReliabilityTests());
+		MergeAndPrint(totalResult, "PacketAuthenticationPolicy", packet::RunPacketAuthenticationPolicyTests());
 
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
 		MergeAndPrint(totalResult, "PacketReplayGuard", net::RunPacketReplayGuardTests());

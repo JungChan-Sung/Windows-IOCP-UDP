@@ -33,6 +33,29 @@ namespace
 			snapshot.faultSimulationReleasedSendRequestCount == 0,
 			"ServerMetricsCollector: initial fault simulation released send request count"
 		);
+		tests::Expect(
+			result,
+			snapshot.authenticationSessionNotFoundDropCount == 0,
+			"ServerMetricsCollector: initial authentication session not found drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidPacketDropCount == 0,
+			"ServerMetricsCollector: initial authentication invalid packet drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidTagDropCount == 0,
+			"ServerMetricsCollector: initial authentication invalid tag drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationReplayDropCount == 0,
+			"ServerMetricsCollector: initial authentication replay drop count"
+		);
 	}
 
 	void RunIncrementCountersTest(tests::DebugTestResult& result)
@@ -42,6 +65,16 @@ namespace
 		metricsCollector.IncrementReceivedPacketCount();
 		metricsCollector.IncrementReceivedPacketCount();
 		metricsCollector.IncrementInvalidPacketDropCount();
+
+		metricsCollector.IncrementAuthenticationSessionNotFoundDropCount();
+		metricsCollector.IncrementAuthenticationInvalidPacketDropCount();
+
+		metricsCollector.IncrementAuthenticationInvalidTagDropCount();
+		metricsCollector.IncrementAuthenticationInvalidTagDropCount();
+
+		metricsCollector.IncrementAuthenticationReplayDropCount();
+		metricsCollector.IncrementAuthenticationReplayDropCount();
+		metricsCollector.IncrementAuthenticationReplayDropCount();
 
 		metricsCollector.IncrementJoinRequestCount();
 		metricsCollector.IncrementInputCommandCount();
@@ -90,6 +123,29 @@ namespace
 			snapshot.faultSimulationReleasedSendRequestCount == 6,
 			"ServerMetricsCollector: fault simulation released send request count"
 		);
+		tests::Expect(
+			result,
+			snapshot.authenticationSessionNotFoundDropCount == 1,
+			"ServerMetricsCollector: authentication session not found drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidPacketDropCount == 1,
+			"ServerMetricsCollector: authentication invalid packet drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidTagDropCount == 2,
+			"ServerMetricsCollector: authentication invalid tag drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationReplayDropCount == 3,
+			"ServerMetricsCollector: authentication replay drop count"
+		);
 	}
 
 	void RunResetTest(tests::DebugTestResult& result)
@@ -115,6 +171,10 @@ namespace
 		metricsCollector.IncrementInvalidReliablePacketCount();
 		metricsCollector.IncrementReliableInvalidAckPacketCount();
 		metricsCollector.AddFaultSimulationReleasedSendRequestCount(10);
+		metricsCollector.IncrementAuthenticationSessionNotFoundDropCount();
+		metricsCollector.IncrementAuthenticationInvalidPacketDropCount();
+		metricsCollector.IncrementAuthenticationInvalidTagDropCount();
+		metricsCollector.IncrementAuthenticationReplayDropCount();
 
 		metricsCollector.Reset();
 
@@ -142,6 +202,29 @@ namespace
 			result,
 			snapshot.faultSimulationReleasedSendRequestCount == 0,
 			"ServerMetricsCollector: reset fault simulation released send request count"
+		);
+		tests::Expect(
+			result,
+			snapshot.authenticationSessionNotFoundDropCount == 0,
+			"ServerMetricsCollector: reset authentication session not found drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidPacketDropCount == 0,
+			"ServerMetricsCollector: reset authentication invalid packet drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationInvalidTagDropCount == 0,
+			"ServerMetricsCollector: reset authentication invalid tag drop count"
+		);
+
+		tests::Expect(
+			result,
+			snapshot.authenticationReplayDropCount == 0,
+			"ServerMetricsCollector: reset authentication replay drop count"
 		);
 	}
 }

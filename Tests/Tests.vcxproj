@@ -203,6 +203,7 @@
     <ClCompile Include="Net\UdpFaultPacketSchedulerTests.cpp" />
     <ClCompile Include="Net\UdpFaultSimulatorTests.cpp" />
     <ClCompile Include="Packet\ControlPacketTests.cpp" />
+    <ClCompile Include="Packet\PacketAuthenticationPolicyTests.cpp" />
     <ClCompile Include="Packet\PacketReliabilityTests.cpp" />
     <ClCompile Include="Packet\PacketSerializationTests.cpp" />
     <ClCompile Include="Persistence\AccountRepositoryIntegrationTests.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="Net\UdpFaultPacketSchedulerTests.h" />
     <ClInclude Include="Net\UdpFaultSimulatorTests.h" />
     <ClInclude Include="Packet\ControlPacketTests.h" />
+    <ClInclude Include="Packet\PacketAuthenticationPolicyTests.h" />
     <ClInclude Include="Packet\PacketReliabilityTests.h" />
     <ClInclude Include="Packet\PacketSerializationTests.h" />
     <ClInclude Include="Persistence\AccountRepositoryIntegrationTests.h" />

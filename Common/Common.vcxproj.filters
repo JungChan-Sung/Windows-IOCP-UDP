@@ -324,6 +324,9 @@
     <ClInclude Include="Net\Auth\PacketReplayGuard.h">
       <Filter>헤더 파일\Net\Auth</Filter>
     </ClInclude>
+    <ClInclude Include="Net\Auth\PacketAuthenticator.h">
+      <Filter>헤더 파일\Net\Auth</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -366,6 +369,9 @@
       <Filter>소스 파일\Time</Filter>
     </ClCompile>
     <ClCompile Include="Net\Auth\PacketReplayGuard.cpp">
+      <Filter>소스 파일\Net\Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Auth\PacketAuthenticator.cpp">
       <Filter>소스 파일\Net\Auth</Filter>
     </ClCompile>
   </ItemGroup>

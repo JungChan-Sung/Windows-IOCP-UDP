@@ -75,7 +75,7 @@ namespace
 		common::net::PacketReplayGuard replayGuard;
 
 		static_cast<void>(replayGuard.TryAccept(100));
-		static_cast<void>(replayGuard.TryAccept(164));
+		static_cast<void>(replayGuard.TryAccept(356));
 
 		tests::Expect(
 			result,

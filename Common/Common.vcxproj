@@ -41,6 +41,7 @@
     <ClInclude Include="Log\LogRecord.h" />
     <ClInclude Include="Log\NullLogger.h" />
     <ClInclude Include="Net\Auth\PacketAuthentication.h" />
+    <ClInclude Include="Net\Auth\PacketAuthenticator.h" />
     <ClInclude Include="Net\Auth\PacketReplayGuard.h" />
     <ClInclude Include="Net\Endpoint.h" />
     <ClInclude Include="Net\EndpointKey.h" />
@@ -103,6 +104,7 @@
     <ClCompile Include="Log\AsyncLogWriter.cpp" />
     <ClCompile Include="Log\ConsoleLogger.cpp" />
     <ClCompile Include="Log\DebugOutputLogger.cpp" />
+    <ClCompile Include="Net\Auth\PacketAuthenticator.cpp" />
     <ClCompile Include="Net\Auth\PacketReplayGuard.cpp" />
     <ClCompile Include="Net\Fault\UdpFaultDecisionGenerator.cpp" />
     <ClCompile Include="Net\Fault\UdpFaultPacketScheduler.cpp" />

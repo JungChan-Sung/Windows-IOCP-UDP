@@ -1,7 +1,7 @@
 #pragma once
 
+#include <bitset>
 #include <cstddef>
-#include <cstdint>
 
 #include <Common/Net/SequenceNumber.h>
 
@@ -10,11 +10,12 @@ namespace common::net
 	class PacketReplayGuard
 	{
 	private:
-		static inline constexpr std::size_t replayWindowBitCount = 64;
+		static inline constexpr std::size_t replayWindowBitCount = 256;
 
 	private:
 		SequenceNumber latestSequence_ = 0;
-		std::uint64_t receivedBitfield_ = 0;
+
+		std::bitset<replayWindowBitCount> receivedBitfield_;
 
 		bool hasReceivedSequence_ = false;
 

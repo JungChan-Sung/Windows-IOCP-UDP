@@ -1,13 +1,13 @@
 #include "PacketReplayGuard.h"
 
-#include <cstdint>
+#include <cstddef>
 
 namespace common::net
 {
 	void PacketReplayGuard::Reset() noexcept
 	{
 		latestSequence_ = 0;
-		receivedBitfield_ = 0;
+		receivedBitfield_.reset();
 
 		hasReceivedSequence_ = false;
 	}
@@ -17,7 +17,7 @@ namespace common::net
 		if (!hasReceivedSequence_)
 		{
 			latestSequence_ = sequence;
-			receivedBitfield_ = 1;
+			receivedBitfield_.set(0);
 			hasReceivedSequence_ = true;
 
 			return true;
@@ -33,15 +33,16 @@ namespace common::net
 			const SequenceNumber distance = sequence - latestSequence_;
 			if (distance >= replayWindowBitCount)
 			{
-				receivedBitfield_ = 1;
+				receivedBitfield_.reset();
 			}
 			else
 			{
-				receivedBitfield_ <<= distance;
-				receivedBitfield_ |= 1;
+				receivedBitfield_ <<= static_cast<std::size_t>(distance);
 			}
 
+			receivedBitfield_.set(0);
 			latestSequence_ = sequence;
+
 			return true;
 		}
 
@@ -51,13 +52,14 @@ namespace common::net
 			return false;
 		}
 
-		const std::uint64_t sequenceBit = static_cast<std::uint64_t>(1) << distance;
-		if ((receivedBitfield_ & sequenceBit) != 0)
+		const std::size_t bitIndex = static_cast<std::size_t>(distance);
+		if (receivedBitfield_.test(bitIndex))
 		{
 			return false;
 		}
 
-		receivedBitfield_ |= sequenceBit;
+		receivedBitfield_.set(bitIndex);
+
 		return true;
 	}
 }

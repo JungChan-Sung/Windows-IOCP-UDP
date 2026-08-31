@@ -327,6 +327,12 @@
     <ClInclude Include="Net\Auth\PacketAuthenticator.h">
       <Filter>헤더 파일\Net\Auth</Filter>
     </ClInclude>
+    <ClInclude Include="Net\Auth\AuthenticatedUdpPacket.h">
+      <Filter>헤더 파일\Net\Auth</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet\PacketAuthenticationPolicy.h">
+      <Filter>헤더 파일\Packet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Net\Socket.cpp">
@@ -372,6 +378,9 @@
       <Filter>소스 파일\Net\Auth</Filter>
     </ClCompile>
     <ClCompile Include="Net\Auth\PacketAuthenticator.cpp">
+      <Filter>소스 파일\Net\Auth</Filter>
+    </ClCompile>
+    <ClCompile Include="Net\Auth\AuthenticatedUdpPacket.cpp">
       <Filter>소스 파일\Net\Auth</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,6 +9,14 @@ namespace common::net
 {
 	class PacketReplayGuard
 	{
+	public:
+		enum class ObserveStatus
+		{
+			New,
+			Duplicate,
+			TooOld,
+		};
+
 	private:
 		static inline constexpr std::size_t replayWindowBitCount = 256;
 
@@ -31,6 +39,8 @@ namespace common::net
 
 	public:
 		void Reset() noexcept;
+
+		[[nodiscard]] ObserveStatus Observe(SequenceNumber sequence) noexcept;
 
 		[[nodiscard]] bool TryAccept(SequenceNumber sequence) noexcept;
 	};

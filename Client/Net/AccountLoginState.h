@@ -91,6 +91,7 @@ namespace client::net
 		void ClearResultUnlocked();
 
 	public:
+		[[nodiscard]] common::net::SessionToken GetSessionToken() const;
 		[[nodiscard]] Snapshot GetSnapshot() const;
 	};
 }

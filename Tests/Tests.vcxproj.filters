@@ -399,6 +399,9 @@
     <ClCompile Include="Net\PacketReplayGuardTests.cpp">
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
+    <ClCompile Include="Net\AuthenticatedUdpPacketTests.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -625,6 +628,9 @@
     </ClInclude>
     <ClInclude Include="Net\PacketReplayGuardTests.h">
       <Filter>헤더 파일\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="Net\AuthenticatedUdpPacketTests.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

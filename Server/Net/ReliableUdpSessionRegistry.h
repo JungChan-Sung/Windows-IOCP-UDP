@@ -8,7 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include <Common/Net/Auth/AuthenticatedUdpPacket.h>
+#include <Common/Net/Auth/PacketReplayGuard.h>
 #include <Common/Net/Endpoint.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Net/Reliable/ReliableUdpConfig.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Packet/PacketBuffer.h>
@@ -20,6 +23,22 @@ namespace server::net
 	{
 	public:
 		using EndpointKey = common::net::EndpointKey;
+
+		enum class AuthenticateIncomingPacketStatus
+		{
+			Succeeded,
+			SessionNotFound,
+			InvalidPacket,
+			InvalidTag,
+			ReplayRejected,
+		};
+
+		struct AuthenticateIncomingPacketResult
+		{
+		public:
+			AuthenticateIncomingPacketStatus status = AuthenticateIncomingPacketStatus::SessionNotFound;
+			std::optional<common::packet::PacketBuffer> packetBuffer;
+		};
 
 		enum class ProcessReceivedPacketStatus
 		{
@@ -63,7 +82,16 @@ namespace server::net
 		};
 
 	private:
-		using SessionTable = std::unordered_map<EndpointKey, common::net::ReliableUdpSession, common::net::EndpointKeyHasher>;
+		struct SessionEntry
+		{
+		public:
+			common::net::ReliableUdpSession reliableSession;
+			common::net::SessionToken sessionToken{};
+			common::net::PacketReplayGuard replayGuard;
+		};
+
+	private:
+		using SessionTable = std::unordered_map<EndpointKey, SessionEntry, common::net::EndpointKeyHasher>;
 		using ClosingEndpointSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
 
 	private:
@@ -83,28 +111,100 @@ namespace server::net
 	public:
 		[[nodiscard]] common::net::ReliableUdpSession& Upsert(const EndpointKey& endpointKey, const common::net::ReliableUdpConfig& config)
 		{
+			return Upsert(endpointKey, config, common::net::invalidSessionToken);
+		}
+
+		[[nodiscard]] common::net::ReliableUdpSession& Upsert(
+			const EndpointKey& endpointKey,
+			const common::net::ReliableUdpConfig& config,
+			common::net::SessionToken sessionToken
+		)
+		{
 			auto [sessionIterator, inserted] = sessionTable_.try_emplace(endpointKey);
+			SessionEntry& sessionEntry = sessionIterator->second;
 			if (!inserted)
 			{
-				sessionIterator->second.Reset();
+				sessionEntry.reliableSession.Reset();
+				sessionEntry.replayGuard.Reset();
 			}
+
+			sessionEntry.sessionToken = sessionToken;
 
 			closingEndpointSet_.erase(endpointKey);
 
-			sessionIterator->second.Configure(config);
-			return sessionIterator->second;
+			sessionEntry.reliableSession.Configure(config);
+
+			return sessionEntry.reliableSession;
 		}
 
 		[[nodiscard]] common::net::ReliableUdpSession* Find(const EndpointKey& endpointKey) noexcept
 		{
 			const auto sessionIterator = sessionTable_.find(endpointKey);
-			return (sessionIterator != sessionTable_.end()) ? &sessionIterator->second : nullptr;
+			return (sessionIterator != sessionTable_.end()) ? &sessionIterator->second.reliableSession : nullptr;
 		}
 
 		[[nodiscard]] const common::net::ReliableUdpSession* Find(const EndpointKey& endpointKey) const noexcept
 		{
 			const auto sessionIterator = sessionTable_.find(endpointKey);
-			return (sessionIterator != sessionTable_.end()) ? &sessionIterator->second : nullptr;
+			return (sessionIterator != sessionTable_.end()) ? &sessionIterator->second.reliableSession : nullptr;
+		}
+
+		[[nodiscard]] AuthenticateIncomingPacketResult AuthenticateIncomingPacket(
+			const EndpointKey& endpointKey,
+			const char* packetData,
+			int packetSize
+		)
+		{
+			const auto sessionIterator = sessionTable_.find(endpointKey);
+			if (sessionIterator == sessionTable_.end())
+			{
+				return {};
+			}
+
+			SessionEntry& sessionEntry = sessionIterator->second;
+
+			const std::optional<common::net::AuthenticatedUdpPacketView> packetView = common::net::ParseAuthenticatedUdpPacket(packetData, packetSize);
+			if (!packetView.has_value())
+			{
+				return AuthenticateIncomingPacketResult{
+					.status = AuthenticateIncomingPacketStatus::InvalidPacket,
+				};
+			}
+
+			if (!common::net::VerifyAuthenticatedUdpPacket(sessionEntry.sessionToken, *packetView))
+			{
+				return AuthenticateIncomingPacketResult{
+					.status = AuthenticateIncomingPacketStatus::InvalidTag,
+				};
+			}
+
+			const common::net::PacketReplayGuard::ObserveStatus replayStatus = sessionEntry.replayGuard.Observe(packetView->authentication.sequence);
+			if (replayStatus == common::net::PacketReplayGuard::ObserveStatus::TooOld)
+			{
+				return AuthenticateIncomingPacketResult{
+					.status = AuthenticateIncomingPacketStatus::ReplayRejected,
+				};
+			}
+
+			if (replayStatus == common::net::PacketReplayGuard::ObserveStatus::Duplicate && !common::packet::IsReliablePacketHeader(packetView->packetHeader))
+			{
+				return AuthenticateIncomingPacketResult{
+					.status = AuthenticateIncomingPacketStatus::ReplayRejected,
+				};
+			}
+
+			std::optional<common::packet::PacketBuffer> packetBuffer = common::net::BuildUnauthenticatedUdpPacket(*packetView);
+			if (!packetBuffer.has_value())
+			{
+				return AuthenticateIncomingPacketResult{
+					.status = AuthenticateIncomingPacketStatus::InvalidPacket,
+				};
+			}
+
+			return AuthenticateIncomingPacketResult{
+				.status = AuthenticateIncomingPacketStatus::Succeeded,
+				.packetBuffer = std::move(packetBuffer),
+			};
 		}
 
 		[[nodiscard]] ProcessReceivedPacketResult ProcessReceivedPacket(
@@ -220,7 +320,7 @@ namespace server::net
 			for (auto sessionIterator = sessionTable_.begin(); sessionIterator != sessionTable_.end();)
 			{
 				const EndpointKey endpointKey = sessionIterator->first;
-				common::net::ReliableUdpSession& session = sessionIterator->second;
+				common::net::ReliableUdpSession& session = sessionIterator->second.reliableSession;
 
 				common::net::ReliableUdpSession::ResendResult resendResult = session.ExtractResendResult(currentTime);
 				batch.giveUpPacketCount += resendResult.giveUpPacketList.size();
@@ -251,9 +351,9 @@ namespace server::net
 		{
 			std::size_t pendingPacketCount = 0;
 
-			for (const auto& [_, session] : sessionTable_)
+			for (const auto& [_, sessionEntry] : sessionTable_)
 			{
-				pendingPacketCount += session.GetPendingPacketCount();
+				pendingPacketCount += sessionEntry.reliableSession.GetPendingPacketCount();
 			}
 
 			return pendingPacketCount;

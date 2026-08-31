@@ -16,9 +16,11 @@ namespace common::packet
 
 	inline constexpr std::size_t stringLengthWireSize = uint16WireSize;
 
-	inline constexpr std::uint16_t protocolVersion = 4;
+	inline constexpr std::uint16_t protocolVersion = 5;
+
+	inline constexpr std::uint16_t packetHeaderAuthenticatedFlag = 0x4000;
 	inline constexpr std::uint16_t packetHeaderReliableFlag = 0x8000;
-	inline constexpr std::uint16_t packetHeaderVersionMask = 0x7FFF;
+	inline constexpr std::uint16_t packetHeaderVersionMask = 0x3FFF;
 
 	inline constexpr std::size_t packetTypeWireSize = uint16WireSize;
 

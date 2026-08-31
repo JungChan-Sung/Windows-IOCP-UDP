@@ -12,7 +12,7 @@ namespace common::net
 		hasReceivedSequence_ = false;
 	}
 
-	bool PacketReplayGuard::TryAccept(SequenceNumber sequence) noexcept
+	PacketReplayGuard::ObserveStatus PacketReplayGuard::Observe(SequenceNumber sequence) noexcept
 	{
 		if (!hasReceivedSequence_)
 		{
@@ -20,12 +20,12 @@ namespace common::net
 			receivedBitfield_.set(0);
 			hasReceivedSequence_ = true;
 
-			return true;
+			return ObserveStatus::New;
 		}
 
 		if (sequence == latestSequence_)
 		{
-			return false;
+			return ObserveStatus::Duplicate;
 		}
 
 		if (IsSequenceNewer(sequence, latestSequence_))
@@ -43,23 +43,28 @@ namespace common::net
 			receivedBitfield_.set(0);
 			latestSequence_ = sequence;
 
-			return true;
+			return ObserveStatus::New;
 		}
 
 		const SequenceNumber distance = latestSequence_ - sequence;
 		if (distance >= replayWindowBitCount)
 		{
-			return false;
+			return ObserveStatus::TooOld;
 		}
 
 		const std::size_t bitIndex = static_cast<std::size_t>(distance);
 		if (receivedBitfield_.test(bitIndex))
 		{
-			return false;
+			return ObserveStatus::Duplicate;
 		}
 
 		receivedBitfield_.set(bitIndex);
 
-		return true;
+		return ObserveStatus::New;
+	}
+
+	bool PacketReplayGuard::TryAccept(SequenceNumber sequence) noexcept
+	{
+		return Observe(sequence) == ObserveStatus::New;
 	}
 }

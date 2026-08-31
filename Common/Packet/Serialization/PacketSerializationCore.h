@@ -15,14 +15,21 @@
 
 namespace common::packet
 {
-	[[nodiscard]] inline std::uint16_t MakePacketHeaderVersion(bool isReliable) noexcept
+	[[nodiscard]] inline std::uint16_t MakePacketHeaderVersion(bool isReliable, bool isAuthenticated = false) noexcept
 	{
+		std::uint16_t version = protocolVersion;
+
 		if (isReliable)
 		{
-			return protocolVersion | packetHeaderReliableFlag;
+			version |= packetHeaderReliableFlag;
 		}
 
-		return protocolVersion;
+		if (isAuthenticated)
+		{
+			version |= packetHeaderAuthenticatedFlag;
+		}
+
+		return version;
 	}
 
 	[[nodiscard]] inline bool IsReliablePacketHeader(const PacketHeader& packetHeader) noexcept
@@ -30,16 +37,21 @@ namespace common::packet
 		return (packetHeader.version & packetHeaderReliableFlag) != 0;
 	}
 
+	[[nodiscard]] inline bool IsAuthenticatedPacketHeader(const PacketHeader& packetHeader) noexcept
+	{
+		return (packetHeader.version & packetHeaderAuthenticatedFlag) != 0;
+	}
+
 	[[nodiscard]] inline std::uint16_t GetPacketHeaderProtocolVersion(const PacketHeader& packetHeader) noexcept
 	{
 		return packetHeader.version & packetHeaderVersionMask;
 	}
 
-	inline void WritePacketHeader(PacketWriter& writer, std::uint16_t packetSize, PacketType packetType, bool isReliable = false)
+	inline void WritePacketHeader(PacketWriter& writer, std::uint16_t packetSize, PacketType packetType, bool isReliable = false, bool isAuthenticated = false)
 	{
 		writer.WriteUInt16(packetSize);
 		writer.WriteUInt16(static_cast<std::uint16_t>(packetType));
-		writer.WriteUInt16(MakePacketHeaderVersion(isReliable));
+		writer.WriteUInt16(MakePacketHeaderVersion(isReliable, isAuthenticated));
 	}
 
 	[[nodiscard]] inline bool ReadPacketHeader(PacketReader& reader, PacketHeader& packetHeader) noexcept
@@ -133,7 +145,7 @@ namespace common::packet
 			return false;
 		}
 
-		if (IsReliablePacketHeader(packetHeader))
+		if (IsReliablePacketHeader(packetHeader) || IsAuthenticatedPacketHeader(packetHeader))
 		{
 			return false;
 		}

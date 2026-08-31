@@ -21,6 +21,7 @@
 
 #include "Net/SnapshotChunkAssemblerCoreTests.h"
 #include "Net/PacketReplayGuardTests.h"
+#include "Net/AuthenticatedUdpPacketTests.h"
 #include "Net/PacketAuthenticatorTests.h"
 #include "Net/ReliableUdpProtocolTests.h"
 #include "Net/ReliableUdpPacketHeaderTests.h"
@@ -94,6 +95,7 @@ namespace tests
 		MergeAndPrint(totalResult, "SnapshotChunkAssemblerCore", net::RunSnapshotChunkAssemblerCoreTests());
 		MergeAndPrint(totalResult, "PacketReplayGuard", net::RunPacketReplayGuardTests());
 		MergeAndPrint(totalResult, "PacketAuthenticator", net::RunPacketAuthenticatorTests());
+		MergeAndPrint(totalResult, "AuthenticatedUdpPacket", net::RunAuthenticatedUdpPacketTests());
 		MergeAndPrint(totalResult, "ReliableUdpProtocol", net::RunReliableUdpProtocolTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketHeader", net::RunReliableUdpPacketHeaderTests());
 		MergeAndPrint(totalResult, "ReliableUdpPacketBuilder", net::RunReliableUdpPacketBuilderTests());

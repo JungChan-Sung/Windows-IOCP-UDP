@@ -47,7 +47,7 @@ namespace common::net
 			return std::nullopt;
 		}
 
-		if (packet::IsReliablePacketHeader(*gamePacketHeader))
+		if (packet::IsReliablePacketHeader(*gamePacketHeader) || packet::IsAuthenticatedPacketHeader(*gamePacketHeader))
 		{
 			return std::nullopt;
 		}

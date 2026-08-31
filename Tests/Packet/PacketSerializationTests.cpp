@@ -745,7 +745,7 @@ namespace
 			static_cast<char>(0x03),
 			static_cast<char>(0x00),
 
-			static_cast<char>(0x04),
+			static_cast<char>(0x05),
 			static_cast<char>(0x00),
 
 			static_cast<char>(0x04),

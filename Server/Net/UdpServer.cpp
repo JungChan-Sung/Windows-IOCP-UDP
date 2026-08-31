@@ -24,6 +24,7 @@
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Control/ControlPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
+#include <Common/Packet/PacketAuthenticationPolicy.h>
 #include <Common/Packet/PacketReliability.h>
 #include <Common/Packet/PacketSerialization.h>
 #include <Common/String/StringFormat.h>
@@ -820,24 +821,83 @@ namespace server::net
 		using DispatchResult = protocol::UdpPacketDispatcher::DispatchResult;
 		using DispatchStatus = protocol::UdpPacketDispatcher::DispatchStatus;
 
-		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
-		if (!packetHeader.has_value())
+		const std::optional<common::packet::PacketHeader> receivedHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
+		if (!receivedHeader.has_value())
 		{
 			return packetDispatcher_.Dispatch(endpointKey, packetData, packetSize);
 		}
 
-		const bool isReliable = common::packet::IsReliablePacketHeader(*packetHeader);
+		const bool requiresAuthentication = common::packet::RequiresClientPacketAuthentication(receivedHeader->type);
+
+		const char* dispatchPacketData = packetData;
+		int dispatchPacketSize = packetSize;
+
+		std::optional<common::packet::PacketBuffer> authenticatedPacketBuffer;
+
+		if (!requiresAuthentication)
+		{
+			if (common::packet::IsAuthenticatedPacketHeader(*receivedHeader))
+			{
+				return DispatchResult{
+					.status = DispatchStatus::InvalidPacketHeader,
+					.packetType = receivedHeader->type,
+					.actualPacketSize = packetSize,
+				};
+			}
+		}
+		else
+		{
+			ReliableUdpSessionRegistry::AuthenticateIncomingPacketResult authenticationResult{};
+
+			{
+				std::scoped_lock lock(stateMutex_);
+
+				authenticationResult = reliableUdpSessionRegistry_.AuthenticateIncomingPacket(endpointKey, packetData, packetSize);
+			}
+
+			if (authenticationResult.status != ReliableUdpSessionRegistry::AuthenticateIncomingPacketStatus::Succeeded)
+			{
+				return DispatchResult{
+					.status = DispatchStatus::InvalidPacketHeader,
+					.packetType = receivedHeader->type,
+					.actualPacketSize = packetSize,
+				};
+			}
+
+			authenticatedPacketBuffer = std::move(authenticationResult.packetBuffer);
+			dispatchPacketData = authenticatedPacketBuffer->data();
+			dispatchPacketSize = static_cast<int>(authenticatedPacketBuffer->size());
+		}
+
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(
+			dispatchPacketData,
+			dispatchPacketSize
+		);
+		if (!packetHeader.has_value())
+		{
+			return DispatchResult{
+				.status = DispatchStatus::InvalidPacketHeader,
+				.packetType = std::nullopt,
+				.actualPacketSize = dispatchPacketSize,
+			};
+		}
+
+		const bool isReliable =	common::packet::IsReliablePacketHeader(*packetHeader);
 		if (!common::packet::IsPacketTransportReliabilityValid(packetHeader->type, isReliable))
 		{
-			return DispatchResult{ DispatchStatus::InvalidPacketHeader, packetHeader->type, packetSize };
+			return DispatchResult{
+				.status = DispatchStatus::InvalidPacketHeader,
+				.packetType = packetHeader->type,
+				.actualPacketSize = dispatchPacketSize,
+			};
 		}
 
 		if (isReliable)
 		{
-			return DispatchReliablePacket(endpointKey, packetData, packetSize);
+			return DispatchReliablePacket(endpointKey, dispatchPacketData, dispatchPacketSize);
 		}
 
-		return packetDispatcher_.Dispatch(endpointKey, packetData, packetSize);
+		return packetDispatcher_.Dispatch(endpointKey, dispatchPacketData, dispatchPacketSize);
 	}
 
 	protocol::UdpPacketDispatcher::DispatchResult UdpServer::DispatchReliablePacket(const EndpointKey& endpointKey, const char* packetData, int packetSize)
@@ -1135,7 +1195,7 @@ namespace server::net
 			{
 				const service::PeerSessionService::JoinResult& joinResult = authenticatedJoinResult.joinResult;
 
-				static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp));
+				static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp, packet.sessionToken));
 
 				matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
 					joinResult.roomId,

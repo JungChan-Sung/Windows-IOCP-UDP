@@ -137,6 +137,13 @@ namespace client::net
 		ClearAccountDataUnlocked();
 	}
 
+	common::net::SessionToken AccountLoginState::GetSessionToken() const
+	{
+		std::scoped_lock lock(mutex_);
+
+		return sessionToken_;
+	}
+
 	AccountLoginState::Snapshot AccountLoginState::GetSnapshot() const
 	{
 		std::scoped_lock lock(mutex_);

@@ -9,6 +9,7 @@
 #include <string_view>
 #include <variant>
 
+#include <Common/Net/Auth/PacketAuthentication.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Game/InputFlags.h>
 #include <Common/Game/GameTypes.h>
@@ -86,6 +87,7 @@ namespace client::net
 		std::atomic<bool> isRunning_ = false;
 		std::atomic<bool> leaveResponseReceived_ = false;
 		std::atomic<ServerDisconnectReason> serverDisconnectReason_ = ServerDisconnectReason::None;
+		std::atomic<common::net::PacketAuthenticationSequence> nextPacketAuthenticationSequence_ = 1;
 
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
@@ -138,6 +140,8 @@ namespace client::net
 	private:
 		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
+
+		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildAuthenticatedPacket(common::packet::ConstPacketSpan packet);
 
 		[[nodiscard]] bool SendPacket(const void* packetData, int packetSize);
 		[[nodiscard]] bool SendAccountLoginRequest(const common::packet::AccountLoginRequestPacket& packet);

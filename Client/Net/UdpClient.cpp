@@ -8,6 +8,7 @@
 #include <utility>
 #include <variant>
 
+#include <Common/Net/Auth/AuthenticatedUdpPacket.h>
 #include <Common/Net/Reliable/ReliableUdpPacketBuilder.h>
 #include <Common/Net/Reliable/ReliableUdpSession.h>
 #include <Common/Net/SessionToken.h>
@@ -16,8 +17,9 @@
 #include <Common/Packet/Account/AccountPacket.h>
 #include <Common/Packet/Control/ControlPacket.h>
 #include <Common/Packet/Game/GamePacket.h>
-#include <Common/Packet/PacketSerialization.h>
+#include <Common/Packet/PacketAuthenticationPolicy.h>
 #include <Common/Packet/PacketReliability.h>
+#include <Common/Packet/PacketSerialization.h>
 #include <Common/String/StringFormat.h>
 
 #include <Client/Game/ClientWorld.h>
@@ -109,6 +111,9 @@ namespace client::net
 
 		world_ = &world;
 		inputSequence_ = 0;
+
+		nextPacketAuthenticationSequence_.store(1);
+
 		leaveResponseReceived_.store(false);
 		serverDisconnectReason_.store(ServerDisconnectReason::None);
 
@@ -156,6 +161,7 @@ namespace client::net
 		{
 			accountLoginState_.Reset();
 			leaveResponseReceived_.store(false);
+			nextPacketAuthenticationSequence_.store(1);
 			serverDisconnectReason_.store(ServerDisconnectReason::None);
 			return;
 		}
@@ -164,6 +170,8 @@ namespace client::net
 
 		world_ = nullptr;
 		inputSequence_ = 0;
+
+		nextPacketAuthenticationSequence_.store(1);
 
 		{
 			std::scoped_lock lock(reliableSessionMutex_);
@@ -399,6 +407,18 @@ namespace client::net
 		iocpTransport_.Stop();
 	}
 
+	std::optional<common::packet::PacketBuffer> UdpClient::BuildAuthenticatedPacket(common::packet::ConstPacketSpan packet)
+	{
+		const common::net::SessionToken sessionToken = accountLoginState_.GetSessionToken();
+		if (!common::net::IsValidSessionToken(sessionToken))
+		{
+			return std::nullopt;
+		}
+
+		const common::net::PacketAuthenticationSequence sequence = nextPacketAuthenticationSequence_.fetch_add(1);
+		return common::net::BuildAuthenticatedUdpPacket(sessionToken, sequence, packet);
+	}
+
 	bool UdpClient::SendPacket(const void* packetData, int packetSize)
 	{
 		switch (transportType_)
@@ -427,11 +447,10 @@ namespace client::net
 
 	bool UdpClient::SendSerializedPacket(common::packet::ConstPacketSpan serializedPacket)
 	{
-		const std::optional<common::packet::PacketHeader> packetHeader =
-			common::packet::DeserializePacketHeader(
-				serializedPacket.data(),
-				static_cast<int>(serializedPacket.size())
-			);
+		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(
+			serializedPacket.data(),
+			static_cast<int>(serializedPacket.size())
+		);
 		if (!packetHeader.has_value())
 		{
 			return false;
@@ -440,6 +459,11 @@ namespace client::net
 		if (common::packet::IsReliablePacketHeader(*packetHeader))
 		{
 			return false;
+		}
+
+		if (!common::packet::RequiresClientPacketAuthentication(packetHeader->type))
+		{
+			return SendPacket(serializedPacket.data(), static_cast<int>(serializedPacket.size()));
 		}
 
 		if (common::packet::GetPacketHeaderProtocolVersion(*packetHeader) != common::packet::protocolVersion)
@@ -452,39 +476,49 @@ namespace client::net
 			return false;
 		}
 
-		if (common::packet::IsReliablePacketType(packetHeader->type))
+		const std::optional<common::packet::PacketBuffer> authenticatedPacketBuffer = BuildAuthenticatedPacket(serializedPacket);
+		if (!authenticatedPacketBuffer.has_value())
 		{
-			return SendReliablePacket(serializedPacket);
+			return false;
 		}
 
-		return SendPacket(serializedPacket.data(), static_cast<int>(serializedPacket.size()));
+		return SendPacket(authenticatedPacketBuffer->data(), static_cast<int>(authenticatedPacketBuffer->size()));
 	}
 
 	bool UdpClient::SendReliablePacket(common::packet::ConstPacketSpan serializedGamePacket)
 	{
-		std::optional<common::packet::PacketBuffer> reliablePacketBuffer;
+		std::optional<common::packet::PacketBuffer> authenticatedPacketBuffer;
 
 		{
 			std::scoped_lock lock(reliableSessionMutex_);
 
 			const common::net::ReliableSequence sequence = reliableSession_.AllocateOutgoingSequence();
 			const common::net::ReliableUdpPacketHeader reliableHeader = reliableSession_.BuildOutgoingHeader(sequence);
-
-			reliablePacketBuffer = common::net::BuildReliableUdpPacket(reliableHeader, serializedGamePacket);
+			const std::optional<common::packet::PacketBuffer> reliablePacketBuffer = common::net::BuildReliableUdpPacket(
+				reliableHeader,
+				serializedGamePacket
+			);
 			if (!reliablePacketBuffer.has_value())
 			{
 				return false;
 			}
 
-			const common::net::ReliableUdpSession::TimePoint currentTime = common::time::Clock::now();
+			authenticatedPacketBuffer = BuildAuthenticatedPacket(common::packet::ConstPacketSpan(
+				reliablePacketBuffer->data(),
+				reliablePacketBuffer->size()
+			));
+			if (!authenticatedPacketBuffer.has_value())
+			{
+				return false;
+			}
 
-			if (!reliableSession_.RegisterSentPacket(sequence, *reliablePacketBuffer, currentTime))
+			if (!reliableSession_.RegisterSentPacket(sequence, *authenticatedPacketBuffer, common::time::Clock::now()))
 			{
 				return false;
 			}
 		}
 
-		if (!SendPacket(reliablePacketBuffer->data(), static_cast<int>(reliablePacketBuffer->size())))
+		if (!SendPacket(authenticatedPacketBuffer->data(), static_cast<int>(authenticatedPacketBuffer->size())))
 		{
 			LogWarning("Initial reliable packet send failed. Packet remains queued for retry.");
 		}
@@ -507,7 +541,16 @@ namespace client::net
 			return false;
 		}
 
-		return SendPacket(ackPacketBuffer->data(), static_cast<int>(ackPacketBuffer->size()));
+		const std::optional<common::packet::PacketBuffer> authenticatedPacketBuffer = BuildAuthenticatedPacket(common::packet::ConstPacketSpan(
+			ackPacketBuffer->data(),
+			ackPacketBuffer->size()
+		));
+		if (!authenticatedPacketBuffer.has_value())
+		{
+			return false;
+		}
+
+		return SendPacket(authenticatedPacketBuffer->data(), static_cast<int>(authenticatedPacketBuffer->size()));
 	}
 
 	void UdpClient::RegisterPacketHandlers()

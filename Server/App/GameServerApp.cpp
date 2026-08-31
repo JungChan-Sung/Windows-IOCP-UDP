@@ -1,6 +1,7 @@
 #include "GameServerApp.h"
 
 #include <chrono>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -319,6 +320,63 @@ namespace server::app
 			logger_.Info(diagnostics::ServerStatusReporter::BuildMessage(snapshot));
 			return false;
 		}
+
+		case admin::ServerAdminCommandType::Players:
+		{
+			const diagnostics::ServerDetailSnapshot snapshot = udpServer_.CaptureDetailSnapshot();
+			if (snapshot.playerList.empty())
+			{
+				logger_.Info("Players: none.");
+				return false;
+			}
+
+			{
+				std::ostringstream stream;
+				stream << "Players: " << snapshot.playerList.size();
+				logger_.Info(stream.str());
+			}
+
+			for (const diagnostics::ServerPlayerDetailSnapshot& player : snapshot.playerList)
+			{
+				std::ostringstream stream;
+				stream << "PlayerId=" << player.playerId
+					<< ", AccountId=" << player.accountId
+					<< ", PersistentPlayerId=" << player.persistentPlayerId
+					<< ", Nickname=" << player.nickname
+					<< ", RoomId=" << player.roomId
+					<< ", AcceptedInput=" << player.lastAcceptedInputSequence
+					<< ", ProcessedInput=" << player.lastProcessedInputSequence;
+				logger_.Info(stream.str());
+			}
+
+			return false;
+		}
+
+		case admin::ServerAdminCommandType::Rooms:
+		{
+			const diagnostics::ServerDetailSnapshot snapshot = udpServer_.CaptureDetailSnapshot();
+			if (snapshot.roomList.empty())
+			{
+				logger_.Info("Rooms: none.");
+				return false;
+			}
+
+			{
+				std::ostringstream stream;
+				stream << "Rooms: " << snapshot.roomList.size();
+				logger_.Info(stream.str());
+			}
+
+			for (const diagnostics::ServerRoomDetailSnapshot& room : snapshot.roomList)
+			{
+				std::ostringstream stream;
+				stream << "RoomId=" << room.roomId << ", Members=" << room.memberCount;
+				logger_.Info(stream.str());
+			}
+
+			return false;
+		}
+
 
 		case admin::ServerAdminCommandType::Stop:
 			logger_.Info("Server stop requested by admin command.");

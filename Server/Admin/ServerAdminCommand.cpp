@@ -69,6 +69,20 @@ namespace server::admin
 			};
 		}
 
+		if (EqualsIgnoreCase(commandLine, "players"))
+		{
+			return ServerAdminCommand{
+				.type = ServerAdminCommandType::Players,
+			};
+		}
+
+		if (EqualsIgnoreCase(commandLine, "rooms"))
+		{
+			return ServerAdminCommand{
+				.type = ServerAdminCommandType::Rooms,
+			};
+		}
+
 		if (EqualsIgnoreCase(commandLine, "stop"))
 		{
 			return ServerAdminCommand{

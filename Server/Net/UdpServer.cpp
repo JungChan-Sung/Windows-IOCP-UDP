@@ -2,6 +2,7 @@
 
 #include <WS2tcpip.h>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -444,6 +445,48 @@ namespace server::net
 		snapshot.udpSendCompletedByteCount = transportMetrics.sendCompletedByteCount;
 
 		snapshot.metrics = serverMetricsCollector_.CaptureSnapshot();
+
+		return snapshot;
+	}
+
+	diagnostics::ServerDetailSnapshot UdpServer::CaptureDetailSnapshot() const
+	{
+		diagnostics::ServerDetailSnapshot snapshot{};
+
+		std::scoped_lock lock(stateMutex_);
+
+		snapshot.playerList.reserve(peerRoomManager_.GetJoinedPeerCount());
+		snapshot.roomList.reserve(peerRoomManager_.GetRoomCount());
+
+		std::unordered_map<RoomId, std::size_t> roomMemberCountTable;
+		roomMemberCountTable.reserve(peerRoomManager_.GetRoomCount());
+		peerRoomManager_.ForEachJoinedPeer(
+			[&snapshot, &roomMemberCountTable](const service::PeerState& peerState)
+			{
+				snapshot.playerList.push_back(diagnostics::ServerPlayerDetailSnapshot{
+					.playerId = peerState.playerId,
+					.accountId = peerState.accountId,
+					.persistentPlayerId = peerState.persistentPlayerId,
+					.nickname = peerState.nickname,
+					.roomId = peerState.roomId,
+					.lastAcceptedInputSequence = peerState.lastAcceptedInputSequence,
+					.lastProcessedInputSequence = peerState.lastProcessedInputSequence,
+					});
+
+				++roomMemberCountTable[peerState.roomId];
+			}
+		);
+
+		for (const auto& [roomId, memberCount] : roomMemberCountTable)
+		{
+			snapshot.roomList.push_back(diagnostics::ServerRoomDetailSnapshot{
+				.roomId = roomId,
+				.memberCount = memberCount,
+				});
+		}
+
+		std::ranges::sort(snapshot.playerList, {}, &diagnostics::ServerPlayerDetailSnapshot::playerId);
+		std::ranges::sort(snapshot.roomList, {}, &diagnostics::ServerRoomDetailSnapshot::roomId);
 
 		return snapshot;
 	}

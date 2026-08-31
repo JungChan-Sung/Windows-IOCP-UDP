@@ -9,6 +9,8 @@ namespace server::admin
 		Unknown,
 		Help,
 		Status,
+		Players,
+		Rooms,
 		Stop,
 	};
 

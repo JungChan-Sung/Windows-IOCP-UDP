@@ -17,6 +17,7 @@
 
 #include <Server/Config/ServerConfig.h>
 #include <Server/Diagnostics/InvalidPacketLogLimiter.h>
+#include <Server/Diagnostics/ServerDetailSnapshot.h>
 #include <Server/Diagnostics/ServerMetricsCollector.h>
 #include <Server/Diagnostics/ServerStatusReporter.h>
 #include <Server/Diagnostics/ServerStatusSnapshot.h>
@@ -134,7 +135,9 @@ namespace server::net
 		void DetachAccountLoginPacketHandler() noexcept;
 
 		[[nodiscard]] game::CompletedMatchList ExtractCompletedMatches();
+
 		[[nodiscard]] diagnostics::ServerStatusSnapshot CaptureStatusSnapshot() const;
+		[[nodiscard]] diagnostics::ServerDetailSnapshot CaptureDetailSnapshot() const;
 
 	private:
 		void UpdateGameTick();

@@ -40,6 +40,30 @@ namespace
 		);
 	}
 
+	void RunPlayersCommandTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("players");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Players,
+			"ServerAdminCommand: parses players"
+		);
+	}
+
+	void RunRoomsCommandTest(tests::DebugTestResult& result)
+	{
+		const server::admin::ServerAdminCommand command =
+			server::admin::ParseServerAdminCommand("rooms");
+
+		tests::Expect(
+			result,
+			command.type == server::admin::ServerAdminCommandType::Rooms,
+			"ServerAdminCommand: parses rooms"
+		);
+	}
+
 	void RunStopCommandTest(tests::DebugTestResult& result)
 	{
 		const server::admin::ServerAdminCommand command =
@@ -67,11 +91,11 @@ namespace
 	void RunCaseInsensitiveTest(tests::DebugTestResult& result)
 	{
 		const server::admin::ServerAdminCommand command =
-			server::admin::ParseServerAdminCommand("HeLp");
+			server::admin::ParseServerAdminCommand("PlAyErS");
 
 		tests::Expect(
 			result,
-			command.type == server::admin::ServerAdminCommandType::Help,
+			command.type == server::admin::ServerAdminCommandType::Players,
 			"ServerAdminCommand: command names are case insensitive"
 		);
 	}
@@ -110,6 +134,8 @@ namespace tests::server
 		RunEmptyCommandTest(result);
 		RunHelpCommandTest(result);
 		RunStatusCommandTest(result);
+		RunPlayersCommandTest(result);
+		RunRoomsCommandTest(result);
 		RunStopCommandTest(result);
 		RunWhitespaceTrimTest(result);
 		RunCaseInsensitiveTest(result);

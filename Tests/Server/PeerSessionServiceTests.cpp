@@ -1844,6 +1844,485 @@ namespace
 		);
 	}
 
+	void RunJoinAuthenticatedRecoverablePeerNewEndpointTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry
+			authenticatedAccountRegistry;
+
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey previousEndpointKey =
+			MakeEndpointKey(26);
+
+		const common::net::EndpointKey nextEndpointKey =
+			MakeEndpointKey(27);
+
+		const TimePoint joinTime = Clock::now();
+
+		static_cast<void>(
+			authenticatedAccountRegistry.Upsert(
+				previousEndpointKey,
+				1001,
+				testPersistentPlayerId,
+				testSessionToken,
+				"nickname",
+				joinTime
+			)
+			);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult firstJoinResult =
+			service.JoinAuthenticatedPeer(
+				previousEndpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				joinTime
+			);
+
+		server::game::PlayerState* playerState =
+			gameWorld.FindPlayer(firstJoinResult.joinResult.playerId);
+
+		tests::Expect(
+			result,
+			playerState != nullptr,
+			"PeerSessionService: new endpoint recovery player exists"
+		);
+
+		if (playerState == nullptr)
+		{
+			return;
+		}
+
+		playerState->x = 321.0F;
+		playerState->y = 654.0F;
+
+		const TimePoint recoverableTime =
+			joinTime + std::chrono::seconds(10);
+
+		static_cast<void>(
+			service.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				std::chrono::seconds(5),
+				peerRoomManager,
+				gameWorld
+			)
+			);
+
+		const TimePoint recoveryTime =
+			recoverableTime + std::chrono::seconds(3);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult recoveryResult =
+			service.JoinAuthenticatedPeer(
+				nextEndpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				recoveryTime
+			);
+
+		tests::Expect(
+			result,
+			recoveryResult.status
+			== server::service::PeerSessionService::
+			JoinAuthenticatedPeerStatus::Recovered,
+			"PeerSessionService: recoverable peer recovered at new endpoint"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.shouldSendResponse,
+			"PeerSessionService: recovered peer sends response"
+		);
+
+		tests::Expect(
+			result,
+			!recoveryResult.joinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: recovered peer does not broadcast joined"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.playerId
+			== firstJoinResult.joinResult.playerId,
+			"PeerSessionService: recovered peer preserves player id"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.persistentPlayerId
+			== testPersistentPlayerId,
+			"PeerSessionService: recovered peer preserves persistent player id"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.roomId == 1,
+			"PeerSessionService: recovered peer preserves room"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.spawnPosition.x == 321.0F,
+			"PeerSessionService: recovered peer returns current x"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.spawnPosition.y == 654.0F,
+			"PeerSessionService: recovered peer returns current y"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindPeer(previousEndpointKey) == nullptr,
+			"PeerSessionService: recovered peer removes previous endpoint"
+		);
+
+		const server::service::PeerState* recoveredPeerState =
+			peerRoomManager.FindJoinedPeer(nextEndpointKey);
+
+		tests::Expect(
+			result,
+			recoveredPeerState != nullptr,
+			"PeerSessionService: recovered peer exists at new endpoint"
+		);
+
+		if (recoveredPeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				recoveredPeerState->playerId
+				== firstJoinResult.joinResult.playerId,
+				"PeerSessionService: recovered peer state preserves player id"
+			);
+
+			tests::Expect(
+				result,
+				recoveredPeerState->sessionToken == testSessionToken,
+				"PeerSessionService: recovered peer state preserves token"
+			);
+
+			tests::Expect(
+				result,
+				recoveredPeerState->connectionState
+				== server::service::PeerConnectionState::Connected,
+				"PeerSessionService: recovered peer becomes connected"
+			);
+
+			tests::Expect(
+				result,
+				recoveredPeerState->lastRecvTime == recoveryTime,
+				"PeerSessionService: recovered peer refreshes receive time"
+			);
+
+			tests::Expect(
+				result,
+				recoveredPeerState->recoverableSince
+				== TimePoint{},
+				"PeerSessionService: recovered peer clears recoverable time"
+			);
+		}
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetPeerCount() == 1,
+			"PeerSessionService: recovered peer count preserved"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetRoomMemberCount(1) == 1,
+			"PeerSessionService: recovered room member count preserved"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 1,
+			"PeerSessionService: recovered player count preserved"
+		);
+
+		tests::Expect(
+			result,
+			authenticatedAccountRegistry.GetCount() == 0,
+			"PeerSessionService: recovery does not require authenticated account entry"
+		);
+	}
+
+	void RunJoinAuthenticatedRecoverablePeerSameEndpointTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry
+			authenticatedAccountRegistry;
+
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey endpointKey =
+			MakeEndpointKey(28);
+
+		const TimePoint joinTime = Clock::now();
+
+		static_cast<void>(
+			authenticatedAccountRegistry.Upsert(
+				endpointKey,
+				1001,
+				testPersistentPlayerId,
+				testSessionToken,
+				"nickname",
+				joinTime
+			)
+			);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult firstJoinResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				joinTime
+			);
+
+		const TimePoint recoverableTime =
+			joinTime + std::chrono::seconds(10);
+
+		static_cast<void>(
+			service.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				std::chrono::seconds(5),
+				peerRoomManager,
+				gameWorld
+			)
+			);
+
+		const TimePoint recoveryTime =
+			recoverableTime + std::chrono::seconds(2);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult recoveryResult =
+			service.JoinAuthenticatedPeer(
+				endpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				recoveryTime
+			);
+
+		tests::Expect(
+			result,
+			recoveryResult.status
+			== server::service::PeerSessionService::
+			JoinAuthenticatedPeerStatus::Recovered,
+			"PeerSessionService: recoverable peer recovered at same endpoint"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.shouldSendResponse,
+			"PeerSessionService: same endpoint recovery sends response"
+		);
+
+		tests::Expect(
+			result,
+			!recoveryResult.joinResult.shouldBroadcastPlayerJoined,
+			"PeerSessionService: same endpoint recovery no joined broadcast"
+		);
+
+		tests::Expect(
+			result,
+			recoveryResult.joinResult.playerId
+			== firstJoinResult.joinResult.playerId,
+			"PeerSessionService: same endpoint recovery preserves player id"
+		);
+
+		const server::service::PeerState* peerState =
+			peerRoomManager.FindJoinedPeer(endpointKey);
+
+		tests::Expect(
+			result,
+			peerState != nullptr,
+			"PeerSessionService: same endpoint recovered peer exists"
+		);
+
+		if (peerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				peerState->connectionState
+				== server::service::PeerConnectionState::Connected,
+				"PeerSessionService: same endpoint recovered peer connected"
+			);
+
+			tests::Expect(
+				result,
+				peerState->lastRecvTime == recoveryTime,
+				"PeerSessionService: same endpoint recovery refreshes receive time"
+			);
+
+			tests::Expect(
+				result,
+				peerState->recoverableSince == TimePoint{},
+				"PeerSessionService: same endpoint recovery clears recoverable time"
+			);
+		}
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetPeerCount() == 1,
+			"PeerSessionService: same endpoint recovery peer count"
+		);
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 1,
+			"PeerSessionService: same endpoint recovery player count"
+		);
+	}
+
+	void RunJoinAuthenticatedRecoverablePeerRejectsDifferentTokenTest(
+		tests::DebugTestResult& result
+	)
+	{
+		server::service::PeerSessionService service;
+		server::service::AuthenticatedAccountRegistry
+			authenticatedAccountRegistry;
+
+		server::service::PeerRoomManager peerRoomManager;
+		server::game::GameWorld gameWorld;
+		common::game::GameRuleConfig gameRuleConfig{};
+
+		const common::net::EndpointKey previousEndpointKey =
+			MakeEndpointKey(29);
+
+		const common::net::EndpointKey nextEndpointKey =
+			MakeEndpointKey(30);
+
+		const TimePoint joinTime = Clock::now();
+
+		static_cast<void>(
+			authenticatedAccountRegistry.Upsert(
+				previousEndpointKey,
+				1001,
+				testPersistentPlayerId,
+				testSessionToken,
+				"nickname",
+				joinTime
+			)
+			);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult firstJoinResult =
+			service.JoinAuthenticatedPeer(
+				previousEndpointKey,
+				testSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				joinTime
+			);
+
+		const TimePoint recoverableTime =
+			joinTime + std::chrono::seconds(10);
+
+		static_cast<void>(
+			service.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				std::chrono::seconds(5),
+				peerRoomManager,
+				gameWorld
+			)
+			);
+
+		const server::service::PeerSessionService::
+			JoinAuthenticatedPeerResult recoveryResult =
+			service.JoinAuthenticatedPeer(
+				nextEndpointKey,
+				otherSessionToken,
+				1,
+				authenticatedAccountRegistry,
+				peerRoomManager,
+				gameWorld,
+				gameRuleConfig,
+				recoverableTime + std::chrono::seconds(1)
+			);
+
+		tests::Expect(
+			result,
+			recoveryResult.status
+			== server::service::PeerSessionService::
+			JoinAuthenticatedPeerStatus::Unauthenticated,
+			"PeerSessionService: different recovery token rejected"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindPeer(nextEndpointKey) == nullptr,
+			"PeerSessionService: rejected recovery does not create new endpoint"
+		);
+
+		const server::service::PeerState* recoverablePeerState =
+			peerRoomManager.FindJoinedPeer(previousEndpointKey);
+
+		tests::Expect(
+			result,
+			recoverablePeerState != nullptr,
+			"PeerSessionService: rejected recovery preserves previous peer"
+		);
+
+		if (recoverablePeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				recoverablePeerState->playerId
+				== firstJoinResult.joinResult.playerId,
+				"PeerSessionService: rejected recovery preserves player id"
+			);
+
+			tests::Expect(
+				result,
+				recoverablePeerState->connectionState
+				== server::service::PeerConnectionState::Recoverable,
+				"PeerSessionService: rejected recovery remains recoverable"
+			);
+
+			tests::Expect(
+				result,
+				recoverablePeerState->sessionToken == testSessionToken,
+				"PeerSessionService: rejected recovery preserves session token"
+			);
+		}
+
+		tests::Expect(
+			result,
+			gameWorld.GetPlayerCount() == 1,
+			"PeerSessionService: rejected recovery preserves player"
+		);
+	}
+
 	void RunJoinAuthenticatedPeerRejectsUnauthenticatedTest(
 		tests::DebugTestResult& result
 	)
@@ -1983,6 +2462,9 @@ namespace tests::server
 
 		RunJoinAuthenticatedPeerTest(result);
 		RunJoinAuthenticatedExistingPeerTest(result);
+		RunJoinAuthenticatedRecoverablePeerNewEndpointTest(result);
+		RunJoinAuthenticatedRecoverablePeerSameEndpointTest(result);
+		RunJoinAuthenticatedRecoverablePeerRejectsDifferentTokenTest(result);
 		RunJoinAuthenticatedPeerRejectsUnauthenticatedTest(result);
 		RunJoinAuthenticatedExistingPeerRejectsTokenMismatchTest(result);
 

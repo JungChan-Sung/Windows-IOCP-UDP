@@ -47,6 +47,7 @@ namespace server::service
 		enum class JoinAuthenticatedPeerStatus
 		{
 			Joined,
+			Recovered,
 			ExistingPeer,
 			Unauthenticated,
 			Rejected,
@@ -146,6 +147,8 @@ namespace server::service
 		) const;
 
 	private:
+		[[nodiscard]] JoinResult BuildCurrentJoinResult(const PeerState& peerState, const game::GameWorld& gameWorld) const noexcept;
+
 		[[nodiscard]] game::PlayerState CreateInitialPlayerState(
 			PlayerId playerId,
 			const common::game::SpawnPoint& spawnPosition,

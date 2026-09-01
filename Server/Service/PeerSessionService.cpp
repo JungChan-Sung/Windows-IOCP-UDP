@@ -18,7 +18,37 @@ namespace server::service
 		const PeerState* existingPeerState = peerRoomManager.FindJoinedPeer(endpointKey);
 		if (existingPeerState != nullptr)
 		{
-			// JoinResponse 유실 등에 의한 기존 peer의 재요청.
+			if (existingPeerState->connectionState == PeerConnectionState::Recoverable)
+			{
+				if (existingPeerState->sessionToken != sessionToken)
+				{
+					return JoinAuthenticatedPeerResult{
+						.status = JoinAuthenticatedPeerStatus::Rejected,
+					};
+				}
+
+				const JoinResult joinResult = BuildCurrentJoinResult(*existingPeerState, gameWorld);
+				if (!joinResult.shouldSendResponse)
+				{
+					return JoinAuthenticatedPeerResult{
+						.status = JoinAuthenticatedPeerStatus::Rejected,
+					};
+				}
+
+				if (!peerRoomManager.RebindRecoverablePeer(endpointKey, endpointKey, currentTime))
+				{
+					return JoinAuthenticatedPeerResult{
+						.status = JoinAuthenticatedPeerStatus::Rejected,
+					};
+				}
+
+				return JoinAuthenticatedPeerResult{
+					.status = JoinAuthenticatedPeerStatus::Recovered,
+					.joinResult = joinResult,
+				};
+			}
+
+			// JoinResponse 유실 등에 의한 기존 Connected peer의 재요청.
 			// 요청 token은 JoinPeer()에서 기존 PeerState token과 비교한다.
 			authenticatedIdentity.accountId = existingPeerState->accountId;
 			authenticatedIdentity.persistentPlayerId = existingPeerState->persistentPlayerId;
@@ -27,6 +57,31 @@ namespace server::service
 		}
 		else
 		{
+			const PeerState* recoverablePeerState = peerRoomManager.FindRecoverablePeerBySessionToken(sessionToken);
+			if (recoverablePeerState != nullptr)
+			{
+				const JoinResult joinResult = BuildCurrentJoinResult(*recoverablePeerState, gameWorld);
+				if (!joinResult.shouldSendResponse)
+				{
+					return JoinAuthenticatedPeerResult{
+						.status = JoinAuthenticatedPeerStatus::Rejected,
+					};
+				}
+
+				const EndpointKey previousEndpointKey = recoverablePeerState->endpointKey;
+				if (!peerRoomManager.RebindRecoverablePeer(previousEndpointKey, endpointKey, currentTime))
+				{
+					return JoinAuthenticatedPeerResult{
+						.status = JoinAuthenticatedPeerStatus::Rejected,
+					};
+				}
+
+				return JoinAuthenticatedPeerResult{
+					.status = JoinAuthenticatedPeerStatus::Recovered,
+					.joinResult = joinResult,
+				};
+			}
+
 			const AuthenticatedAccount* authenticatedAccount = authenticatedAccountRegistry.Find(endpointKey, sessionToken);
 			if (authenticatedAccount == nullptr)
 			{
@@ -99,16 +154,9 @@ namespace server::service
 
 			existingPeerState->lastRecvTime = currentTime;
 
-			const game::PlayerState* existingPlayerState = gameWorld.FindPlayer(existingPeerState->playerId);
-			if (existingPlayerState != nullptr)
+			joinResult = BuildCurrentJoinResult(*existingPeerState, gameWorld);
+			if (joinResult.shouldSendResponse)
 			{
-				joinResult.shouldSendResponse = true;
-				joinResult.shouldBroadcastPlayerJoined = false;
-				joinResult.playerId = existingPeerState->playerId;
-				joinResult.persistentPlayerId = existingPeerState->persistentPlayerId;
-				joinResult.roomId = existingPeerState->roomId;
-				joinResult.spawnPosition.x = existingPlayerState->x;
-				joinResult.spawnPosition.y = existingPlayerState->y;
 				return joinResult;
 			}
 
@@ -273,6 +321,27 @@ namespace server::service
 		}
 
 		return expiredPeerList;
+	}
+
+	PeerSessionService::JoinResult PeerSessionService::BuildCurrentJoinResult(const PeerState& peerState, const game::GameWorld& gameWorld) const noexcept
+	{
+		JoinResult joinResult{};
+
+		const game::PlayerState* playerState = gameWorld.FindPlayer(peerState.playerId);
+		if (playerState == nullptr)
+		{
+			return joinResult;
+		}
+
+		joinResult.shouldSendResponse = true;
+		joinResult.shouldBroadcastPlayerJoined = false;
+		joinResult.playerId = peerState.playerId;
+		joinResult.persistentPlayerId = peerState.persistentPlayerId;
+		joinResult.roomId = peerState.roomId;
+		joinResult.spawnPosition.x = playerState->x;
+		joinResult.spawnPosition.y = playerState->y;
+
+		return joinResult;
 	}
 
 	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const common::game::SpawnPoint& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept

@@ -29,6 +29,14 @@ namespace
 		tests::Expect(
 			result,
 			common::packet::RequiresClientPacketAuthentication(
+				common::packet::PacketType::None
+			),
+			"PacketAuthenticationPolicy: reliable ack-only packet requires authentication"
+		);
+
+		tests::Expect(
+			result,
+			common::packet::RequiresClientPacketAuthentication(
 				common::packet::PacketType::InputCommand
 			),
 			"PacketAuthenticationPolicy: InputCommand requires authentication"

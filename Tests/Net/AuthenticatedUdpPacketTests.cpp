@@ -9,6 +9,7 @@
 #include <Common/Net/SessionToken.h>
 #include <Common/Packet/Game/CommandPacket.h>
 #include <Common/Packet/Game/SessionPacket.h>
+#include <Common/Packet/PacketConstants.h>
 #include <Common/Packet/PacketSerialization.h>
 
 namespace
@@ -451,6 +452,103 @@ namespace
 			"AuthenticatedUdpPacket: tampered authentication sequence rejected"
 		);
 	}
+
+	void RunTamperedReliableHeaderRejectedTest(tests::DebugTestResult& result)
+	{
+		const common::packet::LeaveRequestPacket packet{};
+
+		const std::optional<common::packet::PacketBuffer> serializedPacket =
+			common::packet::SerializePacket(packet);
+
+		tests::Expect(
+			result,
+			serializedPacket.has_value(),
+			"AuthenticatedUdpPacket: reliable header tamper base serialize"
+		);
+
+		if (!serializedPacket.has_value())
+		{
+			return;
+		}
+
+		common::net::ReliableUdpPacketHeader reliableHeader{};
+		reliableHeader.sequence = 10;
+		reliableHeader.ackSequence = 20;
+		reliableHeader.ackBitfield = 0x00000005;
+
+		const std::optional<common::packet::PacketBuffer> reliablePacket =
+			common::net::BuildReliableUdpPacket(
+				reliableHeader,
+				common::packet::ConstPacketSpan(
+					serializedPacket->data(),
+					serializedPacket->size()
+				)
+			);
+
+		tests::Expect(
+			result,
+			reliablePacket.has_value(),
+			"AuthenticatedUdpPacket: reliable header tamper wrapper"
+		);
+
+		if (!reliablePacket.has_value())
+		{
+			return;
+		}
+
+		std::optional<common::packet::PacketBuffer> authenticatedPacket =
+			common::net::BuildAuthenticatedUdpPacket(
+				MakeSessionToken(),
+				200,
+				common::packet::ConstPacketSpan(
+					reliablePacket->data(),
+					reliablePacket->size()
+				)
+			);
+
+		tests::Expect(
+			result,
+			authenticatedPacket.has_value(),
+			"AuthenticatedUdpPacket: reliable header tamper authenticated"
+		);
+
+		if (!authenticatedPacket.has_value())
+		{
+			return;
+		}
+
+		const std::size_t ackSequenceOffset =
+			common::net::reliableUdpPacketHeaderOffset
+			+ common::packet::uint32WireSize;
+
+		(*authenticatedPacket)[ackSequenceOffset] ^= 0x01;
+
+		const std::optional<common::net::AuthenticatedUdpPacketView> packetView =
+			common::net::ParseAuthenticatedUdpPacket(
+				authenticatedPacket->data(),
+				static_cast<int>(authenticatedPacket->size())
+			);
+
+		tests::Expect(
+			result,
+			packetView.has_value(),
+			"AuthenticatedUdpPacket: reliable header tamper structurally parses"
+		);
+
+		if (!packetView.has_value())
+		{
+			return;
+		}
+
+		tests::Expect(
+			result,
+			!common::net::VerifyAuthenticatedUdpPacket(
+				MakeSessionToken(),
+				*packetView
+			),
+			"AuthenticatedUdpPacket: tampered reliable ack sequence rejected"
+		);
+	}
 }
 
 namespace tests::net
@@ -461,7 +559,9 @@ namespace tests::net
 
 		RunUnreliableRoundTripTest(result);
 		RunReliableRoundTripTest(result);
+
 		RunTamperedPayloadRejectedTest(result);
+		RunTamperedReliableHeaderRejectedTest(result);
 		RunTamperedAuthenticationSequenceRejectedTest(result);
 		RunWrongSessionTokenRejectedTest(result);
 

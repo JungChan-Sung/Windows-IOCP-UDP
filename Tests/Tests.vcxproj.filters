@@ -403,7 +403,7 @@
       <Filter>소스 파일\Net</Filter>
     </ClCompile>
     <ClCompile Include="Packet\PacketAuthenticationPolicyTests.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\Packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -636,7 +636,7 @@
       <Filter>헤더 파일\Net</Filter>
     </ClInclude>
     <ClInclude Include="Packet\PacketAuthenticationPolicyTests.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Packet</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

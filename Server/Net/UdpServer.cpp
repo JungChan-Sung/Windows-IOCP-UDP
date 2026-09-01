@@ -1216,12 +1216,14 @@ namespace server::net
 				config_.gameRule,
 				common::time::Clock::now()
 			);
+			if (authenticatedJoinResult.status == JoinStatus::Joined || authenticatedJoinResult.status == JoinStatus::Recovered)
+			{
+				static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp, packet.sessionToken));
+			}
+
 			if (authenticatedJoinResult.status == JoinStatus::Joined)
 			{
 				const service::PeerSessionService::JoinResult& joinResult = authenticatedJoinResult.joinResult;
-
-				static_cast<void>(reliableUdpSessionRegistry_.Upsert(endpointKey, config_.reliableUdp, packet.sessionToken));
-
 				matchHistoryEntered = matchHistoryTracker_.EnterPlayer(
 					joinResult.roomId,
 					joinResult.persistentPlayerId,
@@ -1257,10 +1259,10 @@ namespace server::net
 		if (!responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response send failed. Endpoint=" << FormatEndpoint(endpointKey)
+			stream << "Join response send failed. Endpoint="
+				<< FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
-
 			LogWarning(stream.str());
 		}
 
@@ -1268,24 +1270,30 @@ namespace server::net
 		{
 			{
 				std::ostringstream stream;
-				stream << "Peer joined. Endpoint=" << FormatEndpoint(endpointKey)
-					<< ", PlayerId=" << joinResult.playerId
-					<< ", RoomId=" << joinResult.roomId;
-
+				stream << "Peer joined. Endpoint=" << FormatEndpoint(endpointKey) << ", PlayerId=" << joinResult.playerId << ", RoomId=" << joinResult.roomId;
 				LogInfo(stream.str());
 			}
 
 			BroadcastPlayerJoined(joinResult.roomId, joinResult.playerId, joinResult.spawnPosition.x, joinResult.spawnPosition.y);
+
+			return;
+		}
+
+		if (authenticatedJoinResult.status == JoinStatus::Recovered)
+		{
+			std::ostringstream stream;
+			stream << "Peer recovered. Endpoint=" << FormatEndpoint(endpointKey) << ", PlayerId=" << joinResult.playerId << ", RoomId=" << joinResult.roomId;
+			LogInfo(stream.str());
 			return;
 		}
 
 		if (responseSent)
 		{
 			std::ostringstream stream;
-			stream << "Join response sent to existing peer. Endpoint=" << FormatEndpoint(endpointKey)
+			stream << "Join response sent to existing peer. Endpoint="
+				<< FormatEndpoint(endpointKey)
 				<< ", PlayerId=" << joinResult.playerId
 				<< ", RoomId=" << joinResult.roomId;
-
 			LogDebug(stream.str());
 		}
 	}

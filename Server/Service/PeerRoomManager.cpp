@@ -148,13 +148,18 @@ namespace server::service
 	PeerState& PeerRoomManager::UpsertJoinedPeer(const EndpointKey& endpointKey, PlayerId playerId, RoomId roomId, TimePoint currentTime)
 	{
 		PeerState& peerState = peerTable_[endpointKey];
+
 		peerState.endpointKey = endpointKey;
 		peerState.playerId = playerId;
 		peerState.roomId = roomId;
 		peerState.isJoined = true;
+
+		peerState.connectionState = PeerConnectionState::Connected;
 		peerState.lastRecvTime = currentTime;
+		peerState.recoverableSince = {};
 
 		roomTable_[roomId].insert(endpointKey);
+
 		return peerState;
 	}
 
@@ -303,6 +308,83 @@ namespace server::service
 		return timedOutPeerList;
 	}
 
+	PeerRoomManager::RecoverablePeerList PeerRoomManager::MarkTimedOutPeersRecoverable(TimePoint currentTime, Duration timeout) noexcept
+	{
+		RecoverablePeerList recoverablePeerList;
+
+		for (auto& [endpointKey, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			if (peerState.connectionState != PeerConnectionState::Connected)
+			{
+				continue;
+			}
+
+			if (currentTime - peerState.lastRecvTime <= timeout)
+			{
+				continue;
+			}
+
+			peerState.connectionState = PeerConnectionState::Recoverable;
+			peerState.recoverableSince = currentTime;
+
+			recoverablePeerList.push_back(RecoverablePeer{
+				.endpointKey = endpointKey,
+				.playerId = peerState.playerId,
+				.persistentPlayerId = peerState.persistentPlayerId,
+				.roomId = peerState.roomId,
+				});
+		}
+
+		return recoverablePeerList;
+	}
+
+	PeerRoomManager::ExpiredRecoverablePeerList PeerRoomManager::RemoveExpiredRecoverablePeers(TimePoint currentTime, Duration gracePeriod) noexcept
+	{
+		ExpiredRecoverablePeerList expiredPeerList;
+
+		for (auto peerIterator = peerTable_.begin(); peerIterator != peerTable_.end();)
+		{
+			PeerState& peerState = peerIterator->second;
+			if (!peerState.isJoined || peerState.connectionState != PeerConnectionState::Recoverable)
+			{
+				++peerIterator;
+				continue;
+			}
+
+			if (currentTime - peerState.recoverableSince <= gracePeriod)
+			{
+				++peerIterator;
+				continue;
+			}
+
+			expiredPeerList.push_back(ExpiredRecoverablePeer{
+				.endpointKey = peerIterator->first,
+				.playerId = peerState.playerId,
+				.persistentPlayerId = peerState.persistentPlayerId,
+				.roomId = peerState.roomId,
+				});
+
+			auto roomIterator = roomTable_.find(peerState.roomId);
+			if (roomIterator != roomTable_.end())
+			{
+				roomIterator->second.erase(peerIterator->first);
+				if (roomIterator->second.empty())
+				{
+					roomTable_.erase(roomIterator);
+				}
+			}
+
+			peerIterator = peerTable_.erase(peerIterator);
+		}
+
+		return expiredPeerList;
+	}
+
 	PeerRoomManager::EndpointKeyList PeerRoomManager::BuildRoomEndpointKeyList(RoomId roomId) const
 	{
 		EndpointKeyList endpointKeyList;
@@ -317,7 +399,13 @@ namespace server::service
 
 		for (const EndpointKey& endpointKey : *roomMemberSet)
 		{
-			if (FindJoinedPeer(endpointKey) == nullptr)
+			const PeerState* peerState = FindJoinedPeer(endpointKey);
+			if (peerState == nullptr)
+			{
+				continue;
+			}
+
+			if (peerState->connectionState != PeerConnectionState::Connected)
 			{
 				continue;
 			}

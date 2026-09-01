@@ -3,14 +3,20 @@
 #include <cstdint>
 #include <string>
 
-#include <Common/Net/EndpointKey.h>
-#include <Common/Net/SessionToken.h>
 #include <Common/Game/GameTypes.h>
 #include <Common/Identity/IdentityTypes.h>
+#include <Common/Net/EndpointKey.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 namespace server::service
 {
+	enum class PeerConnectionState : std::uint8_t
+	{
+		Connected = 0,
+		Recoverable,
+	};
+
 	struct PeerState
 	{
 	public:
@@ -25,7 +31,11 @@ namespace server::service
 		std::uint32_t lastAcceptedInputSequence = 0;
 		std::uint32_t lastProcessedInputSequence = 0;
 		common::game::RoomId roomId = 0;
+
 		bool isJoined = false;
+		PeerConnectionState connectionState = PeerConnectionState::Connected;
+
 		common::time::TimePoint lastRecvTime{};
+		common::time::TimePoint recoverableSince{};
 	};
 }

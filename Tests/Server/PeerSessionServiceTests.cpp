@@ -807,6 +807,56 @@ namespace
 			"PeerSessionService: existing peer token mismatch rejected"
 		);
 	}
+
+	void RunTimedOutPeerBecomesRecoverableTest(tests::DebugTestResult& result)
+	{
+		server::service::PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey endpointKey = MakeEndpointKey(1);
+
+		const TimePoint joinTime = Clock::now();
+
+		server::service::PeerState& peerState =
+			peerRoomManager.UpsertJoinedPeer(
+				endpointKey,
+				1,
+				1,
+				joinTime
+			);
+
+		peerState.persistentPlayerId = 5001;
+
+		const auto recoverablePeerList =
+			peerRoomManager.MarkTimedOutPeersRecoverable(
+				joinTime + std::chrono::seconds(10),
+				std::chrono::seconds(5)
+			);
+
+		tests::Expect(
+			result,
+			recoverablePeerList.size() == 1,
+			"PeerRoomManager: timed out peer becomes recoverable"
+		);
+
+		const server::service::PeerState* recoverablePeer =
+			peerRoomManager.FindJoinedPeer(endpointKey);
+
+		tests::Expect(
+			result,
+			recoverablePeer != nullptr,
+			"PeerRoomManager: recoverable peer remains joined"
+		);
+
+		if (recoverablePeer != nullptr)
+		{
+			tests::Expect(
+				result,
+				recoverablePeer->connectionState
+				== server::service::PeerConnectionState::Recoverable,
+				"PeerRoomManager: recoverable peer connection state"
+			);
+		}
+	}
 }
 
 namespace tests::server

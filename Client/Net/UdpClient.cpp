@@ -77,6 +77,9 @@ namespace client::net
 					case StartFailure::AlreadyRunning:
 						return "AlreadyRunning";
 
+					case StartFailure::NotRunning:
+						return "NotRunning";
+
 					case StartFailure::InvalidTransportType:
 						return "InvalidTransportType";
 
@@ -112,21 +115,10 @@ namespace client::net
 		world_ = &world;
 		inputSequence_ = 0;
 
-		nextPacketAuthenticationSequence_.store(1);
-
-		leaveResponseReceived_.store(false);
-		serverDisconnectReason_.store(ServerDisconnectReason::None);
-
 		accountLoginState_.Reset();
-
-		{
-			std::scoped_lock lock(reliableSessionMutex_);
-			reliableSession_.Reset();
-		}
+		ResetTransportSessionState();
 
 		packetDispatcher_.Clear();
-		snapshotChunkAssembler_.Clear();
-		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
 		RegisterPacketHandlers();
 
 		const StartResult startTransportResult = StartTransport(serverIp, serverPort);
@@ -155,14 +147,47 @@ namespace client::net
 		return {};
 	}
 
+	UdpClient::StartResult UdpClient::RestartTransport(const char* serverIp, unsigned short serverPort)
+	{
+		if (!isRunning_.load())
+		{
+			LogWarning("UdpClient transport restart ignored because the client is not running.");
+			return std::unexpected(StartError{ StartFailure::NotRunning });
+		}
+
+		StopTransport();
+		ResetTransportSessionState();
+
+		const StartResult startTransportResult = StartTransport(serverIp, serverPort);
+		if (!startTransportResult.has_value())
+		{
+			LogError("UdpClient transport restart failed.");
+			return startTransportResult;
+		}
+
+		const std::string message = common::log::LogMessageBuilder{}
+			.Append("UdpClient transport restarted. ")
+			.AppendNamedValue("ServerIp", serverIp)
+			.AppendCommaNamedValue("ServerPort", serverPort)
+			.AppendCommaNamedValue("TransportType", config::ToString(transportType_))
+			.Build();
+
+		LogInfo(message);
+
+		return {};
+	}
+
 	void UdpClient::Stop() noexcept
 	{
 		if (!isRunning_.exchange(false))
 		{
+			world_ = nullptr;
+			inputSequence_ = 0;
+
+			ResetTransportSessionState();
 			accountLoginState_.Reset();
-			leaveResponseReceived_.store(false);
-			nextPacketAuthenticationSequence_.store(1);
-			serverDisconnectReason_.store(ServerDisconnectReason::None);
+
+			packetDispatcher_.Clear();
 			return;
 		}
 
@@ -171,19 +196,11 @@ namespace client::net
 		world_ = nullptr;
 		inputSequence_ = 0;
 
-		nextPacketAuthenticationSequence_.store(1);
-
-		{
-			std::scoped_lock lock(reliableSessionMutex_);
-			reliableSession_.Reset();
-		}
+		ResetTransportSessionState();
 
 		accountLoginState_.Reset();
-		leaveResponseReceived_.store(false);
-		serverDisconnectReason_.store(ServerDisconnectReason::None);
 
 		packetDispatcher_.Clear();
-		snapshotChunkAssembler_.Clear();
 
 		LogInfo("UdpClient stopped.");
 	}
@@ -405,6 +422,22 @@ namespace client::net
 	{
 		socketTransport_.Stop();
 		iocpTransport_.Stop();
+	}
+
+	void UdpClient::ResetTransportSessionState() noexcept
+	{
+		nextPacketAuthenticationSequence_.store(1);
+
+		leaveResponseReceived_.store(false);
+		serverDisconnectReason_.store(ServerDisconnectReason::None);
+
+		{
+			std::scoped_lock lock(reliableSessionMutex_);
+			reliableSession_.Reset();
+		}
+
+		snapshotChunkAssembler_.Clear();
+		snapshotChunkAssembler_.SetAssemblyTimeout(snapshotAssemblyTimeout_);
 	}
 
 	std::optional<common::packet::PacketBuffer> UdpClient::BuildAuthenticatedPacket(common::packet::ConstPacketSpan packet)

@@ -56,6 +56,7 @@ namespace client::net
 		enum class StartFailure
 		{
 			AlreadyRunning,
+			NotRunning,
 			InvalidTransportType,
 		};
 
@@ -115,6 +116,7 @@ namespace client::net
 
 	public:
 		[[nodiscard]] StartResult Start(const char* serverIp, unsigned short serverPort, ClientWorldType& world);
+		[[nodiscard]] StartResult RestartTransport(const char* serverIp, unsigned short serverPort);
 		void Stop() noexcept;
 
 		void AttachLogger(common::log::ILogger& logger) noexcept;
@@ -140,6 +142,7 @@ namespace client::net
 	private:
 		[[nodiscard]] StartResult StartTransport(const char* serverIp, unsigned short serverPort);
 		void StopTransport() noexcept;
+		void ResetTransportSessionState() noexcept;
 
 		[[nodiscard]] std::optional<common::packet::PacketBuffer> BuildAuthenticatedPacket(common::packet::ConstPacketSpan packet);
 

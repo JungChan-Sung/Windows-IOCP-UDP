@@ -456,14 +456,9 @@ namespace client::net
 			return false;
 		}
 
-		if (common::packet::IsReliablePacketHeader(*packetHeader))
+		if (common::packet::IsReliablePacketHeader(*packetHeader) || common::packet::IsAuthenticatedPacketHeader(*packetHeader))
 		{
 			return false;
-		}
-
-		if (!common::packet::RequiresClientPacketAuthentication(packetHeader->type))
-		{
-			return SendPacket(serializedPacket.data(), static_cast<int>(serializedPacket.size()));
 		}
 
 		if (common::packet::GetPacketHeaderProtocolVersion(*packetHeader) != common::packet::protocolVersion)
@@ -474,6 +469,16 @@ namespace client::net
 		if (static_cast<std::size_t>(packetHeader->size) != serializedPacket.size())
 		{
 			return false;
+		}
+
+		if (common::packet::IsReliablePacketType(packetHeader->type))
+		{
+			return SendReliablePacket(serializedPacket);
+		}
+
+		if (!common::packet::RequiresClientPacketAuthentication(packetHeader->type))
+		{
+			return SendPacket(serializedPacket.data(), static_cast<int>(serializedPacket.size()));
 		}
 
 		const std::optional<common::packet::PacketBuffer> authenticatedPacketBuffer = BuildAuthenticatedPacket(serializedPacket);

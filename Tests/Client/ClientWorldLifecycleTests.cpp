@@ -60,20 +60,27 @@ namespace
 		client::game::ClientWorld world;
 		InitializeLocalPlayer(world);
 
-		world.ApplyLocalPredictionTick(1, common::game::InputFlags::Right, common::game::defaultFixedDeltaSeconds);
-
-		const common::packet::PlayerSnapshotPacket deathSnapshot = MakeLocalPlayerSnapshot(
+		world.ApplyLocalPredictionTick(
 			1,
-			0,
-			300.0F,
-			350.0F,
-			true
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
 		);
+
+		const common::packet::PlayerSnapshotPacket deathSnapshot =
+			MakeLocalPlayerSnapshot(
+				1,
+				0,
+				300.0F,
+				350.0F,
+				true
+			);
 
 		world.ApplyPlayerSnapshot(deathSnapshot);
 
 		const client::game::ClientWorld::RenderFrameSnapshot renderSnapshot =
-			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
 
 		tests::Expect(
 			result,
@@ -92,7 +99,9 @@ namespace
 			return;
 		}
 
-		const client::game::ClientWorld::RenderPlayerState& renderPlayerState = renderSnapshot.playerStateList.front();
+		const client::game::ClientWorld::RenderPlayerState&
+			renderPlayerState =
+			renderSnapshot.playerStateList.front();
 
 		tests::Expect(
 			result,
@@ -107,25 +116,34 @@ namespace
 		);
 	}
 
-	void RunDeadPlayerPredictionIgnoredTest(tests::DebugTestResult& result)
+	void RunDeadPlayerPredictionIgnoredTest(
+		tests::DebugTestResult& result
+	)
 	{
 		client::game::ClientWorld world;
 		InitializeLocalPlayer(world);
 
-		const common::packet::PlayerSnapshotPacket deathSnapshot = MakeLocalPlayerSnapshot(
-			1,
-			0,
-			300.0F,
-			350.0F,
-			true
-		);
+		const common::packet::PlayerSnapshotPacket deathSnapshot =
+			MakeLocalPlayerSnapshot(
+				1,
+				0,
+				300.0F,
+				350.0F,
+				true
+			);
 
 		world.ApplyPlayerSnapshot(deathSnapshot);
 
-		world.ApplyLocalPredictionTick(1, common::game::InputFlags::Right, common::game::defaultFixedDeltaSeconds);
+		world.ApplyLocalPredictionTick(
+			1,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
 
 		const client::game::ClientWorld::RenderFrameSnapshot renderSnapshot =
-			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
 
 		tests::Expect(
 			result,
@@ -138,7 +156,9 @@ namespace
 			return;
 		}
 
-		const client::game::ClientWorld::RenderPlayerState& renderPlayerState = renderSnapshot.playerStateList.front();
+		const client::game::ClientWorld::RenderPlayerState&
+			renderPlayerState =
+			renderSnapshot.playerStateList.front();
 
 		tests::Expect(
 			result,
@@ -147,35 +167,46 @@ namespace
 		);
 	}
 
-	void RunRespawnResetsPredictionTest(tests::DebugTestResult& result)
+	void RunRespawnResetsPredictionTest(
+		tests::DebugTestResult& result
+	)
 	{
 		client::game::ClientWorld world;
 		InitializeLocalPlayer(world);
 
-		world.ApplyLocalPredictionTick(1, common::game::InputFlags::Right, common::game::defaultFixedDeltaSeconds);
-
-		const common::packet::PlayerSnapshotPacket deathSnapshot = MakeLocalPlayerSnapshot(
+		world.ApplyLocalPredictionTick(
 			1,
-			0,
-			300.0F,
-			350.0F,
-			true
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
 		);
+
+		const common::packet::PlayerSnapshotPacket deathSnapshot =
+			MakeLocalPlayerSnapshot(
+				1,
+				0,
+				300.0F,
+				350.0F,
+				true
+			);
 
 		world.ApplyPlayerSnapshot(deathSnapshot);
 
-		const common::packet::PlayerSnapshotPacket respawnSnapshot = MakeLocalPlayerSnapshot(
-			2,
-			0,
-			400.0F,
-			350.0F,
-			false
-		);
+		const common::packet::PlayerSnapshotPacket respawnSnapshot =
+			MakeLocalPlayerSnapshot(
+				2,
+				0,
+				400.0F,
+				350.0F,
+				false
+			);
 
 		world.ApplyPlayerSnapshot(respawnSnapshot);
 
-		const client::game::ClientWorld::RenderFrameSnapshot respawnRenderSnapshot =
-			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+		const client::game::ClientWorld::RenderFrameSnapshot
+			respawnRenderSnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
 
 		tests::Expect(
 			result,
@@ -194,7 +225,8 @@ namespace
 			return;
 		}
 
-		const client::game::ClientWorld::RenderPlayerState& respawnPlayerState =
+		const client::game::ClientWorld::RenderPlayerState&
+			respawnPlayerState =
 			respawnRenderSnapshot.playerStateList.front();
 
 		tests::Expect(
@@ -209,18 +241,205 @@ namespace
 			"ClientWorldLifecycle: respawn resets prediction to authoritative y"
 		);
 
-		world.ApplyLocalPredictionTick(2, common::game::InputFlags::Right, common::game::defaultFixedDeltaSeconds);
+		world.ApplyLocalPredictionTick(
+			2,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
 
-		const client::game::ClientWorld::RenderFrameSnapshot predictedRenderSnapshot =
-			world.BuildRenderFrameSnapshot(common::time::Clock::now());
+		const client::game::ClientWorld::RenderFrameSnapshot
+			predictedRenderSnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
 
-		const float expectedX = 400.0F + (common::game::defaultMoveSpeed * common::game::defaultFixedDeltaSeconds);
+		const float expectedX =
+			400.0F
+			+ (
+				common::game::defaultMoveSpeed
+				* common::game::defaultFixedDeltaSeconds
+				);
 
 		tests::Expect(
 			result,
-			IsNearlyEqual(predictedRenderSnapshot.playerStateList.front().x, expectedX),
+			IsNearlyEqual(
+				predictedRenderSnapshot.playerStateList.front().x,
+				expectedX
+			),
 			"ClientWorldLifecycle: prediction resumes after respawn"
 		);
+	}
+
+	void RunRecoveryPreservesIdentityAndAllowsRejoinTest(
+		tests::DebugTestResult& result
+	)
+	{
+		client::game::ClientWorld world;
+		InitializeLocalPlayer(world);
+
+		world.ApplyLocalPredictionTick(
+			1,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot
+			beforeRecoverySnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			world.IsJoined(),
+			"ClientWorldLifecycle: recovery setup joined"
+		);
+
+		tests::Expect(
+			result,
+			beforeRecoverySnapshot.playerStateList.size() == 1,
+			"ClientWorldLifecycle: recovery setup render player exists"
+		);
+
+		world.BeginRecovery();
+
+		tests::Expect(
+			result,
+			!world.IsJoined(),
+			"ClientWorldLifecycle: recovery marks world unjoined"
+		);
+
+		tests::Expect(
+			result,
+			world.GetLocalPlayerId() == 100,
+			"ClientWorldLifecycle: recovery preserves local player id"
+		);
+
+		tests::Expect(
+			result,
+			world.GetCurrentRoomId() == 1,
+			"ClientWorldLifecycle: recovery preserves room id"
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot
+			duringRecoverySnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			duringRecoverySnapshot.playerStateList.size() == 1,
+			"ClientWorldLifecycle: recovery preserves render state"
+		);
+
+		world.ApplyLocalPredictionTick(
+			2,
+			common::game::InputFlags::Right,
+			common::game::defaultFixedDeltaSeconds
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot
+			afterIgnoredPredictionSnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
+
+		if (!duringRecoverySnapshot.playerStateList.empty()
+			&& !afterIgnoredPredictionSnapshot.playerStateList.empty())
+		{
+			tests::Expect(
+				result,
+				IsNearlyEqual(
+					duringRecoverySnapshot.playerStateList.front().x,
+					afterIgnoredPredictionSnapshot.playerStateList.front().x
+				),
+				"ClientWorldLifecycle: recovery ignores local prediction"
+			);
+		}
+
+		const bool differentPlayerRejoinAccepted =
+			world.TrySetJoinState(
+				200,
+				1,
+				500.0F,
+				500.0F
+			);
+
+		tests::Expect(
+			result,
+			!differentPlayerRejoinAccepted,
+			"ClientWorldLifecycle: recovery rejects different player id"
+		);
+
+		tests::Expect(
+			result,
+			!world.IsJoined(),
+			"ClientWorldLifecycle: rejected recovery remains unjoined"
+		);
+
+		const bool recovered =
+			world.TrySetJoinState(
+				100,
+				1,
+				300.0F,
+				340.0F
+			);
+
+		tests::Expect(
+			result,
+			recovered,
+			"ClientWorldLifecycle: recovery accepts preserved player id"
+		);
+
+		tests::Expect(
+			result,
+			world.IsJoined(),
+			"ClientWorldLifecycle: recovered world becomes joined"
+		);
+
+		tests::Expect(
+			result,
+			world.GetLocalPlayerId() == 100,
+			"ClientWorldLifecycle: recovered local player id preserved"
+		);
+
+		tests::Expect(
+			result,
+			world.GetCurrentRoomId() == 1,
+			"ClientWorldLifecycle: recovered room id preserved"
+		);
+
+		const client::game::ClientWorld::RenderFrameSnapshot
+			recoveredSnapshot =
+			world.BuildRenderFrameSnapshot(
+				common::time::Clock::now()
+			);
+
+		tests::Expect(
+			result,
+			recoveredSnapshot.playerStateList.size() == 1,
+			"ClientWorldLifecycle: recovered render player exists"
+		);
+
+		if (recoveredSnapshot.playerStateList.size() == 1)
+		{
+			const client::game::ClientWorld::RenderPlayerState&
+				playerState =
+				recoveredSnapshot.playerStateList.front();
+
+			tests::Expect(
+				result,
+				IsNearlyEqual(playerState.x, 300.0F),
+				"ClientWorldLifecycle: recovery resets local x to server state"
+			);
+
+			tests::Expect(
+				result,
+				IsNearlyEqual(playerState.y, 340.0F),
+				"ClientWorldLifecycle: recovery resets local y to server state"
+			);
+		}
 	}
 }
 
@@ -233,6 +452,7 @@ namespace tests::client
 		RunDeathResetsPredictionTest(result);
 		RunDeadPlayerPredictionIgnoredTest(result);
 		RunRespawnResetsPredictionTest(result);
+		RunRecoveryPreservesIdentityAndAllowsRejoinTest(result);
 
 		return result;
 	}

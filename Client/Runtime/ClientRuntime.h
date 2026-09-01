@@ -39,6 +39,7 @@ namespace client::runtime
 	{
 	private:
 		static inline constexpr int maxSimulationTicksPerUpdate = 4;
+		static inline constexpr int serverSilenceKeepAliveMultiplier = 3;
 
 	private:
 		const config::ClientConfig* config_ = nullptr;
@@ -84,6 +85,7 @@ namespace client::runtime
 		void Update();
 
 		[[nodiscard]] bool ProcessAccountLogin(common::time::TimePoint currentTime);
+		[[nodiscard]] bool TryBeginRecovery(common::time::TimePoint currentTime);
 
 		void TrySendKeepAlive(common::time::TimePoint currentTime);
 		void TryJoinRoom(const input::InputSnapshot& inputSnapshot) noexcept;

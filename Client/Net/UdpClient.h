@@ -66,6 +66,9 @@ namespace client::net
 
 		using PlayerId = common::game::PlayerId;
 		using RoomId = common::game::RoomId;
+		
+		using TimePoint = common::time::TimePoint;
+		using Duration = common::time::Duration;
 
 		using ServerDisconnectReason = common::packet::ServerDisconnectReason;
 
@@ -89,6 +92,7 @@ namespace client::net
 		std::atomic<bool> leaveResponseReceived_ = false;
 		std::atomic<ServerDisconnectReason> serverDisconnectReason_ = ServerDisconnectReason::None;
 		std::atomic<common::net::PacketAuthenticationSequence> nextPacketAuthenticationSequence_ = 1;
+		std::atomic<Duration::rep> lastServerPacketReceiveTimeCount_ = 0;
 
 		ClientWorldType* world_ = nullptr;
 		std::uint32_t inputSequence_ = 0;
@@ -154,6 +158,8 @@ namespace client::net
 
 		void RegisterPacketHandlers();
 
+		void RecordServerPacketReceiveTime(TimePoint currentTime) noexcept;
+
 		void HandlePacket(const char* packetData, int packetSize);
 		void HandleReliablePacket(const char* packetData, int packetSize);
 		void HandleAccountLoginResponse(const common::packet::AccountLoginResponsePacket& packet);
@@ -182,6 +188,8 @@ namespace client::net
 		void SetSnapshotAssemblyTimeout(common::time::Milliseconds snapshotAssemblyTimeout) noexcept;
 
 		[[nodiscard]] AccountLoginSnapshot GetAccountLoginSnapshot() const;
+
+		[[nodiscard]] bool HasServerReceiveTimedOut(TimePoint currentTime, Duration timeout) const noexcept;
 
 		[[nodiscard]] bool HasReceivedLeaveResponse() const noexcept
 		{

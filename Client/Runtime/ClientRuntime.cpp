@@ -119,6 +119,42 @@ namespace client::runtime
 		}
 	}
 
+	bool ClientRuntime::TryBeginRecovery(common::time::TimePoint currentTime)
+	{
+		if (!world_->IsJoined())
+		{
+			return false;
+		}
+
+		const common::time::Duration serverSilenceTimeout = config_->timing.keepAliveInterval * serverSilenceKeepAliveMultiplier;
+		if (!udpClient_->HasServerReceiveTimedOut(currentTime, serverSilenceTimeout))
+		{
+			return false;
+		}
+
+		logger_->Warning("Server packet receive timeout detected. Starting session recovery.");
+
+		world_->BeginRecovery();
+		joinHandshakeState_.Begin(currentTime, config_->timing.joinRetryInterval);
+
+		const net::UdpClient::StartResult restartResult = udpClient_->RestartTransport(config_->network.serverIp.c_str(), config_->network.serverPort);
+		if (!restartResult.has_value())
+		{
+			logger_->Error("UDP transport restart failed during session recovery.");
+			isRunning_.store(false);
+			gameWindow_->RequestClose();
+			return true;
+		}
+
+		nextSimulationTickTime_ = currentTime + config_->simulation.tickInterval;
+		nextKeepAliveTime_ = currentTime + config_->timing.keepAliveInterval;
+		nextRoomJoinTime_ = currentTime + config_->timing.roomJoinInterval;
+
+		logger_->Info("UDP transport restarted. Starting recovery join handshake.");
+
+		return true;
+	}
+
 	void ClientRuntime::Update()
 	{
 		if (udpClient_->HasReceivedServerDisconnect())
@@ -132,6 +168,11 @@ namespace client::runtime
 		TryAdjustInterpolationDelay(inputSnapshot);
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
+		if (TryBeginRecovery(currentTime))
+		{
+			return;
+		}
+
 		if (!ProcessAccountLogin(currentTime))
 		{
 			return;

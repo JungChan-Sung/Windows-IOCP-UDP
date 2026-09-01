@@ -427,6 +427,7 @@ namespace client::net
 	void UdpClient::ResetTransportSessionState() noexcept
 	{
 		nextPacketAuthenticationSequence_.store(1);
+		lastServerPacketReceiveTimeCount_.store(0);
 
 		leaveResponseReceived_.store(false);
 		serverDisconnectReason_.store(ServerDisconnectReason::None);
@@ -666,8 +667,15 @@ namespace client::net
 		);
 	}
 
+	void UdpClient::RecordServerPacketReceiveTime(TimePoint currentTime) noexcept
+	{
+		lastServerPacketReceiveTimeCount_.store(currentTime.time_since_epoch().count());
+	}
+
 	void UdpClient::HandlePacket(const char* packetData, int packetSize)
 	{
+		RecordServerPacketReceiveTime(common::time::Clock::now());
+
 		const std::optional<common::packet::PacketHeader> packetHeader = common::packet::DeserializePacketHeader(packetData, packetSize);
 		if (!packetHeader.has_value())
 		{
@@ -1003,5 +1011,22 @@ namespace client::net
 	UdpClient::AccountLoginSnapshot UdpClient::GetAccountLoginSnapshot() const
 	{
 		return accountLoginState_.GetSnapshot();
+	}
+
+	bool UdpClient::HasServerReceiveTimedOut(TimePoint currentTime, Duration timeout) const noexcept
+	{
+		if (timeout <= Duration::zero())
+		{
+			return false;
+		}
+
+		const Duration::rep lastReceiveTimeCount = lastServerPacketReceiveTimeCount_.load();
+		if (lastReceiveTimeCount == 0)
+		{
+			return false;
+		}
+
+		const TimePoint lastReceiveTime{ Duration{ lastReceiveTimeCount } };
+		return currentTime - lastReceiveTime > timeout;
 	}
 }

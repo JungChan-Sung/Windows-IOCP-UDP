@@ -281,6 +281,20 @@ namespace client::game
 		localPlayerReconciliation_.UpdateRenderCorrection(deltaSeconds);
 	}
 
+	void ClientWorld::BeginRecovery() noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		if (!isJoined_)
+		{
+			return;
+		}
+
+		isJoined_ = false;
+
+		localPlayerReconciliation_.Clear();
+	}
+
 	void ClientWorld::Clear() noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
@@ -412,6 +426,11 @@ namespace client::game
 		std::scoped_lock lock(worldMutex_);
 
 		if (isJoined_ || localPlayerId == 0 || roomId <= 0)
+		{
+			return false;
+		}
+
+		if (localPlayerId_ != 0 && localPlayerId_ != localPlayerId)
 		{
 			return false;
 		}

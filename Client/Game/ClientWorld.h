@@ -153,6 +153,7 @@ namespace client::game
 
 		void UpdateLocalEffects(float deltaSeconds);
 
+		void BeginRecovery() noexcept;
 		void Clear() noexcept;
 		void ResetLocalPlayerPrediction(float x, float y);
 		void SetInterpolationSettings(

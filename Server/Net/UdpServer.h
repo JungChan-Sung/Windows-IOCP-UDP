@@ -196,7 +196,7 @@ namespace server::net
 		void BroadcastPlayerJoined(RoomId roomId, PlayerId playerId, float x, float y);
 		void BroadcastPlayerLeft(RoomId roomId, PlayerId playerId);
 
-		void RemoveTimedOutPeers();
+		void ProcessPeerTimeouts();
 
 		void LogDebug(std::string_view message) const;
 		void LogInfo(std::string_view message) const;

@@ -27,15 +27,6 @@ namespace server::service
 		using Duration = common::time::Duration;
 
 	public:
-		struct TimedOutPeer
-		{
-		public:
-			EndpointKey endpointKey{};
-			PlayerId playerId = 0;
-			common::identity::PersistentPlayerId persistentPlayerId = 0;
-			RoomId roomId = 0;
-		};
-
 		struct RecoverablePeer
 		{
 		public:
@@ -67,7 +58,6 @@ namespace server::service
 		using RoomMemberSet = std::unordered_set<EndpointKey, common::net::EndpointKeyHasher>;
 		using RoomTable = std::unordered_map<RoomId, RoomMemberSet>;
 		using EndpointKeyList = std::vector<EndpointKey>;
-		using TimedOutPeerList = std::vector<TimedOutPeer>;
 		using RecoverablePeerList = std::vector<RecoverablePeer>;
 		using ExpiredRecoverablePeerList = std::vector<ExpiredRecoverablePeer>;
 
@@ -118,8 +108,6 @@ namespace server::service
 			TimePoint currentTime,
 			RoomChangeResult& roomChangeResult
 		) noexcept;
-
-		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(TimePoint currentTime, Duration timeout) noexcept;
 
 		[[nodiscard]] RecoverablePeerList MarkTimedOutPeersRecoverable(TimePoint currentTime, Duration timeout) noexcept;
 		[[nodiscard]] ExpiredRecoverablePeerList RemoveExpiredRecoverablePeers(TimePoint currentTime, Duration gracePeriod) noexcept;

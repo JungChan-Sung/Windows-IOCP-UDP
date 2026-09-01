@@ -269,45 +269,6 @@ namespace server::service
 		return true;
 	}
 
-	std::vector<PeerRoomManager::TimedOutPeer> PeerRoomManager::RemoveTimedOutPeers(TimePoint currentTime, Duration timeout) noexcept
-	{
-		std::vector<TimedOutPeer> timedOutPeerList;
-
-		for (auto peerIterator = peerTable_.begin(); peerIterator != peerTable_.end();)
-		{
-			if (currentTime - peerIterator->second.lastRecvTime <= timeout)
-			{
-				++peerIterator;
-				continue;
-			}
-
-			if (peerIterator->second.isJoined)
-			{
-				timedOutPeerList.push_back(TimedOutPeer{
-					.endpointKey = peerIterator->first,
-					.playerId = peerIterator->second.playerId,
-					.persistentPlayerId = peerIterator->second.persistentPlayerId,
-					.roomId = peerIterator->second.roomId,
-					});
-
-				auto roomIterator = roomTable_.find(peerIterator->second.roomId);
-				if (roomIterator != roomTable_.end())
-				{
-					roomIterator->second.erase(peerIterator->first);
-
-					if (roomIterator->second.empty())
-					{
-						roomTable_.erase(roomIterator);
-					}
-				}
-			}
-
-			peerIterator = peerTable_.erase(peerIterator);
-		}
-
-		return timedOutPeerList;
-	}
-
 	PeerRoomManager::RecoverablePeerList PeerRoomManager::MarkTimedOutPeersRecoverable(TimePoint currentTime, Duration timeout) noexcept
 	{
 		RecoverablePeerList recoverablePeerList;

@@ -631,7 +631,7 @@ namespace server::net
 			LogError("Some kill events could not be recorded in match history.");
 		}
 
-		RemoveTimedOutPeers();
+		ProcessPeerTimeouts();
 		ProcessReliableResends();
 
 		const std::size_t faultSimulationReleasedSendRequestCount = packetSender_.FlushFaultSimulationPackets();
@@ -907,7 +907,7 @@ namespace server::net
 			};
 		}
 
-		const bool isReliable =	common::packet::IsReliablePacketHeader(*packetHeader);
+		const bool isReliable = common::packet::IsReliablePacketHeader(*packetHeader);
 		if (!common::packet::IsPacketTransportReliabilityValid(packetHeader->type, isReliable))
 		{
 			return DispatchResult{
@@ -1646,16 +1646,18 @@ namespace server::net
 		static_cast<void>(BroadcastSerializedPacket(packetSender_, endpointKeyList, packet));
 	}
 
-	void UdpServer::RemoveTimedOutPeers()
+	void UdpServer::ProcessPeerTimeouts()
 	{
-		struct TimedOutBroadcast
+		struct ExpiredPeerBroadcast
 		{
 		public:
 			PlayerId playerId = 0;
 			RoomId roomId = 0;
 		};
 
-		std::vector<TimedOutBroadcast> timedOutBroadcastList;
+		service::PeerSessionService::RecoverablePeerList recoverablePeerList;
+		std::vector<ExpiredPeerBroadcast> expiredPeerBroadcastList;
+
 		std::size_t expiredAuthenticatedAccountCount = 0;
 		std::size_t matchHistoryLeaveFailureCount = 0;
 
@@ -1663,41 +1665,43 @@ namespace server::net
 			std::scoped_lock lock(stateMutex_);
 
 			const common::time::TimePoint currentTime = common::time::Clock::now();
-			const service::PeerSessionService::TimedOutPeerList timedOutPeerList = peerSessionService_.RemoveTimedOutPeers(
+			recoverablePeerList = peerSessionService_.MarkTimedOutPeersRecoverable(
 				currentTime,
 				config_.session.peerTimeout,
 				peerRoomManager_,
 				gameWorld_
 			);
 
+			const service::PeerSessionService::ExpiredRecoverablePeerList expiredPeerList = peerSessionService_.RemoveExpiredRecoverablePeers(
+				currentTime,
+				config_.session.reconnectGracePeriod,
+				peerRoomManager_,
+				gameWorld_
+			);
 			expiredAuthenticatedAccountCount = authenticatedAccountRegistry_.RemoveExpired(currentTime, config_.session.peerTimeout);
 
-			serverMetricsCollector_.AddTimedOutPeerCount(timedOutPeerList.size());
+			serverMetricsCollector_.AddTimedOutPeerCount(recoverablePeerList.size());
 
-			timedOutBroadcastList.reserve(timedOutPeerList.size());
+			for (const service::PeerSessionService::RecoverablePeer& recoverablePeer : recoverablePeerList)
+			{
+				static_cast<void>(reliableUdpSessionRegistry_.Remove(recoverablePeer.endpointKey));
+			}
+
+			expiredPeerBroadcastList.reserve(expiredPeerList.size());
 
 			const common::time::SystemTimePoint currentSystemTime = common::time::SystemClock::now();
 
-			for (const service::PeerRoomManager::TimedOutPeer& timedOutPeer : timedOutPeerList)
+			for (const service::PeerSessionService::ExpiredRecoverablePeer& expiredPeer : expiredPeerList)
 			{
-				static_cast<void>(reliableUdpSessionRegistry_.Remove(timedOutPeer.endpointKey));
-
-				const bool matchHistoryLeft = matchHistoryTracker_.LeavePlayer(
-					timedOutPeer.roomId,
-					timedOutPeer.persistentPlayerId,
-					currentSystemTime
-				);
-
+				const bool matchHistoryLeft = matchHistoryTracker_.LeavePlayer(expiredPeer.roomId, expiredPeer.persistentPlayerId, currentSystemTime);
 				if (!matchHistoryLeft)
 				{
 					++matchHistoryLeaveFailureCount;
 				}
 
-				gameWorld_.RemovePlayer(timedOutPeer.playerId);
-
-				timedOutBroadcastList.push_back(TimedOutBroadcast{
-						.playerId = timedOutPeer.playerId,
-						.roomId = timedOutPeer.roomId,
+				expiredPeerBroadcastList.push_back(ExpiredPeerBroadcast{
+					.playerId = expiredPeer.playerId,
+					.roomId = expiredPeer.roomId,
 					});
 			}
 		}
@@ -1705,31 +1709,35 @@ namespace server::net
 		if (expiredAuthenticatedAccountCount > 0)
 		{
 			std::ostringstream stream;
-			stream << "Expired authenticated accounts removed. Count="
-				<< expiredAuthenticatedAccountCount;
-
+			stream << "Expired authenticated accounts removed. Count=" << expiredAuthenticatedAccountCount;
 			LogDebug(stream.str());
 		}
 
 		if (matchHistoryLeaveFailureCount > 0)
 		{
 			std::ostringstream stream;
-			stream << "Failed to remove timed out players from match history."
-				<< " Count=" << matchHistoryLeaveFailureCount;
-
+			stream << "Failed to remove recovery-expired players from match history." << " Count=" << matchHistoryLeaveFailureCount;
 			LogError(stream.str());
 		}
 
-		for (const TimedOutBroadcast& timedOutBroadcast : timedOutBroadcastList)
+		for (const service::PeerSessionService::RecoverablePeer& recoverablePeer : recoverablePeerList)
+		{
+			std::ostringstream stream;
+			stream << "Peer entered recoverable state. Endpoint=" << FormatEndpoint(recoverablePeer.endpointKey)
+				<< ", PlayerId=" << recoverablePeer.playerId
+				<< ", RoomId=" << recoverablePeer.roomId;
+			LogInfo(stream.str());
+		}
+
+		for (const ExpiredPeerBroadcast& expiredPeerBroadcast : expiredPeerBroadcastList)
 		{
 			{
 				std::ostringstream stream;
-				stream << "Peer timed out. PlayerId=" << timedOutBroadcast.playerId
-					<< ", RoomId=" << timedOutBroadcast.roomId;
+				stream << "Peer recovery expired. PlayerId=" << expiredPeerBroadcast.playerId << ", RoomId=" << expiredPeerBroadcast.roomId;
 				LogInfo(stream.str());
 			}
 
-			BroadcastPlayerLeft(timedOutBroadcast.roomId, timedOutBroadcast.playerId);
+			BroadcastPlayerLeft(expiredPeerBroadcast.roomId, expiredPeerBroadcast.playerId);
 		}
 	}
 

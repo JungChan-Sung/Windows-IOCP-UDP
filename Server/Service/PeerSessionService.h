@@ -28,9 +28,6 @@ namespace server::service
 		using TimePoint = common::time::TimePoint;
 		using Duration = common::time::Duration;
 
-		using TimedOutPeer = PeerRoomManager::TimedOutPeer;
-		using TimedOutPeerList = PeerRoomManager::TimedOutPeerList;
-
 		using RecoverablePeer = PeerRoomManager::RecoverablePeer;
 		using RecoverablePeerList = PeerRoomManager::RecoverablePeerList;
 

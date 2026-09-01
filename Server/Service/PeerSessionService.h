@@ -31,6 +31,12 @@ namespace server::service
 		using TimedOutPeer = PeerRoomManager::TimedOutPeer;
 		using TimedOutPeerList = PeerRoomManager::TimedOutPeerList;
 
+		using RecoverablePeer = PeerRoomManager::RecoverablePeer;
+		using RecoverablePeerList = PeerRoomManager::RecoverablePeerList;
+
+		using ExpiredRecoverablePeer = PeerRoomManager::ExpiredRecoverablePeer;
+		using ExpiredRecoverablePeerList = PeerRoomManager::ExpiredRecoverablePeerList;
+
 	public:
 		struct AuthenticatedIdentity
 		{
@@ -128,9 +134,16 @@ namespace server::service
 			game::GameWorld& gameWorld,
 			TimePoint currentTime
 		) const;
-		[[nodiscard]] TimedOutPeerList RemoveTimedOutPeers(
+
+		[[nodiscard]] RecoverablePeerList MarkTimedOutPeersRecoverable(
 			TimePoint currentTime,
 			Duration timeout,
+			PeerRoomManager& peerRoomManager,
+			game::GameWorld& gameWorld
+		) const;
+		[[nodiscard]] ExpiredRecoverablePeerList RemoveExpiredRecoverablePeers(
+			TimePoint currentTime,
+			Duration gracePeriod,
 			PeerRoomManager& peerRoomManager,
 			game::GameWorld& gameWorld
 		) const;

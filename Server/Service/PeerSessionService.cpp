@@ -242,20 +242,37 @@ namespace server::service
 		return changeResult;
 	}
 
-	PeerSessionService::TimedOutPeerList PeerSessionService::RemoveTimedOutPeers(TimePoint currentTime, Duration timeout, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
+	PeerSessionService::RecoverablePeerList PeerSessionService::MarkTimedOutPeersRecoverable(TimePoint currentTime, Duration timeout, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
 	{
-		TimedOutPeerList timedOutPeerList = peerRoomManager.RemoveTimedOutPeers(currentTime, timeout);
-		for (const TimedOutPeer& timedOutPeer : timedOutPeerList)
+		RecoverablePeerList recoverablePeerList = peerRoomManager.MarkTimedOutPeersRecoverable(currentTime, timeout);
+		for (const RecoverablePeer& recoverablePeer : recoverablePeerList)
 		{
-			gameWorld.RemovePlayer(timedOutPeer.playerId);
-
-			if (peerRoomManager.GetRoomMemberCount(timedOutPeer.roomId) == 0)
+			game::PlayerState* playerState = gameWorld.FindPlayer(recoverablePeer.playerId);
+			if (playerState == nullptr)
 			{
-				gameWorld.ClearRoomTransientState(timedOutPeer.roomId);
+				continue;
+			}
+
+			playerState->inputFlags = common::game::InputFlags::None;
+		}
+
+		return recoverablePeerList;
+	}
+
+	PeerSessionService::ExpiredRecoverablePeerList PeerSessionService::RemoveExpiredRecoverablePeers(TimePoint currentTime, Duration gracePeriod, PeerRoomManager& peerRoomManager, game::GameWorld& gameWorld) const
+	{
+		ExpiredRecoverablePeerList expiredPeerList = peerRoomManager.RemoveExpiredRecoverablePeers(currentTime, gracePeriod);
+		for (const ExpiredRecoverablePeer& expiredPeer : expiredPeerList)
+		{
+			gameWorld.RemovePlayer(expiredPeer.playerId);
+
+			if (peerRoomManager.GetRoomMemberCount(expiredPeer.roomId) == 0)
+			{
+				gameWorld.ClearRoomTransientState(expiredPeer.roomId);
 			}
 		}
 
-		return timedOutPeerList;
+		return expiredPeerList;
 	}
 
 	game::PlayerState PeerSessionService::CreateInitialPlayerState(PlayerId playerId, const common::game::SpawnPoint& spawnPosition, const common::game::GameRuleConfig& gameRuleConfig) const noexcept

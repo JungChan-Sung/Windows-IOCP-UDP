@@ -83,6 +83,12 @@ namespace server::config
 			serverConfig.session.peerTimeout = defaultConfig.session.peerTimeout;
 		}
 
+		if (serverConfig.session.reconnectGracePeriod <= common::time::Seconds(0))
+		{
+			AddWarning(warningList, "Session.ReconnectGracePeriodSeconds must be greater than 0. Default grace period will be used.");
+			serverConfig.session.reconnectGracePeriod = defaultConfig.session.reconnectGracePeriod;
+		}
+
 		if (serverConfig.reliableUdp.maxPendingPacketCount == 0)
 		{
 			AddWarning(

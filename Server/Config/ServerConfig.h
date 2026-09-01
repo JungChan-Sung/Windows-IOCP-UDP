@@ -27,6 +27,7 @@ namespace server::config
 	public:
 		common::game::RoomId initialRoomId = 1;
 		common::time::Seconds peerTimeout = common::time::Seconds(10);
+		common::time::Seconds reconnectGracePeriod = common::time::Seconds(30);
 	};
 
 	struct TickConfig

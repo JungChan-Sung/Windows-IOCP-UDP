@@ -153,6 +153,21 @@ namespace
 			return;
 		}
 
+		if (normalizedKey == "reconnectgraceperiodseconds")
+		{
+			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);
+			if (parsedValue.has_value() && *parsedValue > 0)
+			{
+				serverConfig.session.reconnectGracePeriod = common::time::Seconds(*parsedValue);
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
 		AddWarning(warningList, lineNumber, MakeUnknownKeyMessage(section, key));
 	}
 	

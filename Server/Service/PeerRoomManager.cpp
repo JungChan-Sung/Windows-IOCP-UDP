@@ -134,6 +134,62 @@ namespace server::service
 		return nullptr;
 	}
 
+	PeerState* PeerRoomManager::FindRecoverablePeerBySessionToken(const common::net::SessionToken& sessionToken) noexcept
+	{
+		if (!common::net::IsValidSessionToken(sessionToken))
+		{
+			return nullptr;
+		}
+
+		for (auto& [_, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			if (peerState.connectionState != PeerConnectionState::Recoverable)
+			{
+				continue;
+			}
+
+			if (peerState.sessionToken == sessionToken)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const PeerState* PeerRoomManager::FindRecoverablePeerBySessionToken(const common::net::SessionToken& sessionToken) const noexcept
+	{
+		if (!common::net::IsValidSessionToken(sessionToken))
+		{
+			return nullptr;
+		}
+
+		for (const auto& [_, peerState] : peerTable_)
+		{
+			if (!peerState.isJoined)
+			{
+				continue;
+			}
+
+			if (peerState.connectionState != PeerConnectionState::Recoverable)
+			{
+				continue;
+			}
+
+			if (peerState.sessionToken == sessionToken)
+			{
+				return &peerState;
+			}
+		}
+
+		return nullptr;
+	}
+
 	const PeerRoomManager::RoomMemberSet* PeerRoomManager::FindRoomMemberSet(RoomId roomId) const noexcept
 	{
 		const auto roomIterator = roomTable_.find(roomId);
@@ -198,6 +254,81 @@ namespace server::service
 		}
 
 		peerState->lastRecvTime = currentTime;
+		return true;
+	}
+
+	bool PeerRoomManager::RebindRecoverablePeer(const EndpointKey& previousEndpointKey, const EndpointKey& nextEndpointKey, TimePoint currentTime)
+	{
+		PeerState* peerState = FindJoinedPeer(previousEndpointKey);
+		if (peerState == nullptr)
+		{
+			return false;
+		}
+
+		if (peerState->connectionState != PeerConnectionState::Recoverable)
+		{
+			return false;
+		}
+
+		if (previousEndpointKey == nextEndpointKey)
+		{
+			peerState->connectionState = PeerConnectionState::Connected;
+			peerState->lastRecvTime = currentTime;
+			peerState->recoverableSince = {};
+			return true;
+		}
+
+		if (peerTable_.contains(nextEndpointKey))
+		{
+			return false;
+		}
+
+		auto roomIterator = roomTable_.find(peerState->roomId);
+		if (roomIterator == roomTable_.end())
+		{
+			return false;
+		}
+
+		RoomMemberSet& roomMemberSet = roomIterator->second;
+		if (!roomMemberSet.contains(previousEndpointKey) || roomMemberSet.contains(nextEndpointKey))
+		{
+			return false;
+		}
+
+		PeerTable::node_type peerNode = peerTable_.extract(previousEndpointKey);
+		if (peerNode.empty())
+		{
+			return false;
+		}
+
+		RoomMemberSet::node_type roomMemberNode = roomMemberSet.extract(previousEndpointKey);
+		if (roomMemberNode.empty())
+		{
+			static_cast<void>(peerTable_.insert(std::move(peerNode)));
+			return false;
+		}
+
+		peerNode.key() = nextEndpointKey;
+		roomMemberNode.value() = nextEndpointKey;
+
+		PeerState& reboundPeerState = peerNode.mapped();
+		reboundPeerState.endpointKey = nextEndpointKey;
+		reboundPeerState.connectionState = PeerConnectionState::Connected;
+		reboundPeerState.lastRecvTime = currentTime;
+		reboundPeerState.recoverableSince = {};
+
+		const PeerTable::insert_return_type peerInsertResult = peerTable_.insert(std::move(peerNode));
+		if (!peerInsertResult.inserted)
+		{
+			return false;
+		}
+
+		const RoomMemberSet::insert_return_type roomMemberInsertResult = roomMemberSet.insert(std::move(roomMemberNode));
+		if (!roomMemberInsertResult.inserted)
+		{
+			return false;
+		}
+
 		return true;
 	}
 

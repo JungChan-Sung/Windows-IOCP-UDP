@@ -9,6 +9,7 @@
 #include <Common/Game/GameTypes.h>
 #include <Common/Identity/IdentityTypes.h>
 #include <Common/Net/EndpointKey.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Service/PeerState.h>
@@ -86,6 +87,9 @@ namespace server::service
 		[[nodiscard]] const PeerState* FindJoinedPeerByAccountId(common::identity::AccountId accountId) const noexcept;
 		[[nodiscard]] PeerState* FindJoinedPeerByPlayerId(PlayerId playerId) noexcept;
 		[[nodiscard]] const PeerState* FindJoinedPeerByPlayerId(PlayerId playerId) const noexcept;
+		[[nodiscard]] PeerState* FindRecoverablePeerBySessionToken(const common::net::SessionToken& sessionToken) noexcept;
+		[[nodiscard]] const PeerState* FindRecoverablePeerBySessionToken(const common::net::SessionToken& sessionToken) const noexcept;
+
 		[[nodiscard]] const RoomMemberSet* FindRoomMemberSet(RoomId roomId) const noexcept;
 
 		[[nodiscard]] PeerState& UpsertJoinedPeer(
@@ -99,6 +103,8 @@ namespace server::service
 		void ForEachJoinedPeer(const std::function<void(const PeerState&)>& action) const;
 
 		[[nodiscard]] bool RefreshRecvTime(const EndpointKey& endpointKey, TimePoint currentTime) noexcept;
+
+		[[nodiscard]] bool RebindRecoverablePeer(const EndpointKey& previousEndpointKey, const EndpointKey& nextEndpointKey, TimePoint currentTime);
 
 		[[nodiscard]] bool RemovePeer(const EndpointKey& endpointKey, PlayerId& playerId, RoomId& roomId) noexcept;
 

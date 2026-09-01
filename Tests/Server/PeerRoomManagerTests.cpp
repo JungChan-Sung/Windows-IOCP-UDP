@@ -4,6 +4,7 @@
 
 #include <Common/Game/GameTypes.h>
 #include <Common/Net/EndpointKey.h>
+#include <Common/Net/SessionToken.h>
 #include <Common/Time/TimeTypes.h>
 
 #include <Server/Service/PeerRoomManager.h>
@@ -14,6 +15,16 @@
 namespace
 {
 	using PeerRoomManager = server::service::PeerRoomManager;
+
+	inline constexpr common::net::SessionToken testSessionToken{
+		.high = 0x1122334455667788ULL,
+		.low = 0x8877665544332211ULL,
+	};
+
+	inline constexpr common::net::SessionToken otherSessionToken{
+		.high = 0x1234567890ABCDEFULL,
+		.low = 0xFEDCBA0987654321ULL,
+	};
 
 	[[nodiscard]] constexpr common::net::EndpointKey MakeEndpointKey(
 		std::uint32_t address,
@@ -463,6 +474,96 @@ namespace
 		);
 	}
 
+	void RunFindRecoverablePeerBySessionTokenTest(
+		tests::DebugTestResult& result
+	)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey recoverableEndpointKey =
+			MakeEndpointKey(35, 3500);
+
+		const common::net::EndpointKey connectedEndpointKey =
+			MakeEndpointKey(36, 3600);
+
+		const common::time::TimePoint joinTime =
+			common::time::Clock::now();
+
+		server::service::PeerState& recoverablePeerState =
+			peerRoomManager.UpsertJoinedPeer(
+				recoverableEndpointKey,
+				350,
+				1,
+				joinTime
+			);
+
+		recoverablePeerState.sessionToken = testSessionToken;
+
+		server::service::PeerState& connectedPeerState =
+			peerRoomManager.UpsertJoinedPeer(
+				connectedEndpointKey,
+				360,
+				1,
+				joinTime + common::time::Seconds(10)
+			);
+
+		connectedPeerState.sessionToken = otherSessionToken;
+
+		const PeerRoomManager::RecoverablePeerList recoverablePeerList =
+			peerRoomManager.MarkTimedOutPeersRecoverable(
+				joinTime + common::time::Seconds(11),
+				common::time::Seconds(10)
+			);
+
+		tests::Expect(
+			result,
+			recoverablePeerList.size() == 1,
+			"PeerRoomManager: session token lookup setup has one recoverable peer"
+		);
+
+		server::service::PeerState* foundPeerState =
+			peerRoomManager.FindRecoverablePeerBySessionToken(
+				testSessionToken
+			);
+
+		tests::Expect(
+			result,
+			foundPeerState != nullptr,
+			"PeerRoomManager: recoverable peer found by session token"
+		);
+
+		if (foundPeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				foundPeerState->endpointKey == recoverableEndpointKey,
+				"PeerRoomManager: session token lookup returns correct endpoint"
+			);
+
+			tests::Expect(
+				result,
+				foundPeerState->playerId == 350,
+				"PeerRoomManager: session token lookup returns correct player"
+			);
+		}
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindRecoverablePeerBySessionToken(
+				otherSessionToken
+			) == nullptr,
+			"PeerRoomManager: connected peer not found as recoverable by session token"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindRecoverablePeerBySessionToken(
+				common::net::invalidSessionToken
+			) == nullptr,
+			"PeerRoomManager: invalid session token not found"
+		);
+	}
+
 	void RunTimedOutPeerBecomesRecoverableTest(
 		tests::DebugTestResult& result
 	)
@@ -698,6 +799,405 @@ namespace
 		);
 	}
 
+	void RunRebindRecoverablePeerTest(
+		tests::DebugTestResult& result
+	)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey previousEndpointKey =
+			MakeEndpointKey(90, 9000);
+
+		const common::net::EndpointKey nextEndpointKey =
+			MakeEndpointKey(91, 9001);
+
+		const common::time::TimePoint joinTime =
+			common::time::Clock::now();
+
+		const common::time::TimePoint recoverableTime =
+			joinTime + common::time::Seconds(11);
+
+		const common::time::TimePoint recoveryTime =
+			recoverableTime + common::time::Seconds(5);
+
+		server::service::PeerState& peerState =
+			peerRoomManager.UpsertJoinedPeer(
+				previousEndpointKey,
+				900,
+				3,
+				joinTime
+			);
+
+		peerState.accountId = 1001;
+		peerState.persistentPlayerId = 5001;
+		peerState.sessionToken = testSessionToken;
+		peerState.nickname = "nickname";
+		peerState.lastAcceptedInputSequence = 10;
+		peerState.lastProcessedInputSequence = 9;
+
+		static_cast<void>(
+			peerRoomManager.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				common::time::Seconds(10)
+			)
+			);
+
+		const bool rebound =
+			peerRoomManager.RebindRecoverablePeer(
+				previousEndpointKey,
+				nextEndpointKey,
+				recoveryTime
+			);
+
+		tests::Expect(
+			result,
+			rebound,
+			"PeerRoomManager: recoverable peer rebound to new endpoint"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.FindPeer(previousEndpointKey) == nullptr,
+			"PeerRoomManager: previous endpoint removed after rebind"
+		);
+
+		const server::service::PeerState* reboundPeerState =
+			peerRoomManager.FindJoinedPeer(nextEndpointKey);
+
+		tests::Expect(
+			result,
+			reboundPeerState != nullptr,
+			"PeerRoomManager: rebound peer found at new endpoint"
+		);
+
+		if (reboundPeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				reboundPeerState->endpointKey == nextEndpointKey,
+				"PeerRoomManager: rebound endpoint stored"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->accountId == 1001,
+				"PeerRoomManager: rebound account id preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->persistentPlayerId == 5001,
+				"PeerRoomManager: rebound persistent player id preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->sessionToken == testSessionToken,
+				"PeerRoomManager: rebound session token preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->nickname == "nickname",
+				"PeerRoomManager: rebound nickname preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->playerId == 900,
+				"PeerRoomManager: rebound player id preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->roomId == 3,
+				"PeerRoomManager: rebound room id preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->lastAcceptedInputSequence == 10,
+				"PeerRoomManager: rebound accepted input sequence preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->lastProcessedInputSequence == 9,
+				"PeerRoomManager: rebound processed input sequence preserved"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->connectionState
+				== server::service::PeerConnectionState::Connected,
+				"PeerRoomManager: rebound peer becomes connected"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->lastRecvTime == recoveryTime,
+				"PeerRoomManager: rebound receive time updated"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->recoverableSince
+				== common::time::TimePoint{},
+				"PeerRoomManager: rebound recovery time cleared"
+			);
+		}
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetRoomMemberCount(3) == 1,
+			"PeerRoomManager: rebound room member count preserved"
+		);
+
+		const PeerRoomManager::EndpointKeyList endpointKeyList =
+			peerRoomManager.BuildRoomEndpointKeyList(3);
+
+		tests::Expect(
+			result,
+			endpointKeyList.size() == 1,
+			"PeerRoomManager: rebound peer restored to broadcast targets"
+		);
+
+		if (endpointKeyList.size() == 1)
+		{
+			tests::Expect(
+				result,
+				endpointKeyList.front() == nextEndpointKey,
+				"PeerRoomManager: broadcast target uses new endpoint"
+			);
+		}
+
+		const PeerRoomManager::ExpiredRecoverablePeerList expiredPeerList =
+			peerRoomManager.RemoveExpiredRecoverablePeers(
+				recoveryTime + common::time::Seconds(60),
+				common::time::Seconds(30)
+			);
+
+		tests::Expect(
+			result,
+			expiredPeerList.empty(),
+			"PeerRoomManager: rebound connected peer does not expire as recoverable"
+		);
+	}
+
+	void RunRebindRecoverablePeerSameEndpointTest(
+		tests::DebugTestResult& result
+	)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey endpointKey =
+			MakeEndpointKey(100, 10000);
+
+		const common::time::TimePoint joinTime =
+			common::time::Clock::now();
+
+		const common::time::TimePoint recoverableTime =
+			joinTime + common::time::Seconds(11);
+
+		const common::time::TimePoint recoveryTime =
+			recoverableTime + common::time::Seconds(5);
+
+		server::service::PeerState& peerState =
+			peerRoomManager.UpsertJoinedPeer(
+				endpointKey,
+				1000,
+				4,
+				joinTime
+			);
+
+		peerState.sessionToken = testSessionToken;
+
+		static_cast<void>(
+			peerRoomManager.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				common::time::Seconds(10)
+			)
+			);
+
+		const bool rebound =
+			peerRoomManager.RebindRecoverablePeer(
+				endpointKey,
+				endpointKey,
+				recoveryTime
+			);
+
+		tests::Expect(
+			result,
+			rebound,
+			"PeerRoomManager: recoverable peer rebound to same endpoint"
+		);
+
+		const server::service::PeerState* reboundPeerState =
+			peerRoomManager.FindJoinedPeer(endpointKey);
+
+		tests::Expect(
+			result,
+			reboundPeerState != nullptr,
+			"PeerRoomManager: same endpoint rebound peer found"
+		);
+
+		if (reboundPeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				reboundPeerState->connectionState
+				== server::service::PeerConnectionState::Connected,
+				"PeerRoomManager: same endpoint rebound becomes connected"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->lastRecvTime == recoveryTime,
+				"PeerRoomManager: same endpoint rebound receive time updated"
+			);
+
+			tests::Expect(
+				result,
+				reboundPeerState->recoverableSince
+				== common::time::TimePoint{},
+				"PeerRoomManager: same endpoint recovery time cleared"
+			);
+		}
+
+		const PeerRoomManager::EndpointKeyList endpointKeyList =
+			peerRoomManager.BuildRoomEndpointKeyList(4);
+
+		tests::Expect(
+			result,
+			endpointKeyList.size() == 1,
+			"PeerRoomManager: same endpoint rebound restored to broadcast targets"
+		);
+
+		if (endpointKeyList.size() == 1)
+		{
+			tests::Expect(
+				result,
+				endpointKeyList.front() == endpointKey,
+				"PeerRoomManager: same endpoint broadcast target preserved"
+			);
+		}
+	}
+
+	void RunRebindRecoverablePeerRejectsOccupiedEndpointTest(
+		tests::DebugTestResult& result
+	)
+	{
+		PeerRoomManager peerRoomManager;
+
+		const common::net::EndpointKey recoverableEndpointKey =
+			MakeEndpointKey(110, 11000);
+
+		const common::net::EndpointKey occupiedEndpointKey =
+			MakeEndpointKey(111, 11001);
+
+		const common::time::TimePoint joinTime =
+			common::time::Clock::now();
+
+		const common::time::TimePoint recoverableTime =
+			joinTime + common::time::Seconds(11);
+
+		server::service::PeerState& recoverablePeerState =
+			peerRoomManager.UpsertJoinedPeer(
+				recoverableEndpointKey,
+				1100,
+				5,
+				joinTime
+			);
+
+		recoverablePeerState.sessionToken = testSessionToken;
+
+		server::service::PeerState& occupiedPeerState =
+			peerRoomManager.UpsertJoinedPeer(
+				occupiedEndpointKey,
+				1110,
+				6,
+				joinTime + common::time::Seconds(10)
+			);
+
+		occupiedPeerState.sessionToken = otherSessionToken;
+
+		static_cast<void>(
+			peerRoomManager.MarkTimedOutPeersRecoverable(
+				recoverableTime,
+				common::time::Seconds(10)
+			)
+			);
+
+		const bool rebound =
+			peerRoomManager.RebindRecoverablePeer(
+				recoverableEndpointKey,
+				occupiedEndpointKey,
+				recoverableTime + common::time::Seconds(1)
+			);
+
+		tests::Expect(
+			result,
+			!rebound,
+			"PeerRoomManager: occupied endpoint rebind rejected"
+		);
+
+		const server::service::PeerState* retainedRecoverablePeerState =
+			peerRoomManager.FindJoinedPeer(recoverableEndpointKey);
+
+		tests::Expect(
+			result,
+			retainedRecoverablePeerState != nullptr,
+			"PeerRoomManager: rejected rebind keeps recoverable peer"
+		);
+
+		if (retainedRecoverablePeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				retainedRecoverablePeerState->connectionState
+				== server::service::PeerConnectionState::Recoverable,
+				"PeerRoomManager: rejected rebind keeps recoverable state"
+			);
+		}
+
+		const server::service::PeerState* retainedOccupiedPeerState =
+			peerRoomManager.FindJoinedPeer(occupiedEndpointKey);
+
+		tests::Expect(
+			result,
+			retainedOccupiedPeerState != nullptr,
+			"PeerRoomManager: rejected rebind keeps occupied peer"
+		);
+
+		if (retainedOccupiedPeerState != nullptr)
+		{
+			tests::Expect(
+				result,
+				retainedOccupiedPeerState->playerId == 1110,
+				"PeerRoomManager: occupied endpoint player unchanged"
+			);
+
+			tests::Expect(
+				result,
+				retainedOccupiedPeerState->connectionState
+				== server::service::PeerConnectionState::Connected,
+				"PeerRoomManager: occupied endpoint remains connected"
+			);
+		}
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetRoomMemberCount(5) == 1,
+			"PeerRoomManager: rejected rebind keeps recoverable room membership"
+		);
+
+		tests::Expect(
+			result,
+			peerRoomManager.GetRoomMemberCount(6) == 1,
+			"PeerRoomManager: rejected rebind keeps occupied room membership"
+		);
+	}
+
 	void RunExpiredRecoverablePeerIsRemovedTest(
 		tests::DebugTestResult& result
 	)
@@ -818,10 +1318,14 @@ namespace tests::server
 		RunRefreshAtTimeoutBoundaryTest(result);
 		RunFindJoinedPeerByPlayerIdTest(result);
 		RunFindJoinedPeerByPlayerIdRejectsUnjoinedPeerTest(result);
+		RunFindRecoverablePeerBySessionTokenTest(result);
 
 		RunTimedOutPeerBecomesRecoverableTest(result);
 		RunRecoverablePeerExcludedFromBroadcastTargetsTest(result);
 		RunRecoverablePeerSurvivesGracePeriodTest(result);
+		RunRebindRecoverablePeerTest(result);
+		RunRebindRecoverablePeerSameEndpointTest(result);
+		RunRebindRecoverablePeerRejectsOccupiedEndpointTest(result);
 		RunExpiredRecoverablePeerIsRemovedTest(result);
 
 		return result;

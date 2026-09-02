@@ -213,6 +213,7 @@
     <ClCompile Include="Persistence\PersistenceRuntimeIntegrationTests.cpp" />
     <ClCompile Include="Persistence\PersistenceRuntimeTests.cpp" />
     <ClCompile Include="Persistence\PlayerRepositoryIntegrationTests.cpp" />
+    <ClCompile Include="Persistence\ServerConfigRepositoryIntegrationTests.cpp" />
     <ClCompile Include="Server\AccountLoginAdmissionServiceTests.cpp" />
     <ClCompile Include="Server\AccountLoginPacketHandlerTests.cpp" />
     <ClCompile Include="Server\AccountLoginPersistenceIntegrationTests.cpp" />
@@ -300,6 +301,7 @@
     <ClInclude Include="Persistence\PersistenceRuntimeIntegrationTests.h" />
     <ClInclude Include="Persistence\PersistenceRuntimeTests.h" />
     <ClInclude Include="Persistence\PlayerRepositoryIntegrationTests.h" />
+    <ClInclude Include="Persistence\ServerConfigRepositoryIntegrationTests.h" />
     <ClInclude Include="Server\AccountLoginAdmissionServiceTests.h" />
     <ClInclude Include="Server\AccountLoginPacketHandlerTests.h" />
     <ClInclude Include="Server\AccountLoginPersistenceIntegrationTests.h" />

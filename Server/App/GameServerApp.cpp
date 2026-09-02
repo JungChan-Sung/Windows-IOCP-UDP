@@ -251,6 +251,7 @@ namespace server::app
 			.AppendCommaNamedValue("RecvContextCount", serverConfig.network.recvContextCount)
 			.AppendCommaNamedValue("InitialRoomId", serverConfig.session.initialRoomId)
 			.AppendCommaNamedValue("PeerTimeoutSeconds", serverConfig.session.peerTimeout.count())
+			.AppendCommaNamedValue("ReconnectGracePeriodSeconds", serverConfig.session.reconnectGracePeriod.count())
 			.AppendCommaNamedValue("ReliableMaxPendingPacketCount", serverConfig.reliableUdp.maxPendingPacketCount)
 			.AppendCommaNamedValue("ReliableMaxResendCount", serverConfig.reliableUdp.maxResendCount)
 			.AppendCommaNamedValue("ReliableResendIntervalMs", serverConfig.reliableUdp.resendInterval.count())

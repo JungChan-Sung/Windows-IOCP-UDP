@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <Persistence/Account/AccountConstraints.h>
+#include <Persistence/Config/ServerConfigConstraints.h>
 #include <Persistence/Odbc/OdbcStatement.h>
 
 namespace persistence::schema
@@ -12,7 +13,7 @@ namespace persistence::schema
 	DatabaseSchema::InitializeResult DatabaseSchema::Initialize(odbc::OdbcConnection& connection)
 	{
 		const std::string createAccountsTableQuery = std::format(
-				R"sql(
+			R"sql(
 IF OBJECT_ID(N'dbo.accounts', N'U') IS NULL
 BEGIN
 	CREATE TABLE dbo.accounts
@@ -143,12 +144,38 @@ END
 )sql";
 
 		odbc::OdbcStatement matchPlayerStatement;
-		const odbc::OdbcStatement::ExecuteResult createMatchPlayersResult
-			= matchPlayerStatement.ExecuteDirect(connection, createMatchPlayersTableQuery);
-
+		const odbc::OdbcStatement::ExecuteResult createMatchPlayersResult = matchPlayerStatement.ExecuteDirect(connection, createMatchPlayersTableQuery);
 		if (!createMatchPlayersResult.has_value())
 		{
 			return std::unexpected(createMatchPlayersResult.error());
+		}
+
+		const std::string createServerConfigsTableQuery = std::format(
+			R"sql(
+IF OBJECT_ID(N'dbo.server_configs', N'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.server_configs
+	(
+		config_key NVARCHAR({}) NOT NULL,
+		config_value NVARCHAR({}) NOT NULL,
+		updated_at_utc DATETIME2(3) NOT NULL
+			CONSTRAINT DF_server_configs_updated_at_utc
+			DEFAULT SYSUTCDATETIME(),
+
+		CONSTRAINT PK_server_configs
+			PRIMARY KEY (config_key)
+	);
+END
+)sql",
+config::maxServerConfigKeyUtf16CodeUnitCount,
+config::maxServerConfigValueUtf16CodeUnitCount
+);
+
+		odbc::OdbcStatement serverConfigStatement;
+		const odbc::OdbcStatement::ExecuteResult createServerConfigsResult = serverConfigStatement.ExecuteDirect(connection, createServerConfigsTableQuery);
+		if (!createServerConfigsResult.has_value())
+		{
+			return std::unexpected(createServerConfigsResult.error());
 		}
 
 		return {};

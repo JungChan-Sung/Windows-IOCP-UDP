@@ -131,6 +131,7 @@ namespace client::game
 		RoomId currentRoomId_ = 0;
 
 		bool hasReceivedPlayerSnapshot_ = false;
+		bool shouldReanchorNextPlayerSnapshot_ = false;
 		bool isJoined_ = false;
 
 	public:

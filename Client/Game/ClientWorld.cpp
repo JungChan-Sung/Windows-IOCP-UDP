@@ -148,7 +148,7 @@ namespace client::game
 			{
 				InitializePlayerState(playerState, playerStateData.playerId, playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
-			else if (sampleTimeResult.wasReanchored || wasDead != isDead)
+			else if (shouldReanchorNextPlayerSnapshot_ || sampleTimeResult.wasReanchored || wasDead != isDead)
 			{
 				playerState.interpolationBuffer.Reset(playerStateData.x, playerStateData.y, snapshotSampleTime);
 			}
@@ -190,6 +190,8 @@ namespace client::game
 
 			playerIterator = playerTable_.erase(playerIterator);
 		}
+
+		shouldReanchorNextPlayerSnapshot_ = false;
 
 		if (!hasLocalAuthoritativeState)
 		{
@@ -314,6 +316,7 @@ namespace client::game
 		currentRoomId_ = 0;
 
 		hasReceivedPlayerSnapshot_ = false;
+		shouldReanchorNextPlayerSnapshot_ = false;
 		isJoined_ = false;
 	}
 
@@ -430,7 +433,8 @@ namespace client::game
 			return false;
 		}
 
-		if (localPlayerId_ != 0 && localPlayerId_ != localPlayerId)
+		const bool isRecoveryJoin = localPlayerId_ != 0;
+		if (isRecoveryJoin && localPlayerId_ != localPlayerId)
 		{
 			return false;
 		}
@@ -441,6 +445,12 @@ namespace client::game
 
 		localPlayerPrediction_.Reset(spawnX, spawnY);
 		localPlayerReconciliation_.Clear();
+
+		if (isRecoveryJoin)
+		{
+			serverTickTimeline_.Clear();
+			shouldReanchorNextPlayerSnapshot_ = true;
+		}
 
 		return true;
 	}

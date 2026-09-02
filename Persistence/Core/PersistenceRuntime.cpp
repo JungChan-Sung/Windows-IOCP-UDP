@@ -4,6 +4,7 @@
 
 #include <Common/Identity/IdentityTypes.h>
 
+#include <Persistence/Config/ServerConfigRepository.h>
 #include <Persistence/Schema/DatabaseSchema.h>
 
 namespace persistence
@@ -88,6 +89,19 @@ namespace persistence
 		std::scoped_lock lock(databaseMutex_);
 
 		StopUnlocked();
+	}
+
+	PersistenceRuntime::LoadServerConfigEntriesResult PersistenceRuntime::LoadServerConfigEntries()
+	{
+		std::scoped_lock lock(databaseMutex_);
+
+		if (!enabled_ || !IsStartedUnlocked())
+		{
+			return std::unexpected(MakeNotStartedError());
+		}
+
+		config::ServerConfigRepository repository(connection_);
+		return repository.LoadAll();
 	}
 
 	PersistenceRuntime::CreateAccountResult PersistenceRuntime::CreateAccount(const account::AccountCreateRequest& request)

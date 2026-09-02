@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include <Common/String/StringFormat.h>
@@ -15,7 +16,9 @@
 #include <Persistence/Core/DatabaseError.h>
 
 #include <Server/Admin/ServerAdminCommand.h>
+#include <Server/Config/ServerConfigDatabaseApplier.h>
 #include <Server/Config/ServerConfigLoader.h>
+#include <Server/Config/ServerConfigValidator.h>
 #include <Server/Diagnostics/ServerStatusReporter.h>
 
 namespace server::app
@@ -61,15 +64,52 @@ namespace server::app
 
 	GameServerApp::RunResult GameServerApp::Run(unsigned short port)
 	{
-		const config::ServerConfigLoadResult loadResult = BuildServerConfig(port);
+		config::ServerConfigLoadResult loadResult = BuildServerConfig(port);
+
+		std::size_t databaseConfigEntryCount = 0;
+		std::size_t databaseConfigAppliedCount = 0;
+
+		const persistence::PersistenceRuntime::StartResult persistenceStartResult = persistenceRuntime_.Start(persistence::PersistenceRuntimeStartConfig{
+			.enabled = loadResult.config.database.enabled,
+			.connectionString = loadResult.config.database.connectionString,
+			.connectionTimeoutSeconds = loadResult.config.database.connectionTimeoutSeconds,
+			});
+		if (!persistenceStartResult.has_value())
+		{
+			return std::unexpected(RunError{ persistenceStartResult.error() });
+		}
+
+		if (persistenceRuntime_.IsStarted())
+		{
+			persistence::PersistenceRuntime::LoadServerConfigEntriesResult configEntryResult = persistenceRuntime_.LoadServerConfigEntries();
+			if (!configEntryResult.has_value())
+			{
+				persistenceRuntime_.Stop();
+
+				return std::unexpected(RunError{ configEntryResult.error() });
+			}
+
+			databaseConfigEntryCount = configEntryResult->size();
+			config::ServerConfigDatabaseApplyResult applyResult = config::ServerConfigDatabaseApplier::Apply(loadResult.config, *configEntryResult);
+			databaseConfigAppliedCount = applyResult.appliedCount;
+			for (config::ServerConfigWarning& warning : applyResult.warningList)
+			{
+				loadResult.warningList.push_back(std::move(warning));
+			}
+		}
+
+		std::vector<config::ServerConfigWarning> validationWarningList = config::ServerConfigValidator::ValidateAndNormalize(loadResult.config);
+		for (config::ServerConfigWarning& warning : validationWarningList)
+		{
+			loadResult.warningList.push_back(std::move(warning));
+		}
 
 		logger_.SetMinimumLogLevel(loadResult.config.diagnostics.logLevel);
-
-		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(
-			loadResult.config.diagnostics.asyncLogWorkerThreadCount
-		);
+		const common::log::AsyncLogWriter::StartResult loggerStartResult = logger_.Start(loadResult.config.diagnostics.asyncLogWorkerThreadCount);
 		if (!loggerStartResult.has_value())
 		{
+			persistenceRuntime_.Stop();
+
 			return std::unexpected(RunError{ loggerStartResult.error() });
 		}
 
@@ -77,21 +117,18 @@ namespace server::app
 
 		LogConfigWarnings(loadResult.warningList);
 
-		const persistence::PersistenceRuntime::StartResult persistenceStartResult = persistenceRuntime_.Start(
-			persistence::PersistenceRuntimeStartConfig{
-				.enabled = loadResult.config.database.enabled,
-				.connectionString = loadResult.config.database.connectionString,
-				.connectionTimeoutSeconds = loadResult.config.database.connectionTimeoutSeconds,
-			});
-		if (!persistenceStartResult.has_value())
-		{
-			logger_.Error(common::string::FormatScopedName("Database", persistence::core::ToString(persistenceStartResult.error())));
-			return std::unexpected(RunError{ persistenceStartResult.error() });
-		}
-
 		if (persistenceRuntime_.IsStarted())
 		{
 			logger_.Info("Database health check succeeded.");
+
+			const std::string message
+				= common::log::LogMessageBuilder{}
+				.Append("Database config loaded. ")
+				.AppendNamedValue("EntryCount", databaseConfigEntryCount)
+				.AppendCommaNamedValue("AppliedCount", databaseConfigAppliedCount)
+				.Build();
+
+			logger_.Info(message);
 		}
 		else
 		{
@@ -102,9 +139,9 @@ namespace server::app
 		if (!accountLoginProcessorStartResult.has_value())
 		{
 			logger_.Error(common::string::FormatScopedName(
-					"AccountLoginTaskProcessor",
-					common::threading::ThreadPool::ToString(accountLoginProcessorStartResult.error())
-				));
+				"AccountLoginTaskProcessor",
+				common::threading::ThreadPool::ToString(accountLoginProcessorStartResult.error())
+			));
 
 			persistenceRuntime_.Stop();
 
@@ -170,7 +207,7 @@ namespace server::app
 
 	config::ServerConfigLoadResult GameServerApp::BuildServerConfig(unsigned short port) const
 	{
-		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::LoadValidated("Server.ini");
+		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::Load("Server.ini");
 
 		if (port != 0)
 		{

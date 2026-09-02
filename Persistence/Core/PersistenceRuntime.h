@@ -8,6 +8,7 @@
 #include <Common/Identity/IdentityTypes.h>
 
 #include <Persistence/Account/AccountRepository.h>
+#include <Persistence/Config/ServerConfigRepository.h>
 #include <Persistence/Core/DatabaseError.h>
 #include <Persistence/Match/MatchHistoryRepository.h>
 #include <Persistence/Odbc/OdbcConnection.h>
@@ -28,6 +29,7 @@ namespace persistence
 	{
 	public:
 		using StartResult = std::expected<void, core::DatabaseError>;
+		using LoadServerConfigEntriesResult = config::ServerConfigRepository::LoadAllResult;
 
 		using CreateAccountResult = account::AccountRepository::CreateAccountResult;
 		using FindAccountResult = account::AccountRepository::FindAccountResult;
@@ -68,6 +70,8 @@ namespace persistence
 	public:
 		[[nodiscard]] StartResult Start(const PersistenceRuntimeStartConfig& startConfig);
 		void Stop() noexcept;
+
+		[[nodiscard]] LoadServerConfigEntriesResult LoadServerConfigEntries();
 
 		[[nodiscard]] CreateAccountResult CreateAccount(const account::AccountCreateRequest& request);
 		[[nodiscard]] FindAccountResult FindAccountByLoginName(std::string_view loginName);

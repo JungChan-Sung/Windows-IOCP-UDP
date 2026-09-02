@@ -149,6 +149,7 @@
     <ClCompile Include="Admin\ServerAdminCommand.cpp" />
     <ClCompile Include="Admin\ServerAdminConsole.cpp" />
     <ClCompile Include="App\GameServerApp.cpp" />
+    <ClCompile Include="Config\ServerConfigDatabaseApplier.cpp" />
     <ClCompile Include="Config\ServerConfigLoader.cpp" />
     <ClCompile Include="Config\ServerConfigValidator.cpp" />
     <ClCompile Include="Diagnostics\InvalidPacketLogLimiter.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="Admin\ServerAdminConsole.h" />
     <ClInclude Include="App\GameServerApp.h" />
     <ClInclude Include="Config\ServerConfig.h" />
+    <ClInclude Include="Config\ServerConfigDatabaseApplier.h" />
     <ClInclude Include="Config\ServerConfigLoader.h" />
     <ClInclude Include="Config\ServerConfigValidator.h" />
     <ClInclude Include="Config\ServerConfigWarning.h" />

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <string_view>
 #include <vector>
 
 #include <Server/Config/ServerConfig.h>
@@ -29,6 +30,13 @@ namespace server::config
 		ServerConfigLoader& operator=(ServerConfigLoader&&) = delete;
 
 	public:
+		[[nodiscard]] static std::vector<ServerConfigWarning> ApplySingleValue(
+			ServerConfig& serverConfig,
+			std::string_view section,
+			std::string_view key,
+			std::string_view value
+		);
+
 		[[nodiscard]] static ServerConfigLoadResult Load(const std::filesystem::path& filePath);
 		[[nodiscard]] static ServerConfigLoadResult LoadValidated(const std::filesystem::path& filePath);
 		[[nodiscard]] static ServerConfig LoadOrDefault(const std::filesystem::path& filePath);

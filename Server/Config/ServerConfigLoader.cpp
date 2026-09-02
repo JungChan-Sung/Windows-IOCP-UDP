@@ -782,6 +782,15 @@ namespace
 
 namespace server::config
 {
+	std::vector<ServerConfigWarning> ServerConfigLoader::ApplySingleValue(ServerConfig& serverConfig, std::string_view section, std::string_view key, std::string_view value)
+	{
+		std::vector<ServerConfigWarning> warningList;
+
+		ApplyConfigValue(serverConfig, section, key, value, 0, warningList);
+
+		return warningList;
+	}
+
 	ServerConfigLoadResult ServerConfigLoader::Load(const std::filesystem::path& filePath)
 	{
 		ServerConfigLoadResult loadResult{};

@@ -694,11 +694,15 @@ namespace server::net
 				}
 
 				protocol::SnapshotRoomContext& roomContext = context.roomContextList[roomIterator->second];
-				roomContext.peerContextList.push_back(protocol::SnapshotPeerContext{
-					.endpointKey = peerState.endpointKey,
-					.playerId = peerState.playerId,
-					.lastProcessedInputSequence = peerState.lastProcessedInputSequence,
-					});
+
+				if (peerState.connectionState == service::PeerConnectionState::Connected)
+				{
+					roomContext.peerContextList.push_back(protocol::SnapshotPeerContext{
+						.endpointKey = peerState.endpointKey,
+						.playerId = peerState.playerId,
+						.lastProcessedInputSequence = peerState.lastProcessedInputSequence,
+						});
+				}
 
 				const game::PlayerState* playerState = gameWorld_.FindPlayer(peerState.playerId);
 				if (playerState == nullptr)

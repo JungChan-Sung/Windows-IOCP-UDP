@@ -405,9 +405,6 @@
     <ClCompile Include="Packet\PacketAuthenticationPolicyTests.cpp">
       <Filter>소스 파일\Packet</Filter>
     </ClCompile>
-    <ClCompile Include="Persistence\ServerConfigRepositoryIntegrationTests.cpp">
-      <Filter>소스 파일\Persistence</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Net\SnapshotChunkAssemblerCoreTests.h">
@@ -640,9 +637,6 @@
     </ClInclude>
     <ClInclude Include="Packet\PacketAuthenticationPolicyTests.h">
       <Filter>헤더 파일\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Persistence\ServerConfigRepositoryIntegrationTests.h">
-      <Filter>헤더 파일\Persistence</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

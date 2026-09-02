@@ -49,9 +49,6 @@
     <Filter Include="소스 파일\Match">
       <UniqueIdentifier>{7f8532d8-9f04-4656-8f36-00e7ae8eb8ff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="헤더 파일\Config">
-      <UniqueIdentifier>{f4431c12-b7d1-4261-b526-ad12105d34a2}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\DatabaseError.h">
@@ -93,12 +90,6 @@
     <ClInclude Include="Match\MatchHistoryRepository.h">
       <Filter>헤더 파일\Match</Filter>
     </ClInclude>
-    <ClInclude Include="Config\ServerConfigConstraints.h">
-      <Filter>헤더 파일\Config</Filter>
-    </ClInclude>
-    <ClInclude Include="Config\ServerConfigRepository.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\DatabaseError.cpp">
@@ -133,9 +124,6 @@
     </ClCompile>
     <ClCompile Include="Match\MatchHistoryRepository.cpp">
       <Filter>소스 파일\Match</Filter>
-    </ClCompile>
-    <ClCompile Include="Config\ServerConfigRepository.cpp">
-      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

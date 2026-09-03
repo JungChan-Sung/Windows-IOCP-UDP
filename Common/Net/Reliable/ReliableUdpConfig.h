@@ -6,6 +6,7 @@
 
 namespace common::net
 {
+	// Reliable UDP - 송신 윈도우 크기와 재전송 정책 구조체
 	struct ReliableUdpConfig
 	{
 	public:

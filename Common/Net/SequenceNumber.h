@@ -6,6 +6,7 @@ namespace common::net
 {
 	using SequenceNumber = std::uint32_t;
 
+	// 32비트 시퀀스 번호의 순환시 앞뒤 관계 판단 기준값
 	inline constexpr SequenceNumber sequenceNumberHalfRange = static_cast<SequenceNumber>(1) << 31;
 
 	[[nodiscard]] inline bool IsSequenceNewer(SequenceNumber lhs, SequenceNumber rhs) noexcept

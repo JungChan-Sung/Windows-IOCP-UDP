@@ -4,6 +4,7 @@
 
 namespace common::net
 {
+	// IOCP HANDLE - 소유권및 수명 관리 클래스
 	class IocpHandle
 	{
 	private:

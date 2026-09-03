@@ -19,6 +19,7 @@
 
 namespace common::net
 {
+	// 한 통신 상대의 Reliable UDP 송수신 상태와 ACK·재전송 처리를 관리하는 클래스
 	class ReliableUdpSession
 	{
 	public:
@@ -84,6 +85,7 @@ namespace common::net
 			return sendWindow_.AllocateSequence();
 		}
 
+		// 송신 Sequence와 현재 수신 이력을 함께 담아 ACK를 데이터 패킷에 Piggyback하는 함수
 		[[nodiscard]] ReliableUdpPacketHeader BuildOutgoingHeader(ReliableSequence sequence) const noexcept
 		{
 			ReliableUdpPacketHeader reliableHeader{};
@@ -148,6 +150,7 @@ namespace common::net
 			}
 
 			const bool isNewPacket = ProcessReceivedDataHeader(packetView.reliableHeader);
+			// 중복 패킷도 상대의 재전송을 멈출 수 있도록 최신 ACK를 다시 전달
 			return ProcessReceivedPacketResult{
 				.status = isNewPacket ? ProcessReceivedPacketStatus::DataReceived : ProcessReceivedPacketStatus::DuplicateData,
 				.ackPacketBuffer = BuildAckPacket(),

@@ -19,6 +19,18 @@ namespace common::net
 	inline constexpr std::size_t reliableUdpPacketHeaderOffset = packet::serializedPacketHeaderSize;
 	inline constexpr std::size_t reliableUdpPayloadOffset = packet::serializedPacketHeaderSize + reliableUdpPacketHeaderWireSize;
 
+	//┌────────────┐
+	//│ PacketHeader           │
+	//├────────────┤
+	//│ ReliableUdpPacketHeader│
+	//│ - sequence             │
+	//│ - ackSequence          │
+	//│ - ackBitfield          │
+	//├────────────┤
+	//│ Game Payload           │
+	//└────────────┘
+	// Reliable 패킷을 파싱한 비소유 뷰 구조체
+	// payload는 원본 패킷 메모리를 참조
 	struct ReliableUdpPacketView
 	{
 	public:
@@ -27,6 +39,7 @@ namespace common::net
 		packet::ConstPacketSpan payload;
 	};
 
+	// 기본 게임 패킷의 Payload를 유지하면서 Reliable 헤더를 삽입한 전송 패킷 생성 함수
 	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildReliableUdpPacket(
 		const ReliableUdpPacketHeader& reliableHeader,
 		packet::ConstPacketSpan serializedGamePacket
@@ -91,7 +104,6 @@ namespace common::net
 
 		const std::span<const char> payload = serializedGamePacket.subspan(packet::serializedPacketHeaderSize);
 		packetBuffer.insert(packetBuffer.end(), payload.begin(), payload.end());
-
 		if (packetBuffer.size() != reliablePacketSize)
 		{
 			return std::nullopt;
@@ -100,10 +112,10 @@ namespace common::net
 		return packetBuffer;
 	}
 
+	// 게임 Payload 없이 ACK 정보만 전달하는 Reliable 패킷 생성 함수
 	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildReliableUdpAckPacket(const ReliableUdpPacketHeader& reliableHeader)
 	{
 		const std::size_t packetSize = reliableUdpPayloadOffset;
-
 		if (packetSize > packet::maxSerializedPacketSize)
 		{
 			return std::nullopt;
@@ -186,6 +198,7 @@ namespace common::net
 		return packetView;
 	}
 
+	// Reliable 전송 헤더를 제거하고 상위 계층에서 처리할 기본 게임 패킷 복원 함수
 	[[nodiscard]] inline std::optional<packet::PacketBuffer> BuildGamePacketFromReliableUdpPacketView(const ReliableUdpPacketView& packetView)
 	{
 		if (!packet::IsReliablePacketType(packetView.packetHeader.type))

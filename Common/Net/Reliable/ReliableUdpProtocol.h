@@ -33,6 +33,7 @@ namespace common::net
 		return (ackBitfield & ackBit) != 0;
 	}
 
+	// 가장 최근에 수신한 sequence와 이전 32개 패킷의 수신 여부 추적 클래스
 	class ReliableAckTracker
 	{
 	private:
@@ -83,7 +84,9 @@ namespace common::net
 				}
 				else
 				{
+					// 최신 sequence가 이동한 만큼 기존 수신 이력의 기준도 함께 이동
 					ackBitfield_ <<= distance;
+					// 이전 최신 sequence를 새 기준에서 수신된 패킷으로 기록
 					ackBitfield_ |= static_cast<std::uint32_t>(1) << (distance - 1);
 				}
 
@@ -97,10 +100,12 @@ namespace common::net
 				return;
 			}
 
+			// 순서가 뒤바뀌어 도착한 패킷은 최신 sequence와의 거리에 해당하는 비트를 기록
 			ackBitfield_ |= static_cast<std::uint32_t>(1) << (distance - 1);
 		}
 
 	public:
+		// 최신 ACK와 비트필드를 사용해 지정한 sequence의 수신 여부 판단 함수
 		[[nodiscard]] bool IsSequenceAcked(ReliableSequence sequence) const noexcept
 		{
 			if (!hasReceivedAnySequence_)

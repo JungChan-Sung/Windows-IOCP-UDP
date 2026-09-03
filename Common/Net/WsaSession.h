@@ -4,6 +4,7 @@
 
 namespace common::net
 {
+	// WinSock - 초기화 및 정리 RAII 클래스
 	class WsaSession
 	{
 	public:

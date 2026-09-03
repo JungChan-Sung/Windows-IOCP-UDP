@@ -4,6 +4,7 @@
 
 namespace common::net
 {
+	// WinSock SOCKET - 소유권 및 수명 관리 클래스
 	class Socket
 	{
 	private:

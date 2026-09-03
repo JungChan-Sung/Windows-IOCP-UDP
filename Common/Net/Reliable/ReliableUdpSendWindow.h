@@ -12,6 +12,7 @@
 
 namespace common::net
 {
+	// ACK를 받을 때까지 송신 패킷과 재전송 상태 보관 구조체
 	struct ReliablePendingPacket
 	{
 	public:
@@ -21,6 +22,7 @@ namespace common::net
 		int resendCount = 0;
 	};
 
+	// 재전송 대상 및 재전송 한도를 초과하여 포기한 패킷 반환 구조체
 	struct ReliableResendResult
 	{
 	public:
@@ -28,6 +30,7 @@ namespace common::net
 		std::vector<ReliablePendingPacket> giveUpPacketList;
 	};
 
+	// ACK되지 않은 Reliable 패킷 보관 및 ACK 처리와 재전송 시점 관리 클래스
 	class ReliableUdpSendWindow
 	{
 	public:
@@ -133,6 +136,7 @@ namespace common::net
 			return true;
 		}
 
+		// 아직 할당하지 않은 미래 sequence에 대한 잘못된 ACK를 거부 체크하는 함수
 		[[nodiscard]] bool CanProcessAck(ReliableSequence ackSequence) const noexcept
 		{
 			if (ackSequence == 0)

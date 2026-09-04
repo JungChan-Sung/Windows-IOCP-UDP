@@ -9,6 +9,7 @@
 
 namespace common::net
 {
+	// 설정된 확률과 지연 범위에 따라 패킷별 Fault 적용 여부를 결정하는 클래스
 	class UdpFaultDecisionGenerator
 	{
 	public:

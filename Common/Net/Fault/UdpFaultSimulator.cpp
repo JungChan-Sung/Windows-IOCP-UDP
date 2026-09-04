@@ -4,6 +4,7 @@ namespace common::net
 {
 	void UdpFaultSimulator::SetConfig(const Config& config)
 	{
+		// 이전 설정으로 예약된 지연 패킷이 새 설정에 남지 않도록 스케줄을 초기화
 		packetScheduler_.Reset();
 		decisionGenerator_.SetConfig(config);
 		isEnabled_.store(config.enabled);

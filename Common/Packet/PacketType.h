@@ -4,6 +4,7 @@
 
 namespace common::packet
 {
+	// Client와 Server가 공유하는 Wire Protocol의 패킷 종류
 	enum class PacketType : std::uint16_t
 	{
 		None = 0,

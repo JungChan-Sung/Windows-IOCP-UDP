@@ -40,6 +40,7 @@ namespace common::packet
 		PacketHeader header{ 0, PacketType::PlayerSnapshot };
 		std::uint32_t serverTick = 0;
 		std::int32_t roomId = 0;
+		// 클라이언트가 서버 처리 이후의 미확인 입력만 다시 적용할 수 있도록 마지막 처리한 Sequence 값
 		std::uint32_t lastProcessedInputSequence = 0;
 
 		std::uint16_t playerCount = 0;
@@ -55,6 +56,7 @@ namespace common::packet
 		std::uint32_t serverTick = 0;
 		std::int32_t roomId = 0;
 
+		// 제한된 패킷 크기 내에서 Snapshot을 전송할 수 있도록 여러 Chunk로 분할
 		std::uint16_t chunkIndex = 0;
 		std::uint16_t chunkCount = 1;
 

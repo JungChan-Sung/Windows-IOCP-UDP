@@ -24,6 +24,7 @@ namespace common::packet
 		std::uint32_t serverTick = 0;
 		std::int32_t roomId = 0;
 
+		// 제한된 패킷 크기 내에서 Snapshot을 전송할 수 있도록 여러 Chunk로 분할
 		std::uint16_t chunkIndex = 0;
 		std::uint16_t chunkCount = 1;
 

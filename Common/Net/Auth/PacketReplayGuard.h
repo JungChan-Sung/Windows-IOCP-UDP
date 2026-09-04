@@ -7,6 +7,7 @@
 
 namespace common::net
 {
+	// 최근 인증 Sequence의 수신 이력을 유지해 중복 및 오래된 Replay 패킷을 차단하는 클래스
 	class PacketReplayGuard
 	{
 	public:

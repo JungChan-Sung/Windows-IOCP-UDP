@@ -14,6 +14,8 @@
 
 namespace common::threading
 {
+	// 고정 Worker Thread가 공유 작업 Queue를 처리하는 클래스
+	// 즉시 종료와 Pending 작업을 소진한 뒤 종료하는 두 정책을 지원
 	class ThreadPool
 	{
 	public:
@@ -57,7 +59,9 @@ namespace common::threading
 
 	public:
 		[[nodiscard]] StartResult Start(std::size_t workerThreadCount);
+		// Worker에 Stop을 요청하고 아직 실행되지 않은 Pending 작업은 폐기하는 함수
 		void Stop() noexcept;
+		// 새 작업 접수를 중단하고 이미 Queue에 들어온 작업을 모두 처리한 뒤 Worker를 종료하는 함수
 		void StopAfterDrain() noexcept;
 
 		[[nodiscard]] bool Enqueue(Task task);

@@ -17,6 +17,8 @@ namespace common::game
 		float y = 0.0F;
 	};
 
+	// Server 충돌 판정과 Client Prediction이 동일한 공간 규칙을 사용하도록
+	// 방별 벽과 spawn 배치를 공통 데이터로 정의
 	inline constexpr std::array<WallRect, 3> room1WallRectList{
 		WallRect{.minX = 120.0F, .minY = 120.0F, .maxX = 180.0F, .maxY = 560.0F },
 		WallRect{.minX = 460.0F, .minY = 80.0F, .maxX = 520.0F, .maxY = 420.0F },

@@ -55,6 +55,10 @@ namespace client::input
 			pendingActionMask_.fetch_or(fireActionMask, std::memory_order_relaxed);
 			break;
 
+		case 'I':
+			pendingActionMask_.fetch_or(toggleInterpolationActionMask, std::memory_order_relaxed);
+			break;
+
 		case VK_OEM_MINUS:
 		case VK_SUBTRACT:
 			pendingActionMask_.fetch_or(decreaseInterpolationActionMask, std::memory_order_relaxed);
@@ -156,7 +160,9 @@ namespace client::input
 		const std::uint32_t actionMask = pendingActionMask_.exchange(0, std::memory_order_relaxed);
 
 		snapshot.fireRequested = (actionMask & fireActionMask) != 0;
-		snapshot.decreaseInterpolationRequested = (actionMask & decreaseInterpolationActionMask) != 0;
+
+		snapshot.toggleInterpolationRequested = (actionMask & toggleInterpolationActionMask) != 0;
+snapshot.decreaseInterpolationRequested = (actionMask & decreaseInterpolationActionMask) != 0;
 		snapshot.increaseInterpolationRequested = (actionMask & increaseInterpolationActionMask) != 0;
 
 		return snapshot;

@@ -13,6 +13,7 @@ namespace client::input
 		static inline constexpr std::uint32_t fireActionMask = 1U << 0;
 		static inline constexpr std::uint32_t decreaseInterpolationActionMask = 1U << 1;
 		static inline constexpr std::uint32_t increaseInterpolationActionMask = 1U << 2;
+		static inline constexpr std::uint32_t toggleInterpolationActionMask = 1U << 3;
 
 	private:
 		std::atomic<bool> isUpPressed_ = false;

@@ -102,6 +102,8 @@ namespace client::game
 			PlayerId localPlayerId = 0;
 			RoomId currentRoomId = 0;
 			std::uint32_t lastServerTick = 0;
+
+			bool interpolationEnabled = true;
 			common::time::Milliseconds interpolationDelay{};
 
 			RenderPlayerStateList playerStateList;
@@ -122,6 +124,8 @@ namespace client::game
 
 		InterpolationDelayController interpolationDelayController_;
 		ServerTickTimeline serverTickTimeline_;
+
+		bool interpolationEnabled_ = true;
 
 		LocalPlayerPrediction localPlayerPrediction_;
 		LocalPlayerReconciliation localPlayerReconciliation_;
@@ -171,6 +175,10 @@ namespace client::game
 	public:
 		[[nodiscard]] bool TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
 		void SetCurrentRoomId(RoomId roomId);
+
+		void SetInterpolationEnabled(bool isEnabled) noexcept;
+		[[nodiscard]] bool ToggleInterpolationEnabled() noexcept;
+
 		void SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept;
 
 		[[nodiscard]] bool IsJoined() const noexcept;
@@ -180,6 +188,8 @@ namespace client::game
 		[[nodiscard]] RenderPlayerStateList GetRenderPlayerStatesSnapshot(common::time::TimePoint renderTime) const;
 		[[nodiscard]] RenderBulletStateList GetRenderBulletStatesSnapshot() const;
 		[[nodiscard]] RenderImpactEffectStateList GetRenderImpactEffectStatesSnapshot() const;
+
+		[[nodiscard]] bool IsInterpolationEnabled() const noexcept;
 		[[nodiscard]] common::time::Milliseconds GetInterpolationDelay() const noexcept;
 		[[nodiscard]] bool IsLocalPlayerDead() const noexcept;
 

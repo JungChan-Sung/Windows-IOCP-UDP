@@ -165,6 +165,7 @@ namespace client::runtime
 		}
 
 		const input::InputSnapshot inputSnapshot = gameWindow_->ConsumeInputSnapshot();
+		TryToggleInterpolation(inputSnapshot);
 		TryAdjustInterpolationDelay(inputSnapshot);
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
@@ -284,6 +285,18 @@ namespace client::runtime
 		{
 			world_->SetInterpolationDelay(world_->GetInterpolationDelay() + config_->timing.interpolationAdjustStep);
 		}
+	}
+
+	void ClientRuntime::TryToggleInterpolation(const input::InputSnapshot& inputSnapshot)
+	{
+		if (!inputSnapshot.toggleInterpolationRequested)
+		{
+			return;
+		}
+
+		const bool isEnabled = world_->ToggleInterpolationEnabled();
+
+		logger_->Info(isEnabled ? "Remote player interpolation enabled." : "Remote player interpolation disabled.");
 	}
 
 	void ClientRuntime::ShutdownJoinedSession()

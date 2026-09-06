@@ -96,6 +96,7 @@ namespace client::app
 		LogConfigWarnings(loadResult.warningList);
 		OutputStartupConfig();
 
+		world_.SetInterpolationEnabled(config_.interpolation.enabled);
 		world_.SetInterpolationSettings(config_.interpolation.defaultDelay, config_.interpolation.minDelay, config_.interpolation.maxDelay);
 
 		udpClient_.SetSnapshotAssemblyTimeout(config_.snapshot.assemblyTimeout);
@@ -230,6 +231,7 @@ namespace client::app
 			.AppendCommaNamedValue("KeepAliveMs", config_.timing.keepAliveInterval.count())
 			.AppendCommaNamedValue("RoomJoinMs", config_.timing.roomJoinInterval.count())
 			.AppendCommaNamedValue("InterpolationAdjustStepMs", config_.timing.interpolationAdjustStep.count())
+			.AppendCommaNamedValue("InterpolationEnabled", config_.interpolation.enabled)
 			.AppendCommaNamedValue("InterpolationDefaultDelayMs", config_.interpolation.defaultDelay.count())
 			.AppendCommaNamedValue("InterpolationMinDelayMs", config_.interpolation.minDelay.count())
 			.AppendCommaNamedValue("InterpolationMaxDelayMs", config_.interpolation.maxDelay.count())

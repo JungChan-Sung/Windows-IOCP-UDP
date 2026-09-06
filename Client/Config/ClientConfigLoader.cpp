@@ -303,6 +303,21 @@ namespace
 	{
 		const std::string normalizedKey = common::config::ToLowerCopy(key);
 
+		if (normalizedKey == "enabled")
+		{
+			const std::optional<bool> parsedValue = common::config::TryParseBool(value);
+			if (parsedValue.has_value())
+			{
+				clientConfig.interpolation.enabled = *parsedValue;
+			}
+			else
+			{
+				AddWarning(warningList, lineNumber, MakeInvalidValueMessage(section, key, value));
+			}
+
+			return;
+		}
+
 		if (normalizedKey == "defaultdelayms")
 		{
 			const std::optional<unsigned long long> parsedValue = common::config::TryParseUnsigned(value);

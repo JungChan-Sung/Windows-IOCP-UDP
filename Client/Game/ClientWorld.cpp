@@ -352,6 +352,8 @@ namespace client::game
 		snapshot.localPlayerId = localPlayerId_;
 		snapshot.currentRoomId = currentRoomId_;
 		snapshot.lastServerTick = lastServerTick_;
+
+		snapshot.interpolationEnabled = interpolationEnabled_;
 		snapshot.interpolationDelay = interpolationDelayController_.GetDelay();
 
 		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
@@ -396,7 +398,7 @@ namespace client::game
 				}
 				else
 				{
-					const auto latestPosition = playerState.interpolationBuffer.Interpolate(renderTime);
+					const auto latestPosition = playerState.interpolationBuffer.GetLatestPosition();
 					if (latestPosition.has_value())
 					{
 						renderPlayerState.x = latestPosition->x;
@@ -408,15 +410,16 @@ namespace client::game
 				continue;
 			}
 
-			const auto interpolatedPosition = playerState.interpolationBuffer.Interpolate(interpolationTargetTime);
-			if (!interpolatedPosition.has_value())
+			const auto renderPosition = interpolationEnabled_
+				? playerState.interpolationBuffer.Interpolate(interpolationTargetTime) 
+				: playerState.interpolationBuffer.GetLatestPosition();
+			if (!renderPosition.has_value())
 			{
 				continue;
 			}
 
-			renderPlayerState.x = interpolatedPosition->x;
-			renderPlayerState.y = interpolatedPosition->y;
-
+			renderPlayerState.x = renderPosition->x;
+			renderPlayerState.y = renderPosition->y;
 
 			renderPlayerStateList.push_back(renderPlayerState);
 		}
@@ -462,6 +465,20 @@ namespace client::game
 		currentRoomId_ = roomId;
 	}
 
+	void ClientWorld::SetInterpolationEnabled(bool isEnabled) noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		interpolationEnabled_ = isEnabled;
+	}
+
+	bool ClientWorld::ToggleInterpolationEnabled() noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		interpolationEnabled_ = !interpolationEnabled_;
+		return interpolationEnabled_;
+	}
 
 	void ClientWorld::SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept
 	{
@@ -517,6 +534,13 @@ namespace client::game
 		std::scoped_lock lock(worldMutex_);
 
 		return renderImpactEffectStateList_;
+	}
+
+	bool ClientWorld::IsInterpolationEnabled() const noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		return interpolationEnabled_;
 	}
 
 	common::time::Milliseconds ClientWorld::GetInterpolationDelay() const noexcept

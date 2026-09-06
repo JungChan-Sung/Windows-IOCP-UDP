@@ -17,6 +17,7 @@
 
 namespace persistence::odbc
 {
+	// ODBC Statement Handle과 바인딩된 Parameter 버퍼의 수명을 함께 관리하는 클래스
 	class OdbcStatement final
 	{
 	private:
@@ -51,6 +52,8 @@ namespace persistence::odbc
 
 	private:
 		SQLHSTMT statementHandle_ = SQL_NULL_HSTMT;
+		// SQLBindParameter가 실행 시점까지 참조하는 버퍼 주소를 유지하기 위해
+		// 바인딩된 값의 수명과 주소 안정성을 Statement가 보장
 		std::deque<BoundStringParameter> boundStringParameters_;
 		std::deque<BoundInt64Parameter> boundInt64Parameters_;
 		std::deque<BoundTimestampParameter> boundTimestampParameters_;

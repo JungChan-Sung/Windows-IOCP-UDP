@@ -25,6 +25,8 @@ namespace persistence
 		int connectionTimeoutSeconds = 5;
 	};
 
+	// Persistence Subsystem의 ODBC Lifecycle과 공유 Connection 접근을 관리하고
+	// 상위 계층에 Repository 기반 DB 작업의 진입점을 제공하는 클래스
 	class PersistenceRuntime final
 	{
 	public:
@@ -49,6 +51,7 @@ namespace persistence
 		odbc::OdbcEnvironment environment_;
 		odbc::OdbcConnection connection_;
 
+		// 하나의 Connection을 공유하는 Persistence 작업을 직렬화해 동시 접근을 방지
 		mutable std::mutex databaseMutex_;
 
 		bool enabled_ = false;

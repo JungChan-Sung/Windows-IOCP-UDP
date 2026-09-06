@@ -19,6 +19,7 @@ namespace persistence::odbc
 		int connectionTimeoutSeconds = 5;
 	};
 
+	// ODBC Connection Handle과 Transaction 상태의 수명을 관리하는 클래스
 	class OdbcConnection final
 	{
 	public:
@@ -42,6 +43,7 @@ namespace persistence::odbc
 
 	public:
 		[[nodiscard]] OpenResult Open(const OdbcEnvironment& environment, const OdbcConnectionOpenConfig& openConfig);
+		// 명시적으로 완료되지 않은 Transaction은 연결 종료 시 Rollback하는 함수
 		void Close() noexcept;
 
 		[[nodiscard]] HealthCheckResult ExecuteHealthCheck() const;

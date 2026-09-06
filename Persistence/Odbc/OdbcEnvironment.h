@@ -10,6 +10,7 @@
 
 namespace persistence::odbc
 {
+	// ODBC Environment Handle의 초기화와 수명을 RAII 방식으로 관리하는 클래스
 	class OdbcEnvironment final
 	{
 	public:

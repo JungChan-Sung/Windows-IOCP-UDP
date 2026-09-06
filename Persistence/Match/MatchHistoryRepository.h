@@ -30,6 +30,7 @@ namespace persistence::match
 		std::span<const MatchPlayerCreateRecord> playerStatsList;
 	};
 
+	// Match와 참가자 통계를 하나의 Transaction으로 원자적으로 저장하는 클래스
 	class MatchHistoryRepository final
 	{
 	public:

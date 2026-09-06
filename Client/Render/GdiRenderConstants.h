@@ -31,6 +31,6 @@ namespace client::render
 	inline constexpr float spawnEffectMatchRadiusSquared = spawnEffectMatchRadius * spawnEffectMatchRadius;
 
 	inline constexpr int scoreboardStartX = hudLeft;
-	inline constexpr int scoreboardStartY = hudTop + (hudLineHeight * 7);
+	inline constexpr int scoreboardStartY = hudTop + (hudLineHeight * 9);
 	inline constexpr int scoreboardLineHeight = 20;
 }

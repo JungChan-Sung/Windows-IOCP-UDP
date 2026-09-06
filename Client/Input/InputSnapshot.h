@@ -16,6 +16,9 @@ namespace client::input
 		bool fireRequested = false;
 
 		bool toggleInterpolationRequested = false;
+		bool togglePredictionRequested = false;
+		bool toggleReconciliationRequested = false;
+
 		bool decreaseInterpolationRequested = false;
 		bool increaseInterpolationRequested = false;
 	};

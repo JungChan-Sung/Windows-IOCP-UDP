@@ -41,10 +41,15 @@ namespace client::game
 	{
 		pendingInputList_.clear();
 
-		renderCorrectionOffsetX_ = 0.0F;
-		renderCorrectionOffsetY_ = 0.0F;
+		ClearRenderCorrection();
 
 		isHistoryValid_ = true;
+	}
+
+	void LocalPlayerReconciliation::ClearRenderCorrection() noexcept
+	{
+		renderCorrectionOffsetX_ = 0.0F;
+		renderCorrectionOffsetY_ = 0.0F;
 	}
 
 	void LocalPlayerReconciliation::RecordPendingInput(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds)
@@ -69,6 +74,14 @@ namespace client::game
 		pendingInputList_.push_back(pendingInput);
 	}
 
+	void LocalPlayerReconciliation::DiscardProcessedInputs(std::uint32_t lastProcessedInputSequence) noexcept
+	{
+		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, lastProcessedInputSequence))
+		{
+			pendingInputList_.pop_front();
+		}
+	}
+
 	void LocalPlayerReconciliation::Reconcile(LocalPlayerPrediction& prediction, float authoritativeX, float authoritativeY, std::uint32_t lastProcessedInputSequence, float moveSpeed, RoomId roomId) noexcept
 	{
 		if (!isHistoryValid_)
@@ -84,10 +97,7 @@ namespace client::game
 			return;
 		}
 
-		while (!pendingInputList_.empty() && common::net::IsSequenceOlderOrEqual(pendingInputList_.front().sequence, lastProcessedInputSequence))
-		{
-			pendingInputList_.pop_front();
-		}
+		DiscardProcessedInputs(lastProcessedInputSequence);
 
 		LocalPlayerPrediction replayPrediction;
 		replayPrediction.Reset(authoritativeX, authoritativeY);

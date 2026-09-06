@@ -104,6 +104,9 @@ namespace client::game
 			std::uint32_t lastServerTick = 0;
 
 			bool interpolationEnabled = true;
+			bool predictionEnabled = true;
+			bool reconciliationEnabled = true;
+
 			common::time::Milliseconds interpolationDelay{};
 
 			RenderPlayerStateList playerStateList;
@@ -126,6 +129,8 @@ namespace client::game
 		ServerTickTimeline serverTickTimeline_;
 
 		bool interpolationEnabled_ = true;
+		bool predictionEnabled_ = true;
+		bool reconciliationEnabled_ = true;
 
 		LocalPlayerPrediction localPlayerPrediction_;
 		LocalPlayerReconciliation localPlayerReconciliation_;
@@ -176,10 +181,15 @@ namespace client::game
 		[[nodiscard]] bool TrySetJoinState(PlayerId localPlayerId, RoomId roomId, float spawnX, float spawnY);
 		void SetCurrentRoomId(RoomId roomId);
 
-		void SetInterpolationEnabled(bool isEnabled) noexcept;
-		[[nodiscard]] bool ToggleInterpolationEnabled() noexcept;
-
 		void SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept;
+
+		void SetInterpolationEnabled(bool isEnabled) noexcept;
+		void SetPredictionEnabled(bool isEnabled) noexcept;
+		void SetReconciliationEnabled(bool isEnabled) noexcept;
+
+		[[nodiscard]] bool ToggleInterpolationEnabled() noexcept;
+		[[nodiscard]] bool TogglePredictionEnabled() noexcept;
+		[[nodiscard]] bool ToggleReconciliationEnabled() noexcept;
 
 		[[nodiscard]] bool IsJoined() const noexcept;
 		[[nodiscard]] PlayerId GetLocalPlayerId() const noexcept;
@@ -189,8 +199,12 @@ namespace client::game
 		[[nodiscard]] RenderBulletStateList GetRenderBulletStatesSnapshot() const;
 		[[nodiscard]] RenderImpactEffectStateList GetRenderImpactEffectStatesSnapshot() const;
 
-		[[nodiscard]] bool IsInterpolationEnabled() const noexcept;
 		[[nodiscard]] common::time::Milliseconds GetInterpolationDelay() const noexcept;
+
+		[[nodiscard]] bool IsInterpolationEnabled() const noexcept;
+		[[nodiscard]] bool IsPredictionEnabled() const noexcept;
+		[[nodiscard]] bool IsReconciliationEnabled() const noexcept;
+
 		[[nodiscard]] bool IsLocalPlayerDead() const noexcept;
 
 	};

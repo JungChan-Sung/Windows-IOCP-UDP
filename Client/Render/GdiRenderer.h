@@ -56,6 +56,8 @@ namespace client::render
 			RoomId currentRoomId,
 			std::uint32_t serverTick,
 			bool interpolationEnabled,
+			bool predictionEnabled,
+			bool reconciliationEnabled,
 			int interpolationDelayMs
 		) const;
 		void DrawWalls(HDC deviceContext, RoomId roomId) const;

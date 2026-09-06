@@ -68,6 +68,8 @@ namespace client::render
 		const RoomId currentRoomId = renderFrameSnapshot.currentRoomId;
 		const std::uint32_t serverTick = renderFrameSnapshot.lastServerTick;
 		const bool interpolationEnabled = renderFrameSnapshot.interpolationEnabled;
+		const bool predictionEnabled = renderFrameSnapshot.predictionEnabled;
+		const bool reconciliationEnabled = renderFrameSnapshot.reconciliationEnabled;
 		const int interpolationDelayMs = static_cast<int>(renderFrameSnapshot.interpolationDelay.count());
 
 		DrawBackground(deviceContext, clientRect);
@@ -86,6 +88,8 @@ namespace client::render
 			currentRoomId,
 			serverTick,
 			interpolationEnabled,
+			predictionEnabled,
+			reconciliationEnabled,
 			interpolationDelayMs
 		);
 		DrawScoreboard(deviceContext, playerStateList, localPlayerId);
@@ -361,7 +365,7 @@ namespace client::render
 		}
 	}
 
-	void GdiRenderer::DrawHud(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList, const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList, PlayerId localPlayerId, RoomId currentRoomId, std::uint32_t serverTick, bool interpolationEnabled, int interpolationDelayMs) const
+	void GdiRenderer::DrawHud(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList, const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList, PlayerId localPlayerId, RoomId currentRoomId, std::uint32_t serverTick, bool interpolationEnabled, bool predictionEnabled, bool reconciliationEnabled, int interpolationDelayMs) const
 	{
 		(void)clientRect;
 
@@ -418,8 +422,10 @@ namespace client::render
 		const std::wstring line3 = L"ServerTick: " + std::to_wstring(serverTick);
 		const std::wstring line4 = L"PlayerCount: " + std::to_wstring(renderPlayerStateList.size());
 		const std::wstring line5 = interpolationEnabled ? L"RemoteInterpolation: ON" : L"RemoteInterpolation: OFF";
-		const std::wstring line6 = L"InterpolationDelayMs: " + std::to_wstring(interpolationDelayMs);
-		const std::wstring line7 = L"LocalState: " + localState;
+		const std::wstring line6 = predictionEnabled ? L"LocalPrediction: ON" : L"LocalPrediction: OFF";
+		const std::wstring line7 = reconciliationEnabled ? L"Reconciliation: ON" : L"Reconciliation: OFF";
+		const std::wstring line8 = L"InterpolationDelayMs: " + std::to_wstring(interpolationDelayMs);
+		const std::wstring line9 = L"LocalState: " + localState;
 
 		::TextOutW(
 			deviceContext,
@@ -469,6 +475,20 @@ namespace client::render
 			hudTop + (hudLineHeight * 6),
 			line7.c_str(),
 			static_cast<int>(line7.size())
+		);
+		::TextOutW(
+			deviceContext,
+			hudLeft,
+			hudTop + (hudLineHeight * 7),
+			line8.c_str(),
+			static_cast<int>(line8.size())
+		);
+		::TextOutW(
+			deviceContext,
+			hudLeft,
+			hudTop + (hudLineHeight * 8),
+			line9.c_str(),
+			static_cast<int>(line9.size())
 		);
 	}
 

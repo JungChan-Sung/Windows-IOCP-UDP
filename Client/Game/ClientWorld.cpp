@@ -42,7 +42,11 @@ namespace client::game
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		if (!isJoined_ || localPlayerId_ == 0 || !localPlayerPrediction_.IsInitialized() || deltaSeconds <= 0.0F)
+		if (!isJoined_ 
+			|| localPlayerId_ == 0 
+			|| !predictionEnabled_
+			|| !localPlayerPrediction_.IsInitialized() 
+			|| deltaSeconds <= 0.0F)
 		{
 			return;
 		}
@@ -205,6 +209,18 @@ namespace client::game
 			return;
 		}
 
+		if (!predictionEnabled_)
+		{
+			localPlayerReconciliation_.Clear();
+			return;
+		}
+
+		if (!reconciliationEnabled_)
+		{
+			localPlayerReconciliation_.DiscardProcessedInputs(packet.lastProcessedInputSequence);
+			return;
+		}
+
 		localPlayerReconciliation_.Reconcile(
 			localPlayerPrediction_,
 			localAuthoritativeX,
@@ -280,7 +296,11 @@ namespace client::game
 			effectIterator = renderImpactEffectStateList_.erase(effectIterator);
 		}
 
-		localPlayerReconciliation_.UpdateRenderCorrection(deltaSeconds);
+
+		if (predictionEnabled_ && reconciliationEnabled_)
+		{
+			localPlayerReconciliation_.UpdateRenderCorrection(deltaSeconds);
+		}
 	}
 
 	void ClientWorld::BeginRecovery() noexcept
@@ -354,6 +374,9 @@ namespace client::game
 		snapshot.lastServerTick = lastServerTick_;
 
 		snapshot.interpolationEnabled = interpolationEnabled_;
+		snapshot.predictionEnabled = predictionEnabled_;
+		snapshot.reconciliationEnabled = reconciliationEnabled_;
+
 		snapshot.interpolationDelay = interpolationDelayController_.GetDelay();
 
 		snapshot.playerStateList = BuildRenderPlayerStateList(renderTime);
@@ -391,10 +414,16 @@ namespace client::game
 
 			if (renderPlayerState.isLocalPlayer)
 			{
-				if (localPlayerPrediction_.IsInitialized())
+				if (predictionEnabled_ && localPlayerPrediction_.IsInitialized())
 				{
-					renderPlayerState.x = localPlayerPrediction_.GetX() + localPlayerReconciliation_.GetRenderCorrectionOffsetX();
-					renderPlayerState.y = localPlayerPrediction_.GetY() + localPlayerReconciliation_.GetRenderCorrectionOffsetY();
+					renderPlayerState.x = localPlayerPrediction_.GetX();
+					renderPlayerState.y = localPlayerPrediction_.GetY();
+
+					if (reconciliationEnabled_)
+					{
+						renderPlayerState.x += localPlayerReconciliation_.GetRenderCorrectionOffsetX();
+						renderPlayerState.y += localPlayerReconciliation_.GetRenderCorrectionOffsetY();
+					}
 				}
 				else
 				{
@@ -465,11 +494,32 @@ namespace client::game
 		currentRoomId_ = roomId;
 	}
 
+	void ClientWorld::SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		interpolationDelayController_.SetDelay(interpolationDelay);
+	}
+
 	void ClientWorld::SetInterpolationEnabled(bool isEnabled) noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 
 		interpolationEnabled_ = isEnabled;
+	}
+
+	void ClientWorld::SetPredictionEnabled(bool isEnabled) noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		predictionEnabled_ = isEnabled;
+	}
+
+	void ClientWorld::SetReconciliationEnabled(bool isEnabled) noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		reconciliationEnabled_ = isEnabled;
 	}
 
 	bool ClientWorld::ToggleInterpolationEnabled() noexcept
@@ -480,12 +530,54 @@ namespace client::game
 		return interpolationEnabled_;
 	}
 
-	void ClientWorld::SetInterpolationDelay(common::time::Milliseconds interpolationDelay) noexcept
+	bool ClientWorld::TogglePredictionEnabled() noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		interpolationDelayController_.SetDelay(interpolationDelay);
+		predictionEnabled_ = !predictionEnabled_;
+
+		// Prediction 상태가 바뀌면 기존 Pending Input과
+		// Render Correction은 더 이상 연속적인 상태가 아니므로 초기화
+		localPlayerReconciliation_.Clear();
+
+		if (!predictionEnabled_)
+		{
+			return false;
+		}
+
+		// Prediction을 다시 켤 때 이전 Prediction 위치를 그대로 사용하면
+		// OFF되어 있던 시간만큼 위치가 오래된 상태이므로
+		// 최신 서버 확정 위치에서 다시 시작
+		const auto localPlayerIterator = playerTable_.find(localPlayerId_);
+		if (localPlayerIterator == playerTable_.end())
+		{
+			return true;
+		}
+
+		const auto latestPosition = localPlayerIterator->second.interpolationBuffer.GetLatestPosition();
+		if (latestPosition.has_value())
+		{
+			localPlayerPrediction_.Reset(latestPosition->x, latestPosition->y);
+		}
+
+		return true;
 	}
+
+	bool ClientWorld::ToggleReconciliationEnabled() noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		reconciliationEnabled_ = !reconciliationEnabled_;
+		if (!reconciliationEnabled_)
+		{
+			// 이미 진행 중이던 화면 보정이 남으면
+			// OFF했는데도 잠시 보정이 보일 수 있으므로 제거
+			localPlayerReconciliation_.ClearRenderCorrection();
+		}
+
+		return reconciliationEnabled_;
+	}
+
 
 	bool ClientWorld::IsJoined() const noexcept
 	{
@@ -536,6 +628,13 @@ namespace client::game
 		return renderImpactEffectStateList_;
 	}
 
+	common::time::Milliseconds ClientWorld::GetInterpolationDelay() const noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		return interpolationDelayController_.GetDelay();
+	}
+
 	bool ClientWorld::IsInterpolationEnabled() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
@@ -543,11 +642,18 @@ namespace client::game
 		return interpolationEnabled_;
 	}
 
-	common::time::Milliseconds ClientWorld::GetInterpolationDelay() const noexcept
+	bool ClientWorld::IsPredictionEnabled() const noexcept
 	{
 		std::scoped_lock lock(worldMutex_);
 
-		return interpolationDelayController_.GetDelay();
+		return predictionEnabled_;
+	}
+
+	bool ClientWorld::IsReconciliationEnabled() const noexcept
+	{
+		std::scoped_lock lock(worldMutex_);
+
+		return reconciliationEnabled_;
 	}
 
 	bool ClientWorld::IsLocalPlayerDead() const noexcept

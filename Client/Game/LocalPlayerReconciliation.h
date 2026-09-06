@@ -62,7 +62,10 @@ namespace client::game
 
 	public:
 		void Clear() noexcept;
+		void ClearRenderCorrection() noexcept;
+
 		void RecordPendingInput(std::uint32_t inputSequence, common::game::InputFlags inputFlags, float deltaSeconds);
+		void DiscardProcessedInputs(std::uint32_t lastProcessedInputSequence) noexcept;
 
 		void Reconcile(
 			LocalPlayerPrediction& prediction,

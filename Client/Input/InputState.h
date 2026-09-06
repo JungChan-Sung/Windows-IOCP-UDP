@@ -14,6 +14,8 @@ namespace client::input
 		static inline constexpr std::uint32_t decreaseInterpolationActionMask = 1U << 1;
 		static inline constexpr std::uint32_t increaseInterpolationActionMask = 1U << 2;
 		static inline constexpr std::uint32_t toggleInterpolationActionMask = 1U << 3;
+		static inline constexpr std::uint32_t togglePredictionActionMask = 1U << 4;
+		static inline constexpr std::uint32_t toggleReconciliationActionMask = 1U << 5;
 
 	private:
 		std::atomic<bool> isUpPressed_ = false;

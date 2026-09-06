@@ -91,6 +91,8 @@ namespace client::runtime
 		void TryJoinRoom(const input::InputSnapshot& inputSnapshot) noexcept;
 		void TryAdjustInterpolationDelay(const input::InputSnapshot& inputSnapshot) noexcept;
 		void TryToggleInterpolation(const input::InputSnapshot& inputSnapshot);
+		void TryTogglePrediction(const input::InputSnapshot& inputSnapshot);
+		void TryToggleReconciliation(const input::InputSnapshot& inputSnapshot);
 
 		void ShutdownJoinedSession();
 

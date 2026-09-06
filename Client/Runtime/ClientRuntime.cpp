@@ -165,7 +165,11 @@ namespace client::runtime
 		}
 
 		const input::InputSnapshot inputSnapshot = gameWindow_->ConsumeInputSnapshot();
+
 		TryToggleInterpolation(inputSnapshot);
+		TryTogglePrediction(inputSnapshot);
+		TryToggleReconciliation(inputSnapshot);
+
 		TryAdjustInterpolationDelay(inputSnapshot);
 
 		const common::time::TimePoint currentTime = common::time::Clock::now();
@@ -297,6 +301,28 @@ namespace client::runtime
 		const bool isEnabled = world_->ToggleInterpolationEnabled();
 
 		logger_->Info(isEnabled ? "Remote player interpolation enabled." : "Remote player interpolation disabled.");
+	}
+
+	void ClientRuntime::TryTogglePrediction(const input::InputSnapshot& inputSnapshot)
+	{
+		if (!inputSnapshot.togglePredictionRequested)
+		{
+			return;
+		}
+
+		const bool isEnabled = world_->TogglePredictionEnabled();
+		logger_->Info(isEnabled ? "Local player prediction enabled." : "Local player prediction disabled.");
+	}
+
+	void ClientRuntime::TryToggleReconciliation(const input::InputSnapshot& inputSnapshot)
+	{
+		if (!inputSnapshot.toggleReconciliationRequested)
+		{
+			return;
+		}
+
+		const bool isEnabled = world_->ToggleReconciliationEnabled();
+		logger_->Info(isEnabled ? "Local player reconciliation enabled." : "Local player reconciliation disabled.");
 	}
 
 	void ClientRuntime::ShutdownJoinedSession()

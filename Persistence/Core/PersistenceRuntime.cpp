@@ -202,6 +202,8 @@ namespace persistence
 			return std::unexpected(createError);
 		}
 
+		// 다른 DB 사용자와의 생성 경쟁으로 Unique Constraint가 발생한 경우
+		// 이미 생성된 Player를 다시 조회해 Find-or-Create를 완료
 		findResult = repository.FindPlayerByAccountId(accountId);
 		if (!findResult.has_value())
 		{

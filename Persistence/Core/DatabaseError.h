@@ -29,6 +29,7 @@ namespace persistence::core
 		TextConversionFailed,
 	};
 
+	// ODBC가 제공하는 SQLSTATE, Native Error, 진단 메시지를 보관하는 구조체
 	struct DatabaseDiagnosticRecord
 	{
 	public:
@@ -37,6 +38,7 @@ namespace persistence::core
 		std::string message;
 	};
 
+	// Persistence 계층의 실패 종류와 DB Driver의 상세 진단 정보를 함께 전달하는 구조체
 	struct DatabaseError
 	{
 	public:

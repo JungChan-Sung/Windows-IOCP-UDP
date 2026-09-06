@@ -10,6 +10,7 @@
 
 namespace persistence::odbc
 {
+	// ODBC Handle의 전체 Diagnostic Record를 수집해 DatabaseError로 변환하는 구조체
 	struct OdbcDiagnosticContext
 	{
 	public:

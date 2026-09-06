@@ -507,7 +507,6 @@ namespace server::net
 		std::optional<common::packet::PacketBuffer> disconnectPacketBuffer;
 
 		bool matchHistoryLeft = true;
-		bool authenticatedAccountRemoved = true;
 
 		{
 			std::scoped_lock lock(stateMutex_);
@@ -540,8 +539,6 @@ namespace server::net
 				common::time::SystemClock::now()
 			);
 
-			authenticatedAccountRemoved = authenticatedAccountRegistry_.Remove(endpointKey);
-
 			disconnectPacketBuffer = BuildReliableServerDisconnect(
 				endpointKey,
 				common::packet::ServerDisconnectReason::Kicked
@@ -560,11 +557,6 @@ namespace server::net
 		if (!matchHistoryLeft)
 		{
 			LogError("Failed to remove kicked player from match history.");
-		}
-
-		if (!authenticatedAccountRemoved)
-		{
-			LogWarning("Kicked player's authenticated account state was not found.");
 		}
 
 		if (disconnectPacketBuffer.has_value())

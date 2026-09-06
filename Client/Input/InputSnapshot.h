@@ -14,6 +14,8 @@ namespace client::input
 		bool isRoom3Pressed = false;
 
 		bool fireRequested = false;
+
+		bool toggleInterpolationRequested = false;
 		bool decreaseInterpolationRequested = false;
 		bool increaseInterpolationRequested = false;
 	};

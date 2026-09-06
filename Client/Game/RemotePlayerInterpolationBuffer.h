@@ -51,5 +51,8 @@ namespace client::game
 		void PruneBefore(common::time::TimePoint minimumInterpolationTargetTime) noexcept;
 
 		[[nodiscard]] std::optional<InterpolatedPosition> Interpolate(common::time::TimePoint interpolationTargetTime) const noexcept;
+
+	public:
+		[[nodiscard]] std::optional<InterpolatedPosition> GetLatestPosition() const noexcept;
 	};
 }

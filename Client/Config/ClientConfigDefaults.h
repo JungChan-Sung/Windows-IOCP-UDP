@@ -22,6 +22,8 @@ namespace client::config
 	inline constexpr common::time::Milliseconds defaultRoomJoinInterval = common::time::Milliseconds(200);
 	inline constexpr common::time::Milliseconds defaultInterpolationAdjustStep = common::time::Milliseconds(10);
 
+	inline constexpr bool defaultInterpolationEnabled = true;
+
 	inline constexpr common::time::Milliseconds defaultInterpolationDelay = common::time::Milliseconds(100);
 	inline constexpr common::time::Milliseconds minInterpolationDelay = common::time::Milliseconds(0);
 	inline constexpr common::time::Milliseconds maxInterpolationDelay = common::time::Milliseconds(500);

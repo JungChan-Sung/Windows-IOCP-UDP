@@ -67,6 +67,7 @@ namespace client::render
 		const PlayerId localPlayerId = renderFrameSnapshot.localPlayerId;
 		const RoomId currentRoomId = renderFrameSnapshot.currentRoomId;
 		const std::uint32_t serverTick = renderFrameSnapshot.lastServerTick;
+		const bool interpolationEnabled = renderFrameSnapshot.interpolationEnabled;
 		const int interpolationDelayMs = static_cast<int>(renderFrameSnapshot.interpolationDelay.count());
 
 		DrawBackground(deviceContext, clientRect);
@@ -84,6 +85,7 @@ namespace client::render
 			localPlayerId,
 			currentRoomId,
 			serverTick,
+			interpolationEnabled,
 			interpolationDelayMs
 		);
 		DrawScoreboard(deviceContext, playerStateList, localPlayerId);
@@ -359,7 +361,7 @@ namespace client::render
 		}
 	}
 
-	void GdiRenderer::DrawHud(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList, const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList, PlayerId localPlayerId, RoomId currentRoomId, std::uint32_t serverTick, int interpolationDelayMs) const
+	void GdiRenderer::DrawHud(HDC deviceContext, const RECT& clientRect, const game::ClientWorld::RenderPlayerStateList& renderPlayerStateList, const game::ClientWorld::RenderImpactEffectStateList& renderImpactEffectStateList, PlayerId localPlayerId, RoomId currentRoomId, std::uint32_t serverTick, bool interpolationEnabled, int interpolationDelayMs) const
 	{
 		(void)clientRect;
 
@@ -415,8 +417,9 @@ namespace client::render
 		const std::wstring line2 = L"CurrentRoomId: " + std::to_wstring(currentRoomId);
 		const std::wstring line3 = L"ServerTick: " + std::to_wstring(serverTick);
 		const std::wstring line4 = L"PlayerCount: " + std::to_wstring(renderPlayerStateList.size());
-		const std::wstring line5 = L"InterpolationDelayMs: " + std::to_wstring(interpolationDelayMs);
-		const std::wstring line6 = L"LocalState: " + localState;
+		const std::wstring line5 = interpolationEnabled ? L"RemoteInterpolation: ON" : L"RemoteInterpolation: OFF";
+		const std::wstring line6 = L"InterpolationDelayMs: " + std::to_wstring(interpolationDelayMs);
+		const std::wstring line7 = L"LocalState: " + localState;
 
 		::TextOutW(
 			deviceContext,
@@ -459,6 +462,13 @@ namespace client::render
 			hudTop + (hudLineHeight * 5),
 			line6.c_str(),
 			static_cast<int>(line6.size())
+		);
+		::TextOutW(
+			deviceContext,
+			hudLeft,
+			hudTop + (hudLineHeight * 6),
+			line7.c_str(),
+			static_cast<int>(line7.size())
 		);
 	}
 

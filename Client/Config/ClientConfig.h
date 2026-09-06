@@ -40,6 +40,8 @@ namespace client::config
 	struct InterpolationConfig
 	{
 	public:
+		bool enabled = defaultInterpolationEnabled;
+
 		common::time::Milliseconds defaultDelay = defaultInterpolationDelay;
 		common::time::Milliseconds minDelay = minInterpolationDelay;
 		common::time::Milliseconds maxDelay = maxInterpolationDelay;

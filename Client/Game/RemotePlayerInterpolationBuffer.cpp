@@ -104,4 +104,16 @@ namespace client::game
 			.y = std::lerp(previousSampleIterator->y, targetSampleIterator->y, alpha),
 		};
 	}
+	std::optional<RemotePlayerInterpolationBuffer::InterpolatedPosition> RemotePlayerInterpolationBuffer::GetLatestPosition() const noexcept
+	{
+		if (snapshotSampleList_.empty())
+		{
+			return std::nullopt;
+		}
+
+		return InterpolatedPosition{
+			.x = snapshotSampleList_.back().x,
+			.y = snapshotSampleList_.back().y,
+		};
+	}
 }

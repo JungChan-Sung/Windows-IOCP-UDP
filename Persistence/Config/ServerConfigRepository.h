@@ -16,6 +16,7 @@ namespace persistence::config
 		std::string value;
 	};
 
+	// DB의 server_configs를 문자열 Key/Value 목록으로 읽어 상위 Config 계층에 전달하는 클래스
 	class ServerConfigRepository final
 	{
 	public:

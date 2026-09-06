@@ -20,6 +20,7 @@ namespace persistence::account
 
 		odbc::OdbcStatement statement;
 
+		// INSERT와 생성된 IDENTITY 조회를 한 Statement에서 처리해 새 AccountId를 반환
 		const odbc::OdbcStatement::ExecuteResult prepareResult = statement.Prepare(
 			connection_,
 			R"sql(

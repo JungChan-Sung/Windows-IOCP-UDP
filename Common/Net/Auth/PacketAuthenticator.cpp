@@ -77,6 +77,7 @@ namespace common::net
 			return false;
 		}
 
+		// 함수 종료 시간을 동일하게하여 Timing Attack 방지
 		std::uint8_t difference = 0;
 		for (std::size_t index = 0; index < tag.size(); ++index)
 		{

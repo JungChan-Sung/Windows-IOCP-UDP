@@ -14,6 +14,7 @@
 
 namespace common::net
 {
+	// UDP Fault 결정과 지연 스케줄링을 조합해 송신 장애 시뮬레이션을 제공하는 클래스
 	class UdpFaultSimulator
 	{
 	public:

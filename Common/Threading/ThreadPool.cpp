@@ -177,6 +177,7 @@ namespace common::threading
 				taskQueue_.pop();
 			}
 
+			// Queue 보호 범위를 최소화하기 위해 작업 실행은 Lock을 해제한 뒤 수행
 			try
 			{
 				task();

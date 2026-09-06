@@ -8,6 +8,7 @@
 
 namespace common::log
 {
+	// 로그 발생 시각과 심각도, 메시지를 출력 시점과 독립된 값으로 보관하는 구조체
 	struct LogRecord
 	{
 	public:
@@ -24,11 +25,7 @@ namespace common::log
 		};
 	}
 
-	[[nodiscard]] inline LogRecord MakeLogRecord(
-		time::SystemTimePoint timestamp,
-		LogLevel logLevel,
-		std::string_view message
-	)
+	[[nodiscard]] inline LogRecord MakeLogRecord(time::SystemTimePoint timestamp, LogLevel logLevel, std::string_view message)
 	{
 		return LogRecord{
 			.timestamp = timestamp,

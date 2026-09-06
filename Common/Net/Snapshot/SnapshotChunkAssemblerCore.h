@@ -12,6 +12,7 @@
 
 namespace common::net
 {
+	// 조립에 필요한 Snapshot 식별 정보와 단일 Chunk의 데이터를 전달하는 구조체
 	template <typename TData, typename TRoomId>
 	struct SnapshotChunkView
 	{
@@ -32,6 +33,7 @@ namespace common::net
 		std::vector<TData> dataList;
 	};
 
+	// 동일 Snapshot의 Chunk 수신 여부와 데이터를 조립이 완료될 때까지 보관하는 구조체
 	template <typename TData>
 	struct SnapshotChunkAssemblyState
 	{
@@ -39,11 +41,14 @@ namespace common::net
 		std::uint32_t serverTick = 0;
 		std::uint16_t chunkCount = 0;
 		std::uint16_t receivedChunkCount = 0;
+
 		std::vector<std::uint8_t> receivedChunkFlagList;
 		std::vector<std::vector<TData>> chunkDataList;
+
 		time::TimePoint lastUpdatedTime;
 	};
 
+	// Room별로 최신 Snapshot의 Chunk를 수집하고 완성된 데이터 집합으로 조립하는 클래스
 	template <typename TData, typename TRoomId>
 	class SnapshotChunkAssemblerCore
 	{
@@ -86,6 +91,7 @@ namespace common::net
 			lastAppliedTickTable_.erase(roomId);
 		}
 
+		// 일정 시간 동안 갱신되지 않은 불완전한 Snapshot 조립 상태를 제거하는 함수
 		template <typename TLogFunc>
 			requires std::invocable<
 				TLogFunc,
@@ -142,11 +148,7 @@ namespace common::net
 					std::uint32_t,
 					std::size_t
 			>
-		[[nodiscard]] std::optional<AssembledChunk> PushChunk(
-			const ChunkView& chunkView,
-			time::TimePoint currentTime,
-			TLogFunc logFunc
-		)
+		[[nodiscard]] std::optional<AssembledChunk> PushChunk(const ChunkView& chunkView, time::TimePoint currentTime, TLogFunc logFunc)
 		{
 			if (chunkView.chunkCount == 0 || chunkView.chunkIndex >= chunkView.chunkCount)
 			{
@@ -170,6 +172,7 @@ namespace common::net
 			const auto assemblyIterator = assemblyTable_.find(chunkView.roomId);
 			const bool hasAssemblyState = assemblyIterator != assemblyTable_.end();
 
+			// 이미 적용한 Snapshot보다 오래된 Tick은 현재 상태를 되돌리지 않도록 폐기
 			if (hasAppliedTick && chunkView.serverTick < lastAppliedTick)
 			{
 				logFunc(
@@ -202,11 +205,12 @@ namespace common::net
 
 			AssemblyState& assemblyState = assemblyTable_[chunkView.roomId];
 
+			// 새로운 Snapshot이 시작되거나 Chunk 구성이 변경되면 기존 조립 상태를 초기화
+			// 더 최신 Tick은 불완전한 이전 Snapshot을 기다리지 않고 즉시 우선 조립
 			const bool needReset
 				= assemblyState.chunkCount == 0
 				|| chunkView.serverTick > assemblyState.serverTick
 				|| chunkView.chunkCount != assemblyState.chunkCount;
-
 			if (needReset)
 			{
 				assemblyState.serverTick = chunkView.serverTick;
@@ -316,6 +320,7 @@ namespace common::net
 		}
 
 	private:
+		// 네트워크 도착 순서와 관계없이 ChunkIndex 순서대로 데이터를 결합하는 함수
 		[[nodiscard]] static DataList FlattenChunkDataList(const std::vector<std::vector<Data>>& chunkDataList)
 		{
 			DataList flattenedDataList;

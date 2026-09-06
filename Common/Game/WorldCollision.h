@@ -11,6 +11,13 @@
 
 namespace common::game
 {
+	// (minX, minY)
+	//	    ┌───────┐
+	//	    │              │
+	//	    │     Wall     │
+	//   	│              │
+	//	    └───────┘
+	//              	(maxX, maxY)
 	struct WallRect
 	{
 	public:
@@ -213,6 +220,8 @@ namespace common::game
 		}
 	}
 
+	// X/Y 축을 순차적으로 이동시켜 벽과 충돌한 축만 제한하고
+	// 다른 축의 이동은 유지해 벽을 따라 이동할 수 있는 함수
 	inline void MovePlayerWithWallCollision(
 		float& x,
 		float& y,
@@ -308,6 +317,8 @@ namespace common::game
 			|| IsCircleCollidingWithAnyWall(x, y, radius, wallRectList);
 	}
 
+	// 이동 끝점이 충돌한 경우 이동 구간을 이분 탐색(Binary Search)해
+	// 최초 충돌 경계에 가까운 위치를 근사해주는 함수
 	inline void FindCircleImpactPosition(
 		float startX,
 		float startY,

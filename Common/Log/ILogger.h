@@ -7,6 +7,7 @@
 
 namespace common::log
 {
+	// 출력 대상과 관계없이 공통 로그 기록 인터페이스를 제공하는 인터페이스
 	class ILogger
 	{
 	public:

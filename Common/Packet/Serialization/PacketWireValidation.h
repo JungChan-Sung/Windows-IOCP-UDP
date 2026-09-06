@@ -8,6 +8,7 @@
 
 namespace common::packet
 {
+	// 직렬화 구현이 가정하는 기본 타입의 크기를 검증하는 컴파일 타임 단언문 함수
 	[[nodiscard]] consteval bool ValidatePacketBaseWireTypes()
 	{
 		static_assert(sizeof(std::uint8_t) == uint8WireSize);

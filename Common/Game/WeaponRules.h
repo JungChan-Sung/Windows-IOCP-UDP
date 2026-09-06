@@ -15,6 +15,7 @@ namespace common::game
 	inline constexpr float defaultBasicBulletRadius = 6.0F;
 	inline constexpr float defaultBasicFireCooldownSeconds = 0.15F;
 
+	// Bullet 생성과 발사 제한에 필요한 무기별 Gameplay 값을 정의하는 구조체
 	struct WeaponRule
 	{
 	public:

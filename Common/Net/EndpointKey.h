@@ -5,6 +5,12 @@
 
 namespace common::net
 {
+	//63                              16 15              0
+	//┌────────────────┬───────┐
+	//│         IPv4 Address           │     Port     │
+	//│          32 bits               │   16 bits    │
+	//└────────────────┴───────┘
+	// IPv4 주소와 UDP 포트를 조합해 통신 상대를 식별하는 값 타입 구조체
 	struct EndpointKey
 	{
 	public:

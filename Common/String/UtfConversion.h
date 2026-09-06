@@ -6,6 +6,7 @@
 
 namespace common::string
 {
+	// 프로젝트 내부 UTF-8 문자열과 Windows Wide API의 UTF-16 문자열 간 변환 오류를 표현
 	enum class UtfConversionFailure
 	{
 		InputTooLarge,

@@ -6,6 +6,7 @@
 
 namespace common::time
 {
+	// System Clock 시각을 저장·출력하기 쉬운 날짜와 시간 구성 요소로 표현한 구조체
 	struct SystemDateTime
 	{
 	public:

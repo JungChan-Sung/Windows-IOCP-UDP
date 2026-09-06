@@ -37,6 +37,7 @@ namespace common::net
 			}
 			else
 			{
+				// 최신 sequence가 이동한 만큼 Replay window의 수신 이력도 함께 이동
 				receivedBitfield_ <<= static_cast<std::size_t>(distance);
 			}
 

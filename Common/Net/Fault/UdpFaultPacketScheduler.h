@@ -15,9 +15,11 @@
 
 namespace common::net
 {
+	// Fault 결정에 따라 패킷의 즉시 전송 또는 지연 전송을 스케줄링하는 클래스
 	class UdpFaultPacketScheduler
 	{
 	public:
+		// 지연 전송 시 원본 버퍼의 수명에 의존하지 않도록 목적지와 패킷 데이터를 소유하는 구조체
 		struct Packet
 		{
 		public:
@@ -40,6 +42,8 @@ namespace common::net
 		using Decision = UdpFaultDecisionGenerator::Decision;
 
 	private:
+		// 동일한 Release Time을 가진 패킷도 모두 보관하고 등록 순서를 유지하도록
+		// 단조 증가하는 Schedule Order를 보조 키로 사용
 		using ScheduleKey = std::pair<time::TimePoint, std::uint64_t>;
 		using PendingPacketMap = std::map<ScheduleKey, Packet>;
 

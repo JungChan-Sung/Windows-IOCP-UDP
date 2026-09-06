@@ -118,6 +118,7 @@ namespace common::packet
 		return writer.TakeBuffer();
 	}
 
+	// 기본 패킷이 예상 타입·크기·프로토콜을 만족하며 전송 계층의 Reliable/Auth Wrapping이 제거된 상태인지 검증하는 함수
 	[[nodiscard]] inline bool ReadExpectedHeader(
 		PacketReader& reader,
 		PacketHeader& packetHeader,

@@ -11,6 +11,7 @@
 
 namespace common::packet
 {
+	// 패킷 데이터를 정의된 Little-Endian Wire 형식으로 직렬화하는 클래스
 	class PacketWriter
 	{
 	private:
@@ -73,6 +74,12 @@ namespace common::packet
 			WriteUInt32(std::bit_cast<std::uint32_t>(value));
 		}
 
+		//┌─────────┐
+		//│ length    2 bytes│
+		//├─────────┤
+		//│ string bytes     │
+		//│ ...              │
+		//└─────────┘
 		void WriteString(std::string_view value)
 		{
 			if (value.size() > static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max()))

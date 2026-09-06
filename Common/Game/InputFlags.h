@@ -4,6 +4,7 @@
 
 namespace common::game
 {
+	// 동시에 입력되는 이동 방향을 하나의 비트 플래그 값으로 표현
 	enum class InputFlags : std::uint8_t
 	{
 		None = 0,

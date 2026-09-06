@@ -69,6 +69,7 @@ namespace common::net
 
 		PacketAuthenticationTag tag{};
 
+		// Replay Sequence까지 인증 범위에 포함해 Sequence 변조를 방지
 		if (!ComputePacketAuthenticationTag(sessionToken, std::span<const char>(packetBuffer.data(), packetBuffer.size()), tag))
 		{
 			return std::nullopt;

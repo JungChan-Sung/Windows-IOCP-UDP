@@ -8,6 +8,7 @@
 
 namespace common::packet
 {
+	// 직렬화된 패킷 데이터를 정의된 Wire 형식에 따라 순차적으로 읽는 클래스
 	class PacketReader
 	{
 	private:

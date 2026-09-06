@@ -43,6 +43,7 @@ namespace common::game
 			return direction;
 		}
 
+		// 대각선 입력 방향 벡터를 정규화
 		const float length = std::sqrt(lengthSquared);
 		direction.x /= length;
 		direction.y /= length;

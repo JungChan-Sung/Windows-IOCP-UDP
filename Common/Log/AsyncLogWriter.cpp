@@ -93,6 +93,7 @@ namespace common::log
 		}
 
 		const ILogger* logger = logger_;
+		// 비동기 작업이 원본 LogRecord의 수명에 의존하지 않도록 복사본을 소유
 		LogRecord copiedLogRecord = logRecord;
 
 		return threadPool_.Enqueue(

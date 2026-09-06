@@ -7,6 +7,7 @@
 
 namespace common::log
 {
+	// 선언 순서를 로그 심각도 순서로 유지하며 minimum level 필터링에 사용
 	enum class LogLevel
 	{
 		Trace,

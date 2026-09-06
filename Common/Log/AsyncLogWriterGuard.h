@@ -4,6 +4,7 @@
 
 namespace common::log
 {
+	// Scope 종료 시 AsyncLogWriter를 Drain 종료해 모든 return 경로에서 정리를 보장하는 클래스
 	class AsyncLogWriterGuard final
 	{
 	private:

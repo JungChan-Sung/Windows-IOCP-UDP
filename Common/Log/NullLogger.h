@@ -5,6 +5,7 @@
 
 namespace common::log
 {
+	// 로그 호출을 정상 처리하되 실제 출력은 수행하지 않는 Logger 클래스
 	class NullLogger final : public ILogger
 	{
 	public:

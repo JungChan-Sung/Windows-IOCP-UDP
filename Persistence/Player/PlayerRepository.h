@@ -18,6 +18,7 @@ namespace persistence::player
 		common::identity::AccountId accountId = 0;
 	};
 
+	// Account와 1:1로 연결되는 영속 Player의 생성과 조회를 담당하는 클래스
 	class PlayerRepository final
 	{
 	public:

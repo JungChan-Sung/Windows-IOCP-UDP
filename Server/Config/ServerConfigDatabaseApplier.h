@@ -11,6 +11,8 @@
 
 namespace server::config
 {
+	// DB의 문자열 설정을 기존 Config parsing 규칙으로 해석해 
+	// bootstrap 설정을 제외한 ServerConfig 항목에 적용하는 클래스
 	struct ServerConfigDatabaseApplyResult
 	{
 	public:

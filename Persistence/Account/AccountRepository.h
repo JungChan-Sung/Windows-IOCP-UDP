@@ -30,6 +30,7 @@ namespace persistence::account
 		std::string nickname;
 	};
 
+	// accounts 테이블의 계정 생성·조회·존재 확인을 Prepared Statement로 캡슐화한 클래스
 	class AccountRepository final
 	{
 	public:

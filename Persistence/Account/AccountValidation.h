@@ -22,6 +22,7 @@ namespace persistence::account
 		TooLong,
 	};
 
+	// Account 입력 검증 실패의 대상 필드와 원인, 길이 또는 변환 오류 정보를 전달하는 구조체
 	struct AccountValidationError
 	{
 	public:

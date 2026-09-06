@@ -27,6 +27,7 @@ namespace
 			};
 		}
 
+		// ODBC 문자열 바인딩이 SQL_NTS를 사용하므로 embedded NUL에 의한 조기 문자열 종료를 거부
 		if (text.find('\0') != std::string_view::npos)
 		{
 			return AccountValidationError{
@@ -47,8 +48,8 @@ namespace
 			};
 		}
 
+		// NVARCHAR(N)과 동일한 기준으로 제한하기 위해 UTF-16 Code Unit 수를 검사
 		const std::size_t actualCodeUnitCount = utf16Result->size();
-
 		if (actualCodeUnitCount > maximumUtf16CodeUnitCount)
 		{
 			return AccountValidationError{

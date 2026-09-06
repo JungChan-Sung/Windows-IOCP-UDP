@@ -30,12 +30,15 @@ namespace persistence::match
 			return std::unexpected(MakeConnectionNotOpenError());
 		}
 
+		// Match 본문과 모든 참가자 통계를 하나의 작업 단위로 저장해 부분 저장을 방지
 		const odbc::OdbcConnection::TransactionResult beginResult = connection_.BeginTransaction();
 		if (!beginResult.has_value())
 		{
 			return std::unexpected(beginResult.error());
 		}
 
+		// Transaction 중간 실패 시 전체 변경을 되돌리고,
+		// Rollback 실패도 원래 오류 정보에 함께 보존
 		const auto rollbackWithError = [this](core::DatabaseError error) -> SaveMatchResult
 			{
 				if (connection_.IsTransactionActive())

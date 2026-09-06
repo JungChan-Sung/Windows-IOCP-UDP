@@ -47,6 +47,7 @@ account::maxNicknameUtf16CodeUnitCount
 			return std::unexpected(executeResult.error());
 		}
 
+		// account_id의 UNIQUE 제약으로 계정당 하나의 영속성 Player만 허용
 		constexpr std::string_view createPlayersTableQuery = R"sql(
 IF OBJECT_ID(N'dbo.players', N'U') IS NULL
 BEGIN

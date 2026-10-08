@@ -16,6 +16,7 @@ namespace client::game
 	private:
 		struct PendingInput
 		{
+		public:
 			std::uint32_t sequence = 0;
 			common::game::InputFlags inputFlags = common::game::InputFlags::None;
 			float deltaSeconds = 0.0F;

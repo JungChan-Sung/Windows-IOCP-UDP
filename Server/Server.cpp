@@ -9,6 +9,7 @@ int main()
 {
 	try
 	{
+		// WinSock Lifetime이 모든 네트워크 객체보다 길도록 App 생성 전에 초기화
 		common::net::WsaSession wsaSession;
 		const common::net::WsaSession::InitializeResult initializeResult = wsaSession.Initialize();
 		if (!initializeResult.has_value())

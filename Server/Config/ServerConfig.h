@@ -18,7 +18,9 @@ namespace server::config
 	{
 	public:
 		unsigned short port = 9000;
+		// 0이면 hardware concurrency를 기준으로 worker 수를 자동 결정
 		std::size_t workerThreadCount = 0;
+		// 0이면 확정된 worker 수를 기준으로 수신 Context 수를 자동 결정
 		std::size_t recvContextCount = 0;
 	};
 
@@ -30,6 +32,7 @@ namespace server::config
 		common::time::Seconds reconnectGracePeriod = common::time::Seconds(30);
 	};
 
+	// tickInterval은 실행 주기를, fixedDeltaSeconds는 Simulation에 적용할 고정 시간 간격을 정의
 	struct TickConfig
 	{
 	public:

@@ -164,6 +164,7 @@ namespace server::app
 			return std::unexpected(RunError{ matchHistoryProcessorStartResult.error() });
 		}
 
+		// 네트워크 I/O 시작 전에 Server가 사용할 외부 협력 객체를 먼저 연결
 		udpServer_.AttachLogger(logger_);
 		udpServer_.AttachAccountLoginPacketHandler(accountLoginPacketHandler_);
 
@@ -189,6 +190,7 @@ namespace server::app
 
 		udpServer_.Stop();
 
+		// Server 정지 직전 완료된 Match까지 영속화 Queue에 넘기기 위해 마지막으로 회수
 		ProcessCompletedMatches();
 
 		matchHistoryTaskProcessor_.StopAfterDrain();
@@ -207,6 +209,7 @@ namespace server::app
 
 	config::ServerConfigLoadResult GameServerApp::BuildServerConfig(unsigned short port) const
 	{
+		// DB 설정을 적용한 뒤 최종 검증하기 위해 여기서는 파일 값만 먼저 로드
 		config::ServerConfigLoadResult loadResult = config::ServerConfigLoader::Load("Server.ini");
 
 		if (port != 0)

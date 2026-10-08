@@ -17,6 +17,7 @@ namespace server::config
 		std::vector<ServerConfigWarning> warningList;
 	};
 
+	// INI의 Section/Key 값을 ServerConfig로 변환하고 잘못된 항목은 Warning으로 수집하는 클래스
 	class ServerConfigLoader
 	{
 	public:

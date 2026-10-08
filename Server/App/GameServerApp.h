@@ -21,6 +21,7 @@
 
 namespace server::app
 {
+	// Server Subsystem의 의존 관계를 구성하고 Startup, Main Loop, Shutdown Lifecycle을 조율하는 클래스
 	class GameServerApp
 	{
 	public:
@@ -33,6 +34,7 @@ namespace server::app
 		using RunResult = std::expected<void, RunError>;
 
 	private:
+		// 참조 대상이 소비자보다 오래 유지되도록 의존 순서대로 멤버를 선언
 		admin::ServerAdminConsole adminConsole_;
 
 		common::log::AsyncLogWriter logger_;
